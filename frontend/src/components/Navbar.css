@@ -1,0 +1,106 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rem;
+  background-color: transparent;
+  height: 80px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1.5px solid transparent;
+}
+
+.navbar.scrolled {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  height: 70px;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.logo-text {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--text);
+}
+
+.chevron {
+  width: 14px;
+  height: 14px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+}
+
+.sign-in-btn {
+  background-color: var(--text);
+  color: var(--bg);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sign-in-btn:hover {
+  background-color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sign-in-btn:active {
+  transform: translateY(0);
+}
+
+.arrow {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 1024px) {
+  .navbar {
+    padding: 0 1.5rem;
+  }
+  .nav-center {
+    display: none;
+  }
+}

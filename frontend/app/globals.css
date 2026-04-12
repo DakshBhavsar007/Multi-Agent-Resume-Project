@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #F5F0E8;
+  --accent: #C8871A;
+  --text: #2A2A2A;
+  --card: #FFFFFF;
+  --success: #22C55E;
+  --danger: #EF4444;
+  --muted: #6B7280;
+  --sidebar: #2A2A2A;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Shimmer animation for skeletons */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Score ring animation */
+@keyframes fillRing {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: var(--target-offset); }
+}

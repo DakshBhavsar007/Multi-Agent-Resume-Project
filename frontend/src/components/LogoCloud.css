@@ -1,0 +1,87 @@
+.logo-cloud-section {
+  padding: 40px 0; /* Reduced vertical space */
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+}
+
+.logo-cloud-container {
+  max-width: 1200px; /* More compact width */
+  margin: 0 auto;
+  padding: 0 40px; /* Side padding from the page edges */
+  text-align: center;
+}
+
+.logo-cloud-title {
+  font-family: var(--sans);
+  font-size: 15px; /* Slightly smaller title for compactness */
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 24px; /* Reduced gap */
+  letter-spacing: -0.01em;
+}
+
+/* Marquee Logic */
+.marquee-container {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  
+  /* Blurry Ends Effect - Adjusted for padding */
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+}
+
+.marquee-content {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-around;
+  gap: 60px; /* Slightly reduced gap between logos */
+  align-items: center;
+  padding: 10px 0;
+}
+
+.logo-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  opacity: 0.25;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 20px; /* Smaller logos for compactness */
+}
+
+.logo-item-wrapper:hover {
+  opacity: 1;
+}
+
+.logo-symbol {
+  width: 20px;
+  height: 20px;
+}
+
+/* Secondary Row Spacing - Much more compact */
+.marquee-spacer {
+  margin: 20px 0;
+}
+
+@media (max-width: 768px) {
+  .logo-cloud-container {
+    padding: 0 24px;
+  }
+}
