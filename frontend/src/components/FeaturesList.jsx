@@ -64,10 +64,10 @@ const FeaturesList = () => {
       color: "#1a1c1e", tag: "EXT", size: "small" 
     },
     { 
-      title: "Dash Analytics", 
-      description: "Vision into your hiring velocity and candidate quality metrics.", 
-      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
-      color: "#8b5cf6", tag: "DATA", size: "small" 
+      title: "Fraud & Safety Audits", 
+      description: "Scan resumes and job postings for plagiarism, AI-generation probability, ATS tricks, and job seeker phishing scams.", 
+      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+      color: "#ef4444", tag: "SEC", size: "small" 
     },
     { 
       title: "Instant Screening", 
@@ -76,15 +76,15 @@ const FeaturesList = () => {
       color: "#f59e0b", tag: "PRO", size: "wide" 
     },
     { 
-      title: "Global Sync", 
-      description: "Collaborate across timezones with real-time candidate updates.", 
-      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-      color: "#ec4899", tag: "TEAM", size: "small" 
+      title: "Smart Search & Logos", 
+      description: "Find jobs via smart search autocomplete with auto-appended Indian states and upload custom company logos.", 
+      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M16 8v5M19 11h-6"/></svg>,
+      color: "#ec4899", tag: "UX", size: "small" 
     }
   ];
 
   return (
-    <section className="features-section">
+    <section className="features-section" id="features">
       <div className="features-container">
         <div className="features-header-small">Capabilities</div>
         <h2 className="features-main-title">Built for the future of hiring.</h2>

@@ -1,5 +1,5 @@
-"use client";
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import './Navbar.css';
 
@@ -13,7 +13,7 @@ const Logo = () => (
   </svg>
 );
 
-const Navbar = ({ onSignIn }) => {
+const Navbar = ({ onSignIn, isLoggedIn }) => {
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
 
@@ -30,28 +30,52 @@ const Navbar = ({ onSignIn }) => {
       animate={{ y: 0 }}
       transition={{ duration: 0.8, ease: [0.21, 0.45, 0.32, 0.9] }}
     >
-      <div className="nav-left">
+      <Link to="/" className="nav-left flex items-center cursor-pointer no-underline text-inherit">
         <Logo />
-        <span className="logo-text">Vishleshan</span>
-      </div>
+        <span className="logo-text ml-2">Vishleshan</span>
+      </Link>
 
       <div className="nav-center">
-        {['Product', 'Pricing', 'Newsletter', 'Careers', 'About'].map((item, i) => (
-          <motion.a 
-            key={item}
-            href={`#${item.toLowerCase()}`} 
-            className="nav-link"
-            whileHover={{ y: -2 }}
-            transition={{ type: "spring", stiffness: 400 }}
-          >
-            {item}
-            {item === 'Product' && (
-              <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
-            )}
-          </motion.a>
-        ))}
+        {['Product', 'Features', 'Pricing', 'Jobs', 'Developers'].map((item) => {
+          if (item === 'Jobs') {
+            return (
+              <Link 
+                key={item}
+                to="/jobs" 
+                className="nav-link font-semibold transition-all hover:translate-y-[-2px]"
+              >
+                Jobs
+              </Link>
+            );
+          }
+          if (item === 'Developers') {
+            return (
+              <Link 
+                key={item}
+                to="/developer" 
+                className="nav-link font-semibold transition-all hover:translate-y-[-2px]"
+              >
+                Developers
+              </Link>
+            );
+          }
+          return (
+            <motion.a 
+              key={item}
+              href={`/#${item.toLowerCase()}`} 
+              className="nav-link"
+              whileHover={{ y: -2 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              {item}
+              {item === 'Product' && (
+                <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              )}
+            </motion.a>
+          );
+        })}
       </div>
 
       <div className="nav-right">
@@ -61,7 +85,7 @@ const Navbar = ({ onSignIn }) => {
           whileTap={{ scale: 0.95 }}
           onClick={onSignIn}
         >
-          Sign In
+          {isLoggedIn ? 'Dashboard' : 'Sign In'}
           <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="m9 18 6-6-6-6"/>
           </svg>

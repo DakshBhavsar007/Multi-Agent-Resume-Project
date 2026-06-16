@@ -1,15 +1,33 @@
-from celery import Celery
+import socket
+# Patch socket to force IPv4 and avoid IPv6 resolution hangs
+orig_getaddrinfo = socket.getaddrinfo
+def getaddrinfo_ipv4(host, port, family=0, type=0, proto=0, flags=0):
+    return orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+socket.getaddrinfo = getaddrinfo_ipv4
+
 import os
+import sys
+
+# Ensure the backend directory is in the Python pathway
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import django
+# Initialize Django environment
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'vishleshan_backend.settings')
+django.setup()
+
+from celery import Celery
 import asyncio
 from pathlib import Path
 import json
-from datetime import datetime
+from datetime import datetime, timezone
+import concurrent.futures
+import fitz  # PyMuPDF
+from docx import Document
+import re
+import uuid
 
-from models.database import SyncSessionLocal, Candidate, Session as SessionModel, IngestJob, SkillTaxonomy
-from sqlalchemy import select as sync_select
-
-import google.oauth2.credentials
-from googleapiclient.discovery import build
+from api.models import Candidate, Session as SessionModel, IngestJob, SkillTaxonomy
 
 celery_app = Celery(
     "vishleshan",
@@ -25,16 +43,10 @@ celery_app.conf.update(
     broker_connection_retry_on_startup=True
 )
 
-
-import fitz  # PyMuPDF
-from docx import Document
-import re
-import uuid
-
 def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
     """Synchronously extract text and parse a resume file using AI logic."""
-    upload_dir = os.getenv("UPLOAD_DIR", "/tmp/vishleshan/resumes")
-    photo_dir = os.getenv("PHOTO_DIR", "/tmp/vishleshan/photos")
+    upload_dir = os.getenv("UPLOAD_DIR", "uploads")
+    photo_dir = os.getenv("PHOTO_DIR", "photos")
     os.makedirs(photo_dir, exist_ok=True)
 
     ext = Path(file_path).suffix.lower()
@@ -138,8 +150,8 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
                 found_skills.append({"skill": sk.replace("\\", ""), "years": None, "level": None})
 
         # Simple location detection
-        location_keywords = ["Bangalore","Mumbai","Delhi","Hyderabad","Chennai","Pune","Remote","Kolkata",
-                             "Noida","Gurgaon","New York","San Francisco","London","Singapore","Dubai"]
+        location_keywords = ["Bengaluru","Bangalore","Mumbai","Delhi","Hyderabad","Chennai","Pune","Remote","Kolkata",
+                             "Noida","Gurgaon","Gurugram","Kochi","Kerala","New York","San Francisco","London","Singapore","Dubai"]
         location = None
         for loc in location_keywords:
             if loc.lower() in text.lower():
@@ -172,21 +184,14 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
 
         # ── OPTIONAL LLM ENRICHMENT (skip on failure) ────────
         try:
-            from openai import OpenAI
+            from agents.llm import RotateLLMClient
             import threading
             from dotenv import load_dotenv
             
-            load_dotenv() # Load environment variables so OpenAI key exists
+            load_dotenv() # Load environment variables so keys exist
 
-            groq_key = os.getenv("GROQ_API_KEY")
-            openai_key = os.getenv("OPENAI_API_KEY")
-            
-            if groq_key:
-                client = OpenAI(api_key=groq_key, base_url="https://api.groq.com/openai/v1")
-                model_to_use = "llama-3.3-70b-specdec"  # fastest Groq model
-            else:
-                client = OpenAI(api_key=openai_key)
-                model_to_use = "gpt-4o-mini"
+            client = RotateLLMClient()
+            model_to_use = "gemini-1.5-flash"
             
             llm_result = [None]
             llm_error = [None]
@@ -262,12 +267,10 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
             "confidence": 0.1
         }
 
-
-def _normalize_skills_sync(raw_skills: list, db) -> list:
+def _normalize_skills_sync(raw_skills: list, db=None) -> list:
     """Delegates to the highly optimized V2 flat lookup normalization agent."""
     from agents.normalization_agent import _normalize_skills_sync as fast_normalize
     return fast_normalize(raw_skills, db)
-
 
 @celery_app.task(bind=True, max_retries=2, name="process_resume_batch")
 def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, source: str = "upload", use_llm: bool = True):
@@ -275,60 +278,69 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
        Phase 1: Fast regex-only parsing (all files, <0.3s each)
        Phase 2: Background LLM enrichment (if use_llm=True, staggered)
     """
-    is_bulk = len(file_paths) > 10
+    if not file_paths:
+        try:
+            job = IngestJob.objects.get(id=job_id)
+            job.status = "done"
+            job.completed_at = datetime.now(timezone.utc)
+            job.save()
+        except IngestJob.DoesNotExist:
+            pass
+        return
 
-    with SyncSessionLocal() as db:
-        job = db.execute(sync_select(IngestJob).where(IngestJob.id == job_id)).scalar_one_or_none()
-        session_row = db.execute(sync_select(SessionModel).where(SessionModel.id == session_id)).scalar_one_or_none()
+    try:
+        job = IngestJob.objects.get(id=job_id)
+        session_row = SessionModel.objects.get(id=session_id)
+    except (IngestJob.DoesNotExist, SessionModel.DoesNotExist):
+        return
 
-        if not job or not session_row:
-            return
+    try:
+        is_bulk = len(file_paths) > 10
+
+        job.status = "processing"
+        job.save()
+
+        # Phase 1: For bulk uploads → regex-only (fast, <0.3s/file)
+        # For small batches (<=10) and LLM enabled → full LLM parsing
+        do_llm_inline = (not is_bulk) and use_llm
+
+        def _process_one(path):
+            return path, _parse_resume_sync(path, skip_llm=(not do_llm_inline))
+
+        candidate_ids_for_enrichment = []
 
         criteria = session_row.criteria or {}
         min_match_score = criteria.get("min_match_score", 0)
         required_skills = criteria.get("required_skills", [])
         rounds = session_row.rounds or []
         first_round_order = rounds[0]["order"] if rounds else 0
+        req_lower = [r.lower() for r in required_skills]
 
-        job.status = "processing"
-        db.commit()
-
-    import concurrent.futures
-
-    # Phase 1: For bulk uploads → regex-only (fast, <0.3s/file)
-    # For small batches (<=10) and LLM enabled → full LLM parsing
-    do_llm_inline = (not is_bulk) and use_llm
-
-    def _process_one(path):
-        return path, _parse_resume_sync(path, skip_llm=(not do_llm_inline))
-
-    candidate_ids_for_enrichment = []
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(file_paths), 30)) as executor:
-        future_to_path = {executor.submit(_process_one, p): p for p in file_paths}
-        
-        for future in concurrent.futures.as_completed(future_to_path):
-            path = future_to_path[future]
-            try:
-                _, parsed_res = future.result()
-            except Exception as e:
-                with SyncSessionLocal() as db:
-                    job = db.execute(sync_select(IngestJob).where(IngestJob.id == job_id)).scalar_one_or_none()
-                    if job:
-                        job.failed_files = (job.failed_files or 0) + 1
-                        errs = list(job.error_log or [])
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(file_paths), 30)) as executor:
+            future_to_path = {executor.submit(_process_one, p): p for p in file_paths}
+            
+            for future in concurrent.futures.as_completed(future_to_path):
+                path = future_to_path[future]
+                try:
+                    _, parsed_res = future.result()
+                except Exception as e:
+                    try:
+                        active_job = IngestJob.objects.get(id=job_id)
+                        active_job.failed_files = (active_job.failed_files or 0) + 1
+                        errs = list(active_job.error_log or [])
                         errs.append(f"{Path(path).name}: {str(e)[:200]}")
-                        job.error_log = errs
-                        db.commit()
-                continue
-            raw_data = parsed_res["parsed"]
-            raw_skills = raw_data.get("skills", [])
+                        active_job.error_log = errs
+                        active_job.save()
+                    except IngestJob.DoesNotExist:
+                        pass
+                    continue
 
-            with SyncSessionLocal() as db:
-                normalized_skills = _normalize_skills_sync(raw_skills, db)
+                raw_data = parsed_res["parsed"]
+                raw_skills = raw_data.get("skills", [])
+                normalized_skills = _normalize_skills_sync(raw_skills)
 
                 new_cand = Candidate(
-                    session_id=session_id,
+                    session=session_row,
                     name=raw_data.get("name") or Path(path).stem,
                     email=raw_data.get("email"),
                     phone=raw_data.get("phone"),
@@ -346,9 +358,7 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
                 # Simple rule-based match scoring if criteria exist
                 if required_skills:
                     cand_skill_names = {s.get("canonical_skill", "").lower() for s in normalized_skills}
-                    req_lower = [r.lower() for r in required_skills]
                     matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
-                    # No more synthetic boosts for UI evaluation - user wants real data
                     missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
                     matched = len(matched_list)
                     skill_score = round((matched / len(req_lower)) * 100) if req_lower else 0
@@ -375,6 +385,7 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
                     if parsed_res.get("parsing_method") in ("regex", "error_fallback"):
                         score = max(score, min_match_score + 10) if min_match_score else 85
                     
+                    score = min(100, score)
                     new_cand.match_score = score
                     new_cand.recommendation = "Strong" if score >= 70 else ("Moderate" if score >= 40 else "Weak")
                     new_cand.match_details = {
@@ -390,272 +401,288 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
                     if min_match_score > 0 and score < min_match_score:
                         new_cand.status = "rejected"
 
-                db.add(new_cand)
-                db.flush()
+                new_cand.save()
 
                 # Track candidates that need background LLM enrichment
                 if is_bulk and use_llm and parsed_res.get("parsing_method") == "regex":
                     candidate_ids_for_enrichment.append(str(new_cand.id))
 
-                job = db.execute(sync_select(IngestJob).where(IngestJob.id == job_id)).scalar_one_or_none()
-                if job:
-                    job.processed_files = (job.processed_files or 0) + 1
-                db.commit()
+                try:
+                    active_job = IngestJob.objects.get(id=job_id)
+                    active_job.processed_files = (active_job.processed_files or 0) + 1
+                    active_job.save()
+                except IngestJob.DoesNotExist:
+                    pass
 
+        try:
+            active_job = IngestJob.objects.get(id=job_id)
+            active_job.status = "done"
+            active_job.completed_at = datetime.now(timezone.utc)
+            active_job.save()
+        except IngestJob.DoesNotExist:
+            pass
 
+        # Phase 2: Fire background LLM enrichment for bulk-parsed candidates
+        if candidate_ids_for_enrichment:
+            # Stagger: process 5 at a time with 2s delay between batches
+            for i in range(0, len(candidate_ids_for_enrichment), 5):
+                batch = candidate_ids_for_enrichment[i:i+5]
+                enrich_candidates_llm.apply_async(
+                    args=[batch],
+                    countdown=i // 5 * 2  # 0s, 2s, 4s, 6s...
+                )
 
-    with SyncSessionLocal() as db:
-        job = db.execute(sync_select(IngestJob).where(IngestJob.id == job_id)).scalar_one_or_none()
-        if job:
-            job.status = "done"
-            job.completed_at = datetime.utcnow()
-        db.commit()
-
-    # Phase 2: Fire background LLM enrichment for bulk-parsed candidates
-    if candidate_ids_for_enrichment:
-        # Stagger: process 5 at a time with 2s delay between batches
-        for i in range(0, len(candidate_ids_for_enrichment), 5):
-            batch = candidate_ids_for_enrichment[i:i+5]
-            enrich_candidates_llm.apply_async(
-                args=[batch],
-                countdown=i // 5 * 2  # 0s, 2s, 4s, 6s...
-            )
-
+    except Exception as e:
+        import traceback
+        try:
+            active_job = IngestJob.objects.get(id=job_id)
+            active_job.status = "failed"
+            active_job.error_log = [str(e), traceback.format_exc()]
+            active_job.completed_at = datetime.now(timezone.utc)
+            active_job.save()
+        except IngestJob.DoesNotExist:
+            pass
+        raise e
 
 @celery_app.task(name="enrich_candidates_llm", max_retries=1)
 def enrich_candidates_llm(candidate_ids: list):
     """Phase 2: Background LLM enrichment for candidates that were parsed with regex-only.
     Re-parses the resume file through the full LLM pipeline and merges richer data back.
     """
-    with SyncSessionLocal() as db:
-        for cid in candidate_ids:
-            try:
-                cand = db.execute(
-                    sync_select(Candidate).where(Candidate.id == cid)
-                ).scalar_one_or_none()
+    for cid in candidate_ids:
+        try:
+            cand = Candidate.objects.get(id=cid)
+            if not cand.resume_file_path:
+                continue
 
-                if not cand or not cand.resume_file_path:
-                    continue
+            # Check if already enriched
+            raw = cand.raw_resume_data or {}
+            if raw.get("parsing_method") == "llm":
+                continue
 
-                # Check if already enriched
-                raw = cand.raw_resume_data or {}
-                if raw.get("parsing_method") == "llm":
-                    continue
+            # Re-parse with LLM
+            enriched = _parse_resume_sync(cand.resume_file_path, skip_llm=False)
+            if enriched.get("parsing_method") != "llm":
+                continue  # LLM failed, keep regex data
 
-                # Re-parse with LLM
-                enriched = _parse_resume_sync(cand.resume_file_path, skip_llm=False)
-                if enriched.get("parsing_method") != "llm":
-                    continue  # LLM failed, keep regex data
+            parsed = enriched["parsed"]
 
-                parsed = enriched["parsed"]
+            # Merge: update candidate fields with richer LLM data
+            if parsed.get("name") and parsed["name"] != Path(cand.resume_file_path).stem:
+                cand.name = parsed["name"]
+            if parsed.get("email"):
+                cand.email = parsed["email"]
+            if parsed.get("phone"):
+                cand.phone = parsed["phone"]
+            if parsed.get("location") and parsed["location"] != "Unknown":
+                cand.location = parsed["location"]
+            if parsed.get("total_experience_years"):
+                cand.total_experience_years = float(parsed["total_experience_years"])
 
-                # Merge: update candidate fields with richer LLM data
-                if parsed.get("name") and parsed["name"] != Path(cand.resume_file_path).stem:
-                    cand.name = parsed["name"]
-                if parsed.get("email"):
-                    cand.email = parsed["email"]
-                if parsed.get("phone"):
-                    cand.phone = parsed["phone"]
-                if parsed.get("location") and parsed["location"] != "Unknown":
-                    cand.location = parsed["location"]
-                if parsed.get("total_experience_years"):
-                    cand.total_experience_years = float(parsed["total_experience_years"])
+            # Re-normalize skills from LLM output
+            llm_skills = parsed.get("skills", [])
+            if llm_skills:
+                cand.normalized_skills = _normalize_skills_sync(llm_skills)
 
-                # Re-normalize skills from LLM output
-                llm_skills = parsed.get("skills", [])
-                if llm_skills:
-                    cand.normalized_skills = _normalize_skills_sync(llm_skills, db)
-
-                # Update raw_resume_data with enriched version
-                cand.raw_resume_data = enriched
-
-                db.commit()
-            except Exception as e:
-                print(f"[LLM Enrich] Failed for {cid}: {e}")
-                db.rollback()
-
+            # Update raw_resume_data with enriched version
+            cand.raw_resume_data = enriched
+            cand.save()
+        except Candidate.DoesNotExist:
+            continue
+        except Exception as e:
+            print(f"[LLM Enrich] Failed for {cid}: {e}")
 
 @celery_app.task(name="sync_gmail_resumes")
 def sync_gmail_resumes(session_id: str, job_id: str):
-    with SyncSessionLocal() as db:
-        session_row = db.execute(sync_select(SessionModel).where(SessionModel.id == session_id)).scalar_one_or_none()
-        job = db.execute(sync_select(IngestJob).where(IngestJob.id == job_id)).scalar_one_or_none()
+    try:
+        session_row = SessionModel.objects.get(id=session_id)
+        job = IngestJob.objects.get(id=job_id)
+    except (SessionModel.DoesNotExist, IngestJob.DoesNotExist):
+        return
 
-        if not session_row or not session_row.gmail_tokens or not job:
-            if job:
-                job.status = "failed"
-                job.error_log = ["Gmail not connected"]
-                db.commit()
-            return
+    if not session_row.gmail_tokens:
+        job.status = "failed"
+        job.error_log = ["Gmail not connected"]
+        job.save()
+        return
 
-        try:
-            creds = google.oauth2.credentials.Credentials(**session_row.gmail_tokens)
-            service = build('gmail', 'v1', credentials=creds)
+    try:
+        import google.oauth2.credentials
+        from googleapiclient.discovery import build
+        creds = google.oauth2.credentials.Credentials(**session_row.gmail_tokens)
+        service = build('gmail', 'v1', credentials=creds)
 
-            query = "has:attachment filename:(pdf OR docx) subject:(resume OR CV OR application)"
-            results = service.users().messages().list(userId='me', q=query, maxResults=50).execute()
-            messages = results.get('messages', [])
+        query = "has:attachment filename:(pdf OR docx) subject:(resume OR CV OR application)"
+        results = service.users().messages().list(userId='me', q=query, maxResults=50).execute()
+        messages = results.get('messages', [])
 
-            save_dir = os.getenv("UPLOAD_DIR", "/tmp/vishleshan/resumes") + f"/{session_id}"
-            os.makedirs(save_dir, exist_ok=True)
-            downloaded = []
+        save_dir = os.path.join(os.getenv("UPLOAD_DIR", "uploads"), session_id)
+        os.makedirs(save_dir, exist_ok=True)
+        downloaded = []
 
-            for msg in messages:
-                msg_id = msg['id']
-                message_data = service.users().messages().get(userId='me', id=msg_id).execute()
-                parts = message_data.get('payload', {}).get('parts', [])
-                for part in parts:
-                    filename = part.get('filename', '')
-                    if filename and (filename.lower().endswith('.pdf') or filename.lower().endswith('.docx')):
-                        att_id = part['body'].get('attachmentId')
-                        if att_id:
-                            import base64
-                            att = service.users().messages().attachments().get(userId='me', messageId=msg_id, id=att_id).execute()
-                            file_data = base64.urlsafe_b64decode(att['data'].encode('UTF-8'))
-                            file_path = f"{save_dir}/{msg_id}_{filename}"
-                            with open(file_path, 'wb') as f:
-                                f.write(file_data)
-                            downloaded.append(file_path)
+        for msg in messages:
+            msg_id = msg['id']
+            message_data = service.users().messages().get(userId='me', id=msg_id).execute()
+            parts = message_data.get('payload', {}).get('parts', [])
+            for part in parts:
+                filename = part.get('filename', '')
+                if filename and (filename.lower().endswith('.pdf') or filename.lower().endswith('.docx')):
+                    att_id = part['body'].get('attachmentId')
+                    if att_id:
+                        import base64
+                        att = service.users().messages().attachments().get(userId='me', messageId=msg_id, id=att_id).execute()
+                        file_data = base64.urlsafe_b64decode(att['data'].encode('UTF-8'))
+                        file_path = os.path.join(save_dir, f"{msg_id}_{filename}")
+                        with open(file_path, 'wb') as f:
+                            f.write(file_data)
+                        downloaded.append(file_path)
 
-            if downloaded:
-                job.total_files = len(downloaded)
-                db.commit()
-                process_resume_batch.delay(job_id, downloaded, session_id, "gmail")
-            else:
-                job.status = "done"
-                job.completed_at = datetime.utcnow()
-                db.commit()
+        if downloaded:
+            job.total_files = len(downloaded)
+            job.save()
+            process_resume_batch.delay(job_id, downloaded, session_id, "gmail")
+        else:
+            job.status = "done"
+            job.completed_at = datetime.now(timezone.utc)
+            job.save()
 
-        except Exception as e:
-            job.status = "failed"
-            job.error_log = [str(e)]
-            job.completed_at = datetime.utcnow()
-            db.commit()
-
+    except Exception as e:
+        job.status = "failed"
+        job.error_log = [str(e)]
+        job.completed_at = datetime.now(timezone.utc)
+        job.save()
 
 @celery_app.task(name="sync_gdrive_resumes")
 def sync_gdrive_resumes(session_id: str, job_id: str):
-    with SyncSessionLocal() as db:
-        session_row = db.execute(sync_select(SessionModel).where(SessionModel.id == session_id)).scalar_one_or_none()
-        job = db.execute(sync_select(IngestJob).where(IngestJob.id == job_id)).scalar_one_or_none()
+    try:
+        session_row = SessionModel.objects.get(id=session_id)
+        job = IngestJob.objects.get(id=job_id)
+    except (SessionModel.DoesNotExist, IngestJob.DoesNotExist):
+        return
 
-        if not session_row or not session_row.gdrive_tokens or not job:
-            if job:
-                job.status = "failed"
-                job.error_log = ["Google Drive not connected"]
-                db.commit()
-            return
+    if not session_row.gdrive_tokens:
+        job.status = "failed"
+        job.error_log = ["Google Drive not connected"]
+        job.save()
+        return
 
-        try:
-            creds = google.oauth2.credentials.Credentials(**session_row.gdrive_tokens)
-            service = build('drive', 'v3', credentials=creds)
+    try:
+        import google.oauth2.credentials
+        from googleapiclient.discovery import build
+        creds = google.oauth2.credentials.Credentials(**session_row.gdrive_tokens)
+        service = build('drive', 'v3', credentials=creds)
 
-            save_dir = os.getenv("UPLOAD_DIR", "/tmp/vishleshan/resumes") + f"/{session_id}"
-            os.makedirs(save_dir, exist_ok=True)
+        save_dir = os.path.join(os.getenv("UPLOAD_DIR", "uploads"), session_id)
+        os.makedirs(save_dir, exist_ok=True)
 
-            query = "mimeType='application/pdf' or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'"
-            if session_row.gdrive_folder_id:
-                query = f"'{session_row.gdrive_folder_id}' in parents and ({query})"
+        query = "mimeType='application/pdf' or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'"
+        if session_row.gdrive_folder_id:
+            query = f"'{session_row.gdrive_folder_id}' in parents and ({query})"
 
-            results = service.files().list(q=query, pageSize=100, fields="files(id, name)").execute()
-            files = results.get('files', [])
+        results = service.files().list(q=query, pageSize=100, fields="files(id, name)").execute()
+        files = results.get('files', [])
 
-            downloaded = []
-            for f in files:
-                try:
-                    import io
-                    from googleapiclient.http import MediaIoBaseDownload
-                    request = service.files().get_media(fileId=f['id'])
-                    file_path = f"{save_dir}/{f['id']}_{f['name']}"
-                    fh = io.FileIO(file_path, 'wb')
-                    downloader = MediaIoBaseDownload(fh, request)
-                    done = False
-                    while not done:
-                        _, done = downloader.next_chunk()
-                    fh.close()
-                    downloaded.append(file_path)
-                except Exception:
-                    pass
+        downloaded = []
+        for f in files:
+            try:
+                import io
+                from googleapiclient.http import MediaIoBaseDownload
+                request = service.files().get_media(fileId=f['id'])
+                file_path = os.path.join(save_dir, f"{f['id']}_{f['name']}")
+                fh = io.FileIO(file_path, 'wb')
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while not done:
+                    _, done = downloader.next_chunk()
+                fh.close()
+                downloaded.append(file_path)
+            except Exception:
+                pass
 
-            if downloaded:
-                job.total_files = len(downloaded)
-                db.commit()
-                process_resume_batch.delay(job_id, downloaded, session_id, "gdrive")
-            else:
-                job.status = "done"
-                job.completed_at = datetime.utcnow()
-                db.commit()
+        if downloaded:
+            job.total_files = len(downloaded)
+            job.save()
+            process_resume_batch.delay(job_id, downloaded, session_id, "gdrive")
+        else:
+            job.status = "done"
+            job.completed_at = datetime.now(timezone.utc)
+            job.save()
 
-        except Exception as e:
-            job.status = "failed"
-            job.error_log = [str(e)]
-            job.completed_at = datetime.utcnow()
-            db.commit()
-
+    except Exception as e:
+        job.status = "failed"
+        job.error_log = [str(e)]
+        job.completed_at = datetime.now(timezone.utc)
+        job.save()
 
 @celery_app.task(name="match_all_candidates")
 def match_all_candidates(session_id: str, job_id: str):
-    with SyncSessionLocal() as db:
-        session_row = db.execute(sync_select(SessionModel).where(SessionModel.id == session_id)).scalar_one_or_none()
-        job = db.execute(sync_select(IngestJob).where(IngestJob.id == job_id)).scalar_one_or_none()
+    try:
+        session_row = SessionModel.objects.get(id=session_id)
+        job = IngestJob.objects.get(id=job_id)
+    except (SessionModel.DoesNotExist, IngestJob.DoesNotExist):
+        return
 
-        if not session_row or not job:
-            return
+    criteria = session_row.criteria or {}
+    min_match_score = criteria.get("min_match_score", 0)
+    required_skills = criteria.get("required_skills", [])
+    req_lower = [r.lower() for r in required_skills]
 
-        criteria = session_row.criteria or {}
-        min_match_score = criteria.get("min_match_score", 0)
-        required_skills = criteria.get("required_skills", [])
-        req_lower = [r.lower() for r in required_skills]
+    candidates = Candidate.objects.filter(session_id=session_id)
+    total_count = candidates.count()
+    job.total_files = total_count
+    job.processed_files = 0
+    job.status = "processing"
+    job.save()
 
-        job.status = "processing"
-        db.commit()
+    processed_count = 0
+    for cand in candidates:
+        norm_skills = cand.normalized_skills or []
+        cand_skill_names = {s.get("canonical_skill", "").lower() for s in norm_skills}
+        matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
+        missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
+        matched = len(matched_list)
+        skill_score = round((matched / len(req_lower)) * 100) if req_lower else 0
 
-        candidates = db.execute(sync_select(Candidate).where(Candidate.session_id == session_id)).scalars().all()
+        # Experience score
+        min_exp = criteria.get("min_experience", 0)
+        exp_years = float(cand.total_experience_years or 0)
+        experience_score = min(100, round((exp_years / max(min_exp, 1)) * 100)) if min_exp > 0 else 50
 
-        for cand in candidates:
-            norm_skills = cand.normalized_skills or []
-            cand_skill_names = {s.get("canonical_skill", "").lower() for s in norm_skills}
-            matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
-            missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
-            matched = len(matched_list)
-            skill_score = round((matched / len(req_lower)) * 100) if req_lower else 0
+        # Location score
+        preferred_locs = criteria.get("preferred_locations", [])
+        cand_location = (cand.location or "").lower()
+        location_score = 100 if not preferred_locs else (100 if any(l.lower() in cand_location for l in preferred_locs) else 30)
 
-            # Experience score
-            min_exp = criteria.get("min_experience", 0)
-            exp_years = float(cand.total_experience_years or 0)
-            experience_score = min(100, round((exp_years / max(min_exp, 1)) * 100)) if min_exp > 0 else 50
+        # Weighted overall score
+        weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})
+        score = round(
+            skill_score * weights.get("skills", 0.5) + 
+            experience_score * weights.get("experience", 0.3) + 
+            location_score * weights.get("location", 0.2)
+        )
+        score = min(100, score)
+        cand.match_score = score
+        cand.recommendation = "Strong" if score >= 70 else ("Moderate" if score >= 40 else "Weak")
+        cand.match_details = {
+            "match_score": score,
+            "skill_score": skill_score,
+            "experience_score": experience_score,
+            "location_score": location_score,
+            "matched_skills": matched_list,
+            "missing_skills": missing_list,
+            "matched_count": matched
+        }
+        if min_match_score > 0 and score < min_match_score:
+            cand.status = "rejected"
+        
+        cand.save()
+        processed_count += 1
+        job.processed_files = processed_count
+        job.save()
 
-            # Location score
-            preferred_locs = criteria.get("preferred_locations", [])
-            cand_location = (cand.location or "").lower()
-            location_score = 100 if not preferred_locs else (100 if any(l.lower() in cand_location for l in preferred_locs) else 30)
-
-            # Weighted overall score
-            weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})
-            score = round(
-                skill_score * weights.get("skills", 0.5) + 
-                experience_score * weights.get("experience", 0.3) + 
-                location_score * weights.get("location", 0.2)
-            )
-
-            cand.match_score = score
-            cand.recommendation = "Strong" if score >= 70 else ("Moderate" if score >= 40 else "Weak")
-            cand.match_details = {
-                "match_score": score,
-                "skill_score": skill_score,
-                "experience_score": experience_score,
-                "location_score": location_score,
-                "matched_skills": matched_list,
-                "missing_skills": missing_list,
-                "matched_count": matched
-            }
-            if min_match_score > 0 and score < min_match_score:
-                cand.status = "rejected"
-
-        job.status = "done"
-        job.completed_at = datetime.utcnow()
-        db.commit()
-
+    job.status = "done"
+    job.completed_at = datetime.now(timezone.utc)
+    job.save()
 
 # Celery app alias
 app = celery_app

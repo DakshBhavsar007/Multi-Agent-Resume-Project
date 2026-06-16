@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { authAPI } from '../../lib/api';
-import { useAuthStore } from '../../stores/authStore';
+import { authAPI } from '../lib/api';
+import { useAuthStore } from '../stores/authStore';
 import './AuthPage.css';
 
 const AntigravityGrid = () => {
@@ -109,7 +109,14 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
 
   const { setAuth } = useAuthStore();
-  const router = useRouter();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const jwt = localStorage.getItem("vish_jwt");
+    if (jwt) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -129,7 +136,7 @@ const AuthPage = () => {
         const data = await authAPI.login(email, password);
         setAuth(data);
         toast.success("Welcome back!");
-        router.push('/dashboard');
+        navigate('/dashboard');
       } else {
         await authAPI.register({ email, password, name: fullName });
         toast.success("Account created! Please sign in.");
@@ -213,7 +220,7 @@ const AuthPage = () => {
           <button className="auth-toggle-link" onClick={() => setIsLogin(!isLogin)}>{isLogin ? 'Sign Up' : 'Sign In'}</button>
         </div>
 
-        <button onClick={() => router.push('/')} className="back-btn" style={{ background: 'none', border: 'none', width: '100%', marginTop: '10px', color: '#a1a1a1', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <button onClick={() => navigate('/')} className="back-btn" style={{ background: 'none', border: 'none', width: '100%', marginTop: '10px', color: '#a1a1a1', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           Return to home
         </button>

@@ -115,7 +115,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="process-section">
+    <section className="process-section" id="product">
       <div className="process-header">
         <div className="scrolling-text-container">
           FOR 

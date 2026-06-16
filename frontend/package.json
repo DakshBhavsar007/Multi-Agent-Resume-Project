@@ -4,9 +4,9 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "next dev -p 3000 -H 0.0.0.0",
-        "build": "next build",
-        "start": "next start -p 3000"
+        "dev": "vite --host 0.0.0.0",
+        "build": "vite build",
+        "preview": "vite preview"
     },
     "dependencies": {
         "@radix-ui/react-dialog": "^1.1.15",
@@ -19,11 +19,12 @@
         "framer-motion": "^12.38.0",
         "gsap": "^3.14.2",
         "lucide-react": "^1.8.0",
-        "next": "^14.2.35",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-dropzone": "^15.0.0",
         "react-hot-toast": "^2.6.0",
+        "react-router-dom": "^7.17.0",
+        "react-syntax-highlighter": "^16.1.1",
         "recharts": "^3.8.1",
         "zustand": "^5.0.12"
     },

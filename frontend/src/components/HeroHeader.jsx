@@ -1,15 +1,18 @@
 "use client";
 import React, { useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import './HeroHeader.css';
 
 const heroImg = '/assets/hero-image.png';
 
-const HeroHeader = ({ onStart }) => {
+const HeroHeader = ({ onStart, isLoggedIn }) => {
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   const btnPrimaryRef = useRef(null);
   const btnSecondaryRef = useRef(null);
+  const btnDeveloperRef = useRef(null);
 
   useEffect(() => {
     const handleMagnetic = (e) => {
@@ -37,6 +40,7 @@ const HeroHeader = ({ onStart }) => {
 
     const b1 = btnPrimaryRef.current;
     const b2 = btnSecondaryRef.current;
+    const b3 = btnDeveloperRef.current;
 
     if (b1) {
       b1.addEventListener('mousemove', handleMagnetic);
@@ -45,6 +49,10 @@ const HeroHeader = ({ onStart }) => {
     if (b2) {
       b2.addEventListener('mousemove', handleMagnetic);
       b2.addEventListener('mouseleave', resetMagnetic);
+    }
+    if (b3) {
+      b3.addEventListener('mousemove', handleMagnetic);
+      b3.addEventListener('mouseleave', resetMagnetic);
     }
 
     return () => {
@@ -55,6 +63,10 @@ const HeroHeader = ({ onStart }) => {
       if (b2) {
         b2.removeEventListener('mousemove', handleMagnetic);
         b2.removeEventListener('mouseleave', resetMagnetic);
+      }
+      if (b3) {
+        b3.removeEventListener('mousemove', handleMagnetic);
+        b3.removeEventListener('mouseleave', resetMagnetic);
       }
     };
   }, []);
@@ -137,10 +149,22 @@ const HeroHeader = ({ onStart }) => {
         <motion.button 
           ref={btnSecondaryRef}
           className="btn btn-secondary" 
-          whileHover={{ x: -2 }}
+          whileHover={{ y: -2 }}
+          onClick={() => {
+            document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+          }}
         >
           For Enterprise 
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px' }}><path d="m9 18 6-6-6-6"/></svg>
+        </motion.button>
+        <motion.button 
+          ref={btnDeveloperRef}
+          className="btn btn-secondary" 
+          whileHover={{ y: -2 }}
+          onClick={() => navigate('/developer')}
+        >
+          Developer Portal
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px' }}><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
         </motion.button>
         <motion.button 
           ref={btnPrimaryRef}
@@ -149,7 +173,7 @@ const HeroHeader = ({ onStart }) => {
           whileTap={{ scale: 0.98 }}
           onClick={onStart}
         >
-          Start for Free 
+          {isLoggedIn ? "Go to Dashboard" : "Start for Free"} 
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px' }}><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </motion.button>
       </div>

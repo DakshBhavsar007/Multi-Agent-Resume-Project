@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthStore } from '../stores/authStore';
 import './Pricing.css';
 
 const plans = [
@@ -36,8 +37,35 @@ const plans = [
   }
 ];
 
-const PricingCard = ({ plan, isYearly, index, onStart }) => {
+const PricingCard = ({ plan, isYearly, index, onStart, isLoggedIn, userTier }) => {
   const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+
+  const getPlanTierValue = (name) => {
+    if (name === "Starter plan") return 0;
+    if (name === "Business plan") return 1;
+    if (name === "Enterprise plan") return 2;
+    return 0;
+  };
+
+  const getUserTierValue = (tier) => {
+    const t = (tier || "free").toLowerCase();
+    if (t === "free" || t === "starter") return 0;
+    if (t === "business") return 1;
+    if (t === "enterprise") return 2;
+    return 0;
+  };
+
+  const userVal = getUserTierValue(userTier);
+  const planVal = getPlanTierValue(plan.name);
+
+  let buttonText = plan.cta;
+  if (isLoggedIn) {
+    if (userVal === planVal) {
+      buttonText = "Go to Dashboard";
+    } else if (userVal < planVal) {
+      buttonText = "Upgrade";
+    }
+  }
 
   return (
     <motion.div 
@@ -103,18 +131,23 @@ const PricingCard = ({ plan, isYearly, index, onStart }) => {
           whileTap={{ scale: 0.98 }}
           onClick={onStart}
         >
-          {plan.cta}
+          {buttonText}
         </motion.button>
       </div>
     </motion.div>
   );
 };
 
-const Pricing = ({ onStart }) => {
+const Pricing = ({ onStart, isLoggedIn }) => {
   const [isYearly, setIsYearly] = useState(false);
+  const { tier, initFromStorage } = useAuthStore();
+
+  useEffect(() => {
+    initFromStorage();
+  }, [initFromStorage]);
 
   return (
-    <section className="pricing-section">
+    <section className="pricing-section" id="pricing">
       <div className="pricing-header">
         <motion.span className="pricing-label" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}>Plans</motion.span>
         <motion.h2 className="pricing-title" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}>Pricing</motion.h2>
@@ -142,7 +175,7 @@ const Pricing = ({ onStart }) => {
 
       <div className="pricing-grid">
         {plans.map((plan, i) => (
-          <PricingCard key={i} plan={plan} isYearly={isYearly} index={i} onStart={onStart} />
+          <PricingCard key={i} plan={plan} isYearly={isYearly} index={i} onStart={onStart} isLoggedIn={isLoggedIn} userTier={tier} />
         ))}
       </div>
     </section>

@@ -1,12 +1,12 @@
 import pdfplumber, fitz, os, json, uuid
 from docx import Document
-from openai import OpenAI
+from agents.llm import RotateLLMClient
 from pathlib import Path
 import re
 
 class ResumeParsingAgent:
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = RotateLLMClient()
         self.upload_dir = os.getenv("UPLOAD_DIR", "/tmp/vishleshan/resumes")
         self.photo_dir = os.getenv("PHOTO_DIR", "/tmp/vishleshan/photos")
         os.makedirs(self.photo_dir, exist_ok=True)

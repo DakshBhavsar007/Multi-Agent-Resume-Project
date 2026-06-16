@@ -1,5 +1,5 @@
 export default {
-  content: ["./app/**/*.{js,jsx}","./components/**/*.{js,jsx}"],
+  content: ["./src/**/*.{js,jsx}", "./components/**/*.{js,jsx}", "./index.html"],
   theme: {
     extend: {
       colors: {

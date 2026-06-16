@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import './FinalCTA.css';
 
-const FinalCTA = ({ onStart }) => {
+const FinalCTA = ({ onStart, isLoggedIn }) => {
   return (
     <section className="final-cta-section">
       <motion.div 
@@ -49,7 +49,7 @@ const FinalCTA = ({ onStart }) => {
             whileTap={{ scale: 0.95 }}
             onClick={onStart}
           >
-            Sign up for free
+            {isLoggedIn ? "Go to Dashboard" : "Sign up for free"}
           </motion.button>
           <motion.button 
             className="btn-cta-secondary"

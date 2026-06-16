@@ -1,19 +1,30 @@
-# Python
-backend/__pycache__/
-backend/*.pyc
+# Python / Django
+__pycache__/
+*.pyc
 backend/.env
 backend/venv/
 backend/.venv/
+backend/env/
+backend/.env.local
+backend/db.sqlite3
+backend/db.sqlite3-journal
+backend/uploads/
+backend/photos/
 
-# Node
+# Node / Vite (Frontend)
 frontend/node_modules/
-frontend/.next/
+frontend/dist/
+frontend/dist_ssr/
+frontend/.env
 frontend/.env.local
-portal/node_modules/
-portal/.next/
-portal/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 
-# General
+# IDEs & System
+.vscode/
+.idea/
 .DS_Store
 *.log
 /tmp/vishleshan/
+/backend_output.log

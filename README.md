@@ -1,10 +1,10 @@
 <div align="center">
   <img src="./assets/hero_banner.png" alt="Vishleshan API Banner" width="100%" />
 
-  <h1 align="center">Vishleshan — Recruitment Intelligence Infrastructure</h1>
+  <h1 align="center">Vishleshan — Recruitment Intelligence & Protection Infrastructure</h1>
 
   <p align="center">
-    <strong>A high-performance semantic resume parsing & AI candidate matching engine built for enterprise HR.</strong>
+    <strong>A high-performance semantic resume parsing, AI candidate matching, and fraud protection engine built for enterprise HR and job seekers.</strong>
   </p>
 
   <p align="center">
@@ -20,32 +20,42 @@
 
 ## ⚡ Overview
 
-**Vishleshan** is a state-of-the-art backend infrastructure and API ecosystem engineered to automate recruitment data ingestion. Utilizing advanced Local LLMs, Vector Databases, and Semantic Retrieval engines, it transforms unstructured PDFs, Word documents, and text files into rich, actionable JSON candidate profiles—all instantly queryable via natural language.
+**Vishleshan** is a state-of-the-art backend infrastructure and API ecosystem engineered to automate recruitment data ingestion and protect the hiring pipeline. Utilizing advanced Local LLMs, Vector Databases, and Semantic Retrieval engines, it transforms unstructured PDFs, Word documents, and text files into rich, actionable JSON candidate profiles—all instantly queryable via natural language.
 
-Whether you're building a massive enterprise Application Tracking System (ATS) or a niche recruiting agency platform, Vishleshan acts as your backend "Resume Intelligence" brain.
+In addition to deep data extraction, Vishleshan provides an **Advanced Fraud Detection & Safety Audit System** to protect recruiters from fake candidate profiles/ATS manipulations, and to shield job seekers from fraudulent, clone, or phishing job postings.
+
+---
+
+## ✨ Core Capabilities & Latest Updates
+
+- **Advanced Fraud Detection (Recruiters)**: Screen candidate resume files and GitHub portfolios for AI generation probability, plagiarism patterns, and hidden ATS tricks (such as white-text keyword stuffing).
+- **Job Seeker Safety Verification**: Public-facing checks that allow job seekers to inspect company postings, verify their safety score, and query arbitrary companies with real-time company auto-suggestions and JDs autofill.
+- **Developer API Fraud Scan Limits**: Developer API keys can execute Safety Scans `/api/v1/protection/scan` programmatically. Plan limits are enforced in Redis:
+  - **Free**: 0 Safety scans/month
+  - **Starter**: 100 Safety scans/month
+  - **Business**: 1,000 Safety scans/month
+- **Unified Developer Dashboard**: A unified React SPA dashboard mapping API call volumes, error rates, latencies, and Safety Scans metrics in a premium traffic chart.
+- **AI-Powered Search Autocomplete**: The Job Seeker portal matches inputs against active job postings in real time to suggest relevant titles and locations.
+- **Smart Location State Mapping**: Indian tech hubs automatically append corresponding states (e.g., searching `Bangalore` or `Bengaluru` returns `Bengaluru, Karnataka`).
+- **Company Profile Logos**: Recruiters can upload corporate logos (Base64) inside Settings, which sync dynamically and reactively with the sidebar and settings preview.
 
 ---
 
 ## 🧩 Architectural Ecosystem
 
-Visleshan is built as a highly robust, multi-app monorepo split into three core pillars:
+Vishleshan is built as a highly robust, multi-app monorepo:
 
-1. **`backend/` - The AI Engine** (FastAPI, Postgres, Redis, ChromaDB, Celery)
+1. **`backend/` - The AI Engine** (Django, Postgres, Redis, ChromaDB, Celery)
    - Handles strict JWT and API Key Authentication.
    - Synchronous and asynchronous parsing via advanced Worker queues.
    - Embeds candidate histories into specialized vector embeddings for sub-millisecond semantic match scoring against JD profiles.
-   - Hosts real-time WebSocket bindings for interactive AI recruitment assistant Chatbots.
+   - Runs LLM agents for candidate evaluation and safety audit scans.
+   - Manages rate-limiting and monthly plan limits securely via Redis.
 
-2. **`frontend/` - The ATS Interface** (Next.js 14, Tailwind, Zustand)
-   - A fully functional Applicant Tracking System for internal recruiters.
-   - Seamlessly drag-and-drop massive batches of resumes.
-   - View deeply structural "Match Score" comparisons mapping candidate proficiencies specifically against active job taxonomies.
-
-3. **`portal/` - The Developer Portal SaaS** (Next.js 14, React Query, Razorpay)
-   - A standalone web portal designed specifically for 3rd-party engineering teams to buy API access to your infrastructure.
-   - **Subscriptions & Billing**: Built-in Razorpay integration to purchase Free, Starter, and Business API Quotas.
-   - **Analytics & Webhooks**: Deep visual traffic graphs mapping API latencies, parsing failures, and HTTP hook configurations for async processing.
-   - **Embed Widget Generation**: Configure cross-origin domains and mint secure tokens to mount the Vishleshan UI directly inside external HR software interfaces.
+2. **`frontend/` - Unified Recruiter & Developer Dashboard** (React / Vite, Tailwind, Zustand)
+   - **Applicant Tracking System (ATS)**: Drag-and-drop resume ingestion, candidate evaluation, and portfolio verification.
+   - **Job Seeker Safety Hub**: Real-time company autocompletes, safety score metrics, and phishing alerts.
+   - **Developer Portal**: API Keys management, Webhooks logging, Razorpay-based billing plans (Free, Starter, Business), and dynamic Recharts traffic graphs displaying safety scans alongside parses, matches, and chat queries.
 
 ---
 
@@ -72,26 +82,36 @@ Monetize your AI model. Empower client engineering teams to configure their own 
 ### 1. Requirements
 - Node.js `v18+`
 - Python `v3.10+`
-- Docker (for PostgreSQL, Redis, Chroma DB)
+- PostgreSQL, Redis, Chroma DB (running locally or remotely)
 
 ### 2. Backend Setup
-Boot the containerized infrastructure (Database, Vector store, Cache).
+Configure your local environment and run the services.
 ```bash
 cd backend
 cp .env.example .env
 
-# Start core services
-docker-compose up -d
-
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Run the FastAPI Server
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# Configure environment variables in `.env`:
+# Set GEMINI_API_KEYS with a comma-separated list of your Gemini API keys
+# Set GEMINI_MODEL=gemini-2.5-flash for optimized free tier quota usage
+
+# Run Database Migrations
+python manage.py migrate --fake-initial
+
+# Seed the Skill Taxonomy table (one-time)
+python manage.py seed_skills
+
+# Run the Django Dev Server
+python manage.py runserver 8000
+
+# Run the Celery Worker (using multi-threaded pool on Windows for speed)
+celery -A workers.celery_worker worker --loglevel=info --pool=threads --concurrency=4
 ```
 
-### 3. Frontend ATS Interface
-Operates the main tool internal recruiters use on Port `3000`.
+### 3. Frontend Application (ATS, Seeker Portal & Developer Portal)
+Operates the main recruiter tool, seeker portal, and developer portal in a single React SPA.
 ```bash
 cd ../frontend
 npm install
@@ -99,23 +119,14 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-### 4. Developer API Portal
-Hosts the SaaS platform for developers buying usage tokens on Port `3001`.
-```bash
-cd ../portal
-npm install
-cp .env.example .env.local
-npm run dev
-```
-
 ---
 
 ## 💻 API Integration Preview
 
-Integrating your existing HR system with the Vishleshan ingestion engine takes just seconds with any language.
+Integrating your existing HR system with the Vishleshan ingestion and fraud detection engine takes just seconds.
 
+### Synchronous Resume Ingestion
 ```bash
-# Upload and parse a candidate resume synchronously 
 curl -X POST "https://api.vishleshan.ai/api/v1/parse" \
   -H "X-API-Key: vish_live_xxxxxxxxxxx" \
   -F "file=@johndoe_resume.pdf"
@@ -129,6 +140,31 @@ curl -X POST "https://api.vishleshan.ai/api/v1/parse" \
     "email": "johndoe@email.com",
     "skills": ["Distributed Systems", "Go", "Python"],
     "experience_years": 4.5
+  }
+}
+```
+
+### Programmatic Fraud & Safety Auditing
+```bash
+curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \
+  -H "X-API-Key: vish_live_xxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "scan_type": "job",
+    "job_title": "Frontend Developer",
+    "job_description": "Seeking React developer to work from home..."
+  }'
+```
+```json
+{
+  "success": true,
+  "data": {
+    "originality_score": 94,
+    "ai_probability": 6,
+    "plagiarism_score": 5,
+    "status": "Verified Clean",
+    "portfolios": ["React Project Showcase"],
+    "summary": "Document is original with low AI probability."
   }
 }
 ```

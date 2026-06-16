@@ -1,29 +1,24 @@
 import os
 import json
-from openai import OpenAI
-from sqlalchemy.future import select
-from models.database import Candidate, Session, ChatHistory
+from agents.llm import RotateLLMClient
+from api.models import Candidate, Session, ChatHistory
 
 class RecruiterChatbotAgent:
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = RotateLLMClient()
 
-    async def chat(self, message: str, session_id: str, history: list, db) -> dict:
-        # Step 1: Fetch all candidates for session
-        candidates_res = await db.execute(
-            select(Candidate).where(Candidate.session_id == session_id)
-        )
-        candidates = candidates_res.scalars().all()
+    def chat(self, message: str, session_id: str, history: list) -> dict:
+        # Step 1: Fetch all candidates for session using Django ORM
+        candidates = list(Candidate.objects.filter(session_id=session_id))
         
         # Step 2: Fetch session
-        session_res = await db.execute(select(Session).where(Session.id == session_id))
-        session = session_res.scalar_one_or_none()
+        session = Session.objects.filter(id=session_id).first()
         
         # Step 3: Build candidate context (max 50 candidates)
         context_lines = []
         for c in candidates[:50]:
-            skills = [s["canonical_skill"] 
-                      for s in (c.normalized_skills or [])[:8]]
+            skills = [s.get("canonical_skill", s.get("raw_skill", "")) 
+                      for s in (c.normalized_skills or [])[:8] if isinstance(s, dict)]
             context_lines.append(
                 f"ID:{c.id}|{c.name}|{c.location or 'N/A'}|"
                 f"Score:{c.match_score or 'N/A'}%|"
@@ -48,8 +43,7 @@ class RecruiterChatbotAgent:
         - Be specific with names and scores
         - For lists: use numbered format
         - Keep responses concise and helpful
-        
-        End EVERY response with new line:
+        - End EVERY response with new line:
         REFERENCED_IDS:[id1,id2] or REFERENCED_IDS:[]"""
         
         # Step 4: Build messages array (last 10 history)
@@ -82,20 +76,17 @@ class RecruiterChatbotAgent:
             ids = []
             
         # Step 7: Save to chat_history table
-        user_msg = ChatHistory(
+        ChatHistory.objects.create(
             session_id=session_id,
             role="user",
             content=message,
             referenced_candidate_ids=[]
         )
-        assistant_msg = ChatHistory(
+        ChatHistory.objects.create(
             session_id=session_id,
             role="assistant",
             content=reply,
             referenced_candidate_ids=ids
         )
-        db.add(user_msg)
-        db.add(assistant_msg)
-        await db.commit()
         
         return {"reply": reply, "referenced_candidates": ids}

@@ -1,0 +1,321 @@
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Count
+from django.utils import timezone
+from asgiref.sync import async_to_sync
+
+from api.models import Company, Session, Candidate, IngestJob
+from api.decorators import require_api_key, check_rate_limit
+from models.schemas import success_response, error_response
+from agents.inference_agent import SkillInferenceAgent
+from workers.celery_worker import match_all_candidates
+
+def _verify_session_ownership(session, company):
+    if str(session.company_id) != str(company.id):
+        raise PermissionError("Access denied")
+
+@csrf_exempt
+@require_api_key
+def session_root(request):
+    """Handles GET /api/v1/sessions/ (list) and POST /api/v1/sessions/ (create)"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            name = data.get("name")
+            job_title = data.get("job_title")
+            job_description = data.get("job_description")
+            if not name or not job_title or not job_description:
+                return JsonResponse(error_response("name, job_title, job_description are required"), status=400)
+
+            rounds_req = data.get("rounds") or []
+            rounds_data = []
+            for r in rounds_req:
+                rounds_data.append({
+                    "name": r.get("name"),
+                    "interviewer": r.get("interviewer"),
+                    "order": r.get("order")
+                })
+
+            new_session = Session.objects.create(
+                company=request.company,
+                name=name,
+                job_title=job_title,
+                job_description=job_description,
+                rounds=rounds_data,
+                status="active"
+            )
+
+            return JsonResponse(success_response({
+                "id": str(new_session.id),
+                "name": new_session.name,
+                "job_title": new_session.job_title,
+                "job_description": new_session.job_description,
+                "rounds": new_session.rounds,
+                "status": new_session.status,
+                "created_at": new_session.created_at.isoformat() if new_session.created_at else None
+            }))
+        except Exception as e:
+            return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+    elif request.method == "GET":
+        try:
+            status = request.GET.get("status")
+            page = int(request.GET.get("page", 1))
+            per_page = int(request.GET.get("per_page", 20))
+
+            qs = Session.objects.filter(company_id=request.company.id)
+            if status:
+                qs = qs.filter(status=status)
+
+            qs = qs.order_by("-created_at")
+            
+            # Pagination
+            offset = (page - 1) * per_page
+            sessions = qs[offset:offset+per_page]
+
+            result = []
+            for s in sessions:
+                status_counts_qs = Candidate.objects.filter(session_id=s.id).values('status').annotate(count=Count('id'))
+                status_counts = {item['status']: item['count'] for item in status_counts_qs}
+
+                result.append({
+                    "id": str(s.id),
+                    "name": s.name,
+                    "job_title": s.job_title,
+                    "status": s.status,
+                    "rounds": s.rounds,
+                    "candidate_counts": status_counts,
+                    "total_candidates": sum(status_counts.values()),
+                    "hired": status_counts.get("hired", 0),
+                    "rejected": status_counts.get("rejected", 0),
+                    "created_at": s.created_at.isoformat() if s.created_at else None,
+                    "updated_at": s.updated_at.isoformat() if s.updated_at else None
+                })
+
+            return JsonResponse(success_response(result))
+        except Exception as e:
+            return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+    else:
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+@csrf_exempt
+@require_api_key
+def session_detail(request, session_id):
+    """Handles GET, PATCH, DELETE /api/v1/sessions/{session_id}"""
+    try:
+        session = Session.objects.filter(id=session_id).first()
+        if not session:
+            return JsonResponse(error_response("Session not found"), status=404)
+
+        try:
+            _verify_session_ownership(session, request.company)
+        except PermissionError:
+            return JsonResponse(error_response("Access denied"), status=403)
+
+        if request.method == "GET":
+            # Count candidates per round (excluding hired/rejected)
+            round_counts_qs = Candidate.objects.filter(
+                session_id=session.id
+            ).exclude(
+                status__in=["hired", "rejected"]
+            ).values('current_round_index').annotate(count=Count('id'))
+            round_counts = {str(item['current_round_index']): item['count'] for item in round_counts_qs}
+
+            # Merge legacy round_index=0 into the first round
+            if "0" in round_counts and session.rounds:
+                first_order = str(session.rounds[0].get("order", 1))
+                round_counts[first_order] = round_counts.get(first_order, 0) + round_counts.pop("0")
+
+            total_hired = Candidate.objects.filter(session_id=session.id, status="hired").count()
+            total_rejected = Candidate.objects.filter(session_id=session.id, status="rejected").count()
+
+            return JsonResponse(success_response({
+                "id": str(session.id),
+                "name": session.name,
+                "job_title": session.job_title,
+                "job_description": session.job_description,
+                "rounds": session.rounds,
+                "criteria": session.criteria,
+                "inferred_skills": session.inferred_skills,
+                "status": session.status,
+                "current_round": session.current_round_index,
+                "candidate_counts_per_round": round_counts,
+                "total_hired": total_hired,
+                "total_rejected": total_rejected,
+                "gmail_address": session.gmail_address,
+                "created_at": session.created_at.isoformat() if session.created_at else None,
+                "updated_at": session.updated_at.isoformat() if session.updated_at else None
+            }))
+
+        elif request.method == "PATCH":
+            data = json.loads(request.body)
+            if "name" in data and data["name"] is not None:
+                session.name = data["name"]
+            if "job_title" in data and data["job_title"] is not None:
+                session.job_title = data["job_title"]
+            if "job_description" in data and data["job_description"] is not None:
+                session.job_description = data["job_description"]
+            if "rounds" in data and data["rounds"] is not None:
+                session.rounds = [{
+                    "name": r.get("name"),
+                    "interviewer": r.get("interviewer"),
+                    "order": r.get("order")
+                } for r in data["rounds"]]
+            if "status" in data and data["status"] is not None:
+                session.status = data["status"]
+
+            session.updated_at = timezone.now()
+            session.save()
+
+            return JsonResponse(success_response({
+                "message": "Session updated",
+                "id": str(session.id),
+                "name": session.name,
+                "updated_at": session.updated_at.isoformat()
+            }))
+
+        elif request.method == "DELETE":
+            # Check delete_candidates or hard_delete flag
+            data = {}
+            if request.body:
+                try:
+                    data = json.loads(request.body)
+                except ValueError:
+                    pass
+
+            hard_delete = data.get("hard_delete", False) or request.GET.get("hard", "false").lower() == "true" or request.GET.get("hard_delete", "false").lower() == "true"
+            delete_candidates = data.get("delete_candidates", False)
+
+            if hard_delete:
+                session.delete()
+                return JsonResponse(success_response({"message": "Session deleted"}))
+
+            if delete_candidates:
+                Candidate.objects.filter(session_id=session.id).delete()
+
+            session.status = "archived"
+            session.save(update_fields=['status'])
+
+            return JsonResponse(success_response({"message": "Session archived"}))
+
+        else:
+            return JsonResponse(error_response("Method not allowed"), status=405)
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+@csrf_exempt
+@require_api_key
+def set_criteria(request, session_id):
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        session = Session.objects.filter(id=session_id).first()
+        if not session:
+            return JsonResponse(error_response("Session not found"), status=404)
+
+        try:
+            _verify_session_ownership(session, request.company)
+        except PermissionError:
+            return JsonResponse(error_response("Access denied"), status=403)
+
+        data = json.loads(request.body)
+        weights = data.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})
+        if weights:
+            total = sum(weights.values())
+            if not 0.98 <= total <= 1.02:
+                return JsonResponse(error_response(f"Weights must sum to 1.0, got {total:.2f}"), status=400)
+
+        criteria = {
+            "required_skills": data.get("required_skills", []),
+            "nice_to_have": data.get("nice_to_have", []),
+            "preferred_locations": data.get("preferred_locations", []),
+            "min_experience": data.get("min_experience", 0),
+            "min_match_score": data.get("min_match_score", 0),
+            "weights": weights
+        }
+        session.criteria = criteria
+        session.updated_at = timezone.now()
+        session.save()
+
+        candidate_count = Candidate.objects.filter(session_id=session.id).count()
+        if candidate_count > 0:
+            job = IngestJob.objects.create(
+                session=session,
+                type="match_all",
+                status="pending",
+                total_files=candidate_count
+            )
+
+            match_all_candidates.delay(str(session.id), str(job.id))
+
+            return JsonResponse(success_response({
+                "updated": True,
+                "criteria": criteria,
+                "rematching": True,
+                "job_id": str(job.id)
+            }))
+
+        return JsonResponse(success_response({"updated": True, "criteria": criteria}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+@csrf_exempt
+@require_api_key
+def infer_skills(request, session_id):
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        session = Session.objects.filter(id=session_id).first()
+        if not session:
+            return JsonResponse(error_response("Session not found"), status=404)
+
+        try:
+            _verify_session_ownership(session, request.company)
+        except PermissionError:
+            return JsonResponse(error_response("Access denied"), status=403)
+
+        data = json.loads(request.body)
+        job_description = data.get("job_description")
+        if not job_description:
+            return JsonResponse(error_response("job_description is required"), status=400)
+
+        agent = SkillInferenceAgent()
+        # Call the async agent function in a synchronous context using async_to_sync
+        result = async_to_sync(agent.infer_from_jd)(job_description)
+
+        session.inferred_skills = result
+        session.updated_at = timezone.now()
+        session.save()
+
+        return JsonResponse(success_response(result))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+@csrf_exempt
+@require_api_key
+@check_rate_limit("match")
+def trigger_match_all(request, session_id):
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        session = Session.objects.filter(id=session_id).first()
+        if not session:
+            return JsonResponse(error_response("Session not found"), status=404)
+
+        try:
+            _verify_session_ownership(session, request.company)
+        except PermissionError:
+            return JsonResponse(error_response("Access denied"), status=403)
+
+        job = IngestJob.objects.create(
+            session=session,
+            type="match_all",
+            status="pending"
+        )
+
+        match_all_candidates.delay(str(session.id), str(job.id))
+
+        return JsonResponse(success_response({"job_id": str(job.id), "status": "pending"}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

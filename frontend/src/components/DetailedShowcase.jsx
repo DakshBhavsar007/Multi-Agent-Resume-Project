@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { ChevronRight, PlayCircle, Code, Users, Search, Target } from 'lucide-react';
 import './DetailedShowcase.css';
 
@@ -98,6 +99,7 @@ const SimulatedDashboard = () => {
 };
 
 const DetailedShowcase = () => {
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -123,8 +125,8 @@ const DetailedShowcase = () => {
                   Our API handles resume analysis and candidate ranking. Build recruitment workflows that fit your stack without the overhead.
                 </p>
                 <div className="showcase-actions">
-                  <button className="btn btn-secondary">Explore API Docs</button>
-                  <button className="nav-link" style={{ fontSize: '15px' }}>
+                  <button className="btn btn-secondary" onClick={() => navigate('/developer')}>Explore API Docs</button>
+                  <button className="nav-link" style={{ fontSize: '15px' }} onClick={() => navigate('/developer/portal/docs')}>
                     View Endpoints <ChevronRight size={16} />
                   </button>
                 </div>
@@ -157,7 +159,7 @@ const DetailedShowcase = () => {
                   <button className="btn btn-primary" style={{ gap: '10px' }}>
                     <PlayCircle size={18} /> Watch Demo
                   </button>
-                  <button className="btn btn-secondary">Try Dashboard</button>
+                  <button className="btn btn-secondary" onClick={() => navigate('/dashboard')}>Try Dashboard</button>
                 </div>
               </div>
 

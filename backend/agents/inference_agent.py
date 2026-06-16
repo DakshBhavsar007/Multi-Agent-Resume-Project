@@ -1,10 +1,10 @@
 import os
 import json
-from openai import OpenAI
+from agents.llm import RotateLLMClient
 
 class SkillInferenceAgent:
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = RotateLLMClient()
 
     async def infer_from_jd(self, job_description: str) -> dict:
         system = """Expert technical recruiter. 
