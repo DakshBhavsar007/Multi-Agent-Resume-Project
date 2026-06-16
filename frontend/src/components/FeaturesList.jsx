@@ -47,39 +47,39 @@ const FeaturesList = () => {
   const features = [
     { 
       title: "AI Resume Parsing", 
-      description: "Deep extraction of technical skills and experience with surgical precision.", 
+      description: "Multi-agent extraction of skills, experience, and projects with deep LLM-powered analysis.", 
       iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg>,
       color: "#3b82f6", tag: "CORE", size: "tall" 
     },
     { 
       title: "Rank & Match", 
-      description: "Automated ranking based on job requirements and candidate potential.", 
+      description: "Semantic scoring maps candidate skills against job requirements with configurable weights.", 
       iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 11c0 3.517-2.103 6.542-5.12 7.792V21l3.91-2.347A10.046 10.046 0 0 1 12 11z"/><path d="M18 11c0 3.517-2.103 6.542-5.12 7.792V21l3.91-2.347A10.046 10.046 0 0 0 18 11z"/><circle cx="12" cy="5" r="3"/></svg>,
       color: "#059669", tag: "NEW", size: "wide" 
     },
     { 
+      title: "Fraud Detection", 
+      description: "AI-powered scanning detects plagiarism, fake resumes, ATS keyword stuffing, and phishing job posts.", 
+      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
+      color: "#ef4444", tag: "SAFE", size: "small" 
+    },
+    { 
       title: "Developer API", 
-      description: "Full control over your recruitment pipeline with our robust SDK.", 
+      description: "Full REST API with tiered subscriptions, rate limiting, and interactive documentation.", 
       iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>,
       color: "#1a1c1e", tag: "EXT", size: "small" 
     },
     { 
-      title: "Fraud & Safety Audits", 
-      description: "Scan resumes and job postings for plagiarism, AI-generation probability, ATS tricks, and job seeker phishing scams.", 
-      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-      color: "#ef4444", tag: "SEC", size: "small" 
-    },
-    { 
-      title: "Instant Screening", 
-      description: "From upload to shortlist in milliseconds, not minutes.", 
-      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+      title: "Hiring Safety", 
+      description: "Job seekers can verify company legitimacy and scan external postings for red flags before applying.", 
+      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
       color: "#f59e0b", tag: "PRO", size: "wide" 
     },
     { 
-      title: "Smart Search & Logos", 
-      description: "Find jobs via smart search autocomplete with auto-appended Indian states and upload custom company logos.", 
+      title: "Smart Search & Analytics", 
+      description: "Autocomplete job search with state mapping, hiring velocity dashboards, and pipeline analytics.", 
       iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M16 8v5M19 11h-6"/></svg>,
-      color: "#ec4899", tag: "UX", size: "small" 
+      color: "#8b5cf6", tag: "DATA", size: "small" 
     }
   ];
 
