@@ -130,6 +130,13 @@ Full SaaS portal for third-party integrations with usage analytics, billing, and
   <img src="./assets/dev_portal.png" alt="Developer SDK Portal" width="100%" />
 </div>
 
+### Job Seeker Portal
+Smart job discovery with city-aware search, one-click apply, hiring safety verification, and salary trend insights — helping candidates find and verify opportunities safely.
+
+<div align="center">
+  <img src="./assets/jobs.png" alt="Jobs Portal" width="100%" />
+</div>
+
 ---
 
 ## Quick Start
