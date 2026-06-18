@@ -119,13 +119,13 @@ export default function ResumeUploadModal({ isOpen, onClose }) {
                 {...getRootProps()}
                 className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                   isDragActive
-                    ? 'border-[#C8871A] bg-[#fcebd1]/10'
-                    : 'border-[#e6dfcd] hover:border-[#C8871A] hover:bg-[#f5f4ef]/30'
+                    ? 'border-[#2563EB] bg-[#EFF6FF]/10'
+                    : 'border-[#e6dfcd] hover:border-[#2563EB] hover:bg-[#f5f4ef]/30'
                 }`}
               >
                 <input {...getInputProps()} />
                 <div className="flex flex-col items-center justify-center space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-[#fcebd1] text-[#C8871A] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
                     <FileText size={24} />
                   </div>
                   <div>
@@ -136,7 +136,7 @@ export default function ResumeUploadModal({ isOpen, onClose }) {
                       Supports PDF, DOCX, or TXT (Max 10MB)
                     </p>
                   </div>
-                  <button className="bg-white border border-[#e6dfcd] hover:border-[#C8871A] text-[#2A2A2A] font-medium text-xs rounded-lg px-4 py-2 shadow-sm transition-all hover:bg-[#f5f4ef]/20">
+                  <button className="bg-white border border-[#e6dfcd] hover:border-[#2563EB] text-[#2A2A2A] font-medium text-xs rounded-lg px-4 py-2 shadow-sm transition-all hover:bg-[#f5f4ef]/20">
                     Browse Files
                   </button>
                 </div>
@@ -145,7 +145,7 @@ export default function ResumeUploadModal({ isOpen, onClose }) {
 
             {step === 1 && (
               <div className="flex flex-col items-center justify-center py-10 space-y-4">
-                <Loader className="w-12 h-12 text-[#C8871A] animate-spin" />
+                <Loader className="w-12 h-12 text-[#2563EB] animate-spin" />
                 <div className="text-center">
                   <h4 className="text-base font-bold text-[#2A2A2A]">{loadingText}</h4>
                   <p className="text-xs text-[#5c5c5c] mt-1">
@@ -155,7 +155,7 @@ export default function ResumeUploadModal({ isOpen, onClose }) {
                 {/* Simulated bar */}
                 <div className="w-48 h-1.5 bg-[#f5f4ef] rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-[#C8871A]"
+                    className="h-full bg-[#2563EB]"
                     initial={{ width: "0%" }}
                     animate={{ width: "100%" }}
                     transition={{ duration: 7, ease: "easeInOut" }}
@@ -185,7 +185,7 @@ export default function ResumeUploadModal({ isOpen, onClose }) {
                     <label className="text-[10px] uppercase tracking-wider text-[#5c5c5c] font-bold">Extracted Skills</label>
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {parsedProfile.skills?.slice(0, 10).map((s, idx) => (
-                        <span key={idx} className="bg-[#fcebd1]/50 border border-[#e6dfcd] text-[#C8871A] text-xs font-semibold px-2 py-0.5 rounded-full">
+                        <span key={idx} className="bg-[#EFF6FF]/50 border border-[#e6dfcd] text-[#2563EB] text-xs font-semibold px-2 py-0.5 rounded-full">
                           {s.canonical_skill || s.skill}
                         </span>
                       ))}
@@ -215,7 +215,7 @@ export default function ResumeUploadModal({ isOpen, onClose }) {
                   </button>
                   <button
                     onClick={onClose}
-                    className="flex-1 bg-[#C8871A] hover:bg-[#B07314] text-sm font-medium text-white rounded-lg py-2.5 transition-all shadow-sm"
+                    className="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-sm font-medium text-white rounded-lg py-2.5 transition-all shadow-sm"
                   >
                     Explore Job Matches
                   </button>

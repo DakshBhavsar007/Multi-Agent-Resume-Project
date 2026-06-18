@@ -4,7 +4,7 @@ import { portalUsage } from "../../lib/portalApi";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Download } from "lucide-react";
 
-const COLORS = { Parse: "#C8871A", Match: "#3B82F6", Chat: "#22C55E", Scan: "#8B5CF6" };
+const COLORS = { Parse: "#2563EB", Match: "#3B82F6", Chat: "#22C55E", Scan: "#8B5CF6" };
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -79,7 +79,7 @@ export default function DeveloperUsage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
            <h1 className="text-3xl font-black text-charcoal">Usage & Logs</h1>
-           <p className="text-gray-500 font-medium mt-1">Monitor your API traffic and latency over time.</p>
+           <p className="text-gray-800 font-bold mt-1">Monitor your API traffic and latency over time.</p>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ export default function DeveloperUsage() {
             <button 
               key={d} 
               onClick={() => setDays(d)} 
-              className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${days === d ? "bg-gray-100 text-charcoal" : "text-gray-500 hover:text-charcoal"}`}
+              className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${days === d ? "bg-gray-100 text-charcoal" : "text-gray-800 hover:text-black font-extrabold"}`}
             >
               {d} Days
             </button>
@@ -107,7 +107,7 @@ export default function DeveloperUsage() {
            {label: "Avg Latency", val: avgLatency}
          ].map((s, i) => (
             <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-center">
-              <span className="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">{s.label}</span>
+              <span className="text-gray-900 text-xs font-black uppercase tracking-wide mb-1">{s.label}</span>
               <span className="text-2xl font-black text-charcoal">{typeof s.val === 'number' ? (s.val || 0).toLocaleString() : s.val}</span>
             </div>
          ))}
@@ -175,12 +175,12 @@ export default function DeveloperUsage() {
                    {(endpoints || []).sort((a,b)=>b.calls-a.calls).map((ep, i) => (
                      <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                        <td className="py-3 px-2 font-bold text-charcoal">{ep.path}</td>
-                       <td className="py-3 px-2 font-medium text-gray-600">{(ep.calls || 0).toLocaleString()}</td>
-                       <td className="py-3 px-2 text-right font-medium text-gray-400">{ep.latency}ms</td>
+                       <td className="py-3 px-2 font-bold text-gray-900">{(ep.calls || 0).toLocaleString()}</td>
+                       <td className="py-3 px-2 text-right font-bold text-gray-800">{ep.latency}ms</td>
                        <td className="py-3 px-2 text-right">
                           <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-bold ${
                              ep.error_rate < 1 ? "bg-green-100 text-green-700" :
-                             ep.error_rate <= 5 ? "bg-amber-100 text-amber-700" :
+                             ep.error_rate <= 5 ? "bg-blue-100 text-amber-700" :
                              "bg-red-100 text-red-700"
                           }`}>{ep.error_rate}%</span>
                        </td>
@@ -222,9 +222,9 @@ export default function DeveloperUsage() {
                      return (
                        <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                          <td className="py-3 px-2 font-bold text-charcoal">{m}</td>
-                         <td className="py-3 px-2 font-medium text-gray-600">{(p || 0).toLocaleString()}</td>
-                         <td className="py-3 px-2 font-medium text-gray-600">{(mt || 0).toLocaleString()}</td>
-                         <td className="py-3 px-2 font-medium text-gray-600">{(sc || 0).toLocaleString()}</td>
+                         <td className="py-3 px-2 font-bold text-gray-900">{(p || 0).toLocaleString()}</td>
+                         <td className="py-3 px-2 font-bold text-gray-900">{(mt || 0).toLocaleString()}</td>
+                         <td className="py-3 px-2 font-bold text-gray-900">{(sc || 0).toLocaleString()}</td>
                          <td className="py-3 px-2 text-right font-black text-charcoal">{(mockCalls || 0).toLocaleString()}</td>
                        </tr>
                      );

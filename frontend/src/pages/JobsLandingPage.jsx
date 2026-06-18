@@ -179,194 +179,250 @@ export default function JobsLandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f4ef] text-[#2A2A2A] font-sans flex flex-col">
+    <div className="min-h-screen bg-[#FDFCFB] text-[#2A2A2A] font-sans flex flex-col">
       <JobsNavbar onUploadClick={() => setIsModalOpen(true)} />
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 space-y-16">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-16 space-y-20">
         
-        {/* Hero Section */}
-        <section className="text-center max-w-3xl mx-auto space-y-6 pt-6">
-          <span className="bg-[#22C55E]/10 text-[#22C55E] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+
+
+        {/* Search Section */}
+        <section className="text-center max-w-3xl mx-auto space-y-6 pt-4">
+          <span className="bg-[#DCFCE7] text-[#15803D] text-[10px] font-black px-4 py-1.5 rounded-full tracking-wider uppercase">
             Next-Gen Job Platform
           </span>
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-[#2A2A2A] leading-tight">
-            Search for your <span className="text-[#C8871A] italic">next move</span>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#2A2A2A] leading-tight">
+            Search for your <span className="text-[#2563EB] italic font-semibold">next move</span>
           </h1>
-          <p className="text-[#5c5c5c] text-lg max-w-2xl mx-auto">
+          <p className="text-gray-500 font-medium text-sm max-w-xl mx-auto">
             Connecting global talent with industry-leading companies through intelligent matching and real-time market data.
           </p>
 
-          {/* Double Search Bar */}
-          <form onSubmit={handleSearch} className="bg-white border border-[#e6dfcd] p-2 rounded-2xl md:rounded-full shadow-lg flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4 max-w-2xl mx-auto mt-4 w-full">
-            <div className="flex items-center space-x-2 px-4 py-2 w-full md:w-1/2 relative" onClick={(e) => e.stopPropagation()}>
-              <Search className="text-[#5c5c5c]" size={20} />
-              <input
-                type="text"
-                placeholder="Job title, keywords, or..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => { setShowQuerySuggestions(true); setShowLocationSuggestions(false); }}
-                className="w-full text-[#2A2A2A] placeholder-[#9CA3AF] focus:outline-none text-sm bg-transparent"
-              />
-              {showQuerySuggestions && querySuggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-[110%] bg-white border border-[#e6dfcd] rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-60 overflow-y-auto text-left">
-                  {querySuggestions.map((sug, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        setQuery(sug);
-                        setShowQuerySuggestions(false);
-                      }}
-                      className="px-4 py-2 text-sm text-[#2A2A2A] hover:bg-[#f5f4ef] cursor-pointer transition-colors flex items-center space-x-2"
-                    >
-                      <Search size={14} className="text-[#5c5c5c]" />
-                      <span>{sug}</span>
-                    </div>
-                  ))}
+          <div className="pt-6">
+            {/* Popular Searches Marquee */}
+            <div className="max-w-xl mx-auto flex items-center space-x-3 text-xs font-bold text-gray-500 overflow-hidden pb-4">
+              <span className="shrink-0 text-gray-700">Popular Searches:</span>
+              <div className="overflow-hidden w-full relative h-6 flex items-center">
+                <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#FDFCFB] to-transparent z-10 pointer-events-none" />
+                <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#FDFCFB] to-transparent z-10 pointer-events-none" />
+                
+                <div className="animate-marquee whitespace-nowrap flex space-x-12 shrink-0">
+                  <span className="text-gray-500 font-medium text-xs tracking-wide flex items-center gap-3">
+                    <span>Software Engineer</span> <span className="text-gray-300">&bull;</span>
+                    <span>Product Manager</span> <span className="text-gray-300">&bull;</span>
+                    <span>Product Designer</span> <span className="text-gray-300">&bull;</span>
+                    <span>Marketing Specialist</span> <span className="text-gray-300">&bull;</span>
+                    <span>Data Analyst</span> <span className="text-gray-300">&bull;</span>
+                    <span>UI/UX Designer</span> <span className="text-gray-300">&bull;</span>
+                    <span>DevOps Engineer</span> <span className="text-gray-300">&bull;</span>
+                  </span>
+                  <span className="text-gray-500 font-medium text-xs tracking-wide flex items-center gap-3">
+                    <span>Software Engineer</span> <span className="text-gray-300">&bull;</span>
+                    <span>Product Manager</span> <span className="text-gray-300">&bull;</span>
+                    <span>Product Designer</span> <span className="text-gray-300">&bull;</span>
+                    <span>Marketing Specialist</span> <span className="text-gray-300">&bull;</span>
+                    <span>Data Analyst</span> <span className="text-gray-300">&bull;</span>
+                    <span>UI/UX Designer</span> <span className="text-gray-300">&bull;</span>
+                    <span>DevOps Engineer</span> <span className="text-gray-300">&bull;</span>
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
-            <div className="hidden md:block w-[1px] h-8 bg-[#e6dfcd]" />
-            <div className="flex items-center space-x-2 px-4 py-2 w-full md:w-1/2 relative" onClick={(e) => e.stopPropagation()}>
-              <MapPin className="text-[#5c5c5c]" size={20} />
-              <input
-                type="text"
-                placeholder="City, state, or remote"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                onFocus={() => { setShowLocationSuggestions(true); setShowQuerySuggestions(false); }}
-                className="w-full text-[#2A2A2A] placeholder-[#9CA3AF] focus:outline-none text-sm bg-transparent"
-              />
-              {showLocationSuggestions && locationSuggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-[110%] bg-white border border-[#e6dfcd] rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-60 overflow-y-auto text-left">
-                  {locationSuggestions.map((sug, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        setLocation(sug);
-                        setShowLocationSuggestions(false);
-                      }}
-                      className="px-4 py-2 text-sm text-[#2A2A2A] hover:bg-[#f5f4ef] cursor-pointer transition-colors flex items-center space-x-2"
-                    >
-                      <MapPin size={14} className="text-[#5c5c5c]" />
-                      <span>{sug}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button
-              type="submit"
-              className="bg-[#C8871A] hover:bg-[#B07314] text-white px-8 py-3 rounded-xl md:rounded-full font-semibold text-sm transition-all w-full md:w-auto shadow active:scale-95 shrink-0"
+
+            {/* Glowing Gradient Search Bar */}
+            <form 
+              onSubmit={handleSearch} 
+              className="relative p-[2px] rounded-full max-w-3xl mx-auto bg-gradient-to-r from-indigo-500 via-pink-500 to-orange-400 focus-within:shadow-[0_0_25px_rgba(236,72,153,0.35)] transition-shadow duration-300"
             >
-              Search
-            </button>
-          </form>
+              <div className="bg-white rounded-full p-1.5 flex flex-col md:flex-row items-center justify-between w-full gap-2 md:gap-0">
+                
+                {/* Query Input */}
+                <div className="flex items-center space-x-2.5 px-4 flex-1 w-full relative" onClick={(e) => e.stopPropagation()}>
+                  <Search className="text-[#2563EB] shrink-0" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Job title, keywords, or company..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => {
+                      setShowQuerySuggestions(true);
+                      setShowLocationSuggestions(false);
+                    }}
+                    className="w-full text-black placeholder-gray-400 font-medium focus:outline-none text-sm bg-transparent"
+                  />
+                  
+                  {showQuerySuggestions && querySuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-[125%] bg-white border border-gray-150 rounded-2xl shadow-2xl z-50 overflow-hidden py-1 max-h-60 overflow-y-auto text-left">
+                      {querySuggestions.map((sug, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setQuery(sug);
+                            setShowQuerySuggestions(false);
+                          }}
+                          className="px-4 py-2.5 text-xs font-semibold text-charcoal hover:bg-gray-50 cursor-pointer transition-colors flex items-center space-x-2"
+                        >
+                          <Search size={12} className="text-gray-400" />
+                          <span>{sug}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Vertical Separator */}
+                <div className="hidden md:block h-8 w-[1px] bg-gray-200" />
+
+                {/* Location Input */}
+                <div className="flex items-center space-x-2.5 px-4 flex-1 w-full relative" onClick={(e) => e.stopPropagation()}>
+                  <MapPin className="text-[#2563EB] shrink-0" size={18} />
+                  <input
+                    type="text"
+                    placeholder="City, state, or remote..."
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    onFocus={() => {
+                      setShowLocationSuggestions(true);
+                      setShowQuerySuggestions(false);
+                    }}
+                    className="w-full text-black placeholder-gray-400 font-medium focus:outline-none text-sm bg-transparent"
+                  />
+                  
+                  {showLocationSuggestions && locationSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-[125%] bg-white border border-gray-150 rounded-2xl shadow-2xl z-50 overflow-hidden py-1 max-h-60 overflow-y-auto text-left">
+                      {locationSuggestions.map((sug, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setLocation(sug);
+                            setShowLocationSuggestions(false);
+                          }}
+                          className="px-4 py-2.5 text-xs font-semibold text-charcoal hover:bg-gray-50 cursor-pointer transition-colors flex items-center space-x-2"
+                        >
+                          <MapPin size={12} className="text-gray-400" />
+                          <span>{sug}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="bg-black hover:bg-neutral-900 text-white px-7 py-3 rounded-full font-extrabold text-sm transition-all shadow-md active:scale-95 w-full md:w-auto shrink-0"
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+          </div>
 
           {/* Companies List */}
-          <div className="pt-6 flex flex-wrap justify-center items-center gap-x-8 gap-y-3 text-sm font-semibold text-[#6B7280]">
-            <span className="font-medium text-[#9CA3AF]">Trusted by:</span>
-            <span className="hover:text-[#2A2A2A] transition-colors">slack</span>
-            <span className="hover:text-[#2A2A2A] transition-colors">amazon</span>
-            <span className="hover:text-[#2A2A2A] italic transition-colors">Kellogg's</span>
-            <span className="hover:text-[#2A2A2A] transition-colors">Bemis</span>
-            <span className="hover:text-[#2A2A2A] transition-colors">Deribit</span>
+          <div className="pt-8 flex flex-wrap justify-center items-center gap-x-8 gap-y-3 text-xs font-bold text-gray-400">
+            <span className="font-semibold text-gray-300">Trusted by:</span>
+            <span className="hover:text-charcoal transition-colors">slack</span>
+            <span className="hover:text-charcoal transition-colors">amazon</span>
+            <span className="hover:text-charcoal italic transition-colors">Kellogg's</span>
+            <span className="hover:text-charcoal transition-colors">Bemis</span>
+            <span className="hover:text-charcoal transition-colors">Deribit</span>
           </div>
         </section>
 
         {/* Feature Overview: Resume Matcher Visualization */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center bg-white border border-[#e6dfcd] p-8 md:p-12 rounded-3xl shadow-sm">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center bg-white border border-gray-100 p-8 md:p-12 rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div className="lg:col-span-5 space-y-6">
-            <div className="w-10 h-10 bg-[#fcebd1] text-[#C8871A] rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-[#EFF6FF] text-[#2563EB] rounded-xl flex items-center justify-center shrink-0">
               <Sparkles size={20} />
             </div>
-            <h2 className="text-3xl font-extrabold text-[#2A2A2A] tracking-tight">
-              Tailored for your <span className="text-[#C8871A]">unique trajectory</span>
+            <h2 className="text-3xl font-extrabold text-charcoal tracking-tight">
+              Tailored for your <span className="text-[#2563EB]">unique trajectory</span>
             </h2>
-            <p className="text-[#5c5c5c] text-sm leading-relaxed">
+            <p className="text-gray-500 font-medium text-sm leading-relaxed">
               Our Match Engine goes beyond keywords. We analyze your complete resume structure, normalized skill graphs, and experience timeline to map your compatibility against active enterprise job postings.
             </p>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-sm text-[#2A2A2A] font-medium">
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center space-x-3 text-xs text-charcoal font-bold">
                 <CheckCircle2 size={16} className="text-[#22C55E]" />
                 <span>99% parsing precision with AI OCR backup</span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-[#2A2A2A] font-medium">
+              <div className="flex items-center space-x-3 text-xs text-charcoal font-bold">
                 <CheckCircle2 size={16} className="text-[#22C55E]" />
                 <span>Immediate matching score & feedback loop</span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-[#2A2A2A] font-medium">
+              <div className="flex items-center space-x-3 text-xs text-charcoal font-bold">
                 <CheckCircle2 size={16} className="text-[#22C55E]" />
                 <span>One-click Quick Apply mapping directly to ATS portals</span>
               </div>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-[#C8871A] hover:bg-[#B07314] text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-md active:scale-95"
-            >
-              {profile ? 'Verify Extracted Skills' : 'Try Engine AI Now'}
-            </button>
+            <div className="pt-4">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-[#2563EB] hover:bg-blue-700 text-white px-6 py-3.5 rounded-xl font-bold text-xs transition-all shadow-md active:scale-95"
+              >
+                {profile ? 'Verify Extracted Skills' : 'Try Engine AI Now'}
+              </button>
+            </div>
           </div>
 
           {/* Visual card mimicking inspiratio_ui1.jpeg */}
-          <div className="lg:col-span-7 bg-[#f5f4ef]/50 border border-[#e6dfcd] rounded-2xl p-6 md:p-8 space-y-6">
-            <div className="bg-white border border-[#e6dfcd] rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center">
+          <div className="lg:col-span-7 bg-[#F9F8F6] border border-gray-100 rounded-2xl p-6 md:p-8 space-y-6 shadow-inner">
+            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center">
               <div className="flex items-center space-x-4">
-                <div className="bg-[#fcebd1] p-3 rounded-lg text-[#C8871A]">
+                <div className="bg-[#EFF6FF] p-2.5 rounded-xl text-[#2563EB] shrink-0">
                   <FileText size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-[#2A2A2A] text-sm">Resume Matcher</h4>
-                  <p className="text-xs text-[#5c5c5c]">AI-Powered Extraction</p>
+                  <h4 className="font-bold text-charcoal text-sm">Resume Matcher</h4>
+                  <p className="text-xs text-gray-400 font-medium mt-0.5">AI-Powered Extraction</p>
                 </div>
               </div>
-              <span className="mt-2 md:mt-0 bg-[#22C55E]/10 text-[#22C55E] text-xs font-bold px-2.5 py-1 rounded-full">
+              <span className="mt-2 md:mt-0 bg-[#22C55E]/10 text-[#22C55E] text-[10px] font-bold px-3 py-1 rounded-full uppercase border border-[#22C55E]/20">
                 Active Match Analysis
               </span>
             </div>
 
             <div className="space-y-3">
-              <div className="bg-white border border-[#e6dfcd] rounded-xl p-4 flex items-center justify-between shadow-sm">
+              <div className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center space-x-3">
-                  <CheckCircle2 className="text-green-500" size={18} />
+                  <CheckCircle2 className="text-[#22C55E]" size={18} />
                   <div>
-                    <h5 className="font-bold text-xs text-[#2A2A2A]">Technical Skills Found</h5>
-                    <p className="text-[10px] text-[#5c5c5c] mt-0.5">React, Node.js, AWS</p>
+                    <h5 className="font-bold text-xs text-charcoal">Technical Skills Found</h5>
+                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">React, Node.js, AWS</p>
                   </div>
                 </div>
                 <span className="text-[#22C55E] text-xs font-bold">98% match</span>
               </div>
 
-              <div className="bg-white border border-[#e6dfcd] rounded-xl p-4 flex items-center justify-between shadow-sm">
+              <div className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center space-x-3">
-                  <div className="w-[18px] h-[18px] border-2 border-dashed border-[#C8871A] rounded-full animate-spin" />
+                  <div className="w-[18px] h-[18px] border-2 border-dashed border-[#2563EB] rounded-full animate-spin shrink-0" />
                   <div>
-                    <h5 className="font-bold text-xs text-[#2A2A2A]">Soft Skills Analysis</h5>
-                    <p className="text-[10px] text-[#5c5c5c] mt-0.5">Analyzing communication and leadership profiles</p>
+                    <h5 className="font-bold text-xs text-charcoal">Soft Skills Analysis</h5>
+                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">Analyzing communication and leadership profiles</p>
                   </div>
                 </div>
-                <span className="text-[#C8871A] text-xs font-bold">Processing...</span>
+                <span className="text-[#2563EB] text-xs font-bold">Processing...</span>
               </div>
             </div>
           </div>
         </section>
 
         {/* Hiring Safety Banner */}
-        <section className="bg-gradient-to-br from-[#FFF9F2] to-white border border-[#f5e3ce] p-8 md:p-10 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="space-y-3 max-w-2xl text-left">
-            <span className="bg-[#C8871A]/10 text-[#C8871A] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+        <section className="bg-gradient-to-br from-[#F0F6FF] to-[#F8FAFC] border border-[#BFDBFE] p-8 md:p-12 rounded-3xl shadow-sm flex flex-col lg:flex-row justify-between items-center gap-8">
+          <div className="space-y-3 max-w-3xl text-left">
+            <span className="bg-[#2563EB]/10 text-[#2563EB] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-[#2563EB]/20">
               Safety Verification
             </span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-[#2A2A2A] tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-charcoal tracking-tight leading-tight">
               Verify your job application safety before applying
             </h2>
-            <p className="text-[#5c5c5c] text-sm leading-relaxed">
+            <p className="text-gray-500 font-medium text-sm leading-relaxed">
               Recruitment scams, phishing links, and ghost job listings are on the rise. Run our real-time hiring safety audit to check company domain authenticity, scam likelihood, and text originality.
             </p>
           </div>
           <button
             onClick={() => navigate('/jobs/safety-checker')}
-            className="bg-[#2A2A2A] hover:bg-black text-white px-6 py-3.5 rounded-xl font-bold text-xs transition-all shadow-md active:scale-95 shrink-0 flex items-center gap-2"
+            className="bg-charcoal hover:bg-black text-white px-6 py-3.5 rounded-xl font-bold text-xs transition-all shadow-md active:scale-95 shrink-0 flex items-center gap-2"
           >
             <span>Scan External Job Listing</span>
             <ChevronRight size={14} />
@@ -374,33 +430,33 @@ export default function JobsLandingPage() {
         </section>
 
         {/* Market Insights Section matching inspiratio_ui2.jpeg */}
-        <section className="space-y-6">
+        <section className="space-y-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between">
             <div className="space-y-2">
-              <span className="text-xs font-bold text-[#C8871A] uppercase tracking-wider">Real-Time Insights</span>
-              <h2 className="text-3xl font-extrabold text-[#2A2A2A] tracking-tight">Market Insights</h2>
-              <p className="text-[#5c5c5c] text-sm max-w-xl">
+              <span className="text-xs font-bold text-[#2563EB] uppercase tracking-wider">Real-Time Insights</span>
+              <h2 className="text-3xl font-black text-charcoal tracking-tight">Market Insights</h2>
+              <p className="text-gray-500 font-medium text-sm max-w-xl">
                 Stay ahead of the curve with real-time analytics on salary trends, high-demand skills, and industry growth sectors.
               </p>
             </div>
             <button
               onClick={() => navigate('/jobs/trends')}
-              className="text-[#C8871A] hover:text-[#B07314] text-sm font-bold flex items-center space-x-1 mt-4 md:mt-0 transition-colors"
+              className="text-[#2563EB] hover:text-blue-700 text-xs font-bold flex items-center space-x-1 mt-4 md:mt-0 transition-colors"
             >
               <span>View full report</span>
-              <span className="text-lg">&rarr;</span>
+              <ChevronRight size={14} />
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Salary Growth (with Recharts BarChart) */}
-            <div className="bg-[#FFFFFF] border border-[#e6dfcd] rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4">
+            <div className="bg-[#F3F4F6] border border-gray-200/50 rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4">
               <div className="space-y-2">
-                <div className="w-8 h-8 rounded-full bg-[#fcebd1]/50 text-[#C8871A] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-white text-[#2563EB] flex items-center justify-center shadow-sm">
                   <TrendingUp size={16} />
                 </div>
-                <h3 className="font-extrabold text-lg text-[#2A2A2A]">Salary Growth</h3>
-                <p className="text-[#5c5c5c] text-xs">
+                <h3 className="font-extrabold text-base text-charcoal">Salary Growth</h3>
+                <p className="text-gray-500 text-xs font-medium">
                   Tech sector saw an average of +12.4% increase in specialized roles this quarter.
                 </p>
               </div>
@@ -409,9 +465,9 @@ export default function JobsLandingPage() {
               <div className="w-full h-24">
                 <ResponsiveContainer width="100%" height="100%" minHeight={96} minWidth={100}>
                   <BarChart data={salaryData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <XAxis dataKey="name" stroke="#9CA3AF" fontSize={10} axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{ fill: 'rgba(200, 135, 26, 0.05)' }} contentStyle={{ fontSize: 10, borderRadius: 8 }} />
-                    <Bar dataKey="growth" fill="#C8871A" radius={[4, 4, 0, 0]} barSize={24} />
+                    <XAxis dataKey="name" stroke="#9CA3AF" fontSize={9} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: 'rgba(37, 99, 235, 0.03)' }} contentStyle={{ fontSize: 9, borderRadius: 8, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }} />
+                    <Bar dataKey="growth" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -420,36 +476,35 @@ export default function JobsLandingPage() {
             {/* Hiring Velocity (green background) */}
             <div className="bg-[#E8F8F0] border border-[#d1ebd6] rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-6">
               <div className="space-y-2">
-                <div className="w-8 h-8 rounded-full bg-white text-[#22C55E] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-white text-[#059669] flex items-center justify-center shadow-sm">
                   <Compass size={16} />
                 </div>
-                <h3 className="font-extrabold text-lg text-[#2A2A2A]">Hiring Velocity</h3>
-                <p className="text-[#5c5c5c] text-xs">
+                <h3 className="font-extrabold text-base text-charcoal">Hiring Velocity</h3>
+                <p className="text-gray-500 text-xs font-medium">
                   Remote roles are closing 3 days faster than traditional on-site positions.
                 </p>
               </div>
-              <div className="flex items-baseline space-x-1.5">
-                <span className="text-4xl font-extrabold text-[#22C55E]">32%</span>
-                <span className="text-sm font-semibold text-[#5c5c5c]">faster</span>
+              <div className="text-5xl font-black text-[#059669] tracking-tight">
+                32% <span className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">faster</span>
               </div>
             </div>
 
             {/* Top Skills */}
-            <div className="bg-[#FFF9F2] border border-[#f5e3ce] rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-6">
+            <div className="bg-[#F0F6FF] border border-[#BFDBFE] rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-6">
               <div className="space-y-2">
-                <div className="w-8 h-8 rounded-full bg-white text-[#C8871A] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-white text-[#2563EB] flex items-center justify-center shadow-sm">
                   <Cpu size={16} />
                 </div>
-                <h3 className="font-extrabold text-lg text-[#2A2A2A]">Top Skills</h3>
-                <p className="text-[#5c5c5c] text-xs">
+                <h3 className="font-extrabold text-base text-charcoal">Top Skills</h3>
+                <p className="text-gray-500 text-xs font-medium">
                   Prompt Engineering and AI Strategy are the fastest-growing required competencies.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                <span className="bg-white border border-[#f5e3ce] text-[#C8871A] text-[10px] font-bold px-2 py-0.5 rounded-md">AI / ML</span>
-                <span className="bg-white border border-[#f5e3ce] text-[#C8871A] text-[10px] font-bold px-2 py-0.5 rounded-md">Product</span>
-                <span className="bg-white border border-[#f5e3ce] text-[#C8871A] text-[10px] font-bold px-2 py-0.5 rounded-md">Design</span>
-                <span className="bg-white border border-[#f5e3ce] text-[#C8871A] text-[10px] font-bold px-2 py-0.5 rounded-md">Strategy</span>
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-white border border-[#BFDBFE] text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">AI / ML</span>
+                <span className="bg-white border border-[#BFDBFE] text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Product</span>
+                <span className="bg-white border border-[#BFDBFE] text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Design</span>
+                <span className="bg-white border border-[#BFDBFE] text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Strategy</span>
               </div>
             </div>
           </div>

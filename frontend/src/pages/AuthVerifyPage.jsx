@@ -72,7 +72,7 @@ export default function AuthVerifyPage() {
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-10 max-w-md w-full text-center">
         {status === "verifying" && (
           <>
-            <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center mx-auto mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
               <Loader2 size={32} className="text-accent animate-spin" />
             </div>
             <h2 className="text-xl font-black text-charcoal mb-2">

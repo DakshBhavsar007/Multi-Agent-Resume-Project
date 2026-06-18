@@ -168,14 +168,14 @@ export default function FraudDetectionPage() {
 
   const getRatingText = (score) => {
     if (score >= 80) return { label: "Excellent", color: "text-[#22C55E]" };
-    if (score >= 60) return { label: "Moderate Risk", color: "text-[#C8871A]" };
+    if (score >= 60) return { label: "Moderate Risk", color: "text-[#2563EB]" };
     return { label: "High Danger", color: "text-red-500" };
   };
   const rating = getRatingText(report.originality_score);
 
   const getStrokeColor = (score) => {
     if (score >= 80) return "#22C55E";
-    if (score >= 60) return "#C8871A";
+    if (score >= 60) return "#2563EB";
     return "#EF4444";
   };
 
@@ -252,14 +252,14 @@ export default function FraudDetectionPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#2A2A2A] flex items-center gap-2.5">
-            <Shield className="text-[#C8871A] w-8 h-8" />
+            <Shield className="text-[#2563EB] w-8 h-8" />
             <span>Fraud Detection System</span>
           </h1>
           <p className="text-sm text-[#5c5c5c] mt-1">
             Analyze originality, detect AI-generated manipulation, and protect against credentials fabrication in real time.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-bold bg-[#FFF9F2] text-[#C8871A] px-3.5 py-2 rounded-xl border border-[#f5e3ce] shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-bold bg-[#F0F6FF] text-[#2563EB] px-3.5 py-2 rounded-xl border border-[#BFDBFE] shadow-sm">
           <Sparkles size={14} />
           <span>Active OriginX Core Protection</span>
         </div>
@@ -373,16 +373,16 @@ export default function FraudDetectionPage() {
         </div>
 
         {/* Right Column: Sleek 3D Pedestal Shield (Occupies 4 cols) */}
-        <div className="lg:col-span-4 bg-gradient-to-br from-[#FFF9F2] to-white border border-[#e6dfcd] p-8 rounded-3xl shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
+        <div className="lg:col-span-4 bg-gradient-to-br from-[#F0F6FF] to-white border border-[#e6dfcd] p-8 rounded-3xl shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
           {/* Animated concentric decorative circles */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-56 h-56 rounded-full border border-[#f5e3ce]/30 animate-pulse" />
-            <div className="w-40 h-40 rounded-full border border-[#f5e3ce]/50" />
-            <div className="w-24 h-24 rounded-full border border-[#f5e3ce]" />
+            <div className="w-56 h-56 rounded-full border border-[#BFDBFE]/30 animate-pulse" />
+            <div className="w-40 h-40 rounded-full border border-[#BFDBFE]/50" />
+            <div className="w-24 h-24 rounded-full border border-[#BFDBFE]" />
           </div>
 
           <div className="relative z-10 space-y-6">
-            <div className="w-20 h-20 bg-[#C8871A]/10 border-2 border-[#C8871A] rounded-3xl flex items-center justify-center text-[#C8871A] mx-auto shadow-lg shadow-amber-500/10">
+            <div className="w-20 h-20 bg-[#2563EB]/10 border-2 border-[#2563EB] rounded-3xl flex items-center justify-center text-[#2563EB] mx-auto shadow-lg shadow-amber-500/10">
               <Shield className="w-10 h-10 animate-bounce" style={{ animationDuration: '3s' }} />
             </div>
             <div>
@@ -424,7 +424,7 @@ export default function FraudDetectionPage() {
           <div className="pb-4 border-b border-[#f5f4ef] flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h3 className="font-extrabold text-base text-[#2A2A2A] flex items-center gap-2">
-                <Terminal size={18} className="text-[#C8871A]" />
+                <Terminal size={18} className="text-[#2563EB]" />
                 <span>Real-Time Security Scanner</span>
               </h3>
               <p className="text-xs text-[#5c5c5c] mt-0.5">Choose scan target to run AI safety audits.</p>
@@ -438,7 +438,7 @@ export default function FraudDetectionPage() {
               onClick={() => { setScanType("user"); resetScanner(); }}
               className={`pb-2.5 text-xs font-extrabold uppercase tracking-wider border-b-2 transition-all ${
                 scanType === "user"
-                  ? "border-[#C8871A] text-[#C8871A]"
+                  ? "border-[#2563EB] text-[#2563EB]"
                   : "border-transparent text-gray-400 hover:text-[#2A2A2A]"
               }`}
             >
@@ -449,7 +449,7 @@ export default function FraudDetectionPage() {
               onClick={() => { setScanType("job"); resetScanner(); }}
               className={`ml-6 pb-2.5 text-xs font-extrabold uppercase tracking-wider border-b-2 transition-all ${
                 scanType === "job"
-                  ? "border-[#C8871A] text-[#C8871A]"
+                  ? "border-[#2563EB] text-[#2563EB]"
                   : "border-transparent text-gray-400 hover:text-[#2A2A2A]"
               }`}
             >
@@ -469,7 +469,7 @@ export default function FraudDetectionPage() {
                 {scanType === "user" ? (
                   <>
                     {/* File Upload zone */}
-                    <div className="border-2 border-dashed border-[#e6dfcd] hover:border-[#C8871A] rounded-2xl p-8 text-center cursor-pointer transition-colors bg-[#f5f4ef]/30 group">
+                    <div className="border-2 border-dashed border-[#e6dfcd] hover:border-[#2563EB] rounded-2xl p-8 text-center cursor-pointer transition-colors bg-[#f5f4ef]/30 group">
                       <input 
                         type="file" 
                         id="scanner-file" 
@@ -477,7 +477,7 @@ export default function FraudDetectionPage() {
                         onChange={(e) => setSelectedFile(e.target.files[0])}
                       />
                       <label htmlFor="scanner-file" className="cursor-pointer space-y-2 block">
-                        <Upload className="mx-auto text-gray-300 group-hover:text-[#C8871A] transition-colors w-10 h-10" />
+                        <Upload className="mx-auto text-gray-300 group-hover:text-[#2563EB] transition-colors w-10 h-10" />
                         <div className="text-xs font-bold text-[#2A2A2A]">
                           {selectedFile ? `Selected File: ${selectedFile.name}` : "Upload candidate resume PDF / DOCX"}
                         </div>
@@ -495,7 +495,7 @@ export default function FraudDetectionPage() {
                         value={urlInput}
                         onChange={(e) => setUrlInput(e.target.value)}
                         placeholder="Enter GitHub repository URL, Behance portfolio link..."
-                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-10 focus:outline-none focus:border-[#C8871A] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-10 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
                       />
                     </div>
                   </>
@@ -509,7 +509,7 @@ export default function FraudDetectionPage() {
                           value={jobTitleInput}
                           onChange={(e) => setJobTitleInput(e.target.value)}
                           placeholder="e.g. Senior Product Designer"
-                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#C8871A] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
                         />
                       </div>
                       <div>
@@ -519,7 +519,7 @@ export default function FraudDetectionPage() {
                           value={jobLocationInput}
                           onChange={(e) => setJobLocationInput(e.target.value)}
                           placeholder="e.g. Remote / Chicago, IL"
-                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#C8871A] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
                         />
                       </div>
                     </div>
@@ -530,7 +530,7 @@ export default function FraudDetectionPage() {
                         onChange={(e) => setJobDescriptionInput(e.target.value)}
                         placeholder="Paste the description/requirements here to analyze for clone templates, ghost post indicators, or sketchy payment details..."
                         rows={4}
-                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#C8871A] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none"
+                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none"
                       />
                     </div>
                   </div>
@@ -539,7 +539,7 @@ export default function FraudDetectionPage() {
                 <button 
                   type="submit" 
                   disabled={(scanType === "user" && !selectedFile && !urlInput.trim()) || (scanType === "job" && (!jobTitleInput.trim() || !jobDescriptionInput.trim()))}
-                  className="w-full bg-[#C8871A] hover:bg-[#B07314] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Search size={16} />
                   <span>Start Verification Scan</span>
@@ -555,7 +555,7 @@ export default function FraudDetectionPage() {
                 exit={{ opacity: 0 }}
               >
                 <div className="flex flex-col items-center justify-center space-y-4">
-                  <RefreshCw className="animate-spin text-[#C8871A] w-10 h-10" />
+                  <RefreshCw className="animate-spin text-[#2563EB] w-10 h-10" />
                   <div className="text-center">
                     <h4 className="font-bold text-sm text-[#2A2A2A]">AI Scanning Suite Active</h4>
                     <p className="text-[11px] text-[#5c5c5c] mt-0.5">Please wait, analyzing document profiles...</p>
@@ -572,11 +572,11 @@ export default function FraudDetectionPage() {
                         {isDone ? (
                           <CheckCircle className="text-emerald-500 shrink-0 w-4.5 h-4.5" />
                         ) : isActive ? (
-                          <RefreshCw className="text-[#C8871A] animate-spin shrink-0 w-4.5 h-4.5" />
+                          <RefreshCw className="text-[#2563EB] animate-spin shrink-0 w-4.5 h-4.5" />
                         ) : (
                           <div className="w-4.5 h-4.5 rounded-full border-2 border-gray-200 shrink-0" />
                         )}
-                        <span className={`font-semibold ${isDone ? "text-gray-400 line-through" : isActive ? "text-[#C8871A] font-extrabold" : "text-[#5c5c5c]"}`}>
+                        <span className={`font-semibold ${isDone ? "text-gray-400 line-through" : isActive ? "text-[#2563EB] font-extrabold" : "text-[#5c5c5c]"}`}>
                           {step.label}
                         </span>
                       </div>
@@ -638,7 +638,7 @@ export default function FraudDetectionPage() {
 
                 {/* Actions */}
                 <div className="flex gap-3 pt-2">
-                  <button onClick={resetScanner} className="flex-1 bg-white border border-[#e6dfcd] hover:border-[#C8871A] font-bold text-xs py-3 rounded-xl transition-all">
+                  <button onClick={resetScanner} className="flex-1 bg-white border border-[#e6dfcd] hover:border-[#2563EB] font-bold text-xs py-3 rounded-xl transition-all">
                     Scan Another Target
                   </button>
                   <button onClick={resetScanner} className="flex-1 bg-[#2A2A2A] hover:bg-black text-white font-bold text-xs py-3 rounded-xl transition-all">
@@ -716,11 +716,11 @@ export default function FraudDetectionPage() {
                       key={cand.id} 
                       onClick={() => setActiveReport(cand)}
                       className={`border-b border-[#f5f4ef] hover:bg-[#f5f4ef]/25 cursor-pointer transition-colors font-medium ${
-                        activeReport?.id === cand.id ? "bg-[#FFF9F2]" : ""
+                        activeReport?.id === cand.id ? "bg-[#F0F6FF]" : ""
                       }`}
                     >
                       <td className="py-4 px-4 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#f5f4ef] border border-[#e6dfcd] text-[#C8871A] font-extrabold flex items-center justify-center uppercase shadow-inner shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-[#f5f4ef] border border-[#e6dfcd] text-[#2563EB] font-extrabold flex items-center justify-center uppercase shadow-inner shrink-0">
                           {isJob ? "J" : (nameDisplay ? nameDisplay[0] : "C")}
                         </div>
                         <div>

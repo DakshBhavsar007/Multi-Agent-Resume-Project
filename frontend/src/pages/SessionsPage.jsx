@@ -1,9 +1,9 @@
 import React from 'react';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { Layers, Search, Plus, Building } from 'lucide-react';
+import { Building, Search, Plus, MoreVertical, Archive, Trash2, FolderOpen, ArrowUpDown } from 'lucide-react';
 import { sessionsAPI } from '../lib/api';
 
 export default function SessionsPage() {
@@ -12,6 +12,19 @@ export default function SessionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortFilter, setSortFilter] = useState("Newest");
+  const [activeMenuId, setActiveMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  // Click outside to close dropdown menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['sessions'],
@@ -44,155 +57,215 @@ export default function SessionsPage() {
 
   const filteredSessions = getFilteredSessions();
 
+  const getStatusStyle = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return { dot: 'bg-blue-500', text: 'text-blue-600 bg-blue-50/50 border-blue-100', label: 'Completed' };
+      case 'draft':
+        return { dot: 'bg-gray-400', text: 'text-gray-500 bg-gray-50 border-gray-100', label: 'Draft' };
+      default:
+        return { dot: 'bg-[#22C55E]', text: 'text-[#22C55E] bg-[#22C55E]/5 border-[#22C55E]/10', label: 'Active' };
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-charcoal">Recruitment Sessions</h1>
-        <Link to="/dashboard/sessions/new">
-          <button className="bg-accent hover:bg-[#A06B10] text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2">
-            <Plus size={18} />
-            New Session
-          </button>
-        </Link>
+    <div className="space-y-8 max-w-6xl mx-auto pb-24 relative">
+      {/* PAGE HEADER */}
+      <div>
+        <h1 className="text-3xl font-black text-charcoal tracking-tight">Recruitment sessions</h1>
+        <p className="text-gray-500 font-medium mt-1">Manage all your hiring rounds in one place.</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 my-4">
-        <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      {/* FILTER & SEARCH BAR */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        {/* Search */}
+        <div className="relative w-full md:max-w-xs shrink-0">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Search sessions..." 
+            placeholder="Search sessions" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-accent focus:outline-none transition-colors"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:border-accent focus:outline-none transition-colors bg-white shadow-sm font-medium"
           />
         </div>
-        <select 
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border-[1.5px] border-gray-200 rounded-lg px-4 py-2 text-sm text-charcoal bg-white focus:outline-none focus:border-accent"
-        >
-          <option>All</option>
-          <option>Active</option>
-          <option>Completed</option>
-          <option>Archived</option>
-        </select>
-        <select 
-          value={sortFilter}
-          onChange={(e) => setSortFilter(e.target.value)}
-          className="border-[1.5px] border-gray-200 rounded-lg px-4 py-2 text-sm text-charcoal bg-white focus:outline-none focus:border-accent"
-        >
-          <option>Newest</option>
-          <option>Most Candidates</option>
-        </select>
+
+        {/* Tab Segments & Sort */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+          <div className="flex p-1 bg-white border border-gray-200 rounded-xl shadow-sm">
+            {['All', 'Active', 'Completed', 'Draft'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setStatusFilter(tab)}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  statusFilter === tab 
+                    ? 'bg-gray-100 text-charcoal' 
+                    : 'text-gray-500 hover:text-charcoal'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative">
+            <select
+              value={sortFilter}
+              onChange={(e) => setSortFilter(e.target.value)}
+              className="appearance-none pl-4 pr-10 py-2 border border-gray-200 bg-white rounded-xl text-xs font-bold text-gray-600 focus:outline-none focus:border-accent shadow-sm cursor-pointer"
+            >
+              <option value="Newest">Newest</option>
+              <option value="Most Candidates">Most Candidates</option>
+            </select>
+            <ArrowUpDown size={12} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
       </div>
 
+      {/* SESSIONS GRID */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-[200px] shimmer rounded-xl hover:shadow-md transition"></div>
+            <div key={i} className="h-48 bg-gray-100/50 animate-pulse rounded-2xl border border-gray-200/60"></div>
           ))}
         </div>
       ) : filteredSessions.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredSessions.map((session) => (
-            <div key={session.id} className="bg-white outline outline-1 outline-transparent border border-gray-200 rounded-xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-md transition flex flex-col justify-between h-full">
-              <div>
-                <h3 className="text-lg font-bold text-charcoal mb-0.5 flex items-center gap-2">
-                  <Building size={18} className="text-[#C8871A] shrink-0" /> {session.job_title || 'Untitled Role'}
-                </h3>
-                <p className="text-xs text-gray-400 mb-4 ml-7">{session.name || 'Draft Name'}</p>
-                
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-sm text-charcoal font-medium">Rounds:</span>
-                  <span className="text-gray-400 font-mono text-[10px] tracking-wider relative top-0.5">
-                    {session.rounds?.map(() => '●').join('') || '●●●'}
-                  </span>
-                  <span className="text-sm text-muted ml-0.5 line-clamp-1 flex-1">
-                    {session.rounds?.map(r => r.name).join(' > ') || 'Screening > Tech > HR'}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredSessions.map((session) => {
+            const style = getStatusStyle(session.status);
+            return (
+              <div 
+                key={session.id} 
+                className="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md transition-all flex flex-col justify-between h-48 cursor-pointer relative group"
+                onClick={() => navigate(`/dashboard/sessions/${session.id}`)}
+              >
+                {/* CARD HEADER */}
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-accent flex items-center justify-center shrink-0">
+                      <Building size={18} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-charcoal leading-snug group-hover:text-accent transition-colors truncate max-w-[150px]">
+                        {session.job_title || 'Untitled Role'}
+                      </h3>
+                      <p className="text-[11px] text-gray-400 font-medium truncate max-w-[150px] mt-0.5">
+                        {session.name || 'Q4 hiring • 3 rounds'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions Dropdown */}
+                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      onClick={() => setActiveMenuId(activeMenuId === session.id ? null : session.id)}
+                      className="p-1 text-gray-400 hover:text-charcoal hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {activeMenuId === session.id && (
+                      <div 
+                        ref={menuRef}
+                        className="absolute right-0 mt-1.5 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1"
+                      >
+                        <button 
+                          onClick={() => {
+                            setActiveMenuId(null);
+                            navigate(`/dashboard/sessions/${session.id}`);
+                          }}
+                          className="w-full px-4 py-2 text-left text-xs font-semibold text-charcoal hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <FolderOpen size={13} className="text-gray-400" />
+                          Open Session
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            setActiveMenuId(null);
+                            if (window.confirm(`Archive session "${session.job_title || session.name}"?`)) {
+                              try {
+                                await sessionsAPI.delete(session.id, { delete_candidates: false });
+                                queryClient.invalidateQueries({ queryKey: ['sessions'] });
+                                toast.success('Session archived');
+                              } catch(e) { toast.error(e.message); }
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-left text-xs font-semibold text-charcoal hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Archive size={13} className="text-gray-400" />
+                          Archive
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            setActiveMenuId(null);
+                            if (window.confirm(`Permanently delete session "${session.job_title || session.name}"? This will delete all candidates.`)) {
+                              try {
+                                await sessionsAPI.delete(session.id, { delete_candidates: true, hard_delete: true });
+                                queryClient.invalidateQueries({ queryKey: ['sessions'] });
+                                toast.success('Session deleted');
+                              } catch(e) { toast.error(e.message); }
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-left text-xs font-semibold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <Trash2 size={13} className="text-red-400" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* STATUS BADGE */}
+                <div className="mt-2.5">
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${style.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                    {style.label}
                   </span>
                 </div>
 
-                <div className="flex gap-3 mb-6">
-                  <div className="border border-gray-100 bg-gray-50/50 rounded-lg p-2.5 text-center flex-1">
-                    <div className="font-bold text-[22px] text-charcoal leading-none">{session.total_candidates || 0}</div>
-                    <div className="text-[10px] font-semibold text-gray-500 uppercase mt-1">Total</div>
+                {/* BOTTOM STATS ROW */}
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  <div className="bg-gray-50/50 border border-gray-100 rounded-xl py-2 px-1 text-center">
+                    <div className="text-md font-extrabold text-charcoal">{session.total_candidates || 0}</div>
+                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Total</div>
                   </div>
-                  <div className="border border-green-50 bg-green-50/20 rounded-lg p-2.5 text-center flex-1">
-                    <div className="font-bold text-[22px] text-[#22C55E] leading-none">{session.hired || 0}</div>
-                    <div className="text-[10px] font-semibold text-gray-500 uppercase mt-1">Hired</div>
+                  <div className="bg-green-50/20 border border-green-50/50 rounded-xl py-2 px-1 text-center">
+                    <div className="text-md font-extrabold text-[#22C55E]">{session.hired || 0}</div>
+                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Hired</div>
                   </div>
-                  <div className="border border-red-50 bg-red-50/20 rounded-lg p-2.5 text-center flex-1">
-                    <div className="font-bold text-[22px] text-[#EF4444] leading-none">{session.rejected || 0}</div>
-                    <div className="text-[10px] font-semibold text-gray-500 uppercase mt-1">Rejected</div>
+                  <div className="bg-red-50/20 border border-red-50/50 rounded-xl py-2 px-1 text-center">
+                    <div className="text-md font-extrabold text-[#EF4444]">{session.rejected || 0}</div>
+                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Rejected</div>
                   </div>
                 </div>
               </div>
-
-              <div className="mt-auto">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs text-gray-500">
-                    Created: {session.created_at ? new Date(session.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently'}
-                  </span>
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
-                    <div className={`w-1.5 h-1.5 rounded-full ${session.status === 'archived' ? 'bg-gray-400' : 'bg-green-500'}`}></div>
-                    <span className="text-[11px] font-bold text-charcoal capitalize">{session.status || 'Active'}</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => navigate(`/dashboard/sessions/${session.id}`)}
-                    className="flex-[2] bg-accent hover:bg-[#A06B10] text-white py-2 rounded-lg text-sm font-semibold transition-colors"
-                  >
-                    Open Session
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      if (window.confirm(`Archive session "${session.job_title || session.name}"?`)) {
-                        try {
-                          await sessionsAPI.delete(session.id, { delete_candidates: false });
-                          queryClient.invalidateQueries({ queryKey: ['sessions'] });
-                          toast.success('Session archived');
-                        } catch(e) { toast.error(e.message); }
-                      }
-                    }}
-                    className="flex-1 border border-gray-200 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-600 text-charcoal py-2 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Archive
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      if (window.confirm(`Permanently delete session "${session.job_title || session.name}"? This will delete all candidates and cannot be undone.`)) {
-                        try {
-                          await sessionsAPI.delete(session.id, { delete_candidates: true, hard_delete: true });
-                          queryClient.invalidateQueries({ queryKey: ['sessions'] });
-                          toast.success('Session deleted');
-                        } catch(e) { toast.error(e.message); }
-                      }
-                    }}
-                    className="flex-1 border border-gray-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-charcoal py-2 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center p-16 bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-100 min-h-[400px]">
-          <div className="text-accent mb-4">
-            <Layers size={64} />
-          </div>
-          <h2 className="text-xl font-bold text-charcoal mb-2">No sessions yet</h2>
-          <p className="text-muted mb-8 text-center max-w-sm">Create your first recruitment drive to start parsing resumes intelligently.</p>
-          <Link to="/dashboard/sessions/new" className="bg-accent hover:bg-[#A06B10] text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow flex items-center gap-2">
-            <Plus size={18} />
+        <div className="flex flex-col items-center justify-center p-16 bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] border border-gray-100 min-h-[350px]">
+          <Building size={48} className="text-gray-300 mb-4" />
+          <h2 className="text-lg font-bold text-charcoal mb-1">No sessions yet</h2>
+          <p className="text-sm font-medium text-gray-400 mb-6 text-center max-w-sm">
+            Create your first recruitment drive to start parsing resumes intelligently.
+          </p>
+          <button 
+            onClick={() => navigate('/dashboard/sessions/new')}
+            className="bg-accent hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow"
+          >
             Create Session
-          </Link>
+          </button>
         </div>
       )}
+
+      {/* FLOATING ACTION BUTTON */}
+      <button 
+        onClick={() => navigate('/dashboard/sessions/new')}
+        className="fixed bottom-8 right-8 z-50 bg-accent hover:bg-[#1D4ED8] text-white shadow-xl hover:shadow-2xl transition-all rounded-full px-5 py-3 flex items-center gap-2 font-bold active:scale-95 text-sm"
+      >
+        <Plus size={18} />
+        <span>Create</span>
+      </button>
     </div>
   );
 }

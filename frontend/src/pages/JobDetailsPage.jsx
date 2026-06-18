@@ -8,24 +8,24 @@ import ResumeUploadModal from '../components/ResumeUploadModal';
 import { toast } from 'react-hot-toast';
 
 const emojiMap = {
-  '🏢': <Building className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '💰': <DollarSign className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '📍': <MapPin className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '💼': <Briefcase className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '🔑': <Key className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '✨': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '🎉': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
+  '🏢': <Building className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '💰': <DollarSign className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '📍': <MapPin className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '💼': <Briefcase className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '🔑': <Key className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '✨': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '🎉': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
   '⚠️': <AlertCircle className="inline-block w-3.5 h-3.5 mx-0.5 text-red-500 align-text-bottom" />,
-  '💡': <Lightbulb className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
+  '💡': <Lightbulb className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
   '✅': <Check className="inline-block w-3.5 h-3.5 mx-0.5 text-green-600 align-text-bottom" />,
   '✔️': <Check className="inline-block w-3.5 h-3.5 mx-0.5 text-green-600 align-text-bottom" />,
-  '🤖': <Bot className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '📞': <Phone className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '🚀': <TrendingUp className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '💻': <Code className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
+  '🤖': <Bot className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '📞': <Phone className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '🚀': <TrendingUp className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '💻': <Code className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
   '⭐': <Star className="inline-block w-3.5 h-3.5 mx-0.5 text-amber-500 align-text-bottom" />,
   '★': <Star className="inline-block w-3.5 h-3.5 mx-0.5 text-amber-500 align-text-bottom" />,
-  '🔥': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-orange-500 align-text-bottom" />
+  '🔥': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-blue-500 align-text-bottom" />
 };
 
 const renderTextWithIcons = (text) => {
@@ -291,7 +291,7 @@ export default function JobDetailsPage() {
       <div className="min-h-screen bg-[#f5f4ef] flex flex-col">
         <JobsNavbar onUploadClick={() => setIsModalOpen(true)} />
         <div className="flex-1 flex flex-col items-center justify-center space-y-4">
-          <RefreshCw className="animate-spin text-[#C8871A]" size={32} />
+          <RefreshCw className="animate-spin text-[#2563EB]" size={32} />
           <span className="text-sm text-[#5c5c5c]">Retrieving job details...</span>
         </div>
       </div>
@@ -308,7 +308,7 @@ export default function JobDetailsPage() {
             <h3 className="font-bold text-lg text-[#2A2A2A]">Job Posting Not Found</h3>
             <p className="text-xs text-[#5c5c5c] mt-1">This job listing may have expired or been archived.</p>
           </div>
-          <Link to="/jobs/search" className="bg-[#C8871A] text-white px-6 py-2.5 rounded-xl font-bold text-xs">
+          <Link to="/jobs/search" className="bg-[#2563EB] text-white px-6 py-2.5 rounded-xl font-bold text-xs">
             Return to search
           </Link>
         </div>
@@ -338,25 +338,25 @@ export default function JobDetailsPage() {
             {/* Header card matching inspiratio_ui5.jpeg top block */}
             <div className="bg-white border border-[#e6dfcd] p-6 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-[#f5f4ef] border border-[#e6dfcd] text-[#C8871A] text-xl font-bold rounded-2xl flex items-center justify-center uppercase shadow-inner">
+                <div className="w-16 h-16 bg-[#f5f4ef] border border-[#e6dfcd] text-[#2563EB] text-xl font-bold rounded-2xl flex items-center justify-center uppercase shadow-inner">
                   {job.company_name[0]}
                 </div>
                 <div className="space-y-1">
                   <h1 className="text-2xl font-extrabold text-[#2A2A2A] leading-tight">{job.job_title}</h1>
                   <p className="text-sm text-[#5c5c5c] font-medium flex items-center gap-1.5">
                     <Building size={14} className="text-[#5c5c5c]" />
-                    <span><span className="text-[#C8871A] font-semibold">{job.company_name}</span> • {job.preferred_locations?.join(', ') || 'Remote'}</span>
+                    <span><span className="text-[#2563EB] font-semibold">{job.company_name}</span> • {job.preferred_locations?.join(', ') || 'Remote'}</span>
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 w-full md:w-auto">
-                <button className="flex-1 md:flex-initial bg-[#f5f4ef] border border-[#e6dfcd] hover:border-[#C8871A] text-[#2A2A2A] font-bold text-xs px-5 py-3 rounded-xl transition-all flex items-center justify-center space-x-2">
+                <button className="flex-1 md:flex-initial bg-[#f5f4ef] border border-[#e6dfcd] hover:border-[#2563EB] text-[#2A2A2A] font-bold text-xs px-5 py-3 rounded-xl transition-all flex items-center justify-center space-x-2">
                   <Bookmark size={14} />
                   <span>Save</span>
                 </button>
                 <button
                   onClick={() => setShowApplyModal(true)}
-                  className="flex-1 md:flex-initial bg-[#C8871A] hover:bg-[#B07314] text-white font-bold text-xs px-6 py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center space-x-2"
+                  className="flex-1 md:flex-initial bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs px-6 py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center space-x-2"
                 >
                   <span>Apply Now</span>
                 </button>
@@ -418,17 +418,17 @@ export default function JobDetailsPage() {
                 </div>
 
                 {/* Optimisation Tip box */}
-                <div className="bg-[#FFF9F2] border border-[#f5e3ce] p-3 rounded-xl text-[11px] text-[#C8871A] font-medium leading-relaxed flex items-start gap-2">
+                <div className="bg-[#F0F6FF] border border-[#BFDBFE] p-3 rounded-xl text-[11px] text-[#2563EB] font-medium leading-relaxed flex items-start gap-2">
                   {missingSkills.length > 0 ? (
                     <>
-                      <Lightbulb size={14} className="shrink-0 text-[#C8871A] mt-0.5" />
+                      <Lightbulb size={14} className="shrink-0 text-[#2563EB] mt-0.5" />
                       <span>
                         <strong>Tip:</strong> Adding <strong>"{missingSkills[0]}"</strong> to your resume profile might increase your match score by {Math.min(10, Math.round(100 / (job.required_skills?.length || 10)))}%.
                       </span>
                     </>
                   ) : (
                     <>
-                      <Sparkles size={14} className="shrink-0 text-[#C8871A] mt-0.5" />
+                      <Sparkles size={14} className="shrink-0 text-[#2563EB] mt-0.5" />
                       <span>
                         <strong>Awesome:</strong> You have mapped all required skills for this profile. You are highly competitive!
                       </span>
@@ -442,7 +442,7 @@ export default function JobDetailsPage() {
             <div className="bg-white border border-[#e6dfcd] p-8 rounded-3xl shadow-sm space-y-6">
               <div className="space-y-4 pb-6 border-b border-[#f5f4ef]">
                 <h3 className="text-lg font-bold text-[#2A2A2A] flex items-center space-x-2">
-                  <Award size={18} className="text-[#C8871A]" />
+                  <Award size={18} className="text-[#2563EB]" />
                   <span>Role Overview</span>
                 </h3>
                 
@@ -477,7 +477,7 @@ export default function JobDetailsPage() {
                       {sections.map((sec, idx) => (
                         <div key={idx} className="space-y-3 pt-2">
                           {sec.title && (
-                            <h4 className="text-sm font-extrabold uppercase tracking-wider text-[#2A2A2A] border-l-4 border-[#C8871A] pl-3 py-0.5">
+                            <h4 className="text-sm font-extrabold uppercase tracking-wider text-[#2A2A2A] border-l-4 border-[#2563EB] pl-3 py-0.5">
                               {sec.title}
                             </h4>
                           )}
@@ -486,7 +486,7 @@ export default function JobDetailsPage() {
                               if (item.startsWith('- ') || item.startsWith('* ')) {
                                 return (
                                   <div key={itemIdx} className="flex items-start space-x-2 text-xs text-[#5c5c5c] leading-relaxed pl-3">
-                                    <span className="text-[#C8871A] mt-1 shrink-0 font-bold">•</span>
+                                    <span className="text-[#2563EB] mt-1 shrink-0 font-bold">•</span>
                                     <span>{renderTextWithIcons(item.substring(2))}</span>
                                   </div>
                                 );
@@ -536,7 +536,7 @@ export default function JobDetailsPage() {
             {/* AI Safety Verification Audit */}
             <div className="bg-white border border-[#e6dfcd] p-6 rounded-3xl shadow-sm space-y-4">
               <div className="flex items-center space-x-2">
-                <Shield className="text-[#C8871A] w-5 h-5" />
+                <Shield className="text-[#2563EB] w-5 h-5" />
                 <h3 className="font-bold text-sm text-[#2A2A2A]">Legitimacy Verification</h3>
               </div>
               
@@ -605,7 +605,7 @@ export default function JobDetailsPage() {
                   <button
                     onClick={handleRunSafetyCheck}
                     disabled={checkingSafety}
-                    className="w-full bg-[#C8871A] hover:bg-[#B07314] disabled:opacity-50 text-white font-bold text-xs py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center space-x-2"
+                    className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-bold text-xs py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center space-x-2"
                   >
                     {checkingSafety ? (
                       <>
@@ -629,7 +629,7 @@ export default function JobDetailsPage() {
               
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 text-xs text-[#5c5c5c]">
-                  <Calendar size={16} className="text-[#C8871A] shrink-0" />
+                  <Calendar size={16} className="text-[#2563EB] shrink-0" />
                   <div>
                     <p className="font-bold text-[#2A2A2A]">Posted</p>
                     <p>2 days ago</p>
@@ -637,7 +637,7 @@ export default function JobDetailsPage() {
                 </div>
 
                 <div className="flex items-center space-x-3 text-xs text-[#5c5c5c]">
-                  <Briefcase size={16} className="text-[#C8871A] shrink-0" />
+                  <Briefcase size={16} className="text-[#2563EB] shrink-0" />
                   <div>
                     <p className="font-bold text-[#2A2A2A]">Job Type</p>
                     <p>Full-time</p>
@@ -645,7 +645,7 @@ export default function JobDetailsPage() {
                 </div>
 
                 <div className="flex items-center space-x-3 text-xs text-[#5c5c5c]">
-                  <DollarSign size={16} className="text-[#C8871A] shrink-0" />
+                  <DollarSign size={16} className="text-[#2563EB] shrink-0" />
                   <div>
                     <p className="font-bold text-[#2A2A2A]">Salary</p>
                     <p>${job.min_experience ? (job.min_experience * 30 + 90) : 120}k - ${job.min_experience ? (job.min_experience * 35 + 120) : 180}k</p>
@@ -653,7 +653,7 @@ export default function JobDetailsPage() {
                 </div>
 
                 <div className="flex items-center space-x-3 text-xs text-[#5c5c5c]">
-                  <Users size={16} className="text-[#C8871A] shrink-0" />
+                  <Users size={16} className="text-[#2563EB] shrink-0" />
                   <div>
                     <p className="font-bold text-[#2A2A2A]">Applicants</p>
                     <p>{job.min_experience ? (job.min_experience * 18 + 14) : 48}</p>
@@ -663,7 +663,7 @@ export default function JobDetailsPage() {
 
               <button
                 onClick={handleShareClick}
-                className="w-full bg-[#f5f4ef] border border-[#e6dfcd] hover:border-[#C8871A] text-[#2A2A2A] font-bold text-xs py-3 rounded-xl transition-colors flex items-center justify-center space-x-2 shadow-sm active:scale-98"
+                className="w-full bg-[#f5f4ef] border border-[#e6dfcd] hover:border-[#2563EB] text-[#2A2A2A] font-bold text-xs py-3 rounded-xl transition-colors flex items-center justify-center space-x-2 shadow-sm active:scale-98"
               >
                 <Share2 size={14} />
                 <span>Share Job</span>
@@ -674,7 +674,7 @@ export default function JobDetailsPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="font-bold text-sm text-[#2A2A2A]">Similar Jobs</h3>
-                <Link to="/jobs/search" className="text-xs font-bold text-[#C8871A] hover:underline">View all</Link>
+                <Link to="/jobs/search" className="text-xs font-bold text-[#2563EB] hover:underline">View all</Link>
               </div>
 
               <div className="space-y-3">
@@ -684,10 +684,10 @@ export default function JobDetailsPage() {
                     <div
                       key={j.id}
                       onClick={() => navigate(`/jobs/${j.id}`)}
-                      className="group bg-white border border-[#e6dfcd] hover:border-[#C8871A] p-4 rounded-2xl shadow-sm space-y-2 hover:shadow transition-all cursor-pointer"
+                      className="group bg-white border border-[#e6dfcd] hover:border-[#2563EB] p-4 rounded-2xl shadow-sm space-y-2 hover:shadow transition-all cursor-pointer"
                     >
                       <div className="flex justify-between items-start">
-                        <h4 className="font-bold text-xs text-[#2A2A2A] group-hover:text-[#C8871A] transition-colors">
+                        <h4 className="font-bold text-xs text-[#2A2A2A] group-hover:text-[#2563EB] transition-colors">
                           {j.job_title}
                         </h4>
                         <span className="text-[10px] bg-[#22C55E]/10 text-[#22C55E] px-1.5 py-0.5 rounded font-bold shrink-0 ml-2">
@@ -802,7 +802,7 @@ export default function JobDetailsPage() {
                 <button
                   type="submit"
                   disabled={applyLoading}
-                  className="w-full bg-[#C8871A] hover:bg-[#B07314] text-white font-bold text-sm py-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2"
+                  className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-sm py-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2"
                 >
                   {applyLoading && <RefreshCw size={14} className="animate-spin" />}
                   <span>{applyLoading ? 'Sending Application...' : 'Submit Application'}</span>

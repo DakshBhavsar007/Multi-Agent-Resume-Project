@@ -27,14 +27,14 @@ const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
 
   const getPillColor = () => {
     switch(tagColor) {
-      case 'amber': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'amber': return 'bg-blue-100 text-amber-800 border-amber-200';
       case 'blue': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'gray': default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   return (
-    <div className="w-full flex flex-wrap items-center gap-2 p-2 border-[1.5px] border-gray-200 rounded-lg bg-white focus-within:border-[#C8871A] transition-colors">
+    <div className="w-full flex flex-wrap items-center gap-2 p-2 border-[1.5px] border-gray-200 rounded-lg bg-white focus-within:border-[#2563EB] transition-colors">
       {tags.map((tag, idx) => (
         <div key={idx} className={`flex items-center gap-1 px-2.5 py-1 rounded-md border text-sm font-medium ${getPillColor()}`}>
           {tag}
@@ -127,12 +127,12 @@ export default function NewSessionPage() {
           return (
             <div key={idx} className="flex flex-col items-center flex-1 relative z-10">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 transition-colors ${
-                isActive ? "bg-[#C8871A] text-white ring-4 ring-orange-50" :
+                isActive ? "bg-[#2563EB] text-white ring-4 ring-blue-50" :
                 isDone ? "bg-[#2A2A2A] text-white" : "bg-gray-200 text-gray-500"
               }`}>
                 {isDone ? <Check size={16} /> : s.num}
               </div>
-              <span className={`text-xs font-semibold uppercase tracking-wider ${isActive ? "text-[#C8871A]" : isDone ? "text-charcoal" : "text-gray-400"}`}>
+              <span className={`text-xs font-semibold uppercase tracking-wider ${isActive ? "text-[#2563EB]" : isDone ? "text-charcoal" : "text-gray-400"}`}>
                 {s.label}
               </span>
             </div>
@@ -323,7 +323,7 @@ export default function NewSessionPage() {
                 <input
                   type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
                   placeholder="e.g., Backend Engineers Q2 2025"
-                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#C8871A] focus:outline-none"
+                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
               
@@ -332,7 +332,7 @@ export default function NewSessionPage() {
                 <input
                   type="text" value={formData.job_title} onChange={e => setFormData({...formData, job_title: e.target.value})}
                   placeholder="e.g., Senior Full Stack Engineer"
-                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#C8871A] focus:outline-none"
+                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
 
@@ -342,13 +342,13 @@ export default function NewSessionPage() {
                   value={formData.job_description} onChange={e => setFormData({...formData, job_description: e.target.value})}
                   placeholder="Paste the complete job description..."
                   rows={10}
-                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#C8871A] focus:outline-none resize-y"
+                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none resize-y"
                 />
               </div>
 
               <button
                 type="button" onClick={handleInfer} disabled={inferring}
-                className="w-full py-3 bg-[#C8871A] hover:bg-[#A06B10] text-white rounded-lg font-semibold flex flex-row items-center justify-center gap-2 disabled:opacity-75 transition-colors shadow-sm"
+                className="w-full py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg font-semibold flex flex-row items-center justify-center gap-2 disabled:opacity-75 transition-colors shadow-sm"
               >
                 {inferring ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
                 {inferring ? "Analyzing job description..." : "Analyze with AI"}
@@ -362,7 +362,7 @@ export default function NewSessionPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.required_skills.map((s, i) => (
-                      <span key={i} className="text-[11px] bg-amber-100 text-amber-800 px-2 py-1 rounded font-semibold border border-amber-200">{s}</span>
+                      <span key={i} className="text-[11px] bg-blue-100 text-amber-800 px-2 py-1 rounded font-semibold border border-amber-200">{s}</span>
                     ))}
                     {formData.nice_to_have.map((s, i) => (
                       <span key={i} className="text-[11px] bg-gray-200 text-gray-800 px-2 py-1 rounded font-semibold border border-gray-300">{s}</span>
@@ -390,7 +390,7 @@ export default function NewSessionPage() {
                   }
                   setStep(2);
                 }}
-                className="bg-[#C8871A] hover:bg-[#A06B10] text-white px-6 py-2.5 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-lg font-semibold transition-colors flex items-center gap-2"
               >
                 Next: Set Criteria <ArrowRight size={18} />
               </button>
@@ -440,7 +440,7 @@ export default function NewSessionPage() {
                   type="number" min="0" max="20"
                   value={formData.min_experience}
                   onChange={(e) => setFormData({...formData, min_experience: parseInt(e.target.value) || 0})}
-                  className="w-20 p-2 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#C8871A] focus:outline-none"
+                  className="w-20 p-2 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
                 />
                 <span className="text-sm text-muted">years</span>
               </div>
@@ -453,7 +453,7 @@ export default function NewSessionPage() {
                     type="range" min="0" max="100" step="5"
                     value={formData.min_match_score}
                     onChange={handleSliderChange}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#C8871A]"
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#2563EB]"
                   />
                   <div className={`text-3xl font-bold w-20 text-right ${formData.min_match_score < 40 ? 'text-red-500' : formData.min_match_score <= 60 ? 'text-amber-500' : 'text-green-500'}`}>
                     {formData.min_match_score}%
@@ -473,7 +473,7 @@ export default function NewSessionPage() {
                         type="range" min="0" max="1" step="0.05"
                         value={formData.weights[key]}
                         onChange={(e) => handleWeightChange(key, e.target.value)}
-                        className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#C8871A]"
+                        className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#2563EB]"
                       />
                       <div className="w-12 text-sm text-right font-mono text-charcoal">{formData.weights[key].toFixed(2)}</div>
                     </div>
@@ -508,7 +508,7 @@ export default function NewSessionPage() {
                   }
                   setStep(3);
                 }}
-                className="bg-[#C8871A] hover:bg-[#A06B10] text-white px-6 py-2.5 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-lg font-semibold transition-colors flex items-center gap-2"
               >
                 Next: Set Rounds <ArrowRight size={18} />
               </button>
@@ -526,7 +526,7 @@ export default function NewSessionPage() {
               {formData.rounds.map((round, idx) => {
                 const isLast = idx === formData.rounds.length - 1;
                 return (
-                  <div key={round.id} className={`flex items-center gap-3 p-3 bg-white border ${isLast ? 'border-[#C8871A] shadow-sm' : 'border-gray-200'} rounded-xl relative transition-all`}>
+                  <div key={round.id} className={`flex items-center gap-3 p-3 bg-white border ${isLast ? 'border-[#2563EB] shadow-sm' : 'border-gray-200'} rounded-xl relative transition-all`}>
                     <div className="text-gray-400 cursor-move"><GripVertical size={18} /></div>
                     
                     <input 
@@ -536,7 +536,7 @@ export default function NewSessionPage() {
                         newRounds[idx].name = e.target.value;
                         setFormData({...formData, rounds: newRounds});
                       }}
-                      className="flex-[2] p-2 bg-transparent border-b border-gray-200 focus:border-[#C8871A] focus:outline-none text-sm text-charcoal font-medium"
+                      className="flex-[2] p-2 bg-transparent border-b border-gray-200 focus:border-[#2563EB] focus:outline-none text-sm text-charcoal font-medium"
                       placeholder="Round Name"
                     />
                     
@@ -547,7 +547,7 @@ export default function NewSessionPage() {
                         newRounds[idx].interviewer = e.target.value;
                         setFormData({...formData, rounds: newRounds});
                       }}
-                      className="flex-1 p-2 bg-transparent border-b border-gray-200 focus:border-[#C8871A] focus:outline-none text-sm text-gray-600"
+                      className="flex-1 p-2 bg-transparent border-b border-gray-200 focus:border-[#2563EB] focus:outline-none text-sm text-gray-600"
                       placeholder="Interviewer (optional)"
                     />
                     
@@ -563,7 +563,7 @@ export default function NewSessionPage() {
                     </button>
                     
                     {isLast && (
-                      <div className="absolute -top-2.5 right-4 bg-amber-100 text-[#C8871A] text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-amber-200">
+                      <div className="absolute -top-2.5 right-4 bg-blue-100 text-[#2563EB] text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-amber-200">
                         Final Round
                       </div>
                     )}
@@ -578,7 +578,7 @@ export default function NewSessionPage() {
                   const newId = Math.max(...formData.rounds.map(r=>r.id), 0) + 1;
                   setFormData({...formData, rounds: [...formData.rounds, {id:newId, name:"", interviewer:"", order:newId}]});
                 }}
-                className="w-full py-3 border-2 border-dashed border-amber-300 bg-orange-50 text-[#C8871A] hover:bg-orange-100 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3 border-2 border-dashed border-blue-300 bg-blue-50 text-[#2563EB] hover:bg-blue-100 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <Plus size={16} /> Add Round
               </button>
@@ -587,7 +587,7 @@ export default function NewSessionPage() {
             <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col gap-4 relative z-10">
               <button
                 onClick={handleCreate} disabled={creating}
-                className="w-full h-12 bg-[#C8871A] hover:bg-[#A06B10] text-white rounded-lg font-semibold transition-colors flex items-center justify-center disabled:opacity-75 shadow-sm text-lg"
+                className="w-full h-12 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg font-semibold transition-colors flex items-center justify-center disabled:opacity-75 shadow-sm text-lg"
               >
                 {creating ? <><Loader2 className="animate-spin mr-2" size={20} /> Creating session...</> : <><Save size={20} className="mr-2" /> Create Session</>}
               </button>

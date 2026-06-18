@@ -49,7 +49,7 @@ export default function DeveloperBilling() {
         order_id: orderData.order_id,
         name: "Vishleshan",
         description: `Upgrade to ${plans.find(p=>p.id===planId).name} Plan`,
-        theme: { color: "#C8871A" },
+        theme: { color: "#2563EB" },
         handler: async function(response) {
           try {
             await portalBilling.verifyPayment({
@@ -131,7 +131,7 @@ export default function DeveloperBilling() {
                 
                 <div className="flex justify-between items-center mb-4">
                   <h3 className={`text-xl font-bold uppercase tracking-tight ${isActive ? "text-accent-dark" : "text-charcoal"}`}>{p.name}</h3>
-                  {isActive && <span className="bg-amber-100 text-amber-800 text-[10px] font-black uppercase px-2 py-1 rounded-full">Current</span>}
+                  {isActive && <span className="bg-blue-100 text-amber-800 text-[10px] font-black uppercase px-2 py-1 rounded-full">Current</span>}
                 </div>
                 
                 <div className="mb-6 border-b border-gray-100 pb-6">

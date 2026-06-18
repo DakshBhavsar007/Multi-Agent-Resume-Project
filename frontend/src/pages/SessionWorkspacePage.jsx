@@ -12,6 +12,7 @@ import { useIngestStore } from '../stores/ingestStore';
 import { useCandidateStore } from '../stores/candidateStore';
 import ChatPanel from '../components/ChatPanel';
 import CandidateCard from '../components/CandidateCard';
+import PremiumBadge from '../components/PremiumBadge';
 
 export default function SessionWorkspacePage() {
   const { id } = useParams();
@@ -229,7 +230,7 @@ export default function SessionWorkspacePage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={handleMatchAll} className="bg-accent hover:bg-[#A06B10] text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 shadow-sm">
+              <button onClick={handleMatchAll} className="bg-accent hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 shadow-sm">
                 <Zap size={16} fill="currentColor" /> Match All
               </button>
               <button 
@@ -237,7 +238,7 @@ export default function SessionWorkspacePage() {
                   const url = exportAPI.candidatesUrl(id);
                   if (url) window.open(url);
                 }} 
-                className="border-[1.5px] border-accent text-accent hover:bg-orange-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 bg-white"
+                className="border-[1.5px] border-accent text-accent hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 bg-white"
               >
                 <Download size={16} /> Export Hired
               </button>
@@ -247,7 +248,7 @@ export default function SessionWorkspacePage() {
                   navigator.clipboard.writeText(url);
                   toast.success("Public Apply Link copied to clipboard!");
                 }}
-                className="border-[1.5px] border-accent text-accent hover:bg-orange-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 bg-white"
+                className="border-[1.5px] border-accent text-accent hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 bg-white"
               >
                 <LinkIcon size={16} /> Copy Apply Link
               </button>
@@ -309,7 +310,7 @@ export default function SessionWorkspacePage() {
                     <Upload size={32} className="text-accent mb-3" />
                     <h4 className="font-bold text-charcoal text-lg mb-1">Direct Upload</h4>
                     <p className="text-xs text-muted mb-4 font-medium">Upload PDF/DOCX files or drag an entire folder</p>
-                    <div {...getDirectProps()} className="border-2 border-dashed border-[#C8871A] rounded-xl h-[120px] flex items-center justify-center bg-orange-50/40 hover:bg-orange-50 cursor-pointer transition-colors relative overflow-hidden">
+                    <div {...getDirectProps()} className="border-2 border-dashed border-[#2563EB] rounded-xl h-[120px] flex items-center justify-center bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition-colors relative overflow-hidden">
                       <input {...getDirectInput()} webkitdirectory="true" directory="" />
                       <p className="text-sm font-bold text-accent">Drop files here or click to browse</p>
                     </div>
@@ -335,22 +336,25 @@ export default function SessionWorkspacePage() {
                             setSelectedFiles([]);
                             toast.success("Upload started!");
                           } catch (e) { toast.error(e.message); }
-                        }} className="w-full mt-4 bg-accent text-white py-2.5 rounded-lg text-sm font-bold hover:bg-[#A06B10] shadow-sm transition-colors">
+                        }} className="w-full mt-4 bg-accent text-white py-2.5 rounded-lg text-sm font-bold hover:bg-[#1D4ED8] shadow-sm transition-colors">
                           Upload {selectedFiles.length} Files
                         </button>
                       </div>
                     )}
                   </div>
 
-                  {/* ZIP Archive */}
-                  <div className="bg-white rounded-2xl p-6 border-2 border-transparent hover:border-accent transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-                    <Archive size={32} className="text-accent mb-3" />
-                    <h4 className="font-bold text-charcoal text-lg mb-1">ZIP Upload</h4>
-                    <p className="text-xs text-muted mb-4 font-medium">Upload a ZIP containing all resume files</p>
-                    <div {...getZipProps()} className="border-2 border-dashed border-gray-300 rounded-xl h-[120px] flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
-                      <input {...getZipInput()} />
-                      <p className="text-sm font-bold text-gray-500">Drop ZIP file here</p>
-                    </div>
+                  {/* ZIP Archive — Premium Feature */}
+                  <div className="relative">
+                    <PremiumBadge tooltip="Bulk ZIP upload is available on the Premium plan">
+                      <div className="bg-white rounded-2xl p-6 border-2 border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                        <Archive size={32} className="text-accent mb-3" />
+                        <h4 className="font-bold text-charcoal text-lg mb-1">ZIP Upload</h4>
+                        <p className="text-xs text-muted mb-4 font-medium">Upload a ZIP containing all resume files</p>
+                        <div className="border-2 border-dashed border-gray-300 rounded-xl h-[120px] flex items-center justify-center bg-gray-50">
+                          <p className="text-sm font-bold text-gray-500">Drop ZIP file here</p>
+                        </div>
+                      </div>
+                    </PremiumBadge>
                   </div>
 
                   {/* Gmail Sync */}
@@ -382,7 +386,7 @@ export default function SessionWorkspacePage() {
                             addJob(job_id, "gmail");
                             toast.success("Gmail sync started");
                           } catch(e) { toast.error(e.message) }
-                        }} className="bg-accent text-white py-2 rounded-lg text-sm font-bold hover:bg-[#A06B10] shadow-sm transition-colors mt-auto">
+                        }} className="bg-accent text-white py-2 rounded-lg text-sm font-bold hover:bg-[#1D4ED8] shadow-sm transition-colors mt-auto">
                           Sync Now
                         </button>
                       </div>
@@ -420,7 +424,7 @@ export default function SessionWorkspacePage() {
                 <details className="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-2 border-transparent hover:border-gray-200 transition-colors overflow-hidden group">
                   <summary className="font-bold text-charcoal p-5 cursor-pointer bg-gray-50 flex items-center justify-between text-[15px]">
                     <span className="flex items-center gap-2">
-                      <Building size={16} className="text-[#C8871A]" />
+                      <Building size={16} className="text-[#2563EB]" />
                       <span>ATS / Enterprise Import</span>
                     </span>
                     <ChevronDown size={20} className="text-gray-400 group-open:rotate-180 transition-transform" />
@@ -441,13 +445,13 @@ export default function SessionWorkspacePage() {
                       <span className="font-mono text-[11px] bg-white px-2 py-0.5 rounded border border-blue-100 mr-2 mt-2 inline-block">experience_years</span>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-4 items-stretch h-32" {...getAtsProps()}>
-                      <div className={`border-2 border-dashed rounded-xl flex-1 flex flex-col items-center justify-center cursor-pointer transition-colors ${atsFile ? 'border-accent bg-orange-50' : 'border-gray-300 bg-gray-50/50 hover:bg-gray-50'}`}>
+                      <div className={`border-2 border-dashed rounded-xl flex-1 flex flex-col items-center justify-center cursor-pointer transition-colors ${atsFile ? 'border-accent bg-blue-50' : 'border-gray-300 bg-gray-50/50 hover:bg-gray-50'}`}>
                         <input {...getAtsInput()} />
                         <span className="text-2xl mb-2">📄</span>
                         <span className="text-sm text-gray-500 font-bold">{atsFile ? atsFile.name : 'Drop CSV / Excel file here'}</span>
                       </div>
                       <div className="flex flex-col justify-center gap-3 min-w-[200px]">
-                        <button className="text-accent font-bold text-xs border-2 border-accent bg-orange-50 hover:bg-orange-100 px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"><Download size={16}/> Download sample CSV</button>
+                        <button className="text-accent font-bold text-xs border-2 border-accent bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"><Download size={16}/> Download sample CSV</button>
                         <button 
                           onClick={async () => {
                             if (!atsFile) return;
@@ -460,7 +464,7 @@ export default function SessionWorkspacePage() {
                             } catch (e) { toast.error(e.message); }
                           }}
                           disabled={!atsFile}
-                          className={`font-bold text-sm px-4 py-2.5 rounded-xl transition-colors ${atsFile ? 'bg-accent text-white hover:bg-[#A06B10]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                          className={`font-bold text-sm px-4 py-2.5 rounded-xl transition-colors ${atsFile ? 'bg-accent text-white hover:bg-[#1D4ED8]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                         >
                           Import Records
                         </button>
@@ -492,7 +496,7 @@ export default function SessionWorkspacePage() {
                           </div>
                           <div className="w-[110px] text-right flex justify-end">
                             {job.status === 'pending' && <span className="text-[10px] text-gray-500 font-black uppercase tracking-wider bg-gray-100 px-3 py-1.5 rounded-md border border-gray-200">Waiting...</span>}
-                            {job.status === 'processing' && <span className="text-[10px] text-amber-700 font-black uppercase tracking-wider bg-amber-100 px-3 py-1.5 rounded-md border border-amber-200 shadow-sm flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>Processing</span>}
+                            {job.status === 'processing' && <span className="text-[10px] text-amber-700 font-black uppercase tracking-wider bg-blue-100 px-3 py-1.5 rounded-md border border-amber-200 shadow-sm flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>Processing</span>}
                             {job.status === 'done' && <span className="text-[10px] text-green-700 font-black uppercase tracking-wider bg-green-100 px-3 py-1.5 rounded-md border border-green-200 shadow-sm flex items-center justify-end gap-1.5"><Check size={12} strokeWidth={3}/> Complete</span>}
                             {job.status === 'failed' && <span className="text-[10px] text-red-700 font-black uppercase tracking-wider bg-red-100 px-3 py-1.5 rounded-md border border-red-200 shadow-sm flex items-center justify-end gap-1.5"><X size={12} strokeWidth={3}/> Failed ({job.failed || 0})</span>}
                           </div>
@@ -546,7 +550,7 @@ export default function SessionWorkspacePage() {
                 </select>
                 <div className="flex items-center gap-3 border-2 border-gray-200 p-2.5 rounded-lg px-4 bg-white shadow-sm">
                   <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Score &gt;</span>
-                  <input type="range" min="0" max="100" step="5" value={filters.min_score} onChange={e=>setFilters({...filters, min_score: parseInt(e.target.value)})} className="w-24 accent-[#C8871A] cursor-pointer" />
+                  <input type="range" min="0" max="100" step="5" value={filters.min_score} onChange={e=>setFilters({...filters, min_score: parseInt(e.target.value)})} className="w-24 accent-[#2563EB] cursor-pointer" />
                   <span className="text-xs font-black text-charcoal w-6 bg-gray-100 p-1 rounded inline-block text-center">{filters.min_score}</span>
                 </div>
                 <input type="text" placeholder="Must have skill..." value={filters.skill} onChange={e=>setFilters({...filters, skill: e.target.value})} className="border-2 border-gray-200 p-2.5 rounded-lg text-sm font-medium focus:border-accent focus:outline-none w-48 bg-white shadow-sm" />
@@ -584,7 +588,7 @@ export default function SessionWorkspacePage() {
                     <p className="text-sm text-gray-400 font-medium max-w-sm mb-6">
                       {activeRound === 1 && Object.values(jobs).length === 0 ? "You haven't uploaded any resumes yet. Start ingesting files to populate this round." : "Try adjusting your filters or check a different round pipeline."}
                     </p>
-                    {activeRound === 1 && <button onClick={()=>setActiveTab("upload")} className="px-6 py-2.5 border-2 border-accent text-accent rounded-xl font-bold hover:bg-orange-50 hover:shadow-sm transition-colors text-sm flex items-center gap-2"><Upload size={16}/> Go to Upload</button>}
+                    {activeRound === 1 && <button onClick={()=>setActiveTab("upload")} className="px-6 py-2.5 border-2 border-accent text-accent rounded-xl font-bold hover:bg-blue-50 hover:shadow-sm transition-colors text-sm flex items-center gap-2"><Upload size={16}/> Go to Upload</button>}
                   </div>
                 )}
               </div>
@@ -600,7 +604,7 @@ export default function SessionWorkspacePage() {
                   { label: "Scored & Active", val: scoredActive, c: "text-blue-600", bg: "bg-blue-50" },
                   { label: "Hired Final", val: hiredFinal, c: "text-green-600", bg: "bg-green-50" },
                   { label: "Rejected", val: rejectedCount, c: "text-red-500", bg: "bg-red-50" },
-                  { label: "Avg Match Score", val: `${avgMatchScore}%`, c: "text-[#C8871A]", bg: "bg-orange-50" },
+                  { label: "Avg Match Score", val: `${avgMatchScore}%`, c: "text-[#2563EB]", bg: "bg-blue-50" },
                 ].map((s,i) => (
                   <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-center relative overflow-hidden group">
                     <div className={`absolute top-0 inset-x-0 h-1.5 ${s.bg} border-b border-gray-100 transition-all group-hover:h-full -z-10 opacity-50`}></div>
@@ -625,7 +629,7 @@ export default function SessionWorkspacePage() {
                         <XAxis dataKey="name" tick={{fontSize:12, fill:'#6B7280', fontWeight:600}} axisLine={{stroke:'#E5E7EB'}} tickLine={false} dy={10} />
                         <YAxis tick={{fontSize:12, fill:'#6B7280', fontWeight:600}} axisLine={false} tickLine={false} dx={-10} />
                         <Tooltip cursor={{fill: '#F5F0E8', radius: 8}} contentStyle={{borderRadius:12, border:'1px solid #E5E7EB', boxShadow:'0 8px 24px rgba(0,0,0,0.08)', fontWeight:700}}/>
-                        <Bar dataKey="count" fill="#C8871A" radius={[6,6,0,0]} barSize={40} />
+                        <Bar dataKey="count" fill="#2563EB" radius={[6,6,0,0]} barSize={40} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -665,7 +669,7 @@ export default function SessionWorkspacePage() {
               <div className="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden mt-8">
                 <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                   <h3 className="font-black text-charcoal text-lg">Leading Candidates</h3>
-                  <button className="text-xs font-bold text-accent hover:text-accent-dark transition-colors px-3 py-1.5 bg-orange-50 rounded-lg">View Full Leaderboard</button>
+                  <button className="text-xs font-bold text-accent hover:text-accent-dark transition-colors px-3 py-1.5 bg-blue-50 rounded-lg">View Full Leaderboard</button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm whitespace-nowrap">
@@ -680,7 +684,7 @@ export default function SessionWorkspacePage() {
                     </thead>
                     <tbody className="cursor-pointer">
                       {[...candidatesList].sort((a,b) => (b.match_score||0) - (a.match_score||0)).slice(0, 5).map((cand, i) => (
-                        <tr key={cand.id} className="border-b last:border-b-0 border-gray-50 hover:bg-orange-50/30 transition-colors group">
+                        <tr key={cand.id} className="border-b last:border-b-0 border-gray-50 hover:bg-blue-50/30 transition-colors group">
                           <td className="p-4 pl-6 text-gray-400">
                             <span className={`inline-block w-6 text-center font-black ${i===0?'text-amber-500':i===1?'text-gray-400':i===2?'text-amber-700':''}`}>{i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`}</span>
                           </td>

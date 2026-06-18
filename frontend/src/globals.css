@@ -6,7 +6,7 @@
 
 :root {
   --bg: #F5F0E8;
-  --accent: #C8871A;
+  --accent: #2563EB;
   --text: #2A2A2A;
   --card: #FFFFFF;
   --success: #22C55E;
@@ -38,4 +38,16 @@ body {
 @keyframes fillRing {
   from { stroke-dashoffset: 100; }
   to { stroke-dashoffset: var(--target-offset); }
+}
+
+/* Horizontal marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
 }

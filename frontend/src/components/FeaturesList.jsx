@@ -70,8 +70,8 @@ const FeaturesList = () => {
       color: "#1a1c1e", tag: "EXT", size: "small" 
     },
     { 
-      title: "Hiring Safety", 
-      description: "Job seekers can verify company legitimacy and scan external postings for red flags before applying.", 
+      title: "Hiring Safety & Seeker Portal", 
+      description: "Dedicated seeker accounts with profile management, domain authenticity verification, and automated status change notifications.", 
       iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
       color: "#f59e0b", tag: "PRO", size: "wide" 
     },

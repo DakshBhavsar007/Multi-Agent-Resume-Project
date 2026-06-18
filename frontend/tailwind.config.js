@@ -3,8 +3,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        accent: "#C8871A",
-        "accent-dark": "#A06B10",
+        accent: "#2563EB",
+        "accent-dark": "#1D4ED8",
         cream: "#F5F0E8",
         charcoal: "#2A2A2A",
       },

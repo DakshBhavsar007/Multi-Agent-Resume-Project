@@ -154,7 +154,7 @@ export default function JobSeekerSafetyPage() {
       title: "Unrealistic Salary Packages",
       desc: "If an entry-level part-time role offers $4,000/week for very simple tasks, it is almost certainly a check fraud scheme.",
       icon: AlertTriangle,
-      color: "border-orange-200 bg-orange-50 text-orange-700"
+      color: "border-blue-200 bg-blue-50 text-blue-700"
     }
   ];
 
@@ -168,14 +168,14 @@ export default function JobSeekerSafetyPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-[#2A2A2A] flex items-center gap-2.5">
-              <ShieldCheck className="text-[#C8871A] w-8 h-8" />
+              <ShieldCheck className="text-[#2563EB] w-8 h-8" />
               <span>Hiring Safety Audit Suite</span>
             </h1>
             <p className="text-sm text-[#5c5c5c] mt-1">
               Verify company legitimacy, detect ghost job listings, and protect your personal information from recruiting fraud.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs font-bold bg-white text-[#C8871A] px-3.5 py-2 rounded-xl border border-[#e6dfcd] shadow-sm shrink-0">
+          <div className="flex items-center gap-2 text-xs font-bold bg-white text-[#2563EB] px-3.5 py-2 rounded-xl border border-[#e6dfcd] shadow-sm shrink-0">
             <Sparkles size={14} />
             <span>AI Powered Legitimacy Scoring</span>
           </div>
@@ -188,7 +188,7 @@ export default function JobSeekerSafetyPage() {
           <div className="lg:col-span-7 bg-white border border-[#e6dfcd] p-6 md:p-8 rounded-3xl shadow-sm space-y-6">
             <div className="pb-4 border-b border-[#f5f4ef]">
               <h3 className="font-extrabold text-base text-[#2A2A2A] flex items-center gap-2">
-                <Terminal size={18} className="text-[#C8871A]" />
+                <Terminal size={18} className="text-[#2563EB]" />
                 <span>Arbitrary Job Audit</span>
               </h3>
               <p className="text-xs text-[#5c5c5c] mt-0.5">Paste any external job details to inspect them for legitimacy and safety flags.</p>
@@ -214,7 +214,7 @@ export default function JobSeekerSafetyPage() {
                           onChange={(e) => handleCompanyChange(e.target.value)}
                           onFocus={() => setShowSuggestions(true)}
                           placeholder="e.g. Acme Corporation (Optional)"
-                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-9 focus:outline-none focus:border-[#C8871A] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-9 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
                         />
                         {showSuggestions && suggestions.length > 0 && (
                           <div className="absolute left-0 right-0 top-[110%] bg-white border border-[#e6dfcd] rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-60 overflow-y-auto text-left">
@@ -239,7 +239,7 @@ export default function JobSeekerSafetyPage() {
                         value={jobTitle}
                         onChange={(e) => setJobTitle(e.target.value)}
                         placeholder="e.g. Remote Data Entry Assistant"
-                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#C8871A] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
                       />
                     </div>
                   </div>
@@ -251,14 +251,14 @@ export default function JobSeekerSafetyPage() {
                       onChange={(e) => setJobDescription(e.target.value)}
                       placeholder="Paste the requirements, responsibilities, or contact paragraphs here..."
                       rows={6}
-                      className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#C8871A] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none"
+                      className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none"
                     />
                   </div>
 
                   <button 
                     type="submit" 
                     disabled={!jobTitle.trim() || !jobDescription.trim()}
-                    className="w-full bg-[#C8871A] hover:bg-[#B07314] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
                     <Search size={16} />
                     <span>Run Legitimacy Audit</span>
@@ -274,7 +274,7 @@ export default function JobSeekerSafetyPage() {
                   exit={{ opacity: 0 }}
                 >
                   <div className="flex flex-col items-center justify-center space-y-4">
-                    <RefreshCw className="animate-spin text-[#C8871A] w-10 h-10" />
+                    <RefreshCw className="animate-spin text-[#2563EB] w-10 h-10" />
                     <div className="text-center">
                       <h4 className="font-bold text-sm text-[#2A2A2A]">AI Job Auditor Running</h4>
                       <p className="text-[11px] text-[#5c5c5c] mt-0.5">Please wait, inspecting job post structure...</p>
@@ -291,11 +291,11 @@ export default function JobSeekerSafetyPage() {
                           {isDone ? (
                             <CheckCircle className="text-emerald-500 shrink-0 w-4.5 h-4.5" />
                           ) : isActive ? (
-                            <RefreshCw className="text-[#C8871A] animate-spin shrink-0 w-4.5 h-4.5" />
+                            <RefreshCw className="text-[#2563EB] animate-spin shrink-0 w-4.5 h-4.5" />
                           ) : (
                             <div className="w-4.5 h-4.5 rounded-full border-2 border-gray-200 shrink-0" />
                           )}
-                          <span className={`font-semibold ${isDone ? "text-gray-400 line-through" : isActive ? "text-[#C8871A] font-extrabold" : "text-[#5c5c5c]"}`}>
+                          <span className={`font-semibold ${isDone ? "text-gray-400 line-through" : isActive ? "text-[#2563EB] font-extrabold" : "text-[#5c5c5c]"}`}>
                             {step.label}
                           </span>
                         </div>
@@ -402,7 +402,7 @@ export default function JobSeekerSafetyPage() {
               </div>
             </div>
 
-            <div className="bg-[#FFF9F2] border border-[#f5e3ce] p-4 rounded-2xl text-[11px] text-[#C8871A] font-medium leading-relaxed">
+            <div className="bg-[#F0F6FF] border border-[#BFDBFE] p-4 rounded-2xl text-[11px] text-[#2563EB] font-medium leading-relaxed">
               <h5 className="font-bold flex items-center gap-1.5 mb-1 text-sm">
                 <Shield className="w-4 h-4" />
                 <span>Your Data is Protected</span>

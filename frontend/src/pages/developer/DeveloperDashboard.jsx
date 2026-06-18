@@ -6,7 +6,7 @@ import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { Activity, FileText, Zap, Key, Crown, AlertTriangle } from "lucide-react";
 import { LineChart, Line, XAxis, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
-const PIE_COLORS = { Parse: "#C8871A", Match: "#3B82F6", Chat: "#22C55E", Export: "#9CA3AF" };
+const PIE_COLORS = { Parse: "#2563EB", Match: "#3B82F6", Chat: "#22C55E", Export: "#9CA3AF" };
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -57,7 +57,7 @@ export default function DeveloperDashboard() {
       {/* HEADER */}
       <div className="mb-6">
          <h1 className="text-3xl font-black text-charcoal">Overview</h1>
-         <p className="text-gray-500 font-medium mt-1">Welcome back, {company_name || "Developer"}</p>
+         <p className="text-gray-800 font-bold mt-1">Welcome back, {company_name || "Developer"}</p>
       </div>
 
       {/* ALERT BANNER */}
@@ -75,31 +75,31 @@ export default function DeveloperDashboard() {
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-         <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
             <div className="flex justify-between items-start mb-2 group">
-              <span className="text-gray-500 text-xs font-bold uppercase tracking-wide">Total Calls</span>
-              <Activity className="text-gray-400 group-hover:text-accent transition-colors" size={18} />
+              <span className="text-gray-900 text-xs font-black uppercase tracking-wide">Total Calls</span>
+              <Activity className="text-gray-700 group-hover:text-accent transition-colors" size={18} />
             </div>
             <span className="text-2xl font-black text-charcoal">{(totalCalls || 0).toLocaleString()}</span>
          </div>
          <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
             <div className="flex justify-between items-start mb-2 group">
-              <span className="text-gray-500 text-xs font-bold uppercase tracking-wide">Parsed</span>
-              <FileText className="text-gray-400 group-hover:text-amber-500 transition-colors" size={18} />
+              <span className="text-gray-900 text-xs font-black uppercase tracking-wide">Parsed</span>
+              <FileText className="text-gray-700 group-hover:text-amber-500 transition-colors" size={18} />
             </div>
             <span className="text-2xl font-black text-charcoal">{(resumesParsed || 0).toLocaleString()}</span>
          </div>
          <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
             <div className="flex justify-between items-start mb-2 group">
-              <span className="text-gray-500 text-xs font-bold uppercase tracking-wide">Latency</span>
-              <Zap className="text-gray-400 group-hover:text-yellow-500 transition-colors" size={18} />
+              <span className="text-gray-900 text-xs font-black uppercase tracking-wide">Latency</span>
+              <Zap className="text-gray-700 group-hover:text-yellow-500 transition-colors" size={18} />
             </div>
             <span className="text-2xl font-black text-charcoal">{avgLatency}</span>
          </div>
          <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
             <div className="flex justify-between items-start mb-2 group">
-              <span className="text-gray-500 text-xs font-bold uppercase tracking-wide">Active Keys</span>
-              <Key className="text-gray-400 group-hover:text-blue-500 transition-colors" size={18} />
+              <span className="text-gray-900 text-xs font-black uppercase tracking-wide">Active Keys</span>
+              <Key className="text-gray-700 group-hover:text-blue-500 transition-colors" size={18} />
             </div>
             <span className="text-2xl font-black text-charcoal">{activeKeys}</span>
          </div>
@@ -124,9 +124,9 @@ export default function DeveloperDashboard() {
                {timeline ? (
                  <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={timeline} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                       <XAxis dataKey="date" tick={{fontSize: 12, fill: '#9CA3AF'}} tickLine={false} axisLine={false} dy={10} minTickGap={30} />
+                       <XAxis dataKey="date" tick={{fontSize: 12, fill: '#858585'}} tickLine={false} axisLine={false} dy={10} minTickGap={30} />
                        <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#e6dfcd', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                       <Legend wrapperStyle={{fontSize: "12px", fontWeight: "600", color: "#6B7280", paddingTop: "10px"}} />
+                       <Legend wrapperStyle={{fontSize: "12px", fontWeight: "600", color: "#858585", paddingTop: "10px"}} />
                        <Line type="monotone" dataKey="parse" stroke={PIE_COLORS.Parse} strokeWidth={3} dot={false} activeDot={{r: 6, strokeWidth: 0}} />
                        <Line type="monotone" dataKey="match" stroke={PIE_COLORS.Match} strokeWidth={3} dot={false} activeDot={{r: 6, strokeWidth: 0}} />
                        <Line type="monotone" dataKey="chat" stroke={PIE_COLORS.Chat} strokeWidth={3} dot={false} activeDot={{r: 6, strokeWidth: 0}} />
@@ -146,7 +146,7 @@ export default function DeveloperDashboard() {
                  <>
                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none flex-col -mt-4">
                      <span className="text-3xl font-black text-charcoal">{totalCalls}</span>
-                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total</span>
+                     <span className="text-[10px] font-black text-gray-800 uppercase tracking-widest">Total</span>
                    </div>
                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -168,7 +168,7 @@ export default function DeveloperDashboard() {
                    </ResponsiveContainer>
                  </>
                ) : (
-                 <div className="text-sm font-semibold text-gray-400 w-full text-center">No data available</div>
+                 <div className="text-sm font-semibold text-gray-800 w-full text-center">No data available</div>
                )}
             </div>
          </div>
@@ -190,7 +190,7 @@ export default function DeveloperDashboard() {
                    <div key={type} className="flex flex-col gap-2">
                      <div className="flex justify-between items-end">
                        <span className="text-sm font-bold capitalize text-charcoal">{type}</span>
-                       <span className="text-xs font-bold text-gray-500">
+                       <span className="text-xs font-black text-gray-900">
                          {(count || 0).toLocaleString()} / {isUnlimited ? "∞" : (limit || 0).toLocaleString()}
                        </span>
                      </div>
@@ -202,7 +202,7 @@ export default function DeveloperDashboard() {
                            <div className="absolute top-0 left-0 h-full bg-accent rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(pct, 100)}%` }}></div>
                          )}
                        </div>
-                       <span className={`text-xs font-bold w-10 text-right ${isUnlimited ? "text-green-500" : pct > 80 ? "text-amber-500" : "text-gray-400"}`}>
+                       <span className={`text-xs font-bold w-10 text-right ${isUnlimited ? "text-green-600" : pct > 80 ? "text-amber-600" : "text-gray-800"}`}>
                          {isUnlimited ? "UNL" : `${Math.round(pct)}%`}
                        </span>
                      </div>
@@ -220,17 +220,17 @@ export default function DeveloperDashboard() {
                  summary.recent_logs.map((log, i) => (
                    <div key={i} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors px-2 -mx-2 rounded-lg cursor-default">
                      <div className="flex items-center gap-3">
-                       <span className="bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded w-12 text-center">
+                       <span className="bg-gray-100 text-gray-800 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded w-12 text-center">
                          {log.method || "POST"}
                        </span>
                        <span className="text-sm font-bold text-charcoal truncate max-w-[150px] sm:max-w-[200px]">{log.endpoint || "/api/v1/parse"}</span>
                      </div>
-                     <div className="flex items-center gap-4 text-xs font-medium">
-                       <span className="text-gray-400 hidden sm:inline-block">{log.latency_ms ? `${Math.round(log.latency_ms)}ms` : ""}</span>
-                       <span className="text-gray-400 mr-2">{log.time_ago || "just now"}</span>
+                     <div className="flex items-center gap-4 text-xs font-bold">
+                       <span className="text-gray-800 hidden sm:inline-block">{log.latency_ms ? `${Math.round(log.latency_ms)}ms` : ""}</span>
+                       <span className="text-gray-800 mr-2">{log.time_ago || "just now"}</span>
                        <span className={`flex items-center justify-center w-4 h-4 rounded-full ${
                          log.status >= 200 && log.status < 300 ? "bg-green-100 text-green-500" :
-                         log.status >= 400 && log.status < 500 ? "bg-amber-100 text-amber-500" :
+                         log.status >= 400 && log.status < 500 ? "bg-blue-100 text-amber-500" :
                          "bg-red-100 text-red-500"
                        }`}>
                          <div className="w-1.5 h-1.5 rounded-full bg-current"></div>

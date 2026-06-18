@@ -1,12 +1,16 @@
 import os
 import json
+import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, F
 
-from api.models import Company, Session, Candidate
+from api.models import Company, Session, Candidate, JobApplication, Notification
 from api.decorators import require_api_key
 from models.schemas import success_response, error_response
+from api.services.email_service import send_status_update_to_seeker
+
+logger = logging.getLogger(__name__)
 
 def _serialize_candidate_summary(c):
     match_details = c.match_details or {}
@@ -243,6 +247,43 @@ def candidate_action(request, session_id, cand_id):
             return JsonResponse(error_response("Invalid action. Use: forward, reject, hire"), status=400)
 
         candidate.save(update_fields=['current_round_index', 'status'])
+
+        # ── Notify job seeker if this candidate came from platform apply ──────
+        try:
+            app = JobApplication.objects.filter(candidate=candidate).select_related('seeker').first()
+            if app and app.seeker:
+                seeker = app.seeker
+                status_map = {
+                    'hired': 'hired',
+                    'rejected': 'rejected',
+                    'forwarded': 'shortlisted',
+                }
+                notify_status = status_map.get(action)
+                if notify_status:
+                    # Update application status
+                    app.status = notify_status
+                    app.save(update_fields=['status'])
+
+                    # Create in-app notification
+                    Notification.objects.create(
+                        seeker=seeker,
+                        type='status_updated',
+                        title=f'Application Update — {session.job_title}',
+                        message=f'Your application at {session.name} has been updated to: {notify_status.title()}.',
+                        link='/jobs/dashboard/applications',
+                    )
+
+                    # Send email (non-blocking)
+                    send_status_update_to_seeker(
+                        seeker_email=seeker.email,
+                        seeker_name=seeker.full_name,
+                        job_title=session.job_title,
+                        company_name=session.name,
+                        new_status=notify_status,
+                    )
+        except Exception as notify_err:
+            logger.warning('Notification error for candidate action: %s', notify_err)
+        # ─────────────────────────────────────────────────────────────────────
 
         return JsonResponse(success_response({
             "id": str(candidate.id),

@@ -30,7 +30,7 @@ export default function UsageProgress() {
           style={{ width: `${summary?.percentages?.parse || 0}%` }}
         ></div>
       </div>
-      <div className="flex justify-between text-[11px] font-bold text-gray-400 mb-0">
+      <div className="flex justify-between text-[11px] font-bold text-gray-800 mb-0">
         <span>{(summary?.limits?.parse?.count || 0).toLocaleString()} / {(summary?.limits?.parse?.limit || 100).toLocaleString()} parses</span>
       </div>
     </div>

@@ -43,6 +43,14 @@ Thumbs.db
 /tmp/
 /backend_output.log
 dummy.pdf
+celerybeat-schedule
+celerybeat.pid
+.coverage
+.pytest_cache/
+.eslintcache
+htmlcov/
+.gemini/
+.antigravity/
 
 # Inspiration / Design References
 inspiration_ui/

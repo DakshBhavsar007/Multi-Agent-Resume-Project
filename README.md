@@ -67,10 +67,17 @@ All agents communicate through the `RotateLLMClient`, which distributes requests
 - **Scan History** — Audit trail of all protection scans with detailed breakdowns
 
 ### Job Seeker Portal
-- **Smart Job Search** — Autocomplete suggestions with Indian city-to-state mapping
-- **Job Details & Applications** — Full job descriptions, requirements, and one-click apply
-- **Hiring Safety Checker** — Company autocomplete with auto-fill; verify job legitimacy before applying
-- **Salary Trends** — Market salary data and trending job categories
+- **Dedicated Seeker Accounts** — Separate login and registration flows for job seekers, redirecting directly to `/jobs` as the unified landing hub & dashboard.
+- **Direct Subview Navigation** — Dynamic navbar links (Home, Dashboard, Find Jobs, AI Resume Enhancer, My Applications, Notifications, Market Trends, Hiring Safety) for unified, simplified routing without nested dashboard page overlays.
+- **Single-Line Responsive Navbar** — Streamlined layout with Home button to return to the platform landing page (`/`), seeker Dashboard button, and `whitespace-nowrap` layout to ensure smooth mobile-first presentation.
+- **Double-Input Job Search** — Search bar supporting both keyword queries and location searches (with Indian city-to-state mapping and live autocomplete suggestions) separated by a clean vertical divider.
+- **Real-time Notifications** — In-app notification center and automated email alerts notifying seekers when application status changes (e.g. Shortlisted, Hired)
+- **Hiring Safety Checker** — Company domain authenticity scanner; checks scam likelihood and job legitimacy before applying
+- **Salary Trends & Analytics** — Interactive charts displaying sector salary growth and high-demand competencies with a global modern blue color palette.
+
+### Recruiter & Premium Features
+- **Premium Feature Inidication** — Shows product design thinking for monetization with a `👑 Premium` plan lock badge on bulk upload (ZIP, PDF, DOCX) buttons.
+- **Batch Resume Ingestion** — Mocked and protected under the Premium tier to optimize resource consumption.
 
 ### Developer Portal (SaaS API)
 - **REST API** — Programmatic access to resume parsing, matching, chatbot, and fraud scanning
@@ -287,4 +294,4 @@ curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \
 
 Engineered for optimal performance, zero-downtime operation, and seamless enterprise integration.
 
-**Built for DAIICT Hackathon 2026** | *Multi-Agent Recruitment Intelligence Platform*
+**Built as a Sem-IV Project** | *Multi-Agent Recruitment Intelligence Platform*

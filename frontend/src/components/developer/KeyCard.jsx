@@ -126,7 +126,7 @@ export default function KeyCard({ api_key, onUpdate }) {
                        <XAxis dataKey="date" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
                        <YAxis tick={{fontSize: 10}} tickLine={false} axisLine={false} />
                        <Tooltip cursor={{fill: '#F5F0E8'}} contentStyle={{borderRadius:'8px', border:'none', boxShadow:'0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                       <Bar dataKey="calls" fill="#C8871A" radius={[4, 4, 0, 0]} />
+                       <Bar dataKey="calls" fill="#2563EB" radius={[4, 4, 0, 0]} />
                     </BarChart>
                  </ResponsiveContainer>
               ) : (

@@ -33,7 +33,7 @@ export default function ConfirmModal({ isOpen, title, message, confirmText, onCo
                 <button 
                   onClick={onConfirm}
                   className={`px-6 py-2.5 rounded-xl text-white shadow-sm transition-colors ${
-                    danger ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' : 'bg-[#C8871A] hover:bg-[#A06B10] shadow-orange-500/20'
+                    danger ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' : 'bg-[#2563EB] hover:bg-[#1D4ED8] shadow-orange-500/20'
                   }`}
                 >
                   {confirmText || 'Confirm'}

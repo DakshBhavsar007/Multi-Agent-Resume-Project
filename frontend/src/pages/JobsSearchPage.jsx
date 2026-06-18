@@ -8,24 +8,24 @@ import ResumeUploadModal from '../components/ResumeUploadModal';
 import { toast } from 'react-hot-toast';
 
 const emojiMap = {
-  '🏢': <Building className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '💰': <DollarSign className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '📍': <MapPin className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '💼': <Briefcase className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '🔑': <Key className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '✨': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '🎉': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
+  '🏢': <Building className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '💰': <DollarSign className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '📍': <MapPin className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '💼': <Briefcase className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '🔑': <Key className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '✨': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '🎉': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
   '⚠️': <AlertCircle className="inline-block w-3.5 h-3.5 mx-0.5 text-red-500 align-text-bottom" />,
-  '💡': <Lightbulb className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
+  '💡': <Lightbulb className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
   '✅': <Check className="inline-block w-3.5 h-3.5 mx-0.5 text-green-600 align-text-bottom" />,
   '✔️': <Check className="inline-block w-3.5 h-3.5 mx-0.5 text-green-600 align-text-bottom" />,
-  '🤖': <Bot className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '📞': <Phone className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '🚀': <TrendingUp className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
-  '💻': <Code className="inline-block w-3.5 h-3.5 mx-0.5 text-[#C8871A] align-text-bottom" />,
+  '🤖': <Bot className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '📞': <Phone className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '🚀': <TrendingUp className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
+  '💻': <Code className="inline-block w-3.5 h-3.5 mx-0.5 text-[#2563EB] align-text-bottom" />,
   '⭐': <Star className="inline-block w-3.5 h-3.5 mx-0.5 text-amber-500 align-text-bottom" />,
   '★': <Star className="inline-block w-3.5 h-3.5 mx-0.5 text-amber-500 align-text-bottom" />,
-  '🔥': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-orange-500 align-text-bottom" />
+  '🔥': <Sparkles className="inline-block w-3.5 h-3.5 mx-0.5 text-blue-500 align-text-bottom" />
 };
 
 const renderTextWithIcons = (text) => {
@@ -408,7 +408,7 @@ export default function JobsSearchPage() {
                   setSalaryRange(150);
                   setExperienceLevel('Senior');
                 }}
-                className="text-xs text-[#C8871A] hover:text-[#B07314] font-semibold"
+                className="text-xs text-[#2563EB] hover:text-[#1D4ED8] font-semibold"
               >
                 Clear All
               </button>
@@ -423,7 +423,7 @@ export default function JobsSearchPage() {
                     type="checkbox"
                     checked={jobTypes.FullTime}
                     onChange={(e) => setJobTypes({ ...jobTypes, FullTime: e.target.checked })}
-                    className="accent-[#C8871A] h-4 w-4 rounded"
+                    className="accent-[#2563EB] h-4 w-4 rounded"
                   />
                   <span>Full-time</span>
                 </label>
@@ -432,7 +432,7 @@ export default function JobsSearchPage() {
                     type="checkbox"
                     checked={jobTypes.Contract}
                     onChange={(e) => setJobTypes({ ...jobTypes, Contract: e.target.checked })}
-                    className="accent-[#C8871A] h-4 w-4 rounded"
+                    className="accent-[#2563EB] h-4 w-4 rounded"
                   />
                   <span>Contract</span>
                 </label>
@@ -441,7 +441,7 @@ export default function JobsSearchPage() {
                     type="checkbox"
                     checked={jobTypes.Remote}
                     onChange={(e) => setJobTypes({ ...jobTypes, Remote: e.target.checked })}
-                    className="accent-[#C8871A] h-4 w-4 rounded"
+                    className="accent-[#2563EB] h-4 w-4 rounded"
                   />
                   <span>Remote</span>
                 </label>
@@ -452,7 +452,7 @@ export default function JobsSearchPage() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <label className="text-[10px] uppercase tracking-wider text-[#5c5c5c] font-bold">Salary Range</label>
-                <span className="text-xs font-bold text-[#C8871A]">${salaryRange}k+</span>
+                <span className="text-xs font-bold text-[#2563EB]">${salaryRange}k+</span>
               </div>
               <input
                 type="range"
@@ -460,7 +460,7 @@ export default function JobsSearchPage() {
                 max="300"
                 value={salaryRange}
                 onChange={(e) => setSalaryRange(Number(e.target.value))}
-                className="w-full h-1 bg-[#f5f4ef] rounded-lg appearance-none cursor-pointer accent-[#C8871A]"
+                className="w-full h-1 bg-[#f5f4ef] rounded-lg appearance-none cursor-pointer accent-[#2563EB]"
               />
               <div className="flex justify-between text-[10px] text-[#5c5c5c]">
                 <span>$50k</span>
@@ -478,8 +478,8 @@ export default function JobsSearchPage() {
                     onClick={() => setExperienceLevel(level)}
                     className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all border ${
                       experienceLevel === level
-                        ? 'bg-[#C8871A] text-white border-[#C8871A]'
-                        : 'bg-white text-[#5c5c5c] border-[#e6dfcd] hover:text-[#2A2A2A] hover:border-[#C8871A]'
+                        ? 'bg-[#2563EB] text-white border-[#2563EB]'
+                        : 'bg-white text-[#5c5c5c] border-[#e6dfcd] hover:text-[#2A2A2A] hover:border-[#2563EB]'
                     }`}
                   >
                     {level === 'Senior' ? 'Senior (5+ yr)' : level}
@@ -494,7 +494,7 @@ export default function JobsSearchPage() {
             <div className="absolute right-[-10px] top-[-10px] text-white/5 rotate-12">
               <Sparkles size={120} />
             </div>
-            <div className="w-8 h-8 rounded-full bg-[#C8871A]/20 text-[#C8871A] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-[#2563EB]/20 text-[#2563EB] flex items-center justify-center">
               <Sparkles size={16} />
             </div>
             <div className="space-y-1.5 relative z-10">
@@ -505,7 +505,7 @@ export default function JobsSearchPage() {
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="w-full bg-[#C8871A] hover:bg-[#B07314] text-white text-xs font-bold py-2.5 rounded-lg transition-all shadow-md relative z-10"
+              className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold py-2.5 rounded-lg transition-all shadow-md relative z-10"
             >
               {seekerProfile ? 'Update Resume Data' : 'Try Engine AI'}
             </button>
@@ -594,7 +594,7 @@ export default function JobsSearchPage() {
                 )}
               </div>
 
-              <button type="submit" className="bg-[#C8871A] hover:bg-[#B07314] text-white p-2 rounded-lg transition-all shrink-0">
+              <button type="submit" className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white p-2 rounded-lg transition-all shrink-0">
                 <Search size={14} />
               </button>
             </form>
@@ -626,7 +626,7 @@ export default function JobsSearchPage() {
           {/* Job Postings list */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 space-y-3">
-              <RefreshCw className="animate-spin text-[#C8871A]" size={28} />
+              <RefreshCw className="animate-spin text-[#2563EB]" size={28} />
               <span className="text-sm text-[#5c5c5c]">Loading jobs...</span>
             </div>
           ) : filteredJobs.length === 0 ? (
@@ -648,7 +648,7 @@ export default function JobsSearchPage() {
                   >
                     {/* Job Info Left Side */}
                     <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-[#f5f4ef] border border-[#e6dfcd] text-[#C8871A] font-bold rounded-xl flex items-center justify-center uppercase shadow-inner shrink-0">
+                      <div className="w-12 h-12 bg-[#f5f4ef] border border-[#e6dfcd] text-[#2563EB] font-bold rounded-xl flex items-center justify-center uppercase shadow-inner shrink-0">
                         {job.company_name[0]}
                       </div>
                       <div className="space-y-1">
@@ -656,10 +656,10 @@ export default function JobsSearchPage() {
                           <h3 className="font-bold text-base text-[#2A2A2A] hover:underline cursor-pointer" onClick={() => navigate(`/jobs/${job.id}`)}>
                             {job.job_title}
                           </h3>
-                          <Bookmark size={14} className="text-[#5c5c5c] hover:text-[#C8871A] cursor-pointer" />
+                          <Bookmark size={14} className="text-[#5c5c5c] hover:text-[#2563EB] cursor-pointer" />
                         </div>
                         <p className="text-xs text-[#5c5c5c] font-medium">
-                          <span className="text-[#C8871A] font-semibold">{job.company_name}</span> • {job.preferred_locations?.join(', ') || 'Remote'}
+                          <span className="text-[#2563EB] font-semibold">{job.company_name}</span> • {job.preferred_locations?.join(', ') || 'Remote'}
                         </p>
                         <p className="text-xs text-[#6B7280] font-medium flex items-center">
                           <DollarSign size={12} className="text-[#5c5c5c] mr-0.5 relative -top-[0.5px]" />
@@ -686,13 +686,13 @@ export default function JobsSearchPage() {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => navigate(`/jobs/${job.id}`)}
-                          className="bg-white border border-[#e6dfcd] hover:border-[#C8871A] text-[#2A2A2A] font-bold text-xs px-4 py-2.5 rounded-lg transition-all shadow-sm"
+                          className="bg-white border border-[#e6dfcd] hover:border-[#2563EB] text-[#2A2A2A] font-bold text-xs px-4 py-2.5 rounded-lg transition-all shadow-sm"
                         >
                           View Details
                         </button>
                         <button
                           onClick={() => handleApplyClick(job)}
-                          className="bg-[#C8871A] hover:bg-[#B07314] text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all shadow-sm active:scale-95"
+                          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all shadow-sm active:scale-95"
                         >
                           Quick Apply
                         </button>
@@ -781,7 +781,7 @@ export default function JobsSearchPage() {
                 <button
                   type="submit"
                   disabled={applyLoading}
-                  className="w-full bg-[#C8871A] hover:bg-[#B07314] text-white font-bold text-sm py-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2"
+                  className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-sm py-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2"
                 >
                   {applyLoading && <RefreshCw size={14} className="animate-spin" />}
                   <span>{applyLoading ? 'Sending Application...' : 'Submit Application'}</span>

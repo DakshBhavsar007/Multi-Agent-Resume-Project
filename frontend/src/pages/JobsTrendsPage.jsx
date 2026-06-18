@@ -13,7 +13,7 @@ const salaryTimeline = [
 ];
 
 const regionDistribution = [
-  { name: 'Bengaluru', value: 450, color: '#C8871A' },
+  { name: 'Bengaluru', value: 450, color: '#2563EB' },
   { name: 'San Francisco', value: 380, color: '#0F56B3' },
   { name: 'Zurich', value: 180, color: '#22C55E' },
   { name: 'London', value: 240, color: '#8b5cf6' }
@@ -30,7 +30,7 @@ export default function JobsTrendsPage() {
         
         {/* Header */}
         <div className="space-y-2">
-          <span className="text-xs font-bold text-[#C8871A] uppercase tracking-wider">Market Intelligence</span>
+          <span className="text-xs font-bold text-[#2563EB] uppercase tracking-wider">Market Intelligence</span>
           <h1 className="text-3xl font-extrabold text-[#2A2A2A]">Market Trends & Insights</h1>
           <p className="text-sm text-[#5c5c5c] max-w-2xl">
             Analyze wage trajectories, regional volumes, and domain demands processed across the Vishleshan ingestion engine.
@@ -53,7 +53,7 @@ export default function JobsTrendsPage() {
 
           <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm space-y-2">
             <div className="text-xs text-[#5c5c5c] font-medium uppercase tracking-wider">Top Remote Hub</div>
-            <div className="text-3xl font-black text-[#C8871A]">San Francisco</div>
+            <div className="text-3xl font-black text-[#2563EB]">San Francisco</div>
             <div className="text-xs text-[#5c5c5c] font-medium">32% of all remote uploads</div>
           </div>
 
@@ -79,15 +79,15 @@ export default function JobsTrendsPage() {
                 <AreaChart data={salaryTimeline} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="salaryGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#C8871A" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#C8871A" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f5f4ef" />
                   <XAxis dataKey="year" stroke="#9CA3AF" fontSize={11} />
                   <YAxis stroke="#9CA3AF" fontSize={11} />
                   <Tooltip contentStyle={{ borderRadius: 8 }} />
-                  <Area type="monotone" dataKey="salary" stroke="#C8871A" strokeWidth={2} fillOpacity={1} fill="url(#salaryGrad)" />
+                  <Area type="monotone" dataKey="salary" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#salaryGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -162,13 +162,13 @@ export default function JobsTrendsPage() {
             </div>
 
             <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm flex items-start space-x-4">
-              <div className="bg-[#C8871A]/10 p-3 rounded-xl text-[#C8871A] shrink-0">
+              <div className="bg-[#2563EB]/10 p-3 rounded-xl text-[#2563EB] shrink-0">
                 <TrendingUp size={20} />
               </div>
               <div className="space-y-1">
                 <h4 className="font-bold text-sm text-[#2A2A2A]">Rust / Go Backend</h4>
                 <p className="text-xs text-[#5c5c5c]">High throughput performance demand (+22%).</p>
-                <div className="text-xs font-bold text-[#C8871A] pt-1">Avg Pay: $165k</div>
+                <div className="text-xs font-bold text-[#2563EB] pt-1">Avg Pay: $165k</div>
               </div>
             </div>
           </div>

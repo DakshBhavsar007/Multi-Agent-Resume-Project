@@ -147,7 +147,7 @@ export default function DeveloperRegisterPage() {
                <div key={p.id} onClick={() => setSelectedPlan(p.id)} className={`cursor-pointer border-2 rounded-3xl p-6 bg-white transition-all ${selectedPlan === p.id ? "border-accent shadow-xl shadow-amber-500/10 scale-105" : "border-gray-100 hover:border-gray-300"}`}>
                  <div className="flex justify-between items-center mb-4">
                    <h3 className="text-xl font-bold uppercase">{p.name}</h3>
-                   {p.id === "starter" && <span className="bg-amber-100 text-amber-800 text-[10px] font-black uppercase px-2 py-1 rounded-full">Popular</span>}
+                   {p.id === "starter" && <span className="bg-blue-100 text-amber-800 text-[10px] font-black uppercase px-2 py-1 rounded-full">Popular</span>}
                    {selectedPlan === p.id && <Check className="text-accent" />}
                  </div>
                  <div className="mb-6 border-b border-gray-100 pb-6">

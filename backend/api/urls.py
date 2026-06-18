@@ -14,6 +14,9 @@ from api.views import (
     apikey_auth,
     jobs,
     protection,
+    seeker_auth,
+    seeker_resume,
+    seeker_jobs,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -141,4 +144,26 @@ urlpatterns = [
     # ── Protection & Fraud Detection ──────────────────────────────────────────
     path('api/v1/protection/scan', protection.scan_portfolio, name='protection-scan'),
     path('api/v1/protection/history', protection.get_scan_history, name='protection-history'),
+
+    # ── Job Seeker Auth ────────────────────────────────────────────────────────
+    path('api/v1/seeker/auth/register', seeker_auth.register, name='seeker-auth-register'),
+    path('api/v1/seeker/auth/login', seeker_auth.login, name='seeker-auth-login'),
+    path('api/v1/seeker/auth/me', seeker_auth.me, name='seeker-auth-me'),
+    path('api/v1/seeker/auth/profile', seeker_auth.update_profile, name='seeker-auth-profile'),
+
+    # ── Job Seeker Resume ──────────────────────────────────────────────────────
+    path('api/v1/seeker/resume', seeker_resume.get_resume, name='seeker-resume-get'),
+    path('api/v1/seeker/resume/upload', seeker_resume.upload_resume, name='seeker-resume-upload'),
+    path('api/v1/seeker/resume/enhance', seeker_resume.enhance_resume, name='seeker-resume-enhance'),
+
+    # ── Job Seeker Jobs & Applications ─────────────────────────────────────────
+    path('api/v1/seeker/jobs', seeker_jobs.list_jobs, name='seeker-jobs-list'),
+    path('api/v1/seeker/jobs/<str:session_id>', seeker_jobs.job_detail, name='seeker-jobs-detail'),
+    path('api/v1/seeker/jobs/<str:session_id>/apply', seeker_jobs.apply_job, name='seeker-jobs-apply'),
+    path('api/v1/seeker/applications', seeker_jobs.my_applications, name='seeker-applications'),
+
+    # ── Job Seeker Notifications ───────────────────────────────────────────────
+    path('api/v1/seeker/notifications', seeker_jobs.get_notifications, name='seeker-notifications'),
+    path('api/v1/seeker/notifications/read-all', seeker_jobs.mark_all_notifications_read, name='seeker-notifications-read-all'),
+    path('api/v1/seeker/notifications/<str:notif_id>/read', seeker_jobs.mark_notification_read, name='seeker-notification-read'),
 ]

@@ -30,22 +30,22 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
   };
 
   const getHashColor = (name) => {
-    if (!name) return "#C8871A";
-    const colors = ["#C8871A", "#3B82F6", "#22C55E", "#8B5CF6", "#EF4444", "#F59E0B"];
+    if (!name) return "#2563EB";
+    const colors = ["#2563EB", "#3B82F6", "#22C55E", "#8B5CF6", "#EF4444", "#F59E0B"];
     const idx = name.charCodeAt(0) % colors.length;
     return colors[idx];
   };
 
   const getScoreColor = (score) => {
     if (score >= 75) return "#22C55E";
-    if (score >= 50) return "#C8871A";
+    if (score >= 50) return "#2563EB";
     return "#EF4444";
   };
 
   const getBadge = (score) => {
     if (score >= 80) return <span className="bg-[#DCFCE7] text-[#166534] font-bold border border-[#BBF7D0] px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Strong Match</span>;
-    if (score >= 60) return <span className="bg-amber-100 text-amber-700 font-bold border border-amber-200 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Good Match</span>;
-    if (score >= 40) return <span className="bg-orange-100 text-orange-700 font-bold border border-orange-200 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Partial Match</span>;
+    if (score >= 60) return <span className="bg-blue-100 text-amber-700 font-bold border border-amber-200 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Good Match</span>;
+    if (score >= 40) return <span className="bg-blue-100 text-blue-700 font-bold border border-blue-200 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Partial Match</span>;
     return <span className="bg-red-100 text-red-700 font-bold border border-red-200 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Poor Match</span>;
   };
 
@@ -121,7 +121,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
           { opacity: 1, x: 0 }
         }
         className={`bg-white rounded-xl p-5 border-2 transition-all duration-200 flex flex-col ${
-          isHighlighted ? 'border-[#C8871A] shadow-[0_0_0_1px_#C8871A,0_0_16px_rgba(200,135,26,0.3)] relative z-10' : 'border-transparent shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+          isHighlighted ? 'border-[#2563EB] shadow-[0_0_0_1px_#2563EB,0_0_16px_rgba(200,135,26,0.3)] relative z-10' : 'border-transparent shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
         } ${candidate?.status === 'hired' ? 'border-green-200 bg-green-50/30' : ''} ${candidate?.status === 'rejected' ? 'border-red-200 bg-red-50/30 opacity-75' : ''}`}
       >
         {/* HEADER: Avatar + Name + Score */}
@@ -138,7 +138,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
             <h4 className="font-bold text-[15px] text-[#2A2A2A] truncate">{candidate?.name || 'Unnamed Candidate'}</h4>
             <div className="flex items-center gap-2 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
               {candidate?.current_role && (
-                <span className="text-[12px] text-[#C8871A] font-semibold truncate">{candidate.current_role}</span>
+                <span className="text-[12px] text-[#2563EB] font-semibold truncate">{candidate.current_role}</span>
               )}
               {candidate?.current_role && <span className="text-gray-300">•</span>}
               <span className="text-[12px] text-gray-500 flex items-center gap-0.5"><MapPin size={11}/> {candidate?.location || "Unknown"}</span>
@@ -173,7 +173,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
               <span key={i} className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                 candidate?.matched_skills?.includes(h) 
                   ? 'bg-green-50 text-green-700 border-green-100' 
-                  : 'bg-orange-50 text-orange-700 border-orange-100'
+                  : 'bg-blue-50 text-blue-700 border-blue-100'
               }`}>
                 {h}
               </span>
@@ -244,7 +244,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
               <Briefcase size={11} className="text-gray-400"/>
               <span>{experience[0]?.role || "Role"}</span>
               <span className="text-gray-300 mx-0.5">@</span>
-              <span className="text-[#C8871A]">{experience[0]?.company || "Company"}</span>
+              <span className="text-[#2563EB]">{experience[0]?.company || "Company"}</span>
               {experience[0]?.duration && <span className="text-gray-400 ml-auto text-[10px]">{experience[0].duration}</span>}
             </div>
             {experience.length > 1 && (
@@ -302,7 +302,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
               <button 
                 onClick={handleForwardOrHire}
                 className={`flex-[1.5] text-white py-1.5 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center justify-center gap-1.5 ${
-                  isLastRound ? 'bg-[#22C55E] hover:bg-[#166534]' : 'bg-[#C8871A] hover:bg-[#A06B10]'
+                  isLastRound ? 'bg-[#22C55E] hover:bg-[#166534]' : 'bg-[#2563EB] hover:bg-[#1D4ED8]'
                 }`}
               >
                 {isLastRound ? <><Sparkles size={14} /> Hire</> : <>Forward &rarr;</>}
@@ -381,7 +381,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                     {candidate?.linkedin_url && (
                       <div className="flex items-center gap-3 text-sm font-medium">
                         <Linkedin size={16} className="text-blue-500"/>
-                        <a href={candidate.linkedin_url} target="_blank" rel="noopener" className="text-[#C8871A] hover:underline flex items-center gap-1">
+                        <a href={candidate.linkedin_url} target="_blank" rel="noopener" className="text-[#2563EB] hover:underline flex items-center gap-1">
                           LinkedIn Profile <ExternalLink size={12}/>
                         </a>
                       </div>
@@ -389,7 +389,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                     {candidate?.github_url && (
                       <div className="flex items-center gap-3 text-sm font-medium">
                         <Github size={16} className="text-gray-700"/>
-                        <a href={candidate.github_url} target="_blank" rel="noopener" className="text-[#C8871A] hover:underline flex items-center gap-1">
+                        <a href={candidate.github_url} target="_blank" rel="noopener" className="text-[#2563EB] hover:underline flex items-center gap-1">
                           GitHub Profile <ExternalLink size={12}/>
                         </a>
                       </div>
@@ -407,28 +407,28 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                     <div>
                       <div className="flex justify-between text-xs font-bold text-gray-600 mb-1.5">
                         <span>Skills Match</span>
-                        <span className="text-[#C8871A]">{candidate?.skill_score || 0}%</span>
+                        <span className="text-[#2563EB]">{candidate?.skill_score || 0}%</span>
                       </div>
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#C8871A]" style={{width: `${candidate?.skill_score||0}%`}}></div>
+                        <div className="h-full bg-[#2563EB]" style={{width: `${candidate?.skill_score||0}%`}}></div>
                       </div>
                     </div>
                     <div>
                       <div className="flex justify-between text-xs font-bold text-gray-600 mb-1.5">
                         <span>Experience Match</span>
-                        <span className="text-[#C8871A]">{candidate?.experience_score || 0}%</span>
+                        <span className="text-[#2563EB]">{candidate?.experience_score || 0}%</span>
                       </div>
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#C8871A]" style={{width: `${candidate?.experience_score||0}%`}}></div>
+                        <div className="h-full bg-[#2563EB]" style={{width: `${candidate?.experience_score||0}%`}}></div>
                       </div>
                     </div>
                     <div>
                       <div className="flex justify-between text-xs font-bold text-gray-600 mb-1.5">
                         <span>Location Match</span>
-                        <span className="text-[#C8871A]">{candidate?.location_score || 0}%</span>
+                        <span className="text-[#2563EB]">{candidate?.location_score || 0}%</span>
                       </div>
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#C8871A]" style={{width: `${candidate?.location_score||0}%`}}></div>
+                        <div className="h-full bg-[#2563EB]" style={{width: `${candidate?.location_score||0}%`}}></div>
                       </div>
                     </div>
                   </div>
@@ -463,11 +463,11 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                   <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
                      {experience.map((exp, i) => (
                        <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                         <div className="flex items-center justify-center w-[14px] h-[14px] rounded-full border-2 border-white bg-[#C8871A] shrink-0 md:order-1 relative z-10 shadow-sm ml-[3px]"></div>
+                         <div className="flex items-center justify-center w-[14px] h-[14px] rounded-full border-2 border-white bg-[#2563EB] shrink-0 md:order-1 relative z-10 shadow-sm ml-[3px]"></div>
                          <div className="w-[calc(100%-2.5rem)] ml-4 bg-white border border-gray-100 p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                            <div className="flex flex-col gap-1 mb-2">
                              <h4 className="font-bold text-sm text-[#2A2A2A]">{exp.role || exp.title || 'Role'}</h4>
-                             <span className="text-xs font-bold text-[#C8871A]">{exp.company || 'Company'}</span>
+                             <span className="text-xs font-bold text-[#2563EB]">{exp.company || 'Company'}</span>
                              <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1">
                                {exp.start_date} - {exp.end_date || 'Present'} 
                                {exp.duration && <span className="bg-gray-100 px-1.5 py-0.5 rounded lowercase font-medium text-gray-500">{exp.duration}</span>}
@@ -626,7 +626,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                   <button 
                     onClick={() => { setShowDetail(false); handleForwardOrHire(); }}
                     className={`py-3 shadow-md rounded-xl font-bold uppercase tracking-widest text-xs transition-colors ${
-                      isLastRound ? 'bg-[#22C55E] hover:bg-[#166534] text-white shadow-green-600/20' : 'bg-[#C8871A] hover:bg-[#A06B10] text-white shadow-orange-500/20'
+                      isLastRound ? 'bg-[#22C55E] hover:bg-[#166534] text-white shadow-green-600/20' : 'bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-orange-500/20'
                     }`}
                   >
                     {isLastRound ? <span className="flex items-center justify-center gap-1.5"><Sparkles size={12} /> Hire Candidate</span> : 'Forward to Next →'}

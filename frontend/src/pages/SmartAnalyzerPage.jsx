@@ -268,7 +268,7 @@ export default function SmartAnalyzerPage() {
                 <div
                   {...getRootProps()}
                   className={`border-2 border-dashed rounded-xl h-56 flex flex-col items-center justify-center transition-all cursor-pointer group ${
-                    isDragActive ? 'border-accent bg-accent/5 scale-[1.02]' : 'border-gray-200 bg-[#FAFAFA] hover:bg-orange-50/30 hover:border-accent/40'
+                    isDragActive ? 'border-accent bg-accent/5 scale-[1.02]' : 'border-gray-200 bg-[#FAFAFA] hover:bg-blue-50/30 hover:border-accent/40'
                   }`}
                 >
                   <input {...getInputProps()} />
@@ -323,7 +323,7 @@ export default function SmartAnalyzerPage() {
                   disabled={jdText.length < 30 || resumes.length === 0}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  className="group relative px-12 py-4 bg-gradient-to-r from-accent to-[#A06B10] text-white rounded-2xl text-lg font-black shadow-xl shadow-accent/30 disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed transition-all"
+                  className="group relative px-12 py-4 bg-gradient-to-r from-accent to-[#1D4ED8] text-white rounded-2xl text-lg font-black shadow-xl shadow-accent/30 disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed transition-all"
                 >
                   <span className="flex items-center gap-3">
                     <Brain size={22} /> Start Analysis
@@ -407,7 +407,7 @@ export default function SmartAnalyzerPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                   { label: "Total Parsed", value: analysisStats.totalParsed, color: "text-[#2A2A2A]", bg: "bg-gray-50" },
-                  { label: "Avg Score", value: `${analysisStats.avgScore}%`, color: "text-accent", bg: "bg-orange-50" },
+                  { label: "Avg Score", value: `${analysisStats.avgScore}%`, color: "text-accent", bg: "bg-blue-50" },
                   { label: "Strong Match", value: analysisStats.strongCount, color: "text-green-600", bg: "bg-green-50" },
                   { label: "Processing", value: "<10s", color: "text-blue-600", bg: "bg-blue-50" },
                 ].map((stat, i) => (

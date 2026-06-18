@@ -54,7 +54,7 @@ export default function Sidebar() {
       {/* Top Section */}
       <div className="pt-6 px-5 pb-4">
         <div>
-          <h1 className="text-[#C8871A] text-[20px] font-bold tracking-tight">Vishleshan</h1>
+          <h1 className="text-[#2563EB] text-[20px] font-bold tracking-tight">Vishleshan</h1>
           <p className="text-[#9CA3AF] text-xs mt-0.5">Recruiter Dashboard</p>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function Sidebar() {
               <div
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
                   isActive
-                    ? 'bg-amber-500/15 text-[#C8871A] border-l-2 border-[#C8871A] pl-[10px]'
+                    ? 'bg-amber-500/15 text-[#2563EB] border-l-2 border-[#2563EB] pl-[10px]'
                     : 'text-gray-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
@@ -89,7 +89,7 @@ export default function Sidebar() {
             {logo ? (
               <img src={logo} alt="Company Logo" className="w-9 h-9 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-[#C8871A] flex items-center justify-center text-white font-bold shrink-0">
+              <div className="w-9 h-9 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-bold shrink-0">
                 {company?.name?.charAt(0)?.toUpperCase() || 'V'}
               </div>
             )}
@@ -108,7 +108,7 @@ export default function Sidebar() {
               <span className="text-gray-400 text-xs">{parsesUsed}/{parsesTotal} parses</span>
             </div>
             <div className="w-full bg-gray-700 h-1 rounded-full overflow-hidden">
-              <div className="bg-[#C8871A] h-full rounded-full" style={{ width: `${parsePercent}%` }}></div>
+              <div className="bg-[#2563EB] h-full rounded-full" style={{ width: `${parsePercent}%` }}></div>
             </div>
           </div>
 

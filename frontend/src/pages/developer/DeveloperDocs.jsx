@@ -112,7 +112,7 @@ export default function DeveloperDocs() {
             
             <div id="file-upload" className="mb-12 pt-4">
               <div className="flex items-center gap-3 mb-4">
-                 <span className="bg-amber-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
+                 <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
                  <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/parse</h3>
                  <button onClick={() => openPlayground({method:'POST', path:'/api/v1/parse'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
               </div>
@@ -180,7 +180,7 @@ export default function DeveloperDocs() {
             </p>
             
             <div className="flex items-center gap-3 mb-4">
-               <span className="bg-amber-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
+               <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
                <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/protection/scan</h3>
                <button onClick={() => openPlayground({method:'POST', path:'/api/protection/scan'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
             </div>
@@ -351,7 +351,7 @@ export default function DeveloperDocs() {
                  <div className="flex flex-col gap-1.5">
                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Endpoint</label>
                    <div className="flex font-mono text-sm border-2 border-gray-100 rounded-lg overflow-hidden bg-gray-50">
-                     <div className="px-3 py-2 bg-amber-100 text-amber-700 font-bold">{pgEndpoint?.method}</div>
+                     <div className="px-3 py-2 bg-blue-100 text-amber-700 font-bold">{pgEndpoint?.method}</div>
                      <div className="px-3 py-2 text-gray-600 font-medium w-full truncate">{pgEndpoint?.path}</div>
                    </div>
                  </div>

@@ -204,4 +204,69 @@ export const protectionAPI = {
   history: () => req("GET", "/protection/history")
 };
 
+// ── SEEKER API ─────────────────────────────────────────────────────────────────
+// Uses a separate seeker_token from localStorage (never the recruiter JWT)
+
+function getSeekerHeaders(isFile = false) {
+  const h = {};
+  const token = localStorage.getItem('vish_seeker_token');
+  if (token) h['Authorization'] = `Bearer ${token}`;
+  if (!isFile) h['Content-Type'] = 'application/json';
+  return h;
+}
+
+async function seekerReq(method, path, body = null, isFile = false) {
+  const opts = {
+    method,
+    headers: getSeekerHeaders(isFile),
+    body: body ? (isFile ? body : JSON.stringify(body)) : undefined,
+  };
+  const res = await fetch(`http://127.0.0.1:8000${path}`, opts);
+  const data = await res.json();
+  if (res.status === 401) {
+    localStorage.removeItem('vish_seeker_token');
+    localStorage.removeItem('vish_seeker_data');
+    window.location.href = '/jobs/login';
+    throw new Error('Session expired');
+  }
+  if (!data.success) throw new Error(data.error || 'Request failed');
+  return data.data;
+}
+
+export const seekerAPI = {
+  // Auth
+  register: (b) => seekerReq('POST', '/api/v1/seeker/auth/register', b),
+  login: (b) => seekerReq('POST', '/api/v1/seeker/auth/login', b),
+  getMe: () => seekerReq('GET', '/api/v1/seeker/auth/me'),
+  updateProfile: (b) => seekerReq('PATCH', '/api/v1/seeker/auth/profile', b),
+
+  // Resume
+  getResume: () => seekerReq('GET', '/api/v1/seeker/resume'),
+  uploadResume: (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return seekerReq('POST', '/api/v1/seeker/resume/upload', fd, true);
+  },
+  enhanceResume: (jobDescription = '') =>
+    seekerReq('POST', '/api/v1/seeker/resume/enhance', { job_description: jobDescription }),
+
+  // Jobs
+  listJobs: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return seekerReq('GET', `/api/v1/seeker/jobs${qs ? '?' + qs : ''}`);
+  },
+  getJob: (id) => seekerReq('GET', `/api/v1/seeker/jobs/${id}`),
+  applyJob: (id, coverNote = '') =>
+    seekerReq('POST', `/api/v1/seeker/jobs/${id}/apply`, { cover_note: coverNote }),
+
+  // Applications
+  getApplications: () => seekerReq('GET', '/api/v1/seeker/applications'),
+
+  // Notifications
+  getNotifications: () => seekerReq('GET', '/api/v1/seeker/notifications'),
+  markRead: (id) => seekerReq('PATCH', `/api/v1/seeker/notifications/${id}/read`),
+  markAllRead: () => seekerReq('POST', '/api/v1/seeker/notifications/read-all'),
+};
+
+
 

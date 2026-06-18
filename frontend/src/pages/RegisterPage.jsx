@@ -195,7 +195,7 @@ export default function RegisterPage() {
 
               <button
                 type="submit" disabled={loading}
-                className="w-full h-12 mt-6 bg-accent hover:bg-[#A06B10] text-white rounded-lg font-semibold transition-colors flex items-center justify-center disabled:opacity-70"
+                className="w-full h-12 mt-6 bg-accent hover:bg-[#1D4ED8] text-white rounded-lg font-semibold transition-colors flex items-center justify-center disabled:opacity-70"
               >
                 {loading ? <><Loader2 className="animate-spin mr-2" size={20} /> Loading...</> : "Create Account"}
               </button>
@@ -266,7 +266,7 @@ export default function RegisterPage() {
 
             <button
               onClick={handleCopyBoth}
-              className="w-full py-2 mb-6 border-2 border-accent text-accent font-medium rounded-lg hover:bg-orange-50 transition-colors"
+              className="w-full py-2 mb-6 border-2 border-accent text-accent font-medium rounded-lg hover:bg-blue-50 transition-colors"
             >
               Copy Both Keys
             </button>
@@ -276,7 +276,7 @@ export default function RegisterPage() {
                 type="checkbox" 
                 checked={savedKeys}
                 onChange={(e) => setSavedKeys(e.target.checked)}
-                className="w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent accent-[#C8871A]"
+                className="w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent accent-[#2563EB]"
               />
               <span className="text-sm font-medium text-charcoal">✓ I have saved my API keys securely</span>
             </label>
@@ -284,7 +284,7 @@ export default function RegisterPage() {
             <button
               onClick={goToDashboard}
               disabled={!savedKeys}
-              className="w-full h-12 bg-accent hover:bg-[#A06B10] text-white rounded-lg font-semibold transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 bg-accent hover:bg-[#1D4ED8] text-white rounded-lg font-semibold transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Go to Dashboard &rarr;
             </button>

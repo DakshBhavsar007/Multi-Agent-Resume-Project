@@ -21,7 +21,6 @@ import JobsLandingPage from './pages/JobsLandingPage';
 import JobsSearchPage from './pages/JobsSearchPage';
 import JobDetailsPage from './pages/JobDetailsPage';
 import JobsTrendsPage from './pages/JobsTrendsPage';
-import JobsApplicationsPage from './pages/JobsApplicationsPage';
 import JobSeekerSafetyPage from './pages/JobSeekerSafetyPage';
 
 // Developer Portal imports
@@ -37,6 +36,13 @@ import DeveloperWebhooks from './pages/developer/DeveloperWebhooks';
 import DeveloperEmbed from './pages/developer/DeveloperEmbed';
 import DeveloperDocs from './pages/developer/DeveloperDocs';
 import DeveloperSettings from './pages/developer/DeveloperSettings';
+
+// Job Seeker Portal imports
+import JobSeekerLoginPage from './pages/seeker/JobSeekerLoginPage';
+import JobSeekerRegisterPage from './pages/seeker/JobSeekerRegisterPage';
+import MyResumePage from './pages/seeker/MyResumePage';
+import MyApplicationsPage from './pages/seeker/MyApplicationsPage';
+import NotificationsPage from './pages/seeker/NotificationsPage';
 
 function ScrollToTop() {
   const location = useLocation();
@@ -97,7 +103,7 @@ export default function App() {
           style: {
             background:"white",
             color:"#2A2A2A",
-            borderLeft:"4px solid #C8871A",
+            borderLeft:"4px solid #2563EB",
             borderRadius:"8px",
             boxShadow:"0 4px 12px rgba(0,0,0,0.1)"
           },
@@ -122,9 +128,15 @@ export default function App() {
           <Route path="/jobs" element={<JobsLandingPage />} />
           <Route path="/jobs/search" element={<JobsSearchPage />} />
           <Route path="/jobs/safety-checker" element={<JobSeekerSafetyPage />} />
-          <Route path="/jobs/:id" element={<JobDetailsPage />} />
           <Route path="/jobs/trends" element={<JobsTrendsPage />} />
-          <Route path="/jobs/applications" element={<JobsApplicationsPage />} />
+          <Route path="/jobs/applications" element={<MyApplicationsPage />} />
+          <Route path="/jobs/resume" element={<MyResumePage />} />
+          <Route path="/jobs/notifications" element={<NotificationsPage />} />
+          <Route path="/jobs/:id" element={<JobDetailsPage />} />
+
+          {/* Job Seeker Portal — Auth */}
+          <Route path="/jobs/login"    element={<JobSeekerLoginPage />} />
+          <Route path="/jobs/register" element={<JobSeekerRegisterPage />} />
 
           {/* Developer Portal Routes */}
           <Route path="/developer" element={<DeveloperLandingPage />} />

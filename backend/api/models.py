@@ -237,3 +237,81 @@ class FraudScanLog(models.Model):
 
     class Meta:
         db_table = "fraud_scan_logs"
+
+
+# ─── Job Seeker Portal Models ──────────────────────────────────────────────────
+
+class JobSeekerAccount(models.Model):
+    id                = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    full_name         = models.CharField(max_length=255)
+    email             = models.CharField(max_length=255, unique=True)
+    password_hash     = models.CharField(max_length=500)
+    phone             = models.CharField(max_length=50, null=True, blank=True)
+    location          = models.CharField(max_length=255, null=True, blank=True)
+    headline          = models.CharField(max_length=255, null=True, blank=True)  # e.g. "Frontend Developer"
+    resume_file_path  = models.CharField(max_length=500, null=True, blank=True)
+    resume_data       = models.JSONField(default=dict)    # parsed resume JSON
+    enhanced_resume   = models.JSONField(default=dict)    # AI-enhanced version
+    skills            = models.JSONField(default=list)    # normalized skills list
+    tier              = models.CharField(max_length=50, default="free")  # free | premium
+    is_active         = models.BooleanField(default=True)
+    created_at        = models.DateTimeField(default=timezone.now)
+    updated_at        = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "job_seeker_accounts"
+
+    def __str__(self):
+        return f"{self.full_name} <{self.email}>"
+
+
+class JobApplication(models.Model):
+    STATUS_CHOICES = [
+        ("applied",     "Applied"),
+        ("shortlisted", "Shortlisted"),
+        ("rejected",    "Rejected"),
+        ("hired",       "Hired"),
+    ]
+
+    id          = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seeker      = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, db_column="seeker_id", related_name="applications")
+    session     = models.ForeignKey(Session, on_delete=models.CASCADE, db_column="session_id", related_name="seeker_applications")
+    candidate   = models.ForeignKey(Candidate, on_delete=models.SET_NULL, null=True, blank=True, db_column="candidate_id", related_name="seeker_application")
+    cover_note  = models.TextField(null=True, blank=True)
+    status      = models.CharField(max_length=50, choices=STATUS_CHOICES, default="applied")
+    applied_at  = models.DateTimeField(default=timezone.now)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "job_applications"
+        unique_together = (("seeker", "session"),)  # one application per job per seeker
+
+    def __str__(self):
+        return f"{self.seeker.full_name} → {self.session.job_title} [{self.status}]"
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ("application_received", "Application Received"),
+        ("status_updated",       "Status Updated"),
+        ("new_match",            "New Job Match"),
+        ("general",              "General"),
+    ]
+
+    id         = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seeker     = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, null=True, blank=True, db_column="seeker_id", related_name="notifications")
+    company    = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True, db_column="company_id", related_name="notifications")
+    type       = models.CharField(max_length=50, choices=TYPE_CHOICES, default="general")
+    title      = models.CharField(max_length=255)
+    message    = models.TextField()
+    is_read    = models.BooleanField(default=False)
+    link       = models.CharField(max_length=500, null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "notifications"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        target = self.seeker or self.company
+        return f"[{self.type}] → {target}: {self.title}"

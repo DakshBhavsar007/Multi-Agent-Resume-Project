@@ -66,7 +66,7 @@ export default function DeveloperPortalLayout() {
         <div className="p-6 pb-2">
           <div className="flex items-start flex-col mb-8 gap-0.5 mt-4 md:mt-0">
              <span className="text-2xl font-black text-accent tracking-tight cursor-pointer" onClick={() => navigate("/developer")}>Vishleshan</span>
-             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-0.5">Dev Portal</span>
+             <span className="text-xs font-bold text-gray-700 uppercase tracking-widest pl-0.5">Dev Portal</span>
           </div>
         </div>
 
@@ -79,11 +79,11 @@ export default function DeveloperPortalLayout() {
                 <button
                   key={item.href}
                   onClick={() => { navigate(item.href); setMobileMenu(false); }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold transition-all text-left ${
-                    isActive ? "bg-accent/10 border border-accent/20 text-accent" : "text-gray-500 hover:bg-gray-50 hover:text-charcoal"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
+                    isActive ? "bg-accent/10 border border-accent/20 text-accent" : "text-gray-850 hover:bg-gray-50 hover:text-black"
                   }`}
                 >
-                  <Icon size={18} className={isActive ? "text-accent stroke-[2.5]" : "text-gray-400"} />
+                  <Icon size={18} className={isActive ? "text-accent stroke-[2.5]" : "text-gray-700"} />
                   {item.name}
                 </button>
               )
@@ -98,11 +98,11 @@ export default function DeveloperPortalLayout() {
                 <button
                   key={item.href}
                   onClick={() => { navigate(item.href); setMobileMenu(false); }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold transition-all text-left ${
-                    isActive ? "bg-accent/10 text-accent" : "text-gray-500 hover:bg-gray-50 hover:text-charcoal"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
+                    isActive ? "bg-accent/10 text-accent" : "text-gray-850 hover:bg-gray-50 hover:text-black"
                   }`}
                 >
-                  <Icon size={18} className={isActive ? "text-accent" : "text-gray-400"} />
+                  <Icon size={18} className={isActive ? "text-accent" : "text-gray-700"} />
                   {item.name}
                 </button>
               )
@@ -127,7 +127,7 @@ export default function DeveloperPortalLayout() {
               </div>
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="text-sm font-bold truncate text-charcoal">{company_name || "Developer"}</span>
-                <span className="text-[11px] text-gray-500 truncate font-medium">{developer?.email || "developer@example.com"}</span>
+                <span className="text-[11px] text-gray-750 truncate font-bold">{developer?.email || "developer@example.com"}</span>
               </div>
             </div>
         </div>
