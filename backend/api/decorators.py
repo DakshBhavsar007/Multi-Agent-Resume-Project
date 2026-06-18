@@ -35,7 +35,6 @@ def verify_api_key_helper(request):
     x_api_key = request.headers.get("X-API-Key", "")
     if not x_api_key:
         x_api_key = request.GET.get("x_api_key", "")
-        
     if x_api_key:
         # Check standard recruiter keys
         api_key_obj = APIKey.objects.filter(secret_key=x_api_key, is_active=True).first()
@@ -83,6 +82,29 @@ def verify_api_key_helper(request):
                     # Try to find default api key for rate-limit tracking
                     api_key_obj = APIKey.objects.filter(company_id=company.id, is_active=True).first()
                     company._api_key_obj = api_key_obj
+                    request.company = company
+                    return True
+
+            developer_id = payload.get("developer_id")
+            if developer_id:
+                dev_acc = DeveloperAccount.objects.filter(id=developer_id).first()
+                if dev_acc:
+                    company, created = Company.objects.get_or_create(
+                        email=dev_acc.email,
+                        defaults={
+                            "name": dev_acc.company_name,
+                            "password_hash": dev_acc.password_hash,
+                            "tier": dev_acc.tier,
+                            "is_active": True
+                        }
+                    )
+                    if not created and company.tier != dev_acc.tier:
+                        company.tier = dev_acc.tier
+                        company.save(update_fields=['tier'])
+                    
+                    # Try to find an active developer key for rate-limit tracking
+                    dev_key_obj = DeveloperAPIKey.objects.filter(developer_id=dev_acc.id, is_active=True).first()
+                    company._api_key_obj = dev_key_obj
                     request.company = company
                     return True
         except JWTError:

@@ -137,7 +137,7 @@ const response = await fetch(
       {/* HERO */}
       <header className="pt-32 pb-20 px-6 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
         <div className="md:col-span-5 flex flex-col items-start gap-6">
-          <span className="px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-semibold flex flex-row items-center gap-2">
+          <span className="px-4 py-1.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-semibold flex flex-row items-center gap-2">
             <Cpu size={14} /> AI-Powered Talent API
           </span>
           <h1 className="text-4xl lg:text-[48px] font-black text-charcoal leading-[1.1] tracking-tight">
@@ -297,7 +297,7 @@ const response = await fetch(
                  <button 
                   key={tab} 
                   onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-4 text-sm font-semibold transition-colors ${activeTab === tab ? 'text-accent border-b-2 border-accent bg-[#1E1E1E]' : 'text-gray-400 hover:text-white'}`}
+                  className={`px-6 py-4 text-sm font-semibold transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white bg-[#1E1E1E]' : 'text-gray-400 hover:text-white'}`}
                  >
                    {tab}
                  </button>

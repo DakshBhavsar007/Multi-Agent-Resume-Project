@@ -80,10 +80,10 @@ export default function DeveloperPortalLayout() {
                   key={item.href}
                   onClick={() => { navigate(item.href); setMobileMenu(false); }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
-                    isActive ? "bg-accent/10 border border-accent/20 text-accent" : "text-gray-850 hover:bg-gray-50 hover:text-black"
+                    isActive ? "bg-gray-100 border border-gray-200 text-black" : "text-gray-850 hover:bg-gray-50 hover:text-black"
                   }`}
                 >
-                  <Icon size={18} className={isActive ? "text-accent stroke-[2.5]" : "text-gray-700"} />
+                  <Icon size={18} className={isActive ? "text-black stroke-[2.5]" : "text-gray-700"} />
                   {item.name}
                 </button>
               )
@@ -99,10 +99,10 @@ export default function DeveloperPortalLayout() {
                   key={item.href}
                   onClick={() => { navigate(item.href); setMobileMenu(false); }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
-                    isActive ? "bg-accent/10 text-accent" : "text-gray-850 hover:bg-gray-50 hover:text-black"
+                    isActive ? "bg-gray-100 text-black" : "text-gray-850 hover:bg-gray-50 hover:text-black"
                   }`}
                 >
-                  <Icon size={18} className={isActive ? "text-accent" : "text-gray-700"} />
+                  <Icon size={18} className={isActive ? "text-black" : "text-gray-700"} />
                   {item.name}
                 </button>
               )
@@ -134,7 +134,7 @@ export default function DeveloperPortalLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 h-full overflow-y-auto bg-[#F5F0E8] md:mt-0 mt-16 md:p-8 p-4 relative z-0 hide-scrollbar">
+      <main className="flex-1 h-full overflow-y-auto bg-white md:mt-0 mt-16 md:p-8 p-4 relative z-0 hide-scrollbar">
           <ErrorBoundary>
               <motion.div key={pathname} initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.08}} className="w-full h-full">
                 <Outlet />

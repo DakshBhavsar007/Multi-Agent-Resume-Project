@@ -57,19 +57,37 @@ def upload_resume(request):
             for chunk in file.chunks():
                 f.write(chunk)
 
-        # Parse with existing agent (synchronous)
+        # Parse with existing agent (async → sync)
+        file_ext = os.path.splitext(file.name.lower())[1].lstrip(".")  # pdf, docx, txt etc.
+        if file_ext == "doc":
+            file_ext = "docx"
         parser = ResumeParsingAgent()
-        parsed = parser.parse(file_path)
+        from asgiref.sync import async_to_sync
+        result = async_to_sync(parser.parse)(file_path, file_ext)
+        parsed = result.get("parsed", {})
 
         # Normalize skills
         raw_skills = parsed.get("skills", [])
+
+        def flatten_skill(s):
+            """Convert skill object {skill, level, ...} or plain string to a string."""
+            if isinstance(s, str):
+                return s
+            if isinstance(s, dict):
+                return s.get("skill") or s.get("name") or str(s)
+            return str(s)
+
+        # Flatten raw skills to strings first
+        raw_skills_flat = [flatten_skill(s) for s in raw_skills if s]
+
         try:
-            from asgiref.sync import async_to_sync
             norm_agent = SkillNormalizationAgent()
-            normalized_skills = async_to_sync(norm_agent.normalize)(raw_skills)
+            normalized_skills = async_to_sync(norm_agent.normalize)(raw_skills_flat)
+            # Ensure normalized output is also flat strings
+            normalized_skills = [flatten_skill(s) for s in normalized_skills if s]
         except Exception as norm_err:
             logger.warning("Skill normalization failed: %s", norm_err)
-            normalized_skills = raw_skills
+            normalized_skills = raw_skills_flat
 
         # Save to seeker account
         seeker = request.seeker

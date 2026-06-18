@@ -190,7 +190,7 @@ import { VishleshanPanel } from '@vishleshan/vue';
               
               <div className="flex bg-[#2D2D2D] border-b border-gray-700 px-4 pt-4">
                  {Object.keys(codeSnippets).map(tab => (
-                    <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-3 text-sm font-semibold transition-colors ${activeTab === tab ? 'text-accent border-b-2 border-accent bg-[#1E1E1E]' : 'text-gray-400 hover:text-white'}`}>
+                    <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-3 text-sm font-semibold transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white bg-[#1E1E1E]' : 'text-gray-400 hover:text-white'}`}>
                       {tab}
                     </button>
                  ))}

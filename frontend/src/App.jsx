@@ -101,17 +101,19 @@ export default function App() {
         toastOptions={{
           duration: 4000,
           style: {
-            background:"white",
-            color:"#2A2A2A",
-            borderLeft:"4px solid #2563EB",
-            borderRadius:"8px",
-            boxShadow:"0 4px 12px rgba(0,0,0,0.1)"
+            background: "#111111",
+            color: "#ffffff",
+            borderRadius: "10px",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+            fontSize: "13px",
+            fontWeight: "600",
+            padding: "12px 16px",
           },
           success: {
-            iconTheme:{primary:"#22C55E",secondary:"white"}
+            iconTheme: { primary: "#22C55E", secondary: "#111111" }
           },
           error: {
-            iconTheme:{primary:"#EF4444",secondary:"white"}
+            iconTheme: { primary: "#EF4444", secondary: "#111111" }
           }
         }}
       />

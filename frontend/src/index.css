@@ -3,11 +3,11 @@
 :root {
   --text: #2d2d2d;
   --text-secondary: #5c5c5c;
-  --bg: #f5f4ef;
-  --border: #e6dfcd;
-  --border-light: #e6dfcd;
-  --accent: #d48b29;
-  --accent-light: #EFF6FF;
+  --bg: #ffffff;
+  --border: #e5e7eb;
+  --border-light: #e5e7eb;
+  --accent: #111111;
+  --accent-light: #f3f4f6;
   --sans: 'Inter', system-ui, -apple-system, sans-serif;
   --serif: 'Playfair Display', serif;
 }
@@ -31,3 +31,28 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Remap hardcoded blue hex values used as inline Tailwind bg-[#hex] to black */
+[class*="bg-[#2563EB]"],
+[class*="bg-[#1D4ED8]"],
+[class*="bg-[#3B82F6]"] {
+  background-color: #111111 !important;
+}
+[class*="hover:bg-[#2563EB]"]:hover,
+[class*="hover:bg-[#1D4ED8]"]:hover,
+[class*="hover:bg-[#3B82F6]"]:hover {
+  background-color: #333333 !important;
+}
+[class*="text-[#2563EB]"],
+[class*="text-[#1D4ED8]"],
+[class*="text-[#3B82F6]"] {
+  color: #111111 !important;
+}
+[class*="border-[#2563EB]"],
+[class*="border-dashed"][class*="border-[#2563EB]"] {
+  border-color: #111111 !important;
+}
+[class*="from-accent"][class*="to-[#1D4ED8]"] {
+  background-image: linear-gradient(to right, #111111, #333333) !important;
+}
+

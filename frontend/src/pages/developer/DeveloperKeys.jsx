@@ -123,6 +123,13 @@ function DeveloperKeyRow({ apiKey, onUpdate }) {
 
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <button 
+              onClick={() => handleCopy(apiKey.secret_key || "", 'secret')}
+              className="p-1.5 text-gray-600 hover:text-accent hover:bg-blue-50 rounded-lg transition-colors"
+              title="Copy secret key"
+            >
+              {copiedType === 'secret' ? <Check size={14} className="text-green-500" /> : <Key size={14} />}
+            </button>
+            <button 
               onClick={() => handleCopy(apiKey.public_key || "", 'masked')}
               className="p-1.5 text-gray-600 hover:text-charcoal hover:bg-gray-100 rounded-lg transition-colors"
               title="Copy public key"
@@ -161,17 +168,16 @@ function DeveloperKeyRow({ apiKey, onUpdate }) {
                    readOnly 
                    className="text-xs flex-1 text-black font-mono bg-transparent outline-none truncate font-extrabold" 
                  />
-                 <button type="button" onClick={() => setShowSecret(!showSecret)} className="text-gray-500 hover:text-charcoal shrink-0 mr-1">
+                 <button type="button" onClick={() => setShowSecret(!showSecret)} className="text-gray-500 hover:text-charcoal shrink-0 mr-1" title={showSecret ? 'Hide secret key' : 'Reveal secret key'}>
                    {showSecret ? <EyeOff size={14} /> : <Eye size={14} />}
                  </button>
-                 {showSecret && (
-                   <button 
-                     onClick={() => handleCopy(apiKey.secret_key || "", 'secret')} 
-                     className="text-gray-500 hover:text-accent shrink-0"
-                   >
-                     {copiedType === 'secret' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                   </button>
-                 )}
+                 <button 
+                   onClick={() => handleCopy(apiKey.secret_key || "", 'secret')} 
+                   className="text-gray-500 hover:text-accent shrink-0"
+                   title="Copy secret key"
+                 >
+                   {copiedType === 'secret' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                 </button>
                </div>
             </div>
 
@@ -505,7 +511,7 @@ const data = await response.json();`
                       <button 
                        key={tab} 
                        onClick={() => setActiveCodeTab(tab)}
-                       className={`px-6 py-3 text-xs font-bold transition-colors ${activeCodeTab === tab ? 'text-accent border-b-2 border-accent bg-[#1E1E1E]' : 'text-gray-300 hover:text-white'}`}
+                       className={`px-6 py-3 text-xs font-bold transition-colors ${activeCodeTab === tab ? 'text-white border-b-2 border-white bg-[#1E1E1E]' : 'text-gray-300 hover:text-white'}`}
                       >
                         {tab}
                       </button>

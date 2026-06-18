@@ -4,7 +4,7 @@ import { portalUsage } from "../../lib/portalApi";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Download } from "lucide-react";
 
-const COLORS = { Parse: "#2563EB", Match: "#3B82F6", Chat: "#22C55E", Scan: "#8B5CF6" };
+const COLORS = { Parse: "#111111", Match: "#555555", Chat: "#22C55E", Scan: "#8B5CF6" };
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -180,7 +180,7 @@ export default function DeveloperUsage() {
                        <td className="py-3 px-2 text-right">
                           <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-bold ${
                              ep.error_rate < 1 ? "bg-green-100 text-green-700" :
-                             ep.error_rate <= 5 ? "bg-blue-100 text-amber-700" :
+                             ep.error_rate <= 5 ? "bg-gray-100 text-amber-700" :
                              "bg-red-100 text-red-700"
                           }`}>{ep.error_rate}%</span>
                        </td>

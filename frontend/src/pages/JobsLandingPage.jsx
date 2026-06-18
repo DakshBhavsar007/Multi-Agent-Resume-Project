@@ -192,7 +192,7 @@ export default function JobsLandingPage() {
             Next-Gen Job Platform
           </span>
           <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#2A2A2A] leading-tight">
-            Search for your <span className="text-[#2563EB] italic font-semibold">next move</span>
+            Search for your <span className="text-[#111111] italic font-semibold">next move</span>
           </h1>
           <p className="text-gray-500 font-medium text-sm max-w-xl mx-auto">
             Connecting global talent with industry-leading companies through intelligent matching and real-time market data.
@@ -238,7 +238,7 @@ export default function JobsLandingPage() {
                 
                 {/* Query Input */}
                 <div className="flex items-center space-x-2.5 px-4 flex-1 w-full relative" onClick={(e) => e.stopPropagation()}>
-                  <Search className="text-[#2563EB] shrink-0" size={18} />
+                  <Search className="text-gray-400 shrink-0" size={18} />
                   <input
                     type="text"
                     placeholder="Job title, keywords, or company..."
@@ -275,7 +275,7 @@ export default function JobsLandingPage() {
 
                 {/* Location Input */}
                 <div className="flex items-center space-x-2.5 px-4 flex-1 w-full relative" onClick={(e) => e.stopPropagation()}>
-                  <MapPin className="text-[#2563EB] shrink-0" size={18} />
+                  <MapPin className="text-gray-400 shrink-0" size={18} />
                   <input
                     type="text"
                     placeholder="City, state, or remote..."
@@ -331,11 +331,11 @@ export default function JobsLandingPage() {
         {/* Feature Overview: Resume Matcher Visualization */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center bg-white border border-gray-100 p-8 md:p-12 rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div className="lg:col-span-5 space-y-6">
-            <div className="w-10 h-10 bg-[#EFF6FF] text-[#2563EB] rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 bg-gray-100 text-gray-700 rounded-xl flex items-center justify-center shrink-0">
               <Sparkles size={20} />
             </div>
             <h2 className="text-3xl font-extrabold text-charcoal tracking-tight">
-              Tailored for your <span className="text-[#2563EB]">unique trajectory</span>
+              Tailored for your <span className="text-[#111111] font-black">unique trajectory</span>
             </h2>
             <p className="text-gray-500 font-medium text-sm leading-relaxed">
               Our Match Engine goes beyond keywords. We analyze your complete resume structure, normalized skill graphs, and experience timeline to map your compatibility against active enterprise job postings.
@@ -357,7 +357,7 @@ export default function JobsLandingPage() {
             <div className="pt-4">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-[#2563EB] hover:bg-blue-700 text-white px-6 py-3.5 rounded-xl font-bold text-xs transition-all shadow-md active:scale-95"
+                className="bg-black hover:bg-neutral-800 text-white px-6 py-3.5 rounded-xl font-bold text-xs transition-all shadow-md active:scale-95"
               >
                 {profile ? 'Verify Extracted Skills' : 'Try Engine AI Now'}
               </button>
@@ -368,7 +368,7 @@ export default function JobsLandingPage() {
           <div className="lg:col-span-7 bg-[#F9F8F6] border border-gray-100 rounded-2xl p-6 md:p-8 space-y-6 shadow-inner">
             <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center">
               <div className="flex items-center space-x-4">
-                <div className="bg-[#EFF6FF] p-2.5 rounded-xl text-[#2563EB] shrink-0">
+                <div className="bg-gray-100 p-2.5 rounded-xl text-gray-600 shrink-0">
                   <FileText size={20} />
                 </div>
                 <div>
@@ -395,13 +395,13 @@ export default function JobsLandingPage() {
 
               <div className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center space-x-3">
-                  <div className="w-[18px] h-[18px] border-2 border-dashed border-[#2563EB] rounded-full animate-spin shrink-0" />
+                  <div className="w-[18px] h-[18px] border-2 border-dashed border-gray-400 rounded-full animate-spin shrink-0" />
                   <div>
                     <h5 className="font-bold text-xs text-charcoal">Soft Skills Analysis</h5>
                     <p className="text-[10px] text-gray-400 font-medium mt-0.5">Analyzing communication and leadership profiles</p>
                   </div>
                 </div>
-                <span className="text-[#2563EB] text-xs font-bold">Processing...</span>
+                <span className="text-gray-500 text-xs font-bold">Processing...</span>
               </div>
             </div>
           </div>
@@ -410,7 +410,7 @@ export default function JobsLandingPage() {
         {/* Hiring Safety Banner */}
         <section className="bg-gradient-to-br from-[#F0F6FF] to-[#F8FAFC] border border-[#BFDBFE] p-8 md:p-12 rounded-3xl shadow-sm flex flex-col lg:flex-row justify-between items-center gap-8">
           <div className="space-y-3 max-w-3xl text-left">
-            <span className="bg-[#2563EB]/10 text-[#2563EB] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-[#2563EB]/20">
+            <span className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-gray-200">
               Safety Verification
             </span>
             <h2 className="text-2xl md:text-3xl font-extrabold text-charcoal tracking-tight leading-tight">
@@ -433,7 +433,7 @@ export default function JobsLandingPage() {
         <section className="space-y-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between">
             <div className="space-y-2">
-              <span className="text-xs font-bold text-[#2563EB] uppercase tracking-wider">Real-Time Insights</span>
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Real-Time Insights</span>
               <h2 className="text-3xl font-black text-charcoal tracking-tight">Market Insights</h2>
               <p className="text-gray-500 font-medium text-sm max-w-xl">
                 Stay ahead of the curve with real-time analytics on salary trends, high-demand skills, and industry growth sectors.
@@ -441,7 +441,7 @@ export default function JobsLandingPage() {
             </div>
             <button
               onClick={() => navigate('/jobs/trends')}
-              className="text-[#2563EB] hover:text-blue-700 text-xs font-bold flex items-center space-x-1 mt-4 md:mt-0 transition-colors"
+              className="text-gray-600 hover:text-black text-xs font-bold flex items-center space-x-1 mt-4 md:mt-0 transition-colors"
             >
               <span>View full report</span>
               <ChevronRight size={14} />
@@ -452,7 +452,7 @@ export default function JobsLandingPage() {
             {/* Salary Growth (with Recharts BarChart) */}
             <div className="bg-[#F3F4F6] border border-gray-200/50 rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4">
               <div className="space-y-2">
-                <div className="w-8 h-8 rounded-full bg-white text-[#2563EB] flex items-center justify-center shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-white text-gray-600 flex items-center justify-center shadow-sm">
                   <TrendingUp size={16} />
                 </div>
                 <h3 className="font-extrabold text-base text-charcoal">Salary Growth</h3>
@@ -467,7 +467,7 @@ export default function JobsLandingPage() {
                   <BarChart data={salaryData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                     <XAxis dataKey="name" stroke="#9CA3AF" fontSize={9} axisLine={false} tickLine={false} />
                     <Tooltip cursor={{ fill: 'rgba(37, 99, 235, 0.03)' }} contentStyle={{ fontSize: 9, borderRadius: 8, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }} />
-                    <Bar dataKey="growth" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={24} />
+                    <Bar dataKey="growth" fill="#111111" radius={[4, 4, 0, 0]} barSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -492,7 +492,7 @@ export default function JobsLandingPage() {
             {/* Top Skills */}
             <div className="bg-[#F0F6FF] border border-[#BFDBFE] rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-6">
               <div className="space-y-2">
-                <div className="w-8 h-8 rounded-full bg-white text-[#2563EB] flex items-center justify-center shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-white text-gray-600 flex items-center justify-center shadow-sm">
                   <Cpu size={16} />
                 </div>
                 <h3 className="font-extrabold text-base text-charcoal">Top Skills</h3>
@@ -501,10 +501,10 @@ export default function JobsLandingPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <span className="bg-white border border-[#BFDBFE] text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">AI / ML</span>
-                <span className="bg-white border border-[#BFDBFE] text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Product</span>
-                <span className="bg-white border border-[#BFDBFE] text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Design</span>
-                <span className="bg-white border border-[#BFDBFE] text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Strategy</span>
+                <span className="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">AI / ML</span>
+                <span className="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Product</span>
+                <span className="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Design</span>
+                <span className="bg-white border border-gray-200 text-gray-700 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">Strategy</span>
               </div>
             </div>
           </div>

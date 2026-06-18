@@ -3,9 +3,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        accent: "#2563EB",
-        "accent-dark": "#1D4ED8",
-        cream: "#F5F0E8",
+        accent: "#111111",
+        "accent-dark": "#333333",
+        cream: "#ffffff",
         charcoal: "#2A2A2A",
       },
       fontFamily: { sans: ["Inter","sans-serif"] },

@@ -17,6 +17,7 @@ from api.views import (
     seeker_auth,
     seeker_resume,
     seeker_jobs,
+    parse,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -142,6 +143,7 @@ urlpatterns = [
     path('api/v1/public/jobs/<str:session_id>/safety-check', jobs.scan_job_safety_public, name='public-jobs-safety-check'),
 
     # ── Protection & Fraud Detection ──────────────────────────────────────────
+    path('api/v1/parse', parse.parse_resume, name='api-parse'),
     path('api/v1/protection/scan', protection.scan_portfolio, name='protection-scan'),
     path('api/v1/protection/history', protection.get_scan_history, name='protection-history'),
 

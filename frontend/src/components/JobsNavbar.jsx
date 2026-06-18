@@ -62,7 +62,7 @@ export default function JobsNavbar({ onUploadClick }) {
       {/* Brand logo */}
       <div className="flex items-center space-x-8">
         <Link to="/jobs" className="flex items-center space-x-2">
-          <span className="text-xl font-extrabold text-[#2563EB] font-sans tracking-tight">CareerEngine</span>
+          <span className="text-xl font-extrabold text-[#111111] font-sans tracking-tight">CareerEngine</span>
         </Link>
 
         {/* Links */}
@@ -71,7 +71,7 @@ export default function JobsNavbar({ onUploadClick }) {
             to="/"
             className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
               isActive('/')
-                ? 'text-[#2563EB] bg-[#EFF6FF]/50 font-semibold'
+                ? 'text-[#111111] bg-gray-100 font-semibold'
                 : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
             }`}
           >
@@ -84,7 +84,7 @@ export default function JobsNavbar({ onUploadClick }) {
               to="/jobs"
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive('/jobs')
-                  ? 'text-[#2563EB] bg-[#EFF6FF]/50 font-semibold'
+                  ? 'text-[#111111] bg-gray-100 font-semibold'
                   : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
               }`}
             >
@@ -97,7 +97,7 @@ export default function JobsNavbar({ onUploadClick }) {
             to="/jobs/search"
             className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
               isActive('/jobs/search')
-                ? 'text-[#2563EB] bg-[#EFF6FF]/50 font-semibold'
+                ? 'text-[#111111] bg-gray-100 font-semibold'
                 : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
             }`}
           >
@@ -110,7 +110,7 @@ export default function JobsNavbar({ onUploadClick }) {
               to="/jobs/resume"
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive('/jobs/resume')
-                  ? 'text-[#2563EB] bg-[#EFF6FF]/50 font-semibold'
+                  ? 'text-[#111111] bg-gray-100 font-semibold'
                   : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
               }`}
             >
@@ -124,7 +124,7 @@ export default function JobsNavbar({ onUploadClick }) {
               to="/jobs/applications"
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive('/jobs/applications')
-                  ? 'text-[#2563EB] bg-[#EFF6FF]/50 font-semibold'
+                  ? 'text-[#111111] bg-gray-100 font-semibold'
                   : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
               }`}
             >
@@ -138,7 +138,7 @@ export default function JobsNavbar({ onUploadClick }) {
               to="/jobs/notifications"
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive('/jobs/notifications')
-                  ? 'text-[#2563EB] bg-[#EFF6FF]/50 font-semibold'
+                  ? 'text-[#111111] bg-gray-100 font-semibold'
                   : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
               }`}
             >
@@ -151,7 +151,7 @@ export default function JobsNavbar({ onUploadClick }) {
             to="/jobs/trends"
             className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
               isActive('/jobs/trends')
-                ? 'text-[#2563EB] bg-[#EFF6FF]/50 font-semibold'
+                ? 'text-[#111111] bg-gray-100 font-semibold'
                 : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
             }`}
           >
@@ -163,7 +163,7 @@ export default function JobsNavbar({ onUploadClick }) {
             to="/jobs/safety-checker"
             className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
               isActive('/jobs/safety-checker')
-                ? 'text-[#2563EB] bg-[#EFF6FF]/50 font-semibold'
+                ? 'text-[#111111] bg-gray-100 font-semibold'
                 : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
             }`}
           >
@@ -179,9 +179,9 @@ export default function JobsNavbar({ onUploadClick }) {
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center space-x-2 border border-[#e6dfcd] hover:border-[#2563EB] rounded-full px-4 py-2 text-sm font-medium text-[#2A2A2A] transition-colors"
+              className="flex items-center space-x-2 border border-[#e6dfcd] hover:border-gray-400 rounded-full px-4 py-2 text-sm font-medium text-[#2A2A2A] transition-colors"
             >
-              <div className="w-6 h-6 bg-[#2563EB] text-white rounded-full flex items-center justify-center text-xs font-bold capitalize">
+              <div className="w-6 h-6 bg-[#111111] text-white rounded-full flex items-center justify-center text-xs font-bold capitalize">
                 {profile.name ? profile.name[0] : 'U'}
               </div>
               <span className="max-w-[120px] truncate">
@@ -203,7 +203,7 @@ export default function JobsNavbar({ onUploadClick }) {
                     <div className="p-3 border-b border-[#e6dfcd] bg-[#f5f4ef]/50">
                       <div className="text-sm font-bold text-[#2A2A2A] truncate">{profile.name}</div>
                       <div className="text-xs text-[#5c5c5c] truncate">{profile.email || 'No email associated'}</div>
-                      <div className="mt-1 text-[10px] bg-[#2563EB]/10 text-[#2563EB] px-1.5 py-0.5 rounded inline-block font-semibold">
+                      <div className="mt-1 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded inline-block font-semibold">
                         {profile.skills?.length || 0} Skills Extracted
                       </div>
                     </div>
@@ -234,7 +234,7 @@ export default function JobsNavbar({ onUploadClick }) {
         ) : (
           <button
             onClick={onUploadClick}
-            className="flex items-center space-x-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium rounded-full px-5 py-2.5 text-sm transition-all shadow-sm active:scale-95"
+            className="flex items-center space-x-2 bg-[#111111] hover:bg-[#333333] text-white font-medium rounded-full px-5 py-2.5 text-sm transition-all shadow-sm active:scale-95"
           >
             <Upload size={14} />
             <span>Upload Resume</span>

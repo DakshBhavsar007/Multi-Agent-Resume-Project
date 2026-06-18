@@ -5,8 +5,9 @@
 @tailwind utilities;
 
 :root {
-  --bg: #F5F0E8;
-  --accent: #2563EB;
+  --bg: #ffffff;
+  --accent: #111111;
+  --accent-dark: #333333;
   --text: #2A2A2A;
   --card: #FFFFFF;
   --success: #22C55E;
@@ -51,3 +52,76 @@ body {
   width: max-content;
   animation: marquee 30s linear infinite;
 }
+
+/* ── Global blue → black overrides ─────────────────────────────────────────
+   Remaps all hardcoded Tailwind blue utility classes on buttons / interactive
+   elements to the black accent theme. bg-blue-* as backgrounds on buttons,
+   hover states, and inline colour values are all caught here.               */
+@layer utilities {
+  /* Solid blue button fills → black */
+  .bg-blue-500, .bg-blue-600, .bg-blue-700 {
+    background-color: #111111 !important;
+  }
+  .hover\:bg-blue-600:hover,
+  .hover\:bg-blue-700:hover,
+  .hover\:bg-blue-800:hover {
+    background-color: #333333 !important;
+  }
+
+  /* Light blue tints used as hover/selected BG → light gray */
+  .bg-blue-50  { background-color: #f3f4f6 !important; }
+  .bg-blue-100 { background-color: #e5e7eb !important; }
+  .hover\:bg-blue-50:hover  { background-color: #f3f4f6 !important; }
+  .hover\:bg-blue-100:hover { background-color: #e5e7eb !important; }
+
+  /* Blue text → charcoal */
+  .text-blue-500, .text-blue-600, .text-blue-700, .text-blue-800, .text-blue-900 {
+    color: #2A2A2A !important;
+  }
+
+  /* Blue borders → gray */
+  .border-blue-100, .border-blue-200 { border-color: #e5e7eb !important; }
+  .border-blue-500, .border-blue-600 { border-color: #111111 !important; }
+}
+
+/* ── Direct class overrides (independent of Tailwind recompilation) ───────────
+   These override the compiled Tailwind output directly with !important,
+   so they work even if Vite hasn't fully recompiled the config changes.       */
+
+/* bg-accent → black background, white text */
+.bg-accent {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+}
+.hover\:bg-accent:hover,
+.hover\:bg-accent-dark:hover {
+  background-color: #333333 !important;
+}
+.bg-accent-dark { background-color: #333333 !important; }
+
+/* text-accent → black */
+.text-accent       { color: #111111 !important; }
+.text-accent-dark  { color: #333333 !important; }
+.hover\:text-accent:hover      { color: #111111 !important; }
+.hover\:text-accent-dark:hover { color: #333333 !important; }
+
+/* border-accent → black */
+.border-accent       { border-color: #111111 !important; }
+.hover\:border-accent:hover { border-color: #111111 !important; }
+
+/* accent tint backgrounds → neutral light gray */
+[class*="bg-accent\/10"]    { background-color: #f3f4f6 !important; }
+[class*="bg-accent\/20"]    { background-color: #e5e7eb !important; }
+[class*="bg-accent\/5"]     { background-color: #fafafa !important; }
+[class*="border-accent\/"]  { border-color:     #d1d5db !important; }
+[class*="shadow-accent\/"]  { --tw-shadow-color: rgba(0,0,0,0.08) !important; }
+
+/* Text on dark panels must not be black */
+[class*="bg-[#1E1E1E]"],
+[class*="bg-[#2D2D2D]"],
+[class*="bg-[#2A2A2A]"],
+.bg-charcoal { color: #e5e7eb; }
+
+/* bg-accent/10 active state tokens used in sidebar */
+[class*="bg-accent\/10"] { color: #111111 !important; }
+
