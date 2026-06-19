@@ -256,7 +256,17 @@ const AuthPage = () => {
           >
             Google
           </motion.button>
-          <motion.button whileHover={{ y: -2 }} className="sso-btn">GitHub</motion.button>
+          <motion.button 
+            whileHover={{ y: -2 }} 
+            className="sso-btn"
+            onClick={() => {
+              const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+              const redirectUri = encodeURIComponent(import.meta.env.VITE_GITHUB_REDIRECT_URI);
+              window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email&state=recruiter`;
+            }}
+          >
+            GitHub
+          </motion.button>
         </div>
 
         <div className="auth-footer" style={{ transform: "translateZ(10px)" }}>

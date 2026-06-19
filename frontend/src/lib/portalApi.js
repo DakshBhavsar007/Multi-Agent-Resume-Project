@@ -55,6 +55,14 @@ export const portalAuth = {
     }
     return d
   },
+  githubLogin: async (code) => {
+    const d = await req("POST","/auth/login-github", { code }, false)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("portal_jwt", d.jwt_token)
+      localStorage.setItem("portal_dev", JSON.stringify(d))
+    }
+    return d
+  },
   logout: () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("portal_jwt")

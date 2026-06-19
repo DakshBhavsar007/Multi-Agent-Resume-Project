@@ -63,6 +63,13 @@ export const authAPI = {
     localStorage.setItem("vish_company",JSON.stringify(d))
     return d
   },
+  githubLogin: async (code) => {
+    const d = await req("POST","/auth/login-github", { code })
+    localStorage.setItem("vish_jwt",d.jwt_token)
+    localStorage.setItem("vish_api_key",d.api_key||"")
+    localStorage.setItem("vish_company",JSON.stringify(d))
+    return d
+  },
   logout: () => {
     localStorage.clear()
     window.location.href="/login"
@@ -246,6 +253,12 @@ export const seekerAPI = {
   login: (b) => seekerReq('POST', '/api/v1/seeker/auth/login', b),
   googleLogin: async (credential) => {
     const data = await seekerReq('POST', '/api/v1/seeker/auth/login-google', { credential });
+    localStorage.setItem('vish_seeker_token', data.seeker_token);
+    localStorage.setItem('vish_seeker_data', JSON.stringify(data.seeker));
+    return data;
+  },
+  githubLogin: async (code) => {
+    const data = await seekerReq('POST', '/api/v1/seeker/auth/login-github', { code });
     localStorage.setItem('vish_seeker_token', data.seeker_token);
     localStorage.setItem('vish_seeker_data', JSON.stringify(data.seeker));
     return data;
