@@ -74,6 +74,8 @@ All agents communicate through the `RotateLLMClient`, which distributes requests
 - **Real-time Notifications** — In-app notification center and automated email alerts notifying seekers when application status changes (e.g. Shortlisted, Hired)
 - **Hiring Safety Checker** — Company domain authenticity scanner; checks scam likelihood and job legitimacy before applying
 - **Salary Trends & Analytics** — Interactive charts displaying sector salary growth and high-demand competencies with a global modern blue color palette.
+- **Google OAuth Integration** — One-click Google Sign-In & Sign-Up (OAuth 2.0) across all user portals with seamless custom buttons.
+- **Cross-Portal Session Sync** — Logging out from the Recruiter/Company dashboard automatically invalidates and terminates sessions across other active Seeker and Developer portal tabs.
 
 ### Recruiter & Premium Features
 - **Premium Feature Inidication** — Shows product design thinking for monetization with a `👑 Premium` plan lock badge on bulk upload (ZIP, PDF, DOCX) buttons.
@@ -164,6 +166,7 @@ pip install -r requirements.txt
 # Configure environment variables in .env:
 # Set GEMINI_API_KEYS with a comma-separated list of your Gemini API keys
 # Set GEMINI_MODEL=gemini-2.5-flash for optimized free tier quota usage
+# Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET for Google authentication
 
 # Run Database Migrations
 python manage.py migrate --fake-initial
@@ -183,6 +186,7 @@ celery -A workers.celery_worker worker --loglevel=info --pool=threads --concurre
 cd frontend
 npm install
 cp .env.local.example .env.local
+# Set VITE_GOOGLE_CLIENT_ID in .env.local
 npm run dev
 ```
 

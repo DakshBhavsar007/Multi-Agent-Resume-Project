@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { portalBilling } from "../../lib/portalApi";
+import { portalBilling, portalAuth } from "../../lib/portalApi";
+import { usePortalAuthStore } from "../../stores/portalAuthStore";
 
 export default function DeveloperLandingPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -16,7 +17,27 @@ export default function DeveloperLandingPage() {
     { id: "business", name: "Business", price: 9999, features: ["10000 parses/month", "Priority support", "Custom prompts", "99.9% uptime SLA"] }
   ]);
 
-  const isDevLoggedIn = typeof window !== "undefined" ? !!localStorage.getItem("portal_jwt") : false;
+  const { tier, jwt, initFromStorage, setAuth } = usePortalAuthStore();
+  const [isDevLoggedIn, setIsDevLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("portal_jwt");
+    if (token && token !== "undefined") {
+      setIsDevLoggedIn(true);
+      initFromStorage();
+      
+      // Fetch latest profile from backend to ensure tier is up-to-date
+      portalAuth.getMe()
+        .then((meData) => {
+          setAuth(meData);
+        })
+        .catch((err) => {
+          console.error("Failed to sync developer info on landing page:", err);
+        });
+    } else {
+      setIsDevLoggedIn(false);
+    }
+  }, [jwt, initFromStorage, setAuth]);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -337,9 +358,21 @@ const response = await fetch(
                      ))}
                    </ul>
                    
-                   <Link to="/developer/register" className={`w-full block text-center py-3.5 rounded-xl font-bold transition-all ${plan.id === 'starter' ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20' : 'bg-gray-100 text-charcoal hover:bg-gray-200'}`}>
-                     {plan.price === 0 ? "Start for free" : "Subscribe now"}
-                   </Link>
+                   {isDevLoggedIn ? (
+                      plan.id === tier ? (
+                        <button disabled className="w-full block text-center py-3.5 rounded-xl font-bold bg-green-50 text-green-700 border border-green-200 cursor-not-allowed">
+                          Current Plan
+                        </button>
+                      ) : (
+                        <Link to="/developer/portal/billing" className={`w-full block text-center py-3.5 rounded-xl font-bold transition-all ${plan.id === 'starter' ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20' : 'bg-gray-100 text-charcoal hover:bg-gray-200'}`}>
+                          Subscribe now
+                        </Link>
+                      )
+                    ) : (
+                      <Link to="/developer/register" className={`w-full block text-center py-3.5 rounded-xl font-bold transition-all ${plan.id === 'starter' ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20' : 'bg-gray-100 text-charcoal hover:bg-gray-200'}`}>
+                        {plan.price === 0 ? "Start for free" : "Subscribe now"}
+                      </Link>
+                    )}
                 </div>
              ))}
            </div>

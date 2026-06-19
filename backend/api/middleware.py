@@ -37,7 +37,7 @@ class UsageLoggerMiddleware:
         return response
 
     def _infer_action(self, path: str) -> str:
-        if "ingest" in path or "upload" in path:
+        if "ingest" in path or "upload" in path or "parse" in path:
             return "parse"
         elif "match" in path:
             return "match"
@@ -59,6 +59,8 @@ class UsageLoggerMiddleware:
             
             # Find key record
             key_record = DeveloperAPIKey.objects.filter(secret_key=api_key, is_active=True).first()
+            if not key_record:
+                key_record = DeveloperAPIKey.objects.filter(public_key=api_key, is_active=True).first()
             if not key_record:
                 return
 

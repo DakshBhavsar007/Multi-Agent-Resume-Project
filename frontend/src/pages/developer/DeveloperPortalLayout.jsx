@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X } from "lucide-react";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
+import { portalAuth } from "../../lib/portalApi";
 import { motion } from "framer-motion";
 import UsageProgress from "../../components/developer/UsageProgress";
 
@@ -15,7 +16,7 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function DeveloperPortalLayout() {
-  const { jwt, developer, company_name, initFromStorage, clearAuth } = usePortalAuthStore();
+  const { jwt, developer, company_name, initFromStorage, clearAuth, setAuth } = usePortalAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
@@ -25,10 +26,24 @@ export default function DeveloperPortalLayout() {
   useEffect(() => {
     initFromStorage();
     setMounted(true);
-    if (!usePortalAuthStore.getState().jwt) {
+    const token = usePortalAuthStore.getState().jwt || localStorage.getItem("portal_jwt");
+    if (!token) {
       navigate("/developer/login");
+      return;
     }
-  }, [initFromStorage, navigate]);
+
+    // Refresh profile on layout mount
+    portalAuth.getMe()
+      .then((meData) => {
+        setAuth(meData);
+      })
+      .catch((err) => {
+        console.error("Failed to sync developer info:", err);
+        if (err.message === "Session expired" || err.message === "Unauthorized") {
+          clearAuth();
+        }
+      });
+  }, [initFromStorage, navigate, setAuth, clearAuth]);
 
   if (!mounted || !jwt) return null;
 

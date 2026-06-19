@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { portalAuth } from "../../lib/portalApi";
@@ -10,13 +10,43 @@ export default function DeveloperLoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { setAuth, initFromStorage, jwt } = usePortalAuthStore();
+  const googleClientRef = useRef(null);
 
   useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google) {
+        googleClientRef.current = window.google.accounts.oauth2.initTokenClient({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          scope: "openid email profile",
+          callback: async (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              setLoading(true);
+              try {
+                const data = await portalAuth.googleLogin(tokenResponse.access_token);
+                setAuth(data);
+                toast.success("Signed in successfully with Google!");
+                navigate("/developer/portal/dashboard");
+              } catch (err) {
+                toast.error(err.message || "Google login failed");
+              } finally {
+                setLoading(false);
+              }
+            }
+          }
+        });
+      }
+    };
+    document.body.appendChild(script);
+
     initFromStorage();
     if (usePortalAuthStore.getState().jwt) {
       navigate("/developer/portal/dashboard");
     }
-  }, [initFromStorage, navigate]);
+  }, [initFromStorage, navigate, setAuth]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -77,6 +107,34 @@ export default function DeveloperLoginPage() {
             className="w-full mt-2 bg-accent text-white py-3.5 rounded-xl font-bold tracking-wide hover:bg-accent-dark transition-all shadow-md shadow-accent/20 hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
           >
             {loading ? "Signing in..." : "Sign In"}
+          </button>
+
+          <div className="relative my-2 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <span className="relative px-3 bg-white text-xs font-semibold text-gray-400 uppercase tracking-widest">or</span>
+          </div>
+
+          <button 
+            type="button" 
+            disabled={loading}
+            onClick={() => {
+              if (googleClientRef.current) {
+                googleClientRef.current.requestAccessToken();
+              } else {
+                toast.error("Google Auth is loading. Please try again in a moment.");
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2.5 bg-white border border-gray-200 text-charcoal py-3.5 rounded-xl font-bold tracking-wide hover:bg-gray-50 transition-all shadow-sm hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" className="w-4.5 h-4.5">
+              <path d="M21.35,11.1H12v2.7h5.38C17,14.93,15.76,15.9,14.15,16.5l2.2,2.2c2.6-2.4,4.1-5.9,4.1-10C22.45,12.3,22,11.6,21.35,11.1z" fill="#4285F4" />
+              <path d="M12,20.45c2.6,0,4.8-.85,6.4-2.3l-2.2-2.2c-.85.6-2,1-3.3,1c-3.15,0-5.8-2.15-6.75-5.05L3.9,13.9A10.45,10.45,0,0,0,12,20.45z" fill="#34A853" />
+              <path d="M5.25,12.1a6.4,6.4,0,0,1,0-3.8L3.05,6A10.45,10.45,0,0,0,3.05,16.2z" fill="#FBBC05" />
+              <path d="M12,5.25c1.8,0,3.2.6,4.05,1.4l2-2A10.35,10.35,0,0,0,12,1.55a10.45,10.45,0,0,0-8.1,4.45L6.1,8.1C7.05,5.2,9.7,3.15,12,5.25z" fill="#EA4335" />
+            </svg>
+            <span>Sign In with Google</span>
           </button>
         </form>
 

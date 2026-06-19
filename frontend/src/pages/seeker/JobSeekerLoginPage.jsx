@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { seekerAPI } from '../../lib/api';
 import { useSeekerAuthStore } from '../../stores/seekerAuthStore';
@@ -9,6 +9,38 @@ export default function JobSeekerLoginPage() {
   const setAuth = useSeekerAuthStore(s => s.setAuth);
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const googleClientRef = useRef(null);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google) {
+        googleClientRef.current = window.google.accounts.oauth2.initTokenClient({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          scope: "openid email profile",
+          callback: async (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              setLoading(true);
+              try {
+                const data = await seekerAPI.googleLogin(tokenResponse.access_token);
+                setAuth(data);
+                toast.success(`Welcome, ${data.seeker.full_name}!`);
+                navigate('/jobs/dashboard');
+              } catch (err) {
+                toast.error(err.message || 'Google login failed');
+              } finally {
+                setLoading(false);
+              }
+            }
+          }
+        });
+      }
+    };
+    document.body.appendChild(script);
+  }, [navigate, setAuth]);
 
   const handle = async (e) => {
     e.preventDefault();
@@ -28,131 +60,89 @@ export default function JobSeekerLoginPage() {
   };
 
   return (
-    <div style={styles.page}>
-      {/* Left Panel */}
-      <div style={styles.left}>
-        <div style={styles.brand}>
-          <div style={styles.logo}>V</div>
-          <span style={styles.brandName}>Vishleshan</span>
+    <div className="min-h-screen flex items-center justify-center relative bg-bg overflow-hidden font-sans">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-100 via-bg to-bg opacity-70"></div>
+      
+      <div className="w-full max-w-md bg-white rounded-3xl p-8 relative z-10 shadow-2xl shadow-gray-200/50 border border-gray-100 m-4">
+        <div className="flex flex-col items-center mb-8">
+          <span className="text-gray-500 text-[14px] font-medium mb-1">Job Seeker Portal</span>
+          <h1 className="text-3xl font-black tracking-tight text-accent">Vishleshan</h1>
         </div>
-        <div style={styles.leftContent}>
-          <h1 style={styles.leftHeading}>Find your<br/><span style={styles.accent}>next role</span></h1>
-          <p style={styles.leftSub}>AI-powered job matching that connects your skills to the right opportunities.</p>
-          <div style={styles.features}>
-            {['AI Resume Enhancement', 'Smart Job Matching', 'Real-time Application Tracking', 'Fraud-verified Job Listings'].map(f => (
-              <div key={f} style={styles.featureItem}>
-                <span style={styles.check}>✓</span> {f}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* Right Panel */}
-      <div style={styles.right}>
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <h2 style={styles.cardTitle}>Sign in to your account</h2>
-            <p style={styles.cardSub}>Job Seeker Portal</p>
+        <form onSubmit={handle} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-charcoal">Email Address</label>
+            <input 
+              type="email" 
+              placeholder="you@example.com" 
+              value={form.email}
+              onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-gray-400 font-medium"
+              required 
+            />
           </div>
 
-          <form onSubmit={handle} style={styles.form}>
-            <div style={styles.field}>
-              <label style={styles.label}>Email address</label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                style={styles.input}
-                required
-              />
+          <div className="flex flex-col gap-1.5">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-semibold text-charcoal">Password</label>
+              <button type="button" className="text-xs text-gray-500 hover:text-accent font-medium">Forgot password?</button>
             </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={form.password}
-                onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                style={styles.input}
-                required
-              />
-            </div>
-            <button type="submit" disabled={loading} style={styles.btn}>
-              {loading ? 'Signing in…' : 'Sign In'}
-            </button>
-          </form>
-
-          <div style={styles.divider}><span>New to Vishleshan?</span></div>
-          <Link to="/jobs/register" style={styles.registerLink}>Create an account →</Link>
-
-          <div style={styles.companyLink}>
-            Are you a company? <Link to="/login" style={{ color: '#6366f1' }}>Company Login →</Link>
+            <input 
+              type="password" 
+              placeholder="••••••••" 
+              value={form.password}
+              onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-gray-400 font-medium"
+              required 
+            />
           </div>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full mt-2 bg-accent text-white py-3.5 rounded-xl font-bold tracking-wide hover:bg-accent-dark transition-all shadow-md shadow-accent/20 hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+
+          <div className="relative my-2 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <span className="relative px-3 bg-white text-xs font-semibold text-gray-400 uppercase tracking-widest">or</span>
+          </div>
+
+          <button 
+            type="button" 
+            disabled={loading}
+            onClick={() => {
+              if (googleClientRef.current) {
+                googleClientRef.current.requestAccessToken();
+              } else {
+                toast.error("Google Auth is loading. Please try again in a moment.");
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2.5 bg-white border border-gray-200 text-charcoal py-3.5 rounded-xl font-bold tracking-wide hover:bg-gray-50 transition-all shadow-sm hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" className="w-4.5 h-4.5">
+              <path d="M21.35,11.1H12v2.7h5.38C17,14.93,15.76,15.9,14.15,16.5l2.2,2.2c2.6-2.4,4.1-5.9,4.1-10C22.45,12.3,22,11.6,21.35,11.1z" fill="#4285F4" />
+              <path d="M12,20.45c2.6,0,4.8-.85,6.4-2.3l-2.2-2.2c-.85.6-2,1-3.3,1c-3.15,0-5.8-2.15-6.75-5.05L3.9,13.9A10.45,10.45,0,0,0,12,20.45z" fill="#34A853" />
+              <path d="M5.25,12.1a6.4,6.4,0,0,1,0-3.8L3.05,6A10.45,10.45,0,0,0,3.05,16.2z" fill="#FBBC05" />
+              <path d="M12,5.25c1.8,0,3.2.6,4.05,1.4l2-2A10.35,10.35,0,0,0,12,1.55a10.45,10.45,0,0,0-8.1,4.45L6.1,8.1C7.05,5.2,9.7,3.15,12,5.25z" fill="#EA4335" />
+            </svg>
+            <span>Sign In with Google</span>
+          </button>
+        </form>
+
+        <div className="mt-8 text-center border-t border-gray-100 pt-6 flex flex-col gap-2">
+          <p className="text-sm text-gray-500 font-medium">
+            New seeker? <Link to="/jobs/register" className="text-accent hover:text-accent-dark font-bold">Create an account →</Link>
+          </p>
+          <p className="text-xs text-gray-400 font-medium">
+            Are you a company? <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-bold">Company Login →</Link>
+          </p>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: { display: 'flex', minHeight: '100vh', fontFamily: "'Inter', sans-serif" },
-  left: {
-    flex: '0 0 45%', background: 'linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%)',
-    padding: '48px', display: 'flex', flexDirection: 'column', color: '#fff',
-  },
-  brand: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '60px' },
-  logo: {
-    width: '38px', height: '38px', borderRadius: '10px',
-    background: '#fff', color: '#2563eb', fontWeight: 800,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px',
-  },
-  brandName: { fontSize: '20px', fontWeight: 700 },
-  leftContent: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-  leftHeading: { fontSize: '42px', fontWeight: 800, lineHeight: 1.2, margin: '0 0 16px' },
-  accent: { color: '#93c5fd' },
-  leftSub: { fontSize: '16px', color: '#bfdbfe', marginBottom: '36px', lineHeight: 1.6 },
-  features: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  featureItem: { fontSize: '15px', color: '#dbeafe', display: 'flex', alignItems: 'center', gap: '10px' },
-  check: { color: '#4ade80', fontWeight: 700, fontSize: '16px' },
-  right: {
-    flex: 1, background: '#f8fafc', display: 'flex',
-    alignItems: 'center', justifyContent: 'center', padding: '48px',
-  },
-  card: {
-    background: '#fff', borderRadius: '20px', padding: '44px',
-    width: '100%', maxWidth: '440px',
-    boxShadow: '0 4px 40px rgba(0,0,0,0.08)',
-  },
-  cardHeader: { marginBottom: '32px' },
-  cardTitle: { fontSize: '26px', fontWeight: 700, color: '#111827', margin: '0 0 6px' },
-  cardSub: { fontSize: '14px', color: '#6b7280', margin: 0 },
-  form: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  field: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  label: { fontSize: '13px', fontWeight: 600, color: '#374151' },
-  input: {
-    padding: '12px 16px', border: '1.5px solid #e5e7eb',
-    borderRadius: '10px', fontSize: '14px', color: '#111827',
-    outline: 'none', transition: 'border-color 0.2s',
-    fontFamily: 'inherit',
-  },
-  btn: {
-    padding: '14px', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)',
-    color: '#fff', border: 'none', borderRadius: '12px',
-    fontSize: '15px', fontWeight: 600, cursor: 'pointer',
-    marginTop: '4px', transition: 'opacity 0.2s',
-  },
-  divider: {
-    textAlign: 'center', color: '#9ca3af', fontSize: '13px',
-    margin: '24px 0 0', borderTop: '1px solid #f3f4f6', paddingTop: '20px',
-  },
-  registerLink: {
-    display: 'block', textAlign: 'center', color: '#2563eb',
-    fontWeight: 600, fontSize: '14px', textDecoration: 'none', marginTop: '10px',
-  },
-  companyLink: {
-    textAlign: 'center', fontSize: '12px', color: '#9ca3af',
-    marginTop: '20px',
-  },
-};

@@ -50,7 +50,7 @@ Vishleshan processes and stores the following sensitive information. Any vulnera
 - **API Keys** — Developer-issued `vish_live_*` and `vish_test_*` keys
 - **JWT Tokens & Seeker Tokens** — Recruiter session JWTs and seeker session tokens (`vish_seeker_token`)
 - **Payment Data** — Razorpay subscription metadata (no raw card data stored)
-- **LLM API Keys** — Gemini API keys stored in the backend `.env` configuration
+- **LLM API Keys & Google OAuth Credentials** — Gemini API keys, Google client ID, and Google client secret stored in the environment configuration
 
 ---
 
@@ -106,10 +106,9 @@ We use the following severity levels to prioritise reported issues:
 
 If you are running Vishleshan locally or in your own infrastructure, follow these guidelines:
 
-### Environment Variables
-- **Never commit `.env` to version control** — it contains Gemini API keys, DB credentials, and JWT secrets.
-- Use `.env.example` as a template and populate secrets securely.
-- Rotate `GEMINI_API_KEYS` regularly and revoke any compromised keys immediately.
+- **Never commit `.env` or `.env.local` to version control** — they contain Gemini API keys, DB credentials, JWT secrets, and Google Client IDs/Secrets.
+- Use `.env.example` and `.env.local.example` as templates and populate secrets securely.
+- Rotate `GEMINI_API_KEYS` and `GOOGLE_OAUTH_CLIENT_SECRET` regularly and revoke any compromised credentials immediately.
 
 ### API Keys
 - Generate separate `vish_test_*` keys for development — never use production keys in testing.

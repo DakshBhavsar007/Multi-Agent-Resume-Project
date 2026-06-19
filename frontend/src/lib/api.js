@@ -56,6 +56,13 @@ export const authAPI = {
     localStorage.setItem("vish_company",JSON.stringify(d))
     return d
   },
+  googleLogin: async (credential) => {
+    const d = await req("POST","/auth/login-google", { credential })
+    localStorage.setItem("vish_jwt",d.jwt_token)
+    localStorage.setItem("vish_api_key",d.api_key||"")
+    localStorage.setItem("vish_company",JSON.stringify(d))
+    return d
+  },
   logout: () => {
     localStorage.clear()
     window.location.href="/login"
@@ -237,6 +244,12 @@ export const seekerAPI = {
   // Auth
   register: (b) => seekerReq('POST', '/api/v1/seeker/auth/register', b),
   login: (b) => seekerReq('POST', '/api/v1/seeker/auth/login', b),
+  googleLogin: async (credential) => {
+    const data = await seekerReq('POST', '/api/v1/seeker/auth/login-google', { credential });
+    localStorage.setItem('vish_seeker_token', data.seeker_token);
+    localStorage.setItem('vish_seeker_data', JSON.stringify(data.seeker));
+    return data;
+  },
   getMe: () => seekerReq('GET', '/api/v1/seeker/auth/me'),
   updateProfile: (b) => seekerReq('PATCH', '/api/v1/seeker/auth/profile', b),
 

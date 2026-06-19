@@ -43,6 +43,10 @@ export default function DeveloperDocs() {
   const [responseJson, setResponseJson] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
+  // New playground fields
+  const [requestBodyJson, setRequestBodyJson] = useState("");
+  const [candidateIdParam, setCandidateIdParam] = useState("cnd_12345");
+
   const { data: keysData } = useQuery({
     queryKey: ["portal-keys"],
     queryFn: portalKeys.list,
@@ -98,6 +102,33 @@ export default function DeveloperDocs() {
      setPortfolioUrl("");
      setJobTitle("");
      setJobDescription("");
+     setCandidateIdParam("cnd_12345");
+
+     // Pre-populate default bodies based on endpoint
+     if (endpoint.path === "/api/v1/sessions" && endpoint.method === "POST") {
+       setRequestBodyJson(JSON.stringify({ 
+         name: "Q3 Engineering Hire", 
+         job_title: "Software Engineer", 
+         job_description: "We are looking for a software engineer proficient in Python and React." 
+       }, null, 2));
+     } else if (endpoint.path === "/api/v1/ingest/gmail") {
+       setRequestBodyJson(JSON.stringify({ oauth_token: "ya29.xxx", label: "HR/Resumes" }, null, 2));
+     } else if (endpoint.path === "/api/v1/ingest/drive") {
+       setRequestBodyJson(JSON.stringify({ oauth_token: "ya29.xxx", folder_id: "1BxiMVs0XRA...", recursive: true }, null, 2));
+     } else if (endpoint.path === "/api/v1/ingest/ats") {
+       setRequestBodyJson(JSON.stringify({ platform: "greenhouse", job_id: "7291028" }, null, 2));
+     } else if (endpoint.path === "/api/v1/match") {
+       setRequestBodyJson(JSON.stringify({ job_title: "Senior React Developer", job_description: "5+ years React, TypeScript...", top_k: 5 }, null, 2));
+     } else if (endpoint.path === "/api/v1/chat") {
+       setRequestBodyJson(JSON.stringify({ message: "Find React devs with 3+ years experience", session_id: "" }, null, 2));
+     } else if (endpoint.path === "/api/v1/protection/scan") {
+       setPortfolioUrl("https://github.com/torvalds");
+       setJobTitle("Senior Linux Kernel Developer");
+       setJobDescription("We are looking for an expert C developer with deep Linux kernel experience.");
+       setRequestBodyJson("{}");
+     } else {
+       setRequestBodyJson("{}");
+     }
   };
 
   const sendPlaygroundRequest = async () => {
@@ -113,7 +144,12 @@ export default function DeveloperDocs() {
     try {
       const rawBase = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) || "http://127.0.0.1:8000/api/v1";
       const domain = rawBase.replace("/api/v1", "");
-      const url = domain + (pgEndpoint?.path || "");
+      
+      let path = pgEndpoint?.path || "";
+      if (path.includes("/:id")) {
+        path = path.replace("/:id", `/${candidateIdParam}`);
+      }
+      const url = domain + path;
 
       const headers = {
         "X-API-Key": apiKey
@@ -151,10 +187,17 @@ export default function DeveloperDocs() {
           body.append("job_title", jobTitle);
           body.append("job_description", jobDescription);
         }
+      } else if (pgEndpoint?.method === "POST" && requestBodyJson) {
+        headers["Content-Type"] = "application/json";
+        try {
+          body = JSON.stringify(JSON.parse(requestBodyJson));
+        } catch (e) {
+          throw new Error("Invalid request JSON body format.");
+        }
       }
 
       const res = await fetch(url, {
-        method: "POST",
+        method: pgEndpoint?.method || "GET",
         headers,
         body
       });
@@ -249,6 +292,7 @@ export default function DeveloperDocs() {
             <div className="flex items-center gap-3 mb-4">
                <span className="bg-green-100 text-green-700 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">GET</span>
                <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/sessions</h3>
+               <button onClick={() => openPlayground({method:'GET', path:'/api/v1/sessions'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
             </div>
             <p className="text-gray-600 font-medium text-sm mb-4">List all active sessions for your account.</p>
             <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px", marginBottom: "24px" }}>
@@ -258,6 +302,7 @@ export default function DeveloperDocs() {
             <div className="flex items-center gap-3 mb-4">
                <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
                <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/sessions</h3>
+               <button onClick={() => openPlayground({method:'POST', path:'/api/v1/sessions'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
             </div>
             <p className="text-gray-600 font-medium text-sm mb-4">Create a new session for grouping candidate operations.</p>
             <div className="grid md:grid-cols-2 gap-4">
@@ -356,6 +401,7 @@ export default function DeveloperDocs() {
               <div className="flex items-center gap-3 mb-4">
                  <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
                  <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/ingest/gmail</h3>
+                 <button onClick={() => openPlayground({method:'POST', path:'/api/v1/ingest/gmail'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
               </div>
               <p className="text-gray-600 font-medium text-sm mb-4">Sync resumes directly from a Gmail inbox using OAuth credentials.</p>
               <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
@@ -370,6 +416,7 @@ export default function DeveloperDocs() {
               <div className="flex items-center gap-3 mb-4">
                  <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
                  <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/ingest/drive</h3>
+                 <button onClick={() => openPlayground({method:'POST', path:'/api/v1/ingest/drive'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
               </div>
               <p className="text-gray-600 font-medium text-sm mb-4">Ingest resumes from a Google Drive folder. Supports recursive folder scanning and deduplication.</p>
               <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
@@ -384,6 +431,7 @@ export default function DeveloperDocs() {
               <div className="flex items-center gap-3 mb-4">
                  <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
                  <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/ingest/ats</h3>
+                 <button onClick={() => openPlayground({method:'POST', path:'/api/v1/ingest/ats'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
               </div>
               <p className="text-gray-600 font-medium text-sm mb-4">Import candidates from ATS platforms (Greenhouse, Lever, Workday). Requires ATS credentials configured in developer portal settings.</p>
               <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
@@ -402,6 +450,7 @@ export default function DeveloperDocs() {
             <div className="flex items-center gap-3 mb-4">
                <span className="bg-green-100 text-green-700 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">GET</span>
                <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/candidates</h3>
+               <button onClick={() => openPlayground({method:'GET', path:'/api/v1/candidates'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
             </div>
             <p className="text-gray-600 font-medium text-sm mb-4">List all parsed candidates. Supports filtering and pagination.</p>
             <div className="grid md:grid-cols-2 gap-4 mb-8">
@@ -431,6 +480,7 @@ export default function DeveloperDocs() {
             <div className="flex items-center gap-3 mb-4">
                <span className="bg-green-100 text-green-700 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">GET</span>
                <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/candidates/:id</h3>
+               <button onClick={() => openPlayground({method:'GET', path:'/api/v1/candidates/:id'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
             </div>
             <p className="text-gray-600 font-medium text-sm mb-4">Retrieve a single candidate's full structured profile.</p>
             <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
@@ -447,6 +497,7 @@ export default function DeveloperDocs() {
             <div className="flex items-center gap-3 mb-4">
                <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
                <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/match</h3>
+               <button onClick={() => openPlayground({method:'POST', path:'/api/v1/match'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
                <div>
@@ -491,6 +542,7 @@ export default function DeveloperDocs() {
             <div className="flex items-center gap-3 mb-4">
                <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
                <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/chat</h3>
+               <button onClick={() => openPlayground({method:'POST', path:'/api/v1/chat'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
                <div>
@@ -824,6 +876,29 @@ console.log(matches.data.matches);`}
                     )}
                   </div>
 
+                 {pgEndpoint?.path?.includes("/:id") && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Candidate ID (:id)</label>
+                      <input 
+                        type="text" 
+                        value={candidateIdParam}
+                        onChange={(e)=>setCandidateIdParam(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:border-accent outline-none text-xs font-semibold" 
+                      />
+                    </div>
+                 )}
+
+                 {pgEndpoint?.method === "POST" && pgEndpoint?.path !== "/api/v1/parse" && pgEndpoint?.path !== "/api/v1/protection/scan" && (
+                    <div className="flex flex-col gap-1 flex-1 min-h-[150px]">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Request Body (JSON)</label>
+                      <textarea 
+                        rows="8"
+                        value={requestBodyJson}
+                        onChange={(e)=>setRequestBodyJson(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:border-accent outline-none text-xs font-mono resize-none flex-1 min-h-[140px]" 
+                      />
+                    </div>
+                 )}
 
                  {pgEndpoint?.path === "/api/v1/parse" && (
                     <div className="flex flex-col gap-1">

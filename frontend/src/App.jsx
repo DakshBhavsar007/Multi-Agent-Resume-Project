@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
+import { useAuthStore } from './stores/authStore';
+import { useSeekerAuthStore } from './stores/seekerAuthStore';
+import { usePortalAuthStore } from './stores/portalAuthStore';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -92,6 +95,36 @@ export default function App() {
       }
     }
   }));
+
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      // e.key is null when localStorage.clear() is called
+      if (e.key === null || e.key === 'vish_jwt') {
+        // Clear recruiter/company auth
+        useAuthStore.getState().setAuth(null);
+        // Clear seeker auth
+        useSeekerAuthStore.getState().setAuth({ seeker_token: '', seeker: null });
+        // Clear developer auth
+        usePortalAuthStore.getState().setAuth(null);
+
+        // Redirect current tab depending on pathname
+        const path = window.location.pathname;
+        if (path.startsWith('/developer/portal')) {
+          window.location.href = '/developer/login';
+        } else if (path.startsWith('/jobs/applications') || path.startsWith('/jobs/resume') || path.startsWith('/jobs/notifications') || path.startsWith('/jobs')) {
+          // If they are on a seeker page, go back to jobs login
+          if (path !== '/jobs' && path !== '/jobs/search' && path !== '/jobs/trends' && path !== '/jobs/safety-checker') {
+            window.location.href = '/jobs/login';
+          }
+        } else if (path.startsWith('/dashboard')) {
+          window.location.href = '/login';
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

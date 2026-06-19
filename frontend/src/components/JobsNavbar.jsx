@@ -244,7 +244,7 @@ export default function JobsNavbar({ onUploadClick }) {
         {!isSeekerLoggedIn && (
           <button 
             onClick={() => navigate('/jobs/login')} 
-            className="text-sm font-bold text-gray-800 border border-gray-300 hover:border-gray-400 rounded-full px-4.5 py-2 transition-all bg-white shadow-sm"
+            className="text-sm font-bold text-[#111111] border border-[#e6dfcd] hover:border-[#111111] hover:bg-[#fdfcfb] rounded-full px-5 py-2 transition-all bg-white shadow-sm active:scale-95"
           >
             Sign In
           </button>

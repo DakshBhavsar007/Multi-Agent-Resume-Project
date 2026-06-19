@@ -38,6 +38,8 @@ def verify_api_key_helper(request):
     if x_api_key:
         # Check standard recruiter keys
         api_key_obj = APIKey.objects.filter(secret_key=x_api_key, is_active=True).first()
+        if not api_key_obj:
+            api_key_obj = APIKey.objects.filter(public_key=x_api_key, is_active=True).first()
         if api_key_obj:
             company = Company.objects.filter(id=api_key_obj.company_id, is_active=True).first()
             if company:
@@ -49,6 +51,8 @@ def verify_api_key_helper(request):
 
         # Check developer keys
         dev_key_obj = DeveloperAPIKey.objects.filter(secret_key=x_api_key, is_active=True).first()
+        if not dev_key_obj:
+            dev_key_obj = DeveloperAPIKey.objects.filter(public_key=x_api_key, is_active=True).first()
         if dev_key_obj:
             dev_acc = dev_key_obj.developer
             company, created = Company.objects.get_or_create(

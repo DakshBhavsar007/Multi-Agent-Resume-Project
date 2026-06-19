@@ -44,6 +44,26 @@ export default function DeveloperBilling() {
     setLoadingPlan(planId);
     try {
       const orderData = await portalBilling.subscribe(planId);
+      if (orderData.order_id.startsWith("order_mock_")) {
+         setTimeout(async () => {
+           try {
+             await portalBilling.verifyPayment({
+               razorpay_payment_id: "pay_mock_" + Math.random().toString(36).substring(7),
+               razorpay_order_id: orderData.order_id,
+               razorpay_signature: "sig_mock_" + Math.random().toString(36).substring(7),
+               plan: planId
+             });
+             toast.success("Successfully upgraded plan (Mock Mode)!");
+             setAuth({ ...usePortalAuthStore.getState().developer, tier: planId });
+             window.location.reload();
+           } catch (err) {
+             toast.error("Mock upgrade verification failed");
+             setLoadingPlan(null);
+           }
+         }, 1000);
+         return;
+      }
+
       const rzp = new window.Razorpay({
         key: orderData.razorpay_key_id || "rzp_test_mock",
         order_id: orderData.order_id,

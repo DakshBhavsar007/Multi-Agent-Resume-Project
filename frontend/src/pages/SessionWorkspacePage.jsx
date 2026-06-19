@@ -345,7 +345,7 @@ export default function SessionWorkspacePage() {
 
                   {/* ZIP Archive — Premium Feature */}
                   <div className="relative">
-                    <PremiumBadge tooltip="Bulk ZIP upload is available on the Premium plan">
+                    <PremiumBadge tooltip="Bulk ZIP upload is available on the Enterprise plan">
                       <div className="bg-white rounded-2xl p-6 border-2 border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                         <Archive size={32} className="text-accent mb-3" />
                         <h4 className="font-bold text-charcoal text-lg mb-1">ZIP Upload</h4>

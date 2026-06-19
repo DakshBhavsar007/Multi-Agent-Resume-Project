@@ -18,6 +18,7 @@ from api.views import (
     seeker_resume,
     seeker_jobs,
     parse,
+    google_auth,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -35,6 +36,7 @@ urlpatterns = [
     # ── Recruiter Auth ─────────────────────────────────────────────────────────
     path('api/v1/auth/register', recruiter_auth.register, name='auth-register'),
     path('api/v1/auth/login', recruiter_auth.login, name='auth-login'),
+    path('api/v1/auth/login-google', google_auth.recruiter_auth_google, name='auth-login-google'),
     path('api/v1/auth/me', recruiter_auth.me, name='auth-me'),
     path('api/v1/auth/logout', recruiter_auth.logout, name='auth-logout'),
     path('api/v1/auth/change-password', recruiter_auth.change_password, name='auth-change-password'),
@@ -73,6 +75,11 @@ urlpatterns = [
     path('api/v1/sessions/<str:session_id>/candidates/<str:cand_id>/action',
          candidates.candidate_action, name='candidates-action'),
 
+    path('api/v1/candidates',
+         candidates.list_candidates_no_session, name='candidates-list-no-session'),
+    path('api/v1/candidates/<str:cand_id>',
+         candidates.get_candidate_no_session, name='candidates-get-no-session'),
+
     # ── Chat ───────────────────────────────────────────────────────────────────
     path('api/v1/sessions/<str:session_id>/chat', chat.chat, name='chat'),
     # Frontend: GET /chat/history → get history, DELETE /chat/history → clear history
@@ -89,16 +96,20 @@ urlpatterns = [
     path('api/v1/ingest/zip', ingest.upload_zip, name='ingest-zip'),
     path('api/v1/ingest/gmail/connect', ingest.gmail_connect, name='ingest-gmail-connect'),
     path('api/v1/ingest/gmail/sync', ingest.gmail_sync, name='ingest-gmail-sync'),
+    path('api/v1/ingest/gmail', ingest.gmail_sync, name='ingest-gmail-sync-direct'),
     path('api/v1/ingest/gdrive/connect', ingest.gdrive_connect, name='ingest-gdrive-connect'),
     path('api/v1/ingest/gdrive/sync', ingest.gdrive_sync, name='ingest-gdrive-sync'),
+    path('api/v1/ingest/drive', ingest.gdrive_sync, name='ingest-gdrive-sync-direct'),
     path('api/v1/ingest/google-form', ingest.google_form, name='ingest-google-form'),
     path('api/v1/ingest/ats-import', ingest.ats_import, name='ingest-ats-import'),
+    path('api/v1/ingest/ats', ingest.ats_import, name='ingest-ats-import-direct'),
     path('api/v1/ingest/oauth/google/url', ingest.get_google_oauth_url, name='ingest-oauth-url'),
     path('api/v1/ingest/status/<str:job_id>', ingest.get_job_status, name='ingest-status'),
 
     # ── Developer Portal — Auth ────────────────────────────────────────────────
     path('api/developer/auth/register', dev_auth.register, name='dev-auth-register'),
     path('api/developer/auth/login', dev_auth.login, name='dev-auth-login'),
+    path('api/developer/auth/login-google', google_auth.developer_auth_google, name='dev-auth-login-google'),
     path('api/developer/auth/me', dev_auth.get_me, name='dev-auth-me'),
     path('api/developer/auth/profile', dev_auth.patch_me, name='dev-auth-patch-me'),
 
@@ -144,12 +155,15 @@ urlpatterns = [
 
     # ── Protection & Fraud Detection ──────────────────────────────────────────
     path('api/v1/parse', parse.parse_resume, name='api-parse'),
+    path('api/v1/match', parse.global_match, name='api-global-match'),
+    path('api/v1/chat', parse.global_chat, name='api-global-chat'),
     path('api/v1/protection/scan', protection.scan_portfolio, name='protection-scan'),
     path('api/v1/protection/history', protection.get_scan_history, name='protection-history'),
 
     # ── Job Seeker Auth ────────────────────────────────────────────────────────
     path('api/v1/seeker/auth/register', seeker_auth.register, name='seeker-auth-register'),
     path('api/v1/seeker/auth/login', seeker_auth.login, name='seeker-auth-login'),
+    path('api/v1/seeker/auth/login-google', google_auth.seeker_auth_google, name='seeker-auth-login-google'),
     path('api/v1/seeker/auth/me', seeker_auth.me, name='seeker-auth-me'),
     path('api/v1/seeker/auth/profile', seeker_auth.update_profile, name='seeker-auth-profile'),
 

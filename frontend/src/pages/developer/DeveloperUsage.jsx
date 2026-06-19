@@ -66,11 +66,11 @@ export default function DeveloperUsage() {
      a.click();
   };
 
-  const totalCalls = summary?.total_calls || 0;
-  const parseUsage = summary?.percentages?.parse ? summary?.limits?.parse?.count || 0 : 0;
-  const matchUsage = summary?.percentages?.match ? summary?.limits?.match?.count || 0 : 0;
-  const chatUsage = summary?.percentages?.chat ? summary?.limits?.chat?.count || 0 : 0;
-  const scanUsage = summary?.limits?.scan ? summary?.limits?.scan?.count || 0 : 0;
+  const totalCalls = summary?.total_calls ?? 0;
+  const parseUsage = summary?.limits?.parse?.count ?? 0;
+  const matchUsage = summary?.limits?.match?.count ?? 0;
+  const chatUsage = summary?.limits?.chat?.count ?? 0;
+  const scanUsage = summary?.limits?.scan?.count ?? 0;
   const avgLatency = summary?.avg_latency_ms ? `${Math.round(summary.avg_latency_ms)}ms` : "--";
 
   return (
