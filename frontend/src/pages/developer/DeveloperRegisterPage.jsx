@@ -23,6 +23,7 @@ export default function DeveloperRegisterPage() {
   const [showTestSecret, setShowTestSecret] = useState(false);
   const [showLiveSecret, setShowLiveSecret] = useState(false);
   const [keysSaved, setKeysSaved] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // Dynamically load Razorpay
@@ -48,7 +49,7 @@ export default function DeveloperRegisterPage() {
                 const data = await portalAuth.googleLogin(tokenResponse.access_token);
                 if (data.is_new) {
                   setApiKeysData(data);
-                  toast.success("Account created successfully with Google! 🎉");
+                  toast.success("Account created successfully with Google!");
                   setStep(3);
                 } else {
                   setAuth(data);
@@ -162,7 +163,23 @@ export default function DeveloperRegisterPage() {
              </div>
              <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-charcoal">Password*</label>
-                <input type="password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none font-medium" required minLength={8}/>
+                <div className="relative w-full">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    value={form.password} 
+                    onChange={e=>setForm({...form, password:e.target.value})} 
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none font-medium pr-12" 
+                    required 
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-accent transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
                 <div className="flex gap-1 mt-1">
                   <div className={`h-1 w-1/3 rounded-full ${form.password.length > 0 ? "bg-red-400" : "bg-gray-200"}`}></div>
                   <div className={`h-1 w-1/3 rounded-full ${form.password.length > 5 ? "bg-amber-400" : "bg-gray-200"}`}></div>

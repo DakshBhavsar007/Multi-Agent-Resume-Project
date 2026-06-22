@@ -9,6 +9,7 @@ Handles:
   - Notifications CRUD
 """
 
+import os
 import json
 import logging
 from django.http import JsonResponse
@@ -27,12 +28,42 @@ from models.schemas import success_response, error_response
 logger = logging.getLogger(__name__)
 
 
+def _parse_job_description_meta(description: str) -> dict:
+    """Parses salary, location, and employment type from job description text."""
+    meta = {
+        "salary_range": "Competitive",
+        "location": "Remote",
+        "employment_type": "Full-time"
+    }
+    if not description:
+        return meta
+    
+    for line in description.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if ":" in line:
+            parts = line.split(":", 1)
+            key = parts[0].strip().lower()
+            val = parts[1].strip()
+            if not val:
+                continue
+            if key == "salary":
+                meta["salary_range"] = val
+            elif key == "location":
+                meta["location"] = val
+            elif key in ["type", "employment type", "employment_type"]:
+                meta["employment_type"] = val
+    return meta
+
+
 def _session_to_job(session: Session, match_score=None, applied=False) -> dict:
     """Serialize a Session as a public job listing."""
+    meta = _parse_job_description_meta(session.job_description)
     return {
         "id": str(session.id),
         "job_title": session.job_title,
-        "company_name": session.name,
+        "company_name": session.company.name if session.company else "Vishleshan Partner",
         "job_description": session.job_description[:500] + "..." if len(session.job_description) > 500 else session.job_description,
         "full_description": session.job_description,
         "status": session.status,
@@ -42,7 +73,39 @@ def _session_to_job(session: Session, match_score=None, applied=False) -> dict:
         "match_score": match_score,
         "applied": applied,
         "applicant_count": session.seeker_applications.count(),
+        "salary_range": meta["salary_range"],
+        "location": meta["location"],
+        "employment_type": meta["employment_type"],
     }
+
+
+def _get_flat_skills(skills):
+    if not skills:
+        return []
+    
+    # If skills is a dictionary, extract the skills lists
+    if isinstance(skills, dict):
+        skills_list = []
+        if "required_skills" in skills:
+            skills_list.extend(skills["required_skills"])
+        if "nice_to_have_skills" in skills:
+            skills_list.extend(skills["nice_to_have_skills"])
+        if "skills" in skills:
+            skills_list.extend(skills["skills"])
+        
+        if not skills_list:
+            skills_list = list(skills.keys())
+        skills = skills_list
+
+    flat = []
+    for s in skills:
+        if isinstance(s, dict):
+            name = s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)
+            if name:
+                flat.append(name)
+        elif isinstance(s, str):
+            flat.append(s)
+    return flat
 
 
 def _compute_match_score(seeker_skills: list, job_skills: list) -> int:
@@ -52,8 +115,10 @@ def _compute_match_score(seeker_skills: list, job_skills: list) -> int:
     """
     if not seeker_skills or not job_skills:
         return 0
-    seeker_lower = {s.lower() for s in seeker_skills}
-    job_lower = {s.lower() for s in job_skills}
+    flat_seeker = _get_flat_skills(seeker_skills)
+    flat_job = _get_flat_skills(job_skills)
+    seeker_lower = {s.lower() for s in flat_seeker if s}
+    job_lower = {s.lower() for s in flat_job if s}
     intersection = seeker_lower & job_lower
     return round(len(intersection) / len(job_lower) * 100) if job_lower else 0
 
@@ -110,7 +175,7 @@ def job_detail(request, session_id):
         return JsonResponse(error_response("Method not allowed"), status=405)
     try:
         seeker = request.seeker
-        session = Session.objects.filter(id=session_id).first()
+        session = Session.objects.filter(id=session_id, status="active").first()
         if not session:
             return JsonResponse(error_response("Job not found"), status=404)
 
@@ -118,8 +183,10 @@ def job_detail(request, session_id):
         applied = JobApplication.objects.filter(seeker=seeker, session=session).exists()
 
         # Compute skill alignment
-        seeker_lower = {s.lower(): s for s in seeker.skills}
-        job_skills = session.inferred_skills or []
+        flat_seeker = _get_flat_skills(seeker.skills)
+        seeker_lower = {s.lower(): s for s in flat_seeker if s}
+        flat_job = _get_flat_skills(session.inferred_skills)
+        job_skills = flat_job
         matched_skills = [s for s in job_skills if s.lower() in seeker_lower]
         missing_skills = [s for s in job_skills if s.lower() not in seeker_lower]
 
@@ -177,6 +244,15 @@ def apply_job(request, session_id):
         # Build resume data for Candidate record
         resume = seeker.resume_data or {}
 
+        # Safely convert total_experience_years to float
+        raw_exp_years = resume.get("total_experience_years")
+        if raw_exp_years is None:
+            raw_exp_years = 0.0
+        try:
+            total_exp = float(raw_exp_years)
+        except (ValueError, TypeError):
+            total_exp = 0.0
+
         # Create Candidate in the ATS session
         candidate = Candidate.objects.create(
             session=session,
@@ -187,11 +263,15 @@ def apply_job(request, session_id):
             resume_file_path=seeker.resume_file_path,
             raw_resume_data=resume,
             normalized_skills=seeker.skills,
-            total_experience_years=float(resume.get("total_experience_years", 0)),
+            total_experience_years=total_exp,
             status="new",
             source="platform_apply",
             current_round_index=session.rounds[0]["order"] if session.rounds else 0,
         )
+
+        # Calculate match details using jobs module helper
+        from api.views.jobs import _calculate_match_score
+        _calculate_match_score(candidate, session)
 
         # Create JobApplication record
         application = JobApplication.objects.create(
@@ -207,8 +287,8 @@ def apply_job(request, session_id):
             seeker=seeker,
             type="general",
             title=f"Application submitted — {session.job_title}",
-            message=f"Your application to {session.name} for {session.job_title} has been submitted.",
-            link=f"/jobs/dashboard/applications",
+            message=f"Your application to {session.company.name if session.company else 'Vishleshan Partner'} for {session.job_title} has been submitted.",
+            link=f"/jobs/applications?app_id={application.id}",
         )
 
         # Notification for company
@@ -223,7 +303,7 @@ def apply_job(request, session_id):
         # Send emails (non-blocking — failure won't break apply)
         send_application_received_to_company(
             company_email=session.company.email,
-            company_name=session.name,
+            company_name=session.company.name if session.company else "Vishleshan Partner",
             seeker_name=seeker.full_name,
             job_title=session.job_title,
             session_id=session_id,
@@ -232,19 +312,111 @@ def apply_job(request, session_id):
             seeker_email=seeker.email,
             seeker_name=seeker.full_name,
             job_title=session.job_title,
-            company_name=session.name,
+            company_name=session.company.name if session.company else "Vishleshan Partner",
         )
 
         return JsonResponse(success_response({
             "application_id": str(application.id),
             "status": "applied",
-            "message": f"Successfully applied to {session.job_title} at {session.name}",
+            "message": f"Successfully applied to {session.job_title} at {session.company.name if session.company else 'Vishleshan Partner'}",
         }), status=201)
 
     except Exception as e:
         logger.error("apply_job error: %s", e)
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
 
+
+def release_due_results_for_seeker(seeker):
+    from django.utils import timezone
+    from django.utils.dateparse import parse_datetime
+    from django.utils.timezone import is_aware, make_aware
+    from api.models import JobApplication, Notification
+    from api.services.email_service import send_status_update_to_seeker
+    import logging
+    logger = logging.getLogger(__name__)
+
+    apps = JobApplication.objects.filter(seeker=seeker).select_related('session', 'candidate')
+    now = timezone.now()
+
+    for app in apps:
+        candidate = app.candidate
+        if not candidate:
+            continue
+        
+        session = app.session
+        rounds = session.rounds or []
+        
+        # Recruiter status and current round
+        cand_status = candidate.status  # new, forwarded, hired, rejected
+        cand_round = candidate.current_round_index
+        
+        # Seeker status currently saved in app
+        current_app_status = app.status  # applied, shortlisted, hired, rejected
+        
+        # Determine target seeker status based on candidate action
+        status_map = {
+            'hired': 'hired',
+            'rejected': 'rejected',
+            'forwarded': 'shortlisted',
+            'new': 'applied',
+        }
+        target_app_status = status_map.get(cand_status, 'applied')
+        
+        # If the app status doesn't match target status, check if the completed round's result date has passed
+        if current_app_status != target_app_status:
+            # The recruiter did an action. Let's find what round they completed.
+            completed_round_order = cand_round
+            if cand_status == 'forwarded':
+                completed_round_order = max(cand_round - 1, 1)
+            
+            # Find the announcement date of completed_round_order
+            announcement_time = None
+            for r in rounds:
+                try:
+                    if int(r.get("order")) == int(completed_round_order):
+                        ann_date = r.get("result_announcement_date")
+                        if ann_date:
+                            dt = parse_datetime(ann_date)
+                            if dt:
+                                if not is_aware(dt):
+                                    dt = make_aware(dt)
+                                announcement_time = dt
+                        break
+                except (ValueError, TypeError):
+                    continue
+
+            # If announcement time is in the past (or not set), release it!
+            if not announcement_time or now >= announcement_time:
+                # Update JobApplication
+                app.status = target_app_status
+                app.save(update_fields=['status'])
+                
+                # Create in-app notification if it doesn't exist yet
+                notif_exists = Notification.objects.filter(
+                    seeker=seeker,
+                    type='status_updated',
+                    title=f'Application Update — {session.job_title}',
+                    message__contains=target_app_status.title()
+                ).exists()
+                
+                if not notif_exists:
+                    Notification.objects.create(
+                        seeker=seeker,
+                        type='status_updated',
+                        title=f'Application Update — {session.job_title}',
+                        message=f'Your application at {session.company.name if session.company else "Vishleshan Partner"} has been updated to: {target_app_status.title()}.',
+                        link=f'/jobs/applications?app_id={app.id}',
+                    )
+                    
+                    # Send email
+                    send_status_update_to_seeker(
+                        seeker_email=seeker.email,
+                        seeker_name=seeker.full_name,
+                        job_title=session.job_title,
+                        company_name=session.company.name if session.company else "Vishleshan Partner",
+                        new_status=target_app_status,
+                    )
+                    logger.info(f"Released pending result on-the-fly: {target_app_status} for app {app.id}")
 
 @csrf_exempt
 @require_seeker_jwt
@@ -254,29 +426,143 @@ def my_applications(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
     try:
         seeker = request.seeker
-        apps = JobApplication.objects.filter(seeker=seeker).select_related("session").order_by("-applied_at")
+        # Release any results that have become due
+        release_due_results_for_seeker(seeker)
+
+        apps = JobApplication.objects.filter(seeker=seeker).select_related("session", "candidate").order_by("-applied_at")
+        now = timezone.now()
 
         result = []
         for app in apps:
+            session = app.session
+            candidate = app.candidate
+            
+            rounds = session.rounds or []
+            # Sort rounds
+            sorted_rounds = sorted(rounds, key=lambda r: int(r.get("order", 1)))
+            
+            # Find max declared order
+            max_declared_order = 0
+            from django.utils.dateparse import parse_datetime
+            from django.utils.timezone import is_aware, make_aware
+            for r in sorted_rounds:
+                ann_date = r.get("result_announcement_date")
+                if ann_date:
+                    try:
+                        dt = parse_datetime(ann_date)
+                        if dt:
+                            if not is_aware(dt):
+                                dt = make_aware(dt)
+                            if now >= dt:
+                                max_declared_order = int(r.get("order", 1))
+                    except Exception:
+                        pass
+                else:
+                    max_declared_order = int(r.get("order", 1))
+
+            # Candidate status and round
+            cand_round = candidate.current_round_index if candidate else 1
+            cand_status = candidate.status if candidate else "new"
+
+            # Dynamic visible index & status for seeker display
+            visible_round_index = 1
+            seeker_status = "applied"
+
+            if cand_status == "rejected":
+                if cand_round <= max_declared_order:
+                    seeker_status = "rejected"
+                    visible_round_index = cand_round
+                else:
+                    visible_round_index = min(max_declared_order + 1, len(sorted_rounds))
+                    seeker_status = "shortlisted" if visible_round_index > 1 else "applied"
+            elif cand_status == "hired":
+                final_round_order = sorted_rounds[-1].get("order", 1) if sorted_rounds else 1
+                if final_round_order <= max_declared_order:
+                    seeker_status = "hired"
+                    visible_round_index = final_round_order
+                else:
+                    visible_round_index = final_round_order
+                    seeker_status = "shortlisted" if visible_round_index > 1 else "applied"
+            else:
+                highest_cleared_declared = min(max(cand_round - 1, 0), max_declared_order)
+                visible_round_index = min(highest_cleared_declared + 1, len(sorted_rounds) if sorted_rounds else 1)
+                seeker_status = "shortlisted" if visible_round_index > 1 else "applied"
+
+            # Match score fallback
+            match_score = candidate.match_score if candidate else None
+            if match_score is None:
+                match_score = _compute_match_score(seeker.skills, session.inferred_skills)
+
+            # Format rounds
+            ui_rounds = []
+            for r in sorted_rounds:
+                ui_rounds.append({
+                    "name": r.get("name"),
+                    "interviewer": r.get("interviewer"),
+                    "order": r.get("order"),
+                    "result_announcement_date": r.get("result_announcement_date")
+                })
+
+            # Compute offer letter URL relative path if present
+            offer_letter_url = None
+            if app.offer_letter_path:
+                try:
+                    upload_root = os.getenv("UPLOAD_DIR", "uploads")
+                    rel = os.path.relpath(app.offer_letter_path, upload_root).replace("\\", "/")
+                    offer_letter_url = f"/uploads/{rel}"
+                except Exception:
+                    offer_letter_url = None
+
             result.append({
                 "id": str(app.id),
-                "job_id": str(app.session.id),
-                "job_title": app.session.job_title,
-                "company_name": app.session.name,
-                "status": app.status,
+                "job_id": str(session.id),
+                "job_title": session.job_title,
+                "company_name": session.company.name if session.company else "Vishleshan Partner",
+                "company_logo_path": None,
+                "status": seeker_status,
+                "accepted_terms": app.accepted_terms,
+                "offer_letter_url": offer_letter_url,
                 "cover_note": app.cover_note,
                 "applied_at": app.applied_at.isoformat(),
                 "updated_at": app.updated_at.isoformat(),
+                "rounds": ui_rounds,
+                "visible_round_index": visible_round_index,
+                "agent_processing_status": "success",
+                "match_score": match_score,
             })
 
         return JsonResponse(success_response({
             "applications": result,
             "total": len(result),
+            "server_time": timezone.now().isoformat(),
         }))
     except Exception as e:
         logger.error("my_applications error: %s", e)
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
 
+@csrf_exempt
+@require_seeker_jwt
+def accept_offer(request, app_id):
+    if request.method not in ["POST", "PATCH"]:
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        app = JobApplication.objects.filter(id=app_id, seeker=request.seeker).first()
+        if not app:
+            return JsonResponse(error_response("Application not found"), status=404)
+        if app.status != "hired":
+            return JsonResponse(error_response("You can only accept offers for hired status"), status=400)
+        
+        app.accepted_terms = True
+        app.save(update_fields=["accepted_terms"])
+
+        # Automatically mark the session as completed
+        session = app.session
+        session.status = "completed"
+        session.save(update_fields=["status"])
+
+        return JsonResponse(success_response({"accepted": True, "company_name": app.session.company.name if app.session.company else "Vishleshan Partner"}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {e}"), status=500)
 
 # ── Notifications ──────────────────────────────────────────────────────────────
 
@@ -287,6 +573,7 @@ def get_notifications(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
     try:
+        release_due_results_for_seeker(request.seeker)
         notifs = Notification.objects.filter(seeker=request.seeker).order_by("-created_at")[:50]
         data = [{
             "id": str(n.id),

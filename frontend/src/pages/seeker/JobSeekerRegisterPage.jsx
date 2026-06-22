@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { seekerAPI } from '../../lib/api';
 import { useSeekerAuthStore } from '../../stores/seekerAuthStore';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function JobSeekerRegisterPage() {
   const navigate = useNavigate();
   const setAuth = useSeekerAuthStore(s => s.setAuth);
   const [form, setForm] = useState({ full_name: '', email: '', password: '', location: '', headline: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const googleClientRef = useRef(null);
 
@@ -27,7 +29,7 @@ export default function JobSeekerRegisterPage() {
               try {
                 const data = await seekerAPI.googleLogin(tokenResponse.access_token);
                 setAuth(data);
-                toast.success('Signed up successfully with Google! 🎉');
+                toast.success('Signed up successfully with Google!');
                 navigate('/jobs/dashboard');
               } catch (err) {
                 toast.error(err.message || 'Google signup failed');
@@ -51,7 +53,7 @@ export default function JobSeekerRegisterPage() {
       setAuth(data);
       localStorage.setItem('vish_seeker_token', data.seeker_token);
       localStorage.setItem('vish_seeker_data', JSON.stringify(data.seeker));
-      toast.success('Account created! Welcome to Vishleshan 🎉');
+      toast.success('Account created! Welcome to Vishleshan!');
       navigate('/jobs/dashboard');
     } catch (err) {
       toast.error(err.message || 'Registration failed');
@@ -108,14 +110,23 @@ export default function JobSeekerRegisterPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-charcoal">Password *</label>
-              <input 
-                type="password" 
-                placeholder="Min. 8 chars" 
-                value={form.password}
-                onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-gray-400 font-medium"
-                required 
-              />
+              <div className="relative w-full">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Min. 8 chars" 
+                  value={form.password}
+                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-gray-400 font-medium pr-12"
+                  required 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-accent transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
           </div>
 

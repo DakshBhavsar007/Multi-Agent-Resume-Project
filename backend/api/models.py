@@ -9,6 +9,14 @@ class Company(models.Model):
     password_hash = models.CharField(max_length=500)
     tier = models.CharField(max_length=50, default="free")
     is_active = models.BooleanField(default=True)
+    industry = models.CharField(max_length=255, null=True, blank=True)
+    hq_location = models.CharField(max_length=255, null=True, blank=True)
+    about = models.TextField(null=True, blank=True)
+    rating = models.FloatField(default=4.5)
+    company_size = models.CharField(max_length=50, null=True, blank=True)
+    founded_year = models.IntegerField(null=True, blank=True)
+    website_url = models.CharField(max_length=500, null=True, blank=True)
+    logo_path = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -253,10 +261,13 @@ class JobSeekerAccount(models.Model):
     resume_data       = models.JSONField(default=dict)    # parsed resume JSON
     enhanced_resume   = models.JSONField(default=dict)    # AI-enhanced version
     skills            = models.JSONField(default=list)    # normalized skills list
+    open_to           = models.JSONField(default=dict)    # preferences (workTypes, roles, locations)
     tier              = models.CharField(max_length=50, default="free")  # free | premium
     is_active         = models.BooleanField(default=True)
     created_at        = models.DateTimeField(default=timezone.now)
     updated_at        = models.DateTimeField(auto_now=True)
+    active_resume_draft = models.ForeignKey("ResumeDraft", on_delete=models.SET_NULL, null=True, blank=True, db_column="active_resume_draft_id", related_name="active_seeker_account")
+    last_ats_score      = models.FloatField(null=True, blank=True)
 
     class Meta:
         db_table = "job_seeker_accounts"
@@ -279,6 +290,8 @@ class JobApplication(models.Model):
     candidate   = models.ForeignKey(Candidate, on_delete=models.SET_NULL, null=True, blank=True, db_column="candidate_id", related_name="seeker_application")
     cover_note  = models.TextField(null=True, blank=True)
     status      = models.CharField(max_length=50, choices=STATUS_CHOICES, default="applied")
+    accepted_terms = models.BooleanField(default=False)
+    offer_letter_path = models.CharField(max_length=500, null=True, blank=True)
     applied_at  = models.DateTimeField(default=timezone.now)
     updated_at  = models.DateTimeField(auto_now=True)
 
@@ -315,3 +328,37 @@ class Notification(models.Model):
     def __str__(self):
         target = self.seeker or self.company
         return f"[{self.type}] → {target}: {self.title}"
+
+
+class ResumeDraft(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seeker = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, db_column="seeker_id", related_name="resume_drafts")
+    title = models.CharField(max_length=255)
+    template_id = models.CharField(max_length=50, default="modern")
+    content = models.JSONField(default=dict)
+    ats_score = models.FloatField(null=True, blank=True)
+    ats_report = models.JSONField(null=True, blank=True)
+    exported_pdf_path = models.CharField(max_length=500, null=True, blank=True)
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "resume_drafts"
+
+    def __str__(self):
+        return f"Draft '{self.title}' for {self.seeker.full_name}"
+
+
+class SavedJob(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seeker = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, db_column="seeker_id", related_name="saved_jobs")
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, db_column="session_id", related_name="saved_by")
+    saved_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "saved_jobs"
+        unique_together = (("seeker", "session"),)
+
+    def __str__(self):
+        return f"{self.seeker.full_name} bookmarked {self.session.job_title}"

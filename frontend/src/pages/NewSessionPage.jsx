@@ -27,7 +27,7 @@ const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
 
   const getPillColor = () => {
     switch(tagColor) {
-      case 'amber': return 'bg-blue-100 text-amber-800 border-amber-200';
+      case 'amber': return 'bg-amber-50 text-amber-800 border-amber-200';
       case 'blue': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'gray': default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -243,6 +243,19 @@ export default function NewSessionPage() {
   }, [formData.job_description, lastAnalyzedJD]);
 
   const handleCreate = async () => {
+    // Validate that all rounds have a name and a result declaration date
+    for (let i = 0; i < formData.rounds.length; i++) {
+      const r = formData.rounds[i];
+      if (!r.name.trim()) {
+        toast.error(`Please provide a name for Round ${i + 1}`);
+        return;
+      }
+      if (!r.result_announcement_date) {
+        toast.error(`Result declaration date & time is compulsory for round: ${r.name}`);
+        return;
+      }
+    }
+
     setCreating(true);
     try {
       let currentSessionId = inferredData?.session_id;
@@ -362,7 +375,7 @@ export default function NewSessionPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.required_skills.map((s, i) => (
-                      <span key={i} className="text-[11px] bg-blue-100 text-amber-800 px-2 py-1 rounded font-semibold border border-amber-200">{s}</span>
+                      <span key={i} className="text-[11px] bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold border border-amber-200">{s}</span>
                     ))}
                     {formData.nice_to_have.map((s, i) => (
                       <span key={i} className="text-[11px] bg-gray-200 text-gray-800 px-2 py-1 rounded font-semibold border border-gray-300">{s}</span>
@@ -442,12 +455,12 @@ export default function NewSessionPage() {
                   onChange={(e) => setFormData({...formData, min_experience: parseInt(e.target.value) || 0})}
                   className="w-20 p-2 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
                 />
-                <span className="text-sm text-muted">years</span>
+                <span className="text-sm text-gray-500">years</span>
               </div>
 
               <div className="pt-4 border-t border-gray-100">
                 <label className="block text-sm font-bold text-charcoal mb-1">Auto-reject below:</label>
-                <p className="text-xs text-muted mb-4">Candidates scoring below this will be automatically rejected after parsing.</p>
+                <p className="text-xs text-gray-500 mb-4">Candidates scoring below this will be automatically rejected after parsing.</p>
                 <div className="flex items-center gap-6">
                   <input
                     type="range" min="0" max="100" step="5"
@@ -463,7 +476,7 @@ export default function NewSessionPage() {
 
               <div className="pt-4 border-t border-gray-100">
                 <h3 className="text-sm font-bold text-charcoal mb-1">Matching Weights</h3>
-                <p className="text-xs text-muted mb-4">How to weigh different factors (must sum to 1.0)</p>
+                <p className="text-xs text-gray-500 mb-4">How to weigh different factors (must sum to 1.0)</p>
                 
                 <div className="space-y-4">
                   {['skills', 'experience', 'location'].map((key) => (
@@ -520,47 +533,64 @@ export default function NewSessionPage() {
         return (
           <div className="bg-white rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto">
             <h2 className="text-2xl font-bold text-charcoal mb-1">Define interview stages</h2>
-            <p className="text-xs text-muted mb-6">The last round will have "Hire" option instead of "Forward".</p>
+            <p className="text-xs text-gray-500 mb-6">The last round will have "Hire" option instead of "Forward".</p>
             
             <div className="space-y-3 mb-6">
               {formData.rounds.map((round, idx) => {
                 const isLast = idx === formData.rounds.length - 1;
                 return (
-                  <div key={round.id} className={`flex items-center gap-3 p-3 bg-white border ${isLast ? 'border-[#2563EB] shadow-sm' : 'border-gray-200'} rounded-xl relative transition-all`}>
-                    <div className="text-gray-400 cursor-move"><GripVertical size={18} /></div>
-                    
-                    <input 
-                      type="text" value={round.name}
-                      onChange={(e) => {
-                        const newRounds = [...formData.rounds];
-                        newRounds[idx].name = e.target.value;
-                        setFormData({...formData, rounds: newRounds});
-                      }}
-                      className="flex-[2] p-2 bg-transparent border-b border-gray-200 focus:border-[#2563EB] focus:outline-none text-sm text-charcoal font-medium"
-                      placeholder="Round Name"
-                    />
-                    
-                    <input 
-                      type="text" value={round.interviewer}
-                      onChange={(e) => {
-                        const newRounds = [...formData.rounds];
-                        newRounds[idx].interviewer = e.target.value;
-                        setFormData({...formData, rounds: newRounds});
-                      }}
-                      className="flex-1 p-2 bg-transparent border-b border-gray-200 focus:border-[#2563EB] focus:outline-none text-sm text-gray-600"
-                      placeholder="Interviewer (optional)"
-                    />
-                    
-                    <button 
-                      onClick={() => {
-                        if (formData.rounds.length <= 1) return;
-                        setFormData({...formData, rounds: formData.rounds.filter((_, i) => i !== idx)});
-                      }}
-                      className="text-gray-400 hover:text-red-500 p-1 bg-white"
-                      disabled={formData.rounds.length <= 1}
-                    >
-                      <X size={18} />
-                    </button>
+                  <div key={round.id} className={`flex flex-col gap-3 p-4 bg-white border ${isLast ? 'border-[#2563EB] shadow-sm' : 'border-gray-200'} rounded-xl relative transition-all`}>
+                    <div className="flex items-center gap-3">
+                      <div className="text-gray-400 cursor-move"><GripVertical size={18} /></div>
+                      
+                      <input 
+                        type="text" value={round.name}
+                        onChange={(e) => {
+                          const newRounds = [...formData.rounds];
+                          newRounds[idx].name = e.target.value;
+                          setFormData({...formData, rounds: newRounds});
+                        }}
+                        className="flex-[2] p-2 bg-transparent border-b border-gray-200 focus:border-[#2563EB] focus:outline-none text-sm text-charcoal font-medium"
+                        placeholder="Round Name"
+                      />
+                      
+                      <input 
+                        type="text" value={round.interviewer}
+                        onChange={(e) => {
+                          const newRounds = [...formData.rounds];
+                          newRounds[idx].interviewer = e.target.value;
+                          setFormData({...formData, rounds: newRounds});
+                        }}
+                        className="flex-1 p-2 bg-transparent border-b border-gray-200 focus:border-[#2563EB] focus:outline-none text-sm text-gray-600"
+                        placeholder="Interviewer (optional)"
+                      />
+                      
+                      <button 
+                        onClick={() => {
+                          if (formData.rounds.length <= 1) return;
+                          setFormData({...formData, rounds: formData.rounds.filter((_, i) => i !== idx)});
+                        }}
+                        className="text-gray-400 hover:text-red-500 p-1 bg-white"
+                        disabled={formData.rounds.length <= 1}
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 pl-7">
+                      <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">Result Declaration Time*:</label>
+                      <input
+                        type="datetime-local"
+                        value={round.result_announcement_date || ""}
+                        onChange={(e) => {
+                          const newRounds = [...formData.rounds];
+                          newRounds[idx].result_announcement_date = e.target.value;
+                          setFormData({...formData, rounds: newRounds});
+                        }}
+                        className="p-1.5 border border-gray-200 rounded-lg text-xs text-charcoal focus:border-[#2563EB] focus:outline-none flex-1"
+                        required
+                      />
+                    </div>
                     
                     {isLast && (
                       <div className="absolute -top-2.5 right-4 bg-blue-100 text-[#2563EB] text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-amber-200">
@@ -571,12 +601,12 @@ export default function NewSessionPage() {
                 );
               })}
             </div>
-
+ 
             {formData.rounds.length < 8 && (
               <button 
                 onClick={() => {
                   const newId = Math.max(...formData.rounds.map(r=>r.id), 0) + 1;
-                  setFormData({...formData, rounds: [...formData.rounds, {id:newId, name:"", interviewer:"", order:newId}]});
+                  setFormData({...formData, rounds: [...formData.rounds, {id:newId, name:"", interviewer:"", order:newId, result_announcement_date:""}]});
                 }}
                 className="w-full py-3 border-2 border-dashed border-blue-300 bg-blue-50 text-[#2563EB] hover:bg-blue-100 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
               >
@@ -594,7 +624,7 @@ export default function NewSessionPage() {
               
               <button 
                 onClick={() => setStep(2)}
-                className="text-muted hover:text-charcoal text-sm font-medium transition-colors text-center w-full bg-white py-2"
+                className="text-gray-500 hover:text-charcoal text-sm font-medium transition-colors text-center w-full bg-white py-2"
               >
                 &larr; Back to Criteria
               </button>

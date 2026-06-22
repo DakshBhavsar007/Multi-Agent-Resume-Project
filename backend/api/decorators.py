@@ -74,9 +74,16 @@ def verify_api_key_helper(request):
             return True
 
     # 2. JWT Bearer token
+    token = ""
     auth_header = request.headers.get("Authorization", "")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ", 1)[1]
+    else:
+        token = request.GET.get("token", "")
+        if not token:
+            token = request.GET.get("jwt", "")
+            
+    if token and token != "undefined" and token != "null":
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             company_id = payload.get("company_id")
@@ -135,15 +142,22 @@ def require_recruiter_jwt(view_func):
     """Decorator to enforce JWT Bearer token (recruiter dashboard)."""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        token = ""
         auth_header = request.headers.get("Authorization", "")
-        if not auth_header or not auth_header.startswith("Bearer "):
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+        else:
+            token = request.GET.get("token", "")
+            if not token:
+                token = request.GET.get("jwt", "")
+                
+        if not token or token == "undefined" or token == "null":
             return JsonResponse({
                 "success": False,
                 "data": None,
                 "error": "Invalid token format"
             }, status=401)
             
-        token = auth_header.split(" ")[1]
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             company_id = payload.get("company_id")

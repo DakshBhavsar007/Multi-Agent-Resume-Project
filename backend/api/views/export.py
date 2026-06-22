@@ -29,7 +29,7 @@ def export_candidates(request, session_id):
 
             matched = ", ".join(match_details.get("matched_skills", []))
             missing = ", ".join(match_details.get("missing_skills", []))
-            skills_str = ", ".join([s.get("canonical_skill", "") for s in norm_skills]) if norm_skills else ""
+            skills_str = ", ".join([(s.get("canonical_skill") or str(s)) if isinstance(s, dict) else str(s) for s in norm_skills]) if norm_skills else ""
 
             education_list = parsed_data.get("education", [])
             edu_str = ", ".join([

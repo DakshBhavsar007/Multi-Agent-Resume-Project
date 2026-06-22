@@ -68,6 +68,10 @@ All agents communicate through the `RotateLLMClient`, which distributes requests
 
 ### Job Seeker Portal
 - **Dedicated Seeker Accounts** — Separate login and registration flows for job seekers, redirecting directly to `/jobs` as the unified landing hub & dashboard.
+- **AI Resume Builder & Editor** — Create, edit, and export resumes using 7 professional, high-fidelity templates (Modern, Classic, Minimal, Executive, Creative, Compact, ATS Optimized).
+- **Dynamic Columns Selector** — Seamlessly toggle between 1-column and 2-column layouts on any template with automatic sections splitting/collapsing.
+- **ReportLab 2-Column PDF Exporter** — Backend PDF generator utilizing height-based wrapping and dummy canvas measurements to dynamically paginate 2-column documents across multiple pages without overflow.
+- **Active Profile Details Auto-Sync** — Setting a resume draft as the "Active Resume" automatically extracts and syncs experience, education, projects, skills, certifications, and languages directly to the seeker profile.
 - **Direct Subview Navigation** — Dynamic navbar links (Home, Dashboard, Find Jobs, AI Resume Enhancer, My Applications, Notifications, Market Trends, Hiring Safety) for unified, simplified routing without nested dashboard page overlays.
 - **Single-Line Responsive Navbar** — Streamlined layout with Home button to return to the platform landing page (`/`), seeker Dashboard button, and `whitespace-nowrap` layout to ensure smooth mobile-first presentation.
 - **Double-Input Job Search** — Search bar supporting both keyword queries and location searches (with Indian city-to-state mapping and live autocomplete suggestions) separated by a clean vertical divider.

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import { authAPI } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import './AuthPage.css';
@@ -105,8 +106,13 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setShowPassword(false);
+  }, [isLogin]);
 
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
@@ -222,7 +228,31 @@ const AuthPage = () => {
               <label>Password</label>
               {isLogin && <button type="button" style={{ background: 'none', border: 'none', fontSize: '11px', color: '#6b6375', cursor: 'pointer' }}>Forgot?</button>}
             </div>
-            <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+            <div className="relative" style={{ width: '100%' }}>
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="••••••••" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                required 
+                style={{ width: '100%', paddingRight: '44px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-accent transition-colors"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 0
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <motion.button 

@@ -18,7 +18,7 @@ class SemanticMatchingAgent:
         preferred_locs = criteria.get("preferred_locations", [])
         
         candidate_skills = [
-            s["canonical_skill"] 
+            s.get("canonical_skill", str(s)) if isinstance(s, dict) else str(s)
             for s in candidate.get("normalized_skills", [])
         ]
         
@@ -47,8 +47,9 @@ class SemanticMatchingAgent:
                 # Experience bonus for matched skills
                 bonus = 0
                 for s in candidate.get("normalized_skills", []):
-                    if s["canonical_skill"] in matched:
-                        yrs = s.get("years")
+                    skill_name = s.get("canonical_skill", str(s)) if isinstance(s, dict) else str(s)
+                    if skill_name in matched:
+                        yrs = s.get("years") if isinstance(s, dict) else None
                         if yrs is not None and float(yrs) > 3:
                             bonus += 2
                 skill_score = min(100.0, base + min(bonus, 10))

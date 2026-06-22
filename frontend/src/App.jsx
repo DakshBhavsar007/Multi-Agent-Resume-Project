@@ -21,11 +21,13 @@ import SettingsPage from './pages/SettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import FraudDetectionPage from './pages/FraudDetectionPage';
 
-import JobsLandingPage from './pages/JobsLandingPage';
-import JobsSearchPage from './pages/JobsSearchPage';
-import JobDetailsPage from './pages/JobDetailsPage';
+import UserHome from './pages/user/UserHome';
+import UserJobs from './pages/user/UserJobs';
+import UserJobDetail from './pages/user/UserJobDetail';
 import JobsTrendsPage from './pages/JobsTrendsPage';
 import JobSeekerSafetyPage from './pages/JobSeekerSafetyPage';
+import ResumeBuilderLanding from './pages/user/ResumeBuilderLanding';
+import ResumeEditor from './pages/user/ResumeEditor';
 
 // Developer Portal imports
 import DeveloperLandingPage from './pages/developer/DeveloperLandingPage';
@@ -41,12 +43,18 @@ import DeveloperEmbed from './pages/developer/DeveloperEmbed';
 import DeveloperDocs from './pages/developer/DeveloperDocs';
 import DeveloperSettings from './pages/developer/DeveloperSettings';
 
-// Job Seeker Portal imports
 import JobSeekerLoginPage from './pages/seeker/JobSeekerLoginPage';
 import JobSeekerRegisterPage from './pages/seeker/JobSeekerRegisterPage';
 import MyResumePage from './pages/seeker/MyResumePage';
 import MyApplicationsPage from './pages/seeker/MyApplicationsPage';
 import NotificationsPage from './pages/seeker/NotificationsPage';
+import UserCompanies from './pages/user/UserCompanies';
+import UserCompanyDetail from './pages/user/UserCompanyDetail';
+import UserProfile from './pages/user/UserProfile';
+import UserDashboard from './pages/user/UserDashboard';
+import UserUploadResume from './pages/user/UserUploadResume';
+import UserApply from './pages/user/UserApply';
+import UserApplications from './pages/user/UserApplications';
 
 function ScrollToTop() {
   const location = useLocation();
@@ -162,14 +170,22 @@ export default function App() {
           <Route path="/auth/github/callback" element={<GitHubCallbackPage />} />
 
           {/* Job Seeker Routes */}
-          <Route path="/jobs" element={<JobsLandingPage />} />
-          <Route path="/jobs/search" element={<JobsSearchPage />} />
+          <Route path="/jobs" element={<UserHome />} />
+          <Route path="/jobs/search" element={<UserJobs />} />
           <Route path="/jobs/safety-checker" element={<JobSeekerSafetyPage />} />
           <Route path="/jobs/trends" element={<JobsTrendsPage />} />
-          <Route path="/jobs/applications" element={<MyApplicationsPage />} />
+          <Route path="/jobs/companies" element={<UserCompanies />} />
+          <Route path="/jobs/companies/:companyId" element={<UserCompanyDetail />} />
+          <Route path="/jobs/profile" element={<UserProfile />} />
+          <Route path="/jobs/dashboard" element={<UserDashboard />} />
+          <Route path="/jobs/upload-resume" element={<UserUploadResume />} />
+          <Route path="/jobs/apply/:jobId" element={<UserApply />} />
+          <Route path="/jobs/applications" element={<UserApplications />} />
           <Route path="/jobs/resume" element={<MyResumePage />} />
           <Route path="/jobs/notifications" element={<NotificationsPage />} />
-          <Route path="/jobs/:id" element={<JobDetailsPage />} />
+          <Route path="/jobs/:jobId" element={<UserJobDetail />} />
+          <Route path="/resume-builder" element={<ResumeBuilderLanding />} />
+          <Route path="/resume-builder/edit/:resumeId" element={<ResumeEditor />} />
 
           {/* Job Seeker Portal — Auth */}
           <Route path="/jobs/login"    element={<JobSeekerLoginPage />} />

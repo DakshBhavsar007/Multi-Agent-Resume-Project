@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search } from 'lucide-react';
+import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -13,6 +13,56 @@ import { useCandidateStore } from '../stores/candidateStore';
 import ChatPanel from '../components/ChatPanel';
 import CandidateCard from '../components/CandidateCard';
 import PremiumBadge from '../components/PremiumBadge';
+
+const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
+  const [input, setInput] = useState("");
+  
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = input.trim();
+      if (val && !tags.includes(val)) {
+        onChange([...tags, val]);
+      }
+      setInput("");
+    } else if (e.key === 'Backspace' && !input && tags.length > 0) {
+      onChange(tags.slice(0, -1));
+    }
+  };
+
+  const removeTag = (indexToRemove) => {
+    onChange(tags.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const getPillColor = () => {
+    switch(tagColor) {
+      case 'amber': return 'bg-amber-50 text-amber-800 border-amber-200';
+      case 'blue': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'gray': default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  return (
+    <div className="w-full flex flex-wrap items-center gap-2 p-2 border-[1.5px] border-gray-200 rounded-lg bg-white focus-within:border-accent transition-colors">
+      {tags.map((tag, idx) => (
+        <div key={idx} className={`flex items-center gap-1 px-2.5 py-1 rounded-md border text-sm font-medium ${getPillColor()}`}>
+          {tag}
+          <button type="button" onClick={() => removeTag(idx)} className="hover:opacity-70 ml-1 focus:outline-none">
+            <X size={14} />
+          </button>
+        </div>
+      ))}
+      <input
+        type="text"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={tags.length === 0 ? placeholder : "Add more..."}
+        className="flex-1 min-w-[120px] bg-transparent focus:outline-none text-sm text-charcoal py-1"
+      />
+    </div>
+  );
+};
 
 export default function SessionWorkspacePage() {
   const { id } = useParams();
@@ -35,6 +85,74 @@ export default function SessionWorkspacePage() {
     queryKey: ["session", id],
     queryFn: () => sessionsAPI.get(id)
   });
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editJobTitle, setEditJobTitle] = useState("");
+  const [editJobDescription, setEditJobDescription] = useState("");
+  const [editRequiredSkills, setEditRequiredSkills] = useState([]);
+  const [editNiceToHave, setEditNiceToHave] = useState([]);
+  const [editPreferredLocations, setEditPreferredLocations] = useState([]);
+  const [editMinExperience, setEditMinExperience] = useState(0);
+  const [editMinMatchScore, setEditMinMatchScore] = useState(60);
+  const [editRounds, setEditRounds] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const [showSkillSuggestions, setShowSkillSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (session && isEditModalOpen) {
+      setEditName(session.name || "");
+      setEditJobTitle(session.job_title || "");
+      setEditJobDescription(session.job_description || "");
+      const criteria = session.criteria || {};
+      setEditRequiredSkills(criteria.required_skills || []);
+      setEditNiceToHave(criteria.nice_to_have || []);
+      setEditPreferredLocations(criteria.preferred_locations || []);
+      setEditMinExperience(criteria.min_experience || 0);
+      setEditMinMatchScore(criteria.min_match_score || 60);
+      setEditRounds(session.rounds || []);
+    }
+  }, [session, isEditModalOpen]);
+
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    try {
+      // 1. Update session details
+      await sessionsAPI.update(id, {
+        name: editName,
+        job_title: editJobTitle,
+        job_description: editJobDescription,
+        rounds: editRounds.map(r => ({
+          name: r.name,
+          interviewer: r.interviewer,
+          order: r.order,
+          result_announcement_date: r.result_announcement_date
+        }))
+      });
+
+      // 2. Update criteria
+      const weights = session.criteria?.weights || { skills: 0.5, experience: 0.3, location: 0.2 };
+      await sessionsAPI.setCriteria(id, {
+        required_skills: editRequiredSkills,
+        nice_to_have: editNiceToHave,
+        preferred_locations: editPreferredLocations,
+        min_experience: Number(editMinExperience),
+        min_match_score: Number(editMinMatchScore),
+        weights
+      });
+
+      toast.success("Session updated successfully!");
+      setIsEditModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["session", id] });
+      queryClient.invalidateQueries({ queryKey: ["candidates", id] });
+      queryClient.invalidateQueries({ queryKey: ["all_candidates", id] });
+    } catch (e) {
+      toast.error(e.message || "Failed to update session");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Sync activeRound with session data once loaded
   useEffect(() => {
@@ -112,7 +230,12 @@ export default function SessionWorkspacePage() {
   };
   const { getRootProps: getDirectProps, getInputProps: getDirectInput } = useDropzone({
     onDrop: onDropDirect,
-    accept: { 'application/pdf': ['.pdf'], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'] }
+    accept: { 
+      'application/pdf': ['.pdf'], 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
+      'text/plain': ['.txt']
+    }
   });
 
   const onDropZip = async (acceptedFiles) => {
@@ -234,6 +357,12 @@ export default function SessionWorkspacePage() {
                 <Zap size={16} fill="currentColor" /> Match All
               </button>
               <button 
+                onClick={() => setIsEditModalOpen(true)}
+                className="border-[1.5px] border-accent text-accent hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 bg-white shadow-sm"
+              >
+                <Settings size={16} /> Edit Session
+              </button>
+              <button 
                 onClick={() => {
                   const url = exportAPI.candidatesUrl(id);
                   if (url) window.open(url);
@@ -309,7 +438,7 @@ export default function SessionWorkspacePage() {
                   <div className="bg-white rounded-2xl p-6 border-2 border-transparent hover:border-accent transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                     <Upload size={32} className="text-accent mb-3" />
                     <h4 className="font-bold text-charcoal text-lg mb-1">Direct Upload</h4>
-                    <p className="text-xs text-muted mb-4 font-medium">Upload PDF/DOCX files or drag an entire folder</p>
+                    <p className="text-xs text-charcoal mb-4 font-medium">Upload PDF, DOCX, or TXT files or drag an entire folder</p>
                     <div {...getDirectProps()} className="border-2 border-dashed border-[#2563EB] rounded-xl h-[120px] flex items-center justify-center bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition-colors relative overflow-hidden">
                       <input {...getDirectInput()} webkitdirectory="true" directory="" />
                       <p className="text-sm font-bold text-accent">Drop files here or click to browse</p>
@@ -349,7 +478,7 @@ export default function SessionWorkspacePage() {
                       <div className="bg-white rounded-2xl p-6 border-2 border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                         <Archive size={32} className="text-accent mb-3" />
                         <h4 className="font-bold text-charcoal text-lg mb-1">ZIP Upload</h4>
-                        <p className="text-xs text-muted mb-4 font-medium">Upload a ZIP containing all resume files</p>
+                        <p className="text-xs text-charcoal mb-4 font-medium">Upload a ZIP containing all resume files</p>
                         <div className="border-2 border-dashed border-gray-300 rounded-xl h-[120px] flex items-center justify-center bg-gray-50">
                           <p className="text-sm font-bold text-gray-500">Drop ZIP file here</p>
                         </div>
@@ -361,7 +490,7 @@ export default function SessionWorkspacePage() {
                   <div className="bg-white rounded-2xl p-6 border-2 border-transparent hover:border-accent transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                     <Mail size={32} className="text-accent mb-3" />
                     <h4 className="font-bold text-charcoal text-lg mb-1">Gmail Sync</h4>
-                    <p className="text-xs text-muted mb-4 font-medium">Auto-fetch resumes sent to your email</p>
+                    <p className="text-xs text-charcoal mb-4 font-medium">Auto-fetch resumes sent to your email</p>
                     {!session.gmail_address ? (
                       <div className="flex flex-col h-[120px] justify-center items-center bg-gray-50 border border-gray-100 rounded-xl">
                         <button onClick={async () => {
@@ -402,7 +531,7 @@ export default function SessionWorkspacePage() {
                         <span className="text-sm font-bold text-gray-400 pb-[13px] hover:text-gray-600 cursor-pointer">Google Form</span>
                       </div>
                     </div>
-                    <p className="text-xs text-muted mb-4 font-medium flex-1">Sync from a shared Drive folder link</p>
+                    <p className="text-xs text-charcoal mb-4 font-medium flex-1">Sync from a shared Drive folder link</p>
                     <div className="flex flex-col justify-end mt-auto">
                       <input type="text" placeholder="Paste Google Drive folder URL here..." value={driveUrl} onChange={e=>setDriveUrl(e.target.value)} className="w-full text-xs p-2.5 font-medium border-2 border-gray-100 rounded-lg mb-2 focus:border-accent focus:outline-none bg-gray-50" />
                       <button 
@@ -543,7 +672,46 @@ export default function SessionWorkspacePage() {
               </div>
 
               <div className="flex flex-wrap gap-4 items-center bg-gray-50 border border-gray-200 p-4 rounded-xl">
-                <input type="text" placeholder="Search names..." value={filters.search} onChange={e=>setFilters({...filters, search: e.target.value})} className="flex-1 min-w-[200px] border-2 border-gray-200 p-2.5 rounded-lg text-sm font-medium focus:border-accent focus:outline-none bg-white shadow-sm" />
+                <div className="relative flex-1 min-w-[200px] z-20">
+                  <input 
+                    type="text" 
+                    placeholder="Search names..." 
+                    value={filters.search} 
+                    onChange={e=>setFilters({...filters, search: e.target.value})} 
+                    onFocus={() => setShowNameSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
+                    className="w-full border-2 border-gray-200 p-2.5 rounded-lg text-sm font-medium focus:border-accent focus:outline-none bg-white shadow-sm" 
+                  />
+                  {showNameSuggestions && (
+                    <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto py-1">
+                      {(() => {
+                        const filteredList = Array.from(new Set(
+                          (allCandidatesList || [])
+                            .filter(c => !filters.search || (c.name || "").toLowerCase().includes(filters.search.toLowerCase()))
+                            .map(c => c.name)
+                            .filter(Boolean)
+                        )).slice(0, 5);
+                        return filteredList.length > 0 ? (
+                          filteredList.map((sug, idx) => (
+                            <button
+                              key={idx}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setFilters({...filters, search: sug});
+                                setShowNameSuggestions(false);
+                              }}
+                              className="w-full text-left px-4 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal truncate"
+                            >
+                              {sug}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-2 text-xs text-muted-foreground">No suggestions found</div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
                 <select value={filters.location} onChange={e=>setFilters({...filters, location: e.target.value})} className="border-2 border-gray-200 p-2.5 rounded-lg text-sm font-bold focus:outline-none focus:border-accent text-charcoal bg-white shadow-sm cursor-pointer">
                   <option value="">All Locations</option>
                   <option value="Remote">Remote</option>
@@ -553,7 +721,46 @@ export default function SessionWorkspacePage() {
                   <input type="range" min="0" max="100" step="5" value={filters.min_score} onChange={e=>setFilters({...filters, min_score: parseInt(e.target.value)})} className="w-24 accent-[#2563EB] cursor-pointer" />
                   <span className="text-xs font-black text-charcoal w-6 bg-gray-100 p-1 rounded inline-block text-center">{filters.min_score}</span>
                 </div>
-                <input type="text" placeholder="Must have skill..." value={filters.skill} onChange={e=>setFilters({...filters, skill: e.target.value})} className="border-2 border-gray-200 p-2.5 rounded-lg text-sm font-medium focus:border-accent focus:outline-none w-48 bg-white shadow-sm" />
+                <div className="relative w-48 z-20">
+                  <input 
+                    type="text" 
+                    placeholder="Must have skill..." 
+                    value={filters.skill} 
+                    onChange={e=>setFilters({...filters, skill: e.target.value})} 
+                    onFocus={() => setShowSkillSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSkillSuggestions(false), 200)}
+                    className="w-full border-2 border-gray-200 p-2.5 rounded-lg text-sm font-medium focus:border-accent focus:outline-none bg-white shadow-sm" 
+                  />
+                  {showSkillSuggestions && (
+                    <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto py-1">
+                      {(() => {
+                        const filteredList = Array.from(new Set(
+                          (allCandidatesList || [])
+                            .flatMap(c => (c.normalized_skills || []).map(s => s.canonical_skill || s.skill || s))
+                            .filter(Boolean)
+                            .filter(s => typeof s === 'string' && (!filters.skill || s.toLowerCase().includes(filters.skill.toLowerCase())))
+                        )).slice(0, 5);
+                        return filteredList.length > 0 ? (
+                          filteredList.map((sug, idx) => (
+                            <button
+                              key={idx}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setFilters({...filters, skill: sug});
+                                setShowSkillSuggestions(false);
+                              }}
+                              className="w-full text-left px-4 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal truncate"
+                            >
+                              {sug}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-2 text-xs text-muted-foreground">No suggestions found</div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
                 <select value={filters.sort} onChange={e=>setFilters({...filters, sort: e.target.value})} className="border-2 border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:border-accent font-bold ml-auto bg-white shadow-sm cursor-pointer text-charcoal">
                   <option>Match Score ↓</option>
                   <option>Name A-Z</option>
@@ -705,6 +912,175 @@ export default function SessionWorkspacePage() {
           )}
         </div>
       </div>
+
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-charcoal/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto flex flex-col hide-scrollbar border border-gray-100">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-gray-100 mb-6">
+              <h2 className="text-xl font-black text-charcoal">Edit Session Details</h2>
+              <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-charcoal transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="space-y-5 flex-1 pr-1">
+              
+              {/* Session Name & Job Title */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Session Name</label>
+                  <input 
+                    type="text" 
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                    placeholder="e.g. Q4 Python hiring"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Job Title</label>
+                  <input 
+                    type="text" 
+                    value={editJobTitle}
+                    onChange={e => setEditJobTitle(e.target.value)}
+                    className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                    placeholder="e.g. Backend Software Engineer"
+                  />
+                </div>
+              </div>
+
+              {/* Job Description */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Job Description</label>
+                <textarea 
+                  rows={4}
+                  value={editJobDescription}
+                  onChange={e => setEditJobDescription(e.target.value)}
+                  className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                  placeholder="Paste detailed job description here..."
+                />
+              </div>
+
+              {/* Min Exp & Min Match Score */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Min Experience (Years)</label>
+                  <input 
+                    type="number" 
+                    value={editMinExperience}
+                    onChange={e => setEditMinExperience(e.target.value)}
+                    className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                    min="0"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Min Match Score (%)</label>
+                  <input 
+                    type="number" 
+                    value={editMinMatchScore}
+                    onChange={e => setEditMinMatchScore(e.target.value)}
+                    className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+              </div>
+
+              {/* Required Skills */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Required Skills</label>
+                <TagInput 
+                  tags={editRequiredSkills} 
+                  onChange={setEditRequiredSkills} 
+                  placeholder="Type skill and press Enter..." 
+                  tagColor="amber"
+                />
+              </div>
+
+              {/* Nice-to-have Skills */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nice-to-have Skills</label>
+                <TagInput 
+                  tags={editNiceToHave} 
+                  onChange={setEditNiceToHave} 
+                  placeholder="Type skill and press Enter..." 
+                  tagColor="blue"
+                />
+              </div>
+
+              {/* Preferred Locations */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Preferred Locations</label>
+                <TagInput 
+                  tags={editPreferredLocations} 
+                  onChange={setEditPreferredLocations} 
+                  placeholder="Type location and press Enter..." 
+                  tagColor="gray"
+                />
+              </div>
+
+              {/* Interview Rounds */}
+              <div className="space-y-2 border-t border-gray-100 pt-4">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Interview Rounds</label>
+                {editRounds.map((round, idx) => (
+                  <div key={idx} className="flex gap-4 items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span className="text-xs font-bold text-gray-400 w-16">Round {round.order}</span>
+                    <input 
+                      type="text" 
+                      value={round.name}
+                      onChange={e => {
+                        const updated = [...editRounds];
+                        updated[idx].name = e.target.value;
+                        setEditRounds(updated);
+                      }}
+                      className="flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold"
+                      placeholder="Round Name"
+                    />
+                    <input 
+                      type="text" 
+                      value={round.interviewer || ""}
+                      onChange={e => {
+                        const updated = [...editRounds];
+                        updated[idx].interviewer = e.target.value;
+                        setEditRounds(updated);
+                      }}
+                      className="flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold"
+                      placeholder="Interviewer Name"
+                    />
+                  </div>
+                ))}
+              </div>
+
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+              <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="border-[1.5px] border-gray-200 hover:bg-gray-50 text-charcoal px-5 py-2.5 rounded-xl font-bold transition-all text-sm"
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveChanges}
+                className="bg-accent hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl font-bold transition-all text-sm shadow flex items-center gap-2"
+                disabled={isSaving}
+              >
+                {isSaving ? <Loader2 size={16} className="animate-spin" /> : null}
+                Save Changes
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       <ChatPanel sessionId={id} />
     </div>

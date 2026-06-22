@@ -10,6 +10,7 @@ export default function SessionsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortFilter, setSortFilter] = useState("Newest");
   const [activeMenuId, setActiveMenuId] = useState(null);
@@ -79,15 +80,50 @@ export default function SessionsPage() {
       {/* FILTER & SEARCH BAR */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Search */}
-        <div className="relative w-full md:max-w-xs shrink-0">
+        <div className="relative w-full md:max-w-xs shrink-0 z-20">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input 
             type="text" 
             placeholder="Search sessions" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:border-accent focus:outline-none transition-colors bg-white shadow-sm font-medium"
           />
+          {showSuggestions && (
+            <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto py-1">
+              {(() => {
+                const filteredList = Array.from(new Set(
+                  (sessions || [])
+                    .filter(s => 
+                      !searchTerm || 
+                      (s.name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+                      (s.job_title || "").toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .flatMap(s => [s.job_title, s.name])
+                    .filter(Boolean)
+                )).slice(0, 5);
+                return filteredList.length > 0 ? (
+                  filteredList.map((sug, idx) => (
+                    <button
+                      key={idx}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setSearchTerm(sug);
+                        setShowSuggestions(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal truncate"
+                    >
+                      {sug}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-xs text-muted-foreground">No suggestions found</div>
+                );
+              })()}
+            </div>
+          )}
         </div>
 
         {/* Tab Segments & Sort */}

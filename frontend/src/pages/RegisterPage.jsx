@@ -16,6 +16,7 @@ export default function RegisterPage() {
     confirmPassword: ""
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiKeys, setApiKeys] = useState(null);
@@ -164,7 +165,7 @@ export default function RegisterPage() {
                   />
                   <button
                     type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-accent transition-colors"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -184,11 +185,19 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-1.5">Confirm Password</label>
-                <input
-                  type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
-                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-[15px] focus:border-accent focus:outline-none transition-colors"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
+                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-[15px] focus:border-accent focus:outline-none transition-colors pr-12"
+                    required
+                  />
+                  <button
+                    type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-accent transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}

@@ -63,6 +63,45 @@ def require_seeker_jwt(view_func):
 
 
 def _seeker_dict(seeker: JobSeekerAccount) -> dict:
+    import os
+    resume_file_name = None
+    resume_size = None
+    if seeker.resume_file_path:
+        try:
+            resume_file_name = os.path.basename(seeker.resume_file_path)
+            # Remove UUID prefix (36 chars + '_') if it exists
+            if len(resume_file_name) > 37 and resume_file_name[36] == '_':
+                resume_file_name = resume_file_name[37:]
+            if os.path.exists(seeker.resume_file_path):
+                resume_size = round(os.path.getsize(seeker.resume_file_path) / 1024, 1)
+        except Exception:
+            pass
+
+    # Calculate profile strength
+    strength = 0
+    if seeker.full_name: strength += 10
+    if seeker.email: strength += 10
+    if seeker.phone: strength += 10
+    if seeker.location: strength += 10
+    if seeker.headline: strength += 10
+    if seeker.resume_file_path: strength += 20
+    if seeker.skills: strength += 10
+    
+    resume_data = seeker.resume_data or {}
+    if resume_data.get("experience") or resume_data.get("work_experience"):
+        strength += 10
+    if resume_data.get("education"):
+        strength += 10
+
+    # Applications count
+    applications_count = seeker.applications.count() if hasattr(seeker, "applications") else 0
+    
+    # Interviews count
+    interviews_count = seeker.applications.filter(status="shortlisted").count() if hasattr(seeker, "applications") else 0
+
+    hired_app = seeker.applications.filter(status="hired", accepted_terms=True).first() if hasattr(seeker, "applications") else None
+    hired_by = hired_app.session.company.name if hired_app and hired_app.session.company else None
+
     return {
         "id": str(seeker.id),
         "full_name": seeker.full_name,
@@ -72,8 +111,21 @@ def _seeker_dict(seeker: JobSeekerAccount) -> dict:
         "headline": seeker.headline,
         "tier": seeker.tier,
         "has_resume": bool(seeker.resume_file_path or seeker.resume_data),
-        "skills": seeker.skills,
+        "skills": seeker.skills or [],
+        "resume_file_path": seeker.resume_file_path,
+        "resume_file_name": resume_file_name,
+        "resume_size": resume_size,
+        "resume_updated_at": seeker.updated_at.isoformat() if seeker.updated_at else None,
+        "resume_data": seeker.resume_data or {},
+        "open_to": seeker.open_to or {},
+        "profile_strength": strength,
+        "applications_count": applications_count,
+        "interviews_count": interviews_count,
+        "hired_by": hired_by,
+        "saved_jobs_count": 0,
         "created_at": seeker.created_at.isoformat() if seeker.created_at else None,
+        "active_resume_draft_id": str(seeker.active_resume_draft.id) if seeker.active_resume_draft else None,
+        "last_ats_score": seeker.last_ats_score,
     }
 
 
@@ -181,6 +233,22 @@ def update_profile(request):
         if "headline" in data:
             seeker.headline = data["headline"].strip() or None
             fields_changed.append("headline")
+        if "skills" in data:
+            seeker.skills = data["skills"]
+            fields_changed.append("skills")
+        if "open_to" in data:
+            seeker.open_to = data["open_to"]
+            fields_changed.append("open_to")
+        
+        # Handle experience and education inside resume_data
+        if "experience" in data or "education" in data:
+            if not isinstance(seeker.resume_data, dict):
+                seeker.resume_data = {}
+            if "experience" in data:
+                seeker.resume_data["experience"] = data["experience"]
+            if "education" in data:
+                seeker.resume_data["education"] = data["education"]
+            fields_changed.append("resume_data")
 
         if fields_changed:
             seeker.save(update_fields=fields_changed)

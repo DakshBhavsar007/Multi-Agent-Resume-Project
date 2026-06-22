@@ -31,19 +31,22 @@ def session_root(request):
             rounds_req = data.get("rounds") or []
             rounds_data = []
             for r in rounds_req:
+                ann_date = r.get("result_announcement_date")
                 rounds_data.append({
                     "name": r.get("name"),
                     "interviewer": r.get("interviewer"),
-                    "order": r.get("order")
+                    "order": r.get("order"),
+                    "result_announcement_date": ann_date if ann_date else None
                 })
 
+            status_val = "analysis" if job_title == "Smart Analyzer Session" else "active"
             new_session = Session.objects.create(
                 company=request.company,
                 name=name,
                 job_title=job_title,
                 job_description=job_description,
                 rounds=rounds_data,
-                status="active"
+                status=status_val
             )
 
             return JsonResponse(success_response({
@@ -67,6 +70,8 @@ def session_root(request):
             qs = Session.objects.filter(company_id=request.company.id)
             if status:
                 qs = qs.filter(status=status)
+            else:
+                qs = qs.exclude(status="analysis")
 
             qs = qs.order_by("-created_at")
             
@@ -157,11 +162,16 @@ def session_detail(request, session_id):
             if "job_description" in data and data["job_description"] is not None:
                 session.job_description = data["job_description"]
             if "rounds" in data and data["rounds"] is not None:
-                session.rounds = [{
-                    "name": r.get("name"),
-                    "interviewer": r.get("interviewer"),
-                    "order": r.get("order")
-                } for r in data["rounds"]]
+                rounds_data = []
+                for r in data["rounds"]:
+                    ann_date = r.get("result_announcement_date")
+                    rounds_data.append({
+                        "name": r.get("name"),
+                        "interviewer": r.get("interviewer"),
+                        "order": r.get("order"),
+                        "result_announcement_date": ann_date if ann_date else None
+                    })
+                session.rounds = rounds_data
             if "status" in data and data["status"] is not None:
                 session.status = data["status"]
 

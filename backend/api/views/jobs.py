@@ -10,6 +10,7 @@ from api.models import Session, Candidate, Company, FraudScanLog
 from workers.celery_worker import _parse_resume_sync, _normalize_skills_sync
 from models.schemas import success_response, error_response
 from agents.fraud_agent import FraudDetectionAgent
+from api.views.seeker_jobs import _parse_job_description_meta
 
 def _calculate_match_score(candidate, session):
     """Calculates and updates candidate match score synchronously against session criteria."""
@@ -18,7 +19,11 @@ def _calculate_match_score(candidate, session):
     req_lower = [r.lower() for r in required_skills]
     
     norm_skills = candidate.normalized_skills or []
-    cand_skill_names = {s.get("canonical_skill", "").lower() for s in norm_skills}
+    cand_skill_names = {
+        (s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)).lower()
+        if isinstance(s, dict) else str(s).lower()
+        for s in norm_skills if s
+    }
     matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
     missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
     matched = len(matched_list)
@@ -104,6 +109,7 @@ def list_public_jobs(request):
                     continue
             
             company_name = s.company.name if s.company else "Vishleshan Partner"
+            meta = _parse_job_description_meta(s.job_description)
             
             jobs.append({
                 "id": str(s.id),
@@ -114,7 +120,10 @@ def list_public_jobs(request):
                 "nice_to_have": criteria.get("nice_to_have", []),
                 "preferred_locations": preferred_locations,
                 "min_experience": criteria.get("min_experience", 0),
-                "created_at": s.created_at.isoformat() if s.created_at else None
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+                "salary_range": meta["salary_range"],
+                "location": meta["location"],
+                "employment_type": meta["employment_type"]
             })
             
         return JsonResponse(success_response(jobs))
@@ -142,6 +151,7 @@ def get_public_job(request, session_id):
             
         criteria = s.criteria or {}
         company_name = s.company.name if s.company else "Vishleshan Partner"
+        meta = _parse_job_description_meta(s.job_description)
         
         return JsonResponse(success_response({
             "id": str(s.id),
@@ -152,7 +162,10 @@ def get_public_job(request, session_id):
             "nice_to_have": criteria.get("nice_to_have", []),
             "preferred_locations": criteria.get("preferred_locations", []),
             "min_experience": criteria.get("min_experience", 0),
-            "created_at": s.created_at.isoformat() if s.created_at else None
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+            "salary_range": meta["salary_range"],
+            "location": meta["location"],
+            "employment_type": meta["employment_type"]
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

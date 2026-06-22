@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { authAPI } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
@@ -20,9 +21,15 @@ import {
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
-  const { company } = useAuthStore();
+  const navigate = useNavigate();
+  const { company, clearAuth } = useAuthStore();
   const [companyName, setCompanyName] = useState(company?.name || '');
   const [logo, setLogo] = useState(localStorage.getItem('vish_company_logo') || '');
+
+  const handleLogout = () => {
+    clearAuth();
+    navigate("/login");
+  };
   
   const [activeTab, setActiveTab] = useState('api-keys'); // 'profile' | 'api-keys' | 'notifications' | 'account'
   const [copiedKeyId, setCopiedKeyId] = useState(null);
@@ -286,16 +293,63 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {(activeTab === 'notifications' || activeTab === 'account') && (
-            <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] border border-gray-100 p-12 text-center flex flex-col items-center justify-center space-y-4 min-h-[300px]">
-              <div className="w-12 h-12 rounded-full bg-[#EFF6FF]/50 text-[#2563EB] flex items-center justify-center">
-                <Lock size={20} />
+          {activeTab === 'notifications' && (
+            <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] border border-gray-100 p-8 space-y-6">
+              <h2 className="text-md font-bold text-charcoal flex items-center gap-2 pb-4 border-b border-gray-100">
+                <Bell className="w-5 h-5 text-accent" /> Notifications
+              </h2>
+              <div className="divide-y divide-gray-100">
+                {[
+                  { label: "New candidate applied", desc: "Get notified when a candidate joins a session.", defaultVal: true },
+                  { label: "Weekly digest", desc: "A summary of activity across sessions.", defaultVal: false },
+                  { label: "Fraud alerts", desc: "Immediate alert when a suspicious resume is flagged.", defaultVal: true },
+                ].map((it, i) => (
+                  <div key={i} className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
+                    <div>
+                      <div className="font-bold text-sm text-charcoal">{it.label}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{it.desc}</div>
+                    </div>
+                    <ToggleSwitch defaultOn={it.defaultVal} />
+                  </div>
+                ))}
               </div>
-              <div>
-                <h3 className="font-bold text-charcoal text-md">Feature Mocked</h3>
-                <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto">
-                  This Settings sub-tab is currently mocked for the Sem-IV project demonstration.
-                </p>
+            </div>
+          )}
+
+          {activeTab === 'account' && (
+            <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] border border-gray-100 p-8 space-y-6">
+              <h2 className="text-md font-bold text-charcoal flex items-center gap-2 pb-4 border-b border-gray-100">
+                <User className="w-5 h-5 text-accent" /> Account
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Admin Full name</label>
+                  <input type="text" className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" defaultValue={company?.name ? `${company.name} Administrator` : "Admin"} />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Email</label>
+                  <input type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500 font-medium focus:outline-none" defaultValue={company?.email || "admin@company.com"} readOnly />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Role</label>
+                  <input type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500 font-medium focus:outline-none" defaultValue="Owner / Admin" readOnly />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Language</label>
+                  <input type="text" className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" defaultValue="English (US)" />
+                </div>
+              </div>
+              <div className="border-t border-gray-100 pt-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <div className="font-bold text-sm text-charcoal">Sign out of workspace</div>
+                  <div className="text-xs text-gray-500 mt-0.5">You'll need to sign in again to access the dashboard.</div>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="px-4 py-2 rounded-xl border border-red-200 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                >
+                  Sign out
+                </button>
               </div>
             </div>
           )}
@@ -382,3 +436,17 @@ export default function SettingsPage() {
     </PageTransition>
   );
 }
+
+function ToggleSwitch({ defaultOn }) {
+  const [on, setOn] = useState(!!defaultOn);
+  return (
+    <button
+      type="button"
+      onClick={() => setOn((v) => !v)}
+      className={`w-12 h-7 rounded-full p-0.5 transition shrink-0 ${on ? "bg-accent" : "bg-gray-100 border border-gray-200"}`}
+    >
+      <span className={`block w-6 h-6 bg-white rounded-full shadow transition-transform ${on ? "translate-x-5" : "translate-x-0 border border-gray-200/50"}`} />
+    </button>
+  );
+}
+

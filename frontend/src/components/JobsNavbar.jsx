@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, LogOut, Upload, Briefcase, TrendingUp, FolderGit, Home, Shield, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
+import ResumeUploadModal from './ResumeUploadModal';
 
 export default function JobsNavbar({ onUploadClick }) {
   const location = useLocation();
@@ -9,6 +10,26 @@ export default function JobsNavbar({ onUploadClick }) {
   const [profile, setProfile] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const isSeekerLoggedIn = !!localStorage.getItem('vish_seeker_token');
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [preselectedFile, setPreselectedFile] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPreselectedFile(file);
+      setModalOpen(true);
+    }
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setPreselectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   // Sync profile from local storage
   const syncProfile = () => {
@@ -211,7 +232,7 @@ export default function JobsNavbar({ onUploadClick }) {
                       <button
                         onClick={() => {
                           setDropdownOpen(false);
-                          onUploadClick();
+                          fileInputRef.current?.click();
                         }}
                         className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-[#2A2A2A] hover:bg-[#f5f4ef] rounded-lg text-left transition-colors"
                       >
@@ -233,7 +254,7 @@ export default function JobsNavbar({ onUploadClick }) {
           </div>
         ) : (
           <button
-            onClick={onUploadClick}
+            onClick={() => fileInputRef.current?.click()}
             className="flex items-center space-x-2 bg-[#111111] hover:bg-[#333333] text-white font-medium rounded-full px-5 py-2.5 text-sm transition-all shadow-sm active:scale-95"
           >
             <Upload size={14} />
@@ -250,7 +271,14 @@ export default function JobsNavbar({ onUploadClick }) {
           </button>
         )}
 
-
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept=".pdf,.docx,.txt"
+          style={{ display: 'none' }}
+        />
+        <ResumeUploadModal isOpen={modalOpen} onClose={handleModalClose} preselectedFile={preselectedFile} />
 
       </div>
     </nav>

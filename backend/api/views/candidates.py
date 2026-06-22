@@ -1,6 +1,9 @@
 import os
 import json
 import logging
+import ast
+import re
+import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, F
@@ -12,6 +15,28 @@ from models.schemas import success_response, error_response
 from api.services.email_service import send_status_update_to_seeker
 
 logger = logging.getLogger(__name__)
+
+def _get_skill_name(s):
+    if not s:
+        return ""
+    if isinstance(s, dict):
+        return s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or s.get("name") or str(s)
+    if isinstance(s, str):
+        s_trimmed = s.strip()
+        if s_trimmed.startswith("{") and s_trimmed.endswith("}"):
+            try:
+                parsed = ast.literal_eval(s_trimmed)
+                if isinstance(parsed, dict):
+                    return parsed.get("canonical_skill") or parsed.get("skill") or parsed.get("raw_skill") or parsed.get("name") or s_trimmed
+            except Exception:
+                m = re.search(r"'(?:canonical_skill|raw_skill|skill|name)':\s*'([^']+)'", s_trimmed)
+                if m:
+                    return m.group(1)
+                m2 = re.search(r'"(?:canonical_skill|raw_skill|skill|name)":\s*"([^"]+)"', s_trimmed)
+                if m2:
+                    return m2.group(1)
+        return s
+    return str(s)
 
 def _serialize_candidate_summary(c):
     match_details = c.match_details or {}
@@ -30,12 +55,11 @@ def _serialize_candidate_summary(c):
     matched_set = set(s.lower() for s in match_details.get("matched_skills", []))
     missing_set = set(s.lower() for s in match_details.get("missing_skills", []))
     
-    other_skills = [
-        s.get("canonical_skill", s.get("raw_skill", ""))
-        for s in norm_skills
-        if s.get("canonical_skill", s.get("raw_skill", "")).lower() not in matched_set
-        and s.get("canonical_skill", s.get("raw_skill", "")).lower() not in missing_set
-    ]
+    other_skills = []
+    for s in norm_skills:
+        name = _get_skill_name(s)
+        if name and name.lower() not in matched_set and name.lower() not in missing_set:
+            other_skills.append(name)
 
     upload_root = os.getenv("UPLOAD_DIR", "uploads")
     photo_root = os.getenv("PHOTO_DIR", "photos")
@@ -79,7 +103,7 @@ def _serialize_candidate_summary(c):
         "github_url": github_url,
         "experience": experience,
         "education": education,
-        "normalized_skills": [s.get("canonical_skill", s) for s in norm_skills] if norm_skills else [],
+        "normalized_skills": [_get_skill_name(s) for s in norm_skills] if norm_skills else [],
         "current_round_index": c.current_round_index,
         "round_index": c.current_round_index,
         "raw_resume_data": parsed,
@@ -222,14 +246,22 @@ def candidate_action(request, session_id, cand_id):
         if not candidate:
             return JsonResponse(error_response("Candidate not found"), status=404)
 
-        data = json.loads(request.body)
-        action = data.get("action")
+        is_multipart = request.content_type.startswith('multipart/form-data') if hasattr(request, 'content_type') else request.META.get('CONTENT_TYPE', '').startswith('multipart/form-data')
+        if is_multipart:
+            action = request.POST.get("action")
+        else:
+            data = json.loads(request.body)
+            action = data.get("action")
+
         if not action:
             return JsonResponse(error_response("action is required"), status=400)
 
         rounds = session.rounds or []
         max_round = max([r.get("order", 1) for r in rounds]) if rounds else 1
 
+        prior_round_order = candidate.current_round_index
+
+        offer_letter_path = None
         if action == "forward":
             if candidate.current_round_index >= max_round:
                 return JsonResponse(error_response("Already at last round"), status=400)
@@ -243,45 +275,105 @@ def candidate_action(request, session_id, cand_id):
             if rounds and candidate.current_round_index < max_round:
                 return JsonResponse(error_response("Can only hire from last round"), status=400)
             candidate.status = "hired"
+            
+            # Save uploaded offer letter if present
+            offer_file = request.FILES.get("offer_letter") or request.FILES.get("file")
+            if offer_file:
+                allowed_ext = (".pdf", ".docx", ".doc", ".txt", ".png", ".jpg", ".jpeg")
+                if not offer_file.name.lower().endswith(allowed_ext):
+                    return JsonResponse(error_response("Only PDF, DOCX, DOC, TXT, PNG, JPG, or JPEG offer letters are accepted"), status=400)
+                
+                upload_root = os.getenv("UPLOAD_DIR", "uploads")
+                offer_dir = os.path.join(upload_root, "offer_letters")
+                os.makedirs(offer_dir, exist_ok=True)
+                
+                fname = f"{uuid.uuid4()}_{offer_file.name}"
+                offer_letter_path = os.path.join(offer_dir, fname)
+                with open(offer_letter_path, "wb+") as f:
+                    for chunk in offer_file.chunks():
+                        f.write(chunk)
 
         else:
             return JsonResponse(error_response("Invalid action. Use: forward, reject, hire"), status=400)
 
         candidate.save(update_fields=['current_round_index', 'status'])
 
+        if action == "hire":
+            session = candidate.session
+            session.status = "completed"
+            session.save(update_fields=['status'])
+
+
         # ── Notify job seeker if this candidate came from platform apply ──────
         try:
             app = JobApplication.objects.filter(candidate=candidate).select_related('seeker').first()
             if app and app.seeker:
                 seeker = app.seeker
+                
+                # Save offer letter path if uploaded
+                if offer_letter_path:
+                    app.offer_letter_path = offer_letter_path
+                    app.save(update_fields=['offer_letter_path'])
+                
                 status_map = {
-                    'hired': 'hired',
-                    'rejected': 'rejected',
-                    'forwarded': 'shortlisted',
+                    'hire': 'hired',
+                    'reject': 'rejected',
+                    'forward': 'shortlisted',
                 }
                 notify_status = status_map.get(action)
                 if notify_status:
-                    # Update application status
-                    app.status = notify_status
-                    app.save(update_fields=['status'])
+                    # Determine if result declaration date is in the future
+                    from django.utils.dateparse import parse_datetime
+                    from django.utils.timezone import is_aware, make_aware
+                    
+                    announcement_time = None
+                    # Find completed round (order == prior_round_order)
+                    for r in rounds:
+                        try:
+                            if int(r.get("order")) == int(prior_round_order):
+                                ann_date = r.get("result_announcement_date")
+                                if ann_date:
+                                    dt = parse_datetime(ann_date)
+                                    if dt:
+                                        if not is_aware(dt):
+                                            dt = make_aware(dt)
+                                        announcement_time = dt
+                                break
+                        except (ValueError, TypeError):
+                            continue
 
-                    # Create in-app notification
-                    Notification.objects.create(
-                        seeker=seeker,
-                        type='status_updated',
-                        title=f'Application Update — {session.job_title}',
-                        message=f'Your application at {session.name} has been updated to: {notify_status.title()}.',
-                        link='/jobs/dashboard/applications',
-                    )
+                    if announcement_time and announcement_time > timezone.now():
+                        # Schedule delayed release via Celery
+                        try:
+                            from workers.celery_worker import release_round_results
+                            release_round_results.apply_async(
+                                args=[str(app.id), notify_status],
+                                eta=announcement_time
+                            )
+                        except Exception as cel_err:
+                            logger.warning('Celery scheduling failed: %s', cel_err)
+                    else:
+                        # Release immediately
+                        app.status = notify_status
+                        app.save(update_fields=['status'])
 
-                    # Send email (non-blocking)
-                    send_status_update_to_seeker(
-                        seeker_email=seeker.email,
-                        seeker_name=seeker.full_name,
-                        job_title=session.job_title,
-                        company_name=session.name,
-                        new_status=notify_status,
-                    )
+                        # Create in-app notification
+                        Notification.objects.create(
+                            seeker=seeker,
+                            type='status_updated',
+                            title=f'Application Update — {session.job_title}',
+                            message=f'Your application at {session.company.name if session.company else "Vishleshan Partner"} has been updated to: {notify_status.title()}.',
+                            link=f'/jobs/applications?app_id={app.id}',
+                        )
+
+                        # Send email
+                        send_status_update_to_seeker(
+                            seeker_email=seeker.email,
+                            seeker_name=seeker.full_name,
+                            job_title=session.job_title,
+                            company_name=session.company.name if session.company else "Vishleshan Partner",
+                            new_status=notify_status,
+                        )
         except Exception as notify_err:
             logger.warning('Notification error for candidate action: %s', notify_err)
         # ─────────────────────────────────────────────────────────────────────

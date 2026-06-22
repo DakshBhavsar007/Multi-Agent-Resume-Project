@@ -1,6 +1,8 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ||
              "http://127.0.0.1:8000/api/v1"
 
+export const API_HOST = BASE.replace("/api/v1", "");
+
 function getHeaders(isFile=false) {
   const h = {};
   const apiKey = localStorage.getItem("vish_api_key");
@@ -56,20 +58,6 @@ export const authAPI = {
     localStorage.setItem("vish_company",JSON.stringify(d))
     return d
   },
-  googleLogin: async (credential) => {
-    const d = await req("POST","/auth/login-google", { credential })
-    localStorage.setItem("vish_jwt",d.jwt_token)
-    localStorage.setItem("vish_api_key",d.api_key||"")
-    localStorage.setItem("vish_company",JSON.stringify(d))
-    return d
-  },
-  githubLogin: async (code) => {
-    const d = await req("POST","/auth/login-github", { code })
-    localStorage.setItem("vish_jwt",d.jwt_token)
-    localStorage.setItem("vish_api_key",d.api_key||"")
-    localStorage.setItem("vish_company",JSON.stringify(d))
-    return d
-  },
   logout: () => {
     localStorage.clear()
     window.location.href="/login"
@@ -77,7 +65,22 @@ export const authAPI = {
   generateKey: (b) => req("POST","/auth/api-keys/generate",b),
   getKeys: () => req("GET","/auth/api-keys"),
   deleteKey: (id) => req("DELETE",`/auth/api-keys/${id}`),
-  getMe: () => req("GET","/auth/me")
+  googleLogin: async (credential) => {
+    const d = await req("POST", "/auth/login-google", { credential })
+    localStorage.setItem("vish_jwt", d.jwt_token)
+    localStorage.setItem("vish_api_key", d.api_key || "")
+    localStorage.setItem("vish_company", JSON.stringify(d))
+    return d
+  },
+  githubLogin: async (code) => {
+    const d = await req("POST", "/auth/login-github", { code })
+    localStorage.setItem("vish_jwt", d.jwt_token)
+    localStorage.setItem("vish_api_key", d.api_key || "")
+    localStorage.setItem("vish_company", JSON.stringify(d))
+    return d
+  },
+  getMe: () => req("GET","/auth/me"),
+  updateProfile: (b) => req("POST","/auth/update-profile",b)
 }
 
 // SESSIONS
@@ -135,10 +138,15 @@ export const candidatesAPI = {
   get: (sessionId,candId) =>
     req("GET",
       `/sessions/${sessionId}/candidates/${candId}`),
-  action: (sessionId,candId,action) =>
-    req("PATCH",
-      `/sessions/${sessionId}/candidates/${candId}/action`,
-      {action}),
+  action: (sessionId, candId, action, file = null) => {
+    if (file) {
+      const fd = new FormData();
+      fd.append("action", action);
+      fd.append("offer_letter", file);
+      return req("PATCH", `/sessions/${sessionId}/candidates/${candId}/action`, fd, true);
+    }
+    return req("PATCH", `/sessions/${sessionId}/candidates/${candId}/action`, { action });
+  },
   delete: (sessionId,candId) =>
     req("DELETE",
       `/sessions/${sessionId}/candidates/${candId}`),
@@ -163,10 +171,12 @@ export const exportAPI = {
   candidatesUrl: (sessionId,status="hired") =>
     `${BASE}/sessions/${sessionId}/export/candidates` +
     `?status=${status}&x_api_key=${
-      localStorage.getItem("vish_api_key")||""}`,
+      localStorage.getItem("vish_api_key")||""}&token=${
+      localStorage.getItem("vish_jwt")||""}`,
   reportUrl: (sessionId) =>
     `${BASE}/sessions/${sessionId}/export/report` +
-    `?x_api_key=${localStorage.getItem("vish_api_key")||""}`
+    `?x_api_key=${localStorage.getItem("vish_api_key")||""}&token=${
+      localStorage.getItem("vish_jwt")||""}`
 }
 
 // PUBLIC JOBS (Job Seeker Portal API)
@@ -235,7 +245,7 @@ async function seekerReq(method, path, body = null, isFile = false) {
     headers: getSeekerHeaders(isFile),
     body: body ? (isFile ? body : JSON.stringify(body)) : undefined,
   };
-  const res = await fetch(`http://127.0.0.1:8000${path}`, opts);
+  const res = await fetch(`${API_HOST}${path}`, opts);
   const data = await res.json();
   if (res.status === 401) {
     localStorage.removeItem('vish_seeker_token');
@@ -252,16 +262,20 @@ export const seekerAPI = {
   register: (b) => seekerReq('POST', '/api/v1/seeker/auth/register', b),
   login: (b) => seekerReq('POST', '/api/v1/seeker/auth/login', b),
   googleLogin: async (credential) => {
-    const data = await seekerReq('POST', '/api/v1/seeker/auth/login-google', { credential });
-    localStorage.setItem('vish_seeker_token', data.seeker_token);
-    localStorage.setItem('vish_seeker_data', JSON.stringify(data.seeker));
-    return data;
+    const d = await seekerReq('POST', '/api/v1/seeker/auth/login-google', { credential });
+    if (typeof window !== "undefined") {
+      localStorage.setItem('vish_seeker_token', d.seeker_token);
+      localStorage.setItem('vish_seeker_data', JSON.stringify(d.seeker));
+    }
+    return d;
   },
   githubLogin: async (code) => {
-    const data = await seekerReq('POST', '/api/v1/seeker/auth/login-github', { code });
-    localStorage.setItem('vish_seeker_token', data.seeker_token);
-    localStorage.setItem('vish_seeker_data', JSON.stringify(data.seeker));
-    return data;
+    const d = await seekerReq('POST', '/api/v1/seeker/auth/login-github', { code });
+    if (typeof window !== "undefined") {
+      localStorage.setItem('vish_seeker_token', d.seeker_token);
+      localStorage.setItem('vish_seeker_data', JSON.stringify(d.seeker));
+    }
+    return d;
   },
   getMe: () => seekerReq('GET', '/api/v1/seeker/auth/me'),
   updateProfile: (b) => seekerReq('PATCH', '/api/v1/seeker/auth/profile', b),
@@ -273,8 +287,32 @@ export const seekerAPI = {
     fd.append('file', file);
     return seekerReq('POST', '/api/v1/seeker/resume/upload', fd, true);
   },
+  getParseStatus: () => seekerReq('GET', '/api/v1/seeker/resume/parse-status'),
   enhanceResume: (jobDescription = '') =>
     seekerReq('POST', '/api/v1/seeker/resume/enhance', { job_description: jobDescription }),
+
+  // Resume Builder Drafts & ATS Agent
+  getDrafts: () => seekerReq('GET', '/api/v1/seeker/resume/drafts'),
+  getDraft: (id) => seekerReq('GET', `/api/v1/seeker/resume/drafts/${id}`),
+  createDraft: (b) => seekerReq('POST', '/api/v1/seeker/resume/drafts', b),
+  updateDraft: (id, b) => seekerReq('PATCH', `/api/v1/seeker/resume/drafts/${id}`, b),
+  deleteDraft: (id) => seekerReq('DELETE', `/api/v1/seeker/resume/drafts/${id}`),
+  activateDraft: (id, file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return seekerReq('POST', `/api/v1/seeker/resume/drafts/${id}/activate`, fd, true);
+  },
+  exportDraftPdf: (id) => seekerReq('POST', `/api/v1/seeker/resume/drafts/${id}/export-pdf`),
+  recommendTemplates: () => seekerReq('GET', '/api/v1/seeker/resume/recommend-templates'),
+  atsCheck: (payload) => seekerReq('POST', '/api/agents/ats-check', payload),
+  optimizeDraft: (payload) => seekerReq('POST', '/api/v1/seeker/resume/drafts/optimize', payload),
+  enhanceDraft: (payload) => seekerReq('POST', '/api/v1/seeker/resume/drafts/enhance', payload),
+  importFileDraft: (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return seekerReq('POST', '/api/v1/seeker/resume/drafts/import-file', fd, true);
+  },
+
 
   // Jobs
   listJobs: (params = {}) => {
@@ -284,14 +322,61 @@ export const seekerAPI = {
   getJob: (id) => seekerReq('GET', `/api/v1/seeker/jobs/${id}`),
   applyJob: (id, coverNote = '') =>
     seekerReq('POST', `/api/v1/seeker/jobs/${id}/apply`, { cover_note: coverNote }),
+  
+  // Saved Jobs / Bookmarks
+  saveJob: (id, save = true) => seekerReq(save ? 'POST' : 'DELETE', `/api/v1/seeker/jobs/${id}/save`),
+  getSavedJobs: () => seekerReq('GET', '/api/v1/seeker/jobs/saved'),
+
+  // Companies
+  listCompanies: () => seekerReq('GET', '/api/v1/seeker/companies'),
+  getCompany: (id) => seekerReq('GET', `/api/v1/seeker/companies/${id}`),
+  followCompany: (id, follow = true) => seekerReq(follow ? 'POST' : 'DELETE', `/api/v1/seeker/companies/${id}/follow`),
 
   // Applications
   getApplications: () => seekerReq('GET', '/api/v1/seeker/applications'),
+  acceptOffer: (id) => seekerReq('POST', `/api/v1/seeker/applications/${id}/accept`),
 
   // Notifications
   getNotifications: () => seekerReq('GET', '/api/v1/seeker/notifications'),
   markRead: (id) => seekerReq('PATCH', `/api/v1/seeker/notifications/${id}/read`),
   markAllRead: () => seekerReq('POST', '/api/v1/seeker/notifications/read-all'),
+};
+
+// ── PUBLIC API (no auth required) ──────────────────────────────────────────────
+// For browsing jobs/companies without logging in
+
+async function publicReq(method, path) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  const res = await fetch(`${API_HOST}${path}`, opts);
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || 'Request failed');
+  return data.data;
+}
+
+export const publicAPI = {
+  listCompanies: () => publicReq('GET', '/api/v1/public/companies'),
+  getCompany: (id) => publicReq('GET', `/api/v1/public/companies/${id}`),
+  listJobs: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return publicReq('GET', `/api/v1/public/jobs${qs ? '?' + qs : ''}`);
+  },
+  getJob: (id) => publicReq('GET', `/api/v1/public/jobs/${id}`),
+  parseResume: (file) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return fetch(`${API_HOST}/api/v1/public/parse-resume`, {
+      method: "POST",
+      body: fd,
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) throw new Error(data.error || "Failed to parse resume");
+        return data.data;
+      });
+  },
 };
 
 

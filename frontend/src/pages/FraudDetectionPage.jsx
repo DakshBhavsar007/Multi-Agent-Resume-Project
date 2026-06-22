@@ -473,13 +473,14 @@ export default function FraudDetectionPage() {
                       <input 
                         type="file" 
                         id="scanner-file" 
+                        accept=".pdf,.docx,.doc,.txt"
                         className="hidden" 
                         onChange={(e) => setSelectedFile(e.target.files[0])}
                       />
                       <label htmlFor="scanner-file" className="cursor-pointer space-y-2 block">
                         <Upload className="mx-auto text-gray-300 group-hover:text-[#2563EB] transition-colors w-10 h-10" />
                         <div className="text-xs font-bold text-[#2A2A2A]">
-                          {selectedFile ? `Selected File: ${selectedFile.name}` : "Upload candidate resume PDF / DOCX"}
+                          {selectedFile ? `Selected File: ${selectedFile.name}` : "Upload candidate resume PDF / DOCX / TXT"}
                         </div>
                         <p className="text-[10px] text-gray-400">PDF, DOCX, TXT up to 10MB</p>
                       </label>

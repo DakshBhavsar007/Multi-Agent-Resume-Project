@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { seekerAPI } from '../../lib/api';
 import { Bell, CheckCheck, BriefcaseBusiness, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import JobsNavbar from '../../components/JobsNavbar';
+import { Header, Footer } from '../../components/user/site-chrome';
 
 const TYPE_ICONS = {
   application_received: { icon: BriefcaseBusiness, color: '#2563eb', bg: '#eff6ff' },
@@ -12,6 +13,7 @@ const TYPE_ICONS = {
 };
 
 export default function NotificationsPage() {
+  const navigate = useNavigate();
   const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [unread, setUnread] = useState(0);
@@ -48,8 +50,8 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f4ef] text-[#2A2A2A] font-sans flex flex-col">
-      <JobsNavbar />
+    <div className="min-h-screen bg-background text-[#2A2A2A] font-sans flex flex-col">
+      <Header />
       <main className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex justify-center">
         <div style={styles.page}>
           <div style={styles.header}>
@@ -80,7 +82,10 @@ export default function NotificationsPage() {
               <div
                 key={n.id}
                 style={{ ...styles.card, ...(n.is_read ? {} : styles.cardUnread) }}
-                onClick={() => !n.is_read && markOne(n.id)}
+                onClick={async () => {
+                  if (!n.is_read) await markOne(n.id);
+                  if (n.link) navigate(n.link);
+                }}
               >
                 <div style={{ ...styles.iconBox, background: cfg.bg }}>
                   <Icon size={18} color={cfg.color} />
@@ -98,6 +103,7 @@ export default function NotificationsPage() {
       )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

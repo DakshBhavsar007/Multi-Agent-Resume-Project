@@ -357,7 +357,11 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
 
                 # Simple rule-based match scoring if criteria exist
                 if required_skills:
-                    cand_skill_names = {s.get("canonical_skill", "").lower() for s in normalized_skills}
+                    cand_skill_names = {
+                        (s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)).lower()
+                        if isinstance(s, dict) else str(s).lower()
+                        for s in normalized_skills if s
+                    }
                     matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
                     missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
                     matched = len(matched_list)
@@ -380,11 +384,6 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
                         experience_score * weights.get("experience", 0.3) + 
                         location_score * weights.get("location", 0.2)
                     )
-                    
-                    # Force a passing score for evaluation mock fallback
-                    if parsed_res.get("parsing_method") in ("regex", "error_fallback"):
-                        score = max(score, min_match_score + 10) if min_match_score else 85
-                    
                     score = min(100, score)
                     new_cand.match_score = score
                     new_cand.recommendation = "Strong" if score >= 70 else ("Moderate" if score >= 40 else "Weak")
@@ -487,6 +486,13 @@ def enrich_candidates_llm(candidate_ids: list):
             # Update raw_resume_data with enriched version
             cand.raw_resume_data = enriched
             cand.save()
+
+            # Recalculate match score with the newly enriched data
+            try:
+                from api.views.jobs import _calculate_match_score
+                _calculate_match_score(cand, cand.session)
+            except Exception as score_ex:
+                print(f"[LLM Enrich] Score recalculation failed for {cid}: {score_ex}")
         except Candidate.DoesNotExist:
             continue
         except Exception as e:
@@ -512,7 +518,7 @@ def sync_gmail_resumes(session_id: str, job_id: str):
         creds = google.oauth2.credentials.Credentials(**session_row.gmail_tokens)
         service = build('gmail', 'v1', credentials=creds)
 
-        query = "has:attachment filename:(pdf OR docx) subject:(resume OR CV OR application)"
+        query = "has:attachment filename:(pdf OR docx OR txt) subject:(resume OR CV OR application)"
         results = service.users().messages().list(userId='me', q=query, maxResults=50).execute()
         messages = results.get('messages', [])
 
@@ -526,7 +532,7 @@ def sync_gmail_resumes(session_id: str, job_id: str):
             parts = message_data.get('payload', {}).get('parts', [])
             for part in parts:
                 filename = part.get('filename', '')
-                if filename and (filename.lower().endswith('.pdf') or filename.lower().endswith('.docx')):
+                if filename and (filename.lower().endswith('.pdf') or filename.lower().endswith('.docx') or filename.lower().endswith('.txt')):
                     att_id = part['body'].get('attachmentId')
                     if att_id:
                         import base64
@@ -575,7 +581,7 @@ def sync_gdrive_resumes(session_id: str, job_id: str):
         save_dir = os.path.join(os.getenv("UPLOAD_DIR", "uploads"), session_id)
         os.makedirs(save_dir, exist_ok=True)
 
-        query = "mimeType='application/pdf' or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'"
+        query = "mimeType='application/pdf' or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' or mimeType='text/plain'"
         if session_row.gdrive_folder_id:
             query = f"'{session_row.gdrive_folder_id}' in parents and ({query})"
 
@@ -637,7 +643,11 @@ def match_all_candidates(session_id: str, job_id: str):
     processed_count = 0
     for cand in candidates:
         norm_skills = cand.normalized_skills or []
-        cand_skill_names = {s.get("canonical_skill", "").lower() for s in norm_skills}
+        cand_skill_names = {
+            (s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)).lower()
+            if isinstance(s, dict) else str(s).lower()
+            for s in norm_skills if s
+        }
         matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
         missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
         matched = len(matched_list)
@@ -683,6 +693,44 @@ def match_all_candidates(session_id: str, job_id: str):
     job.status = "done"
     job.completed_at = datetime.now(timezone.utc)
     job.save()
+
+@celery_app.task(name="release_round_results")
+def release_round_results(application_id: str, notify_status: str):
+    from api.models import JobApplication, Notification
+    from api.services.email_service import send_status_update_to_seeker
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        app = JobApplication.objects.filter(id=application_id).select_related('seeker', 'session').first()
+        if not app:
+            logger.warning(f"release_round_results: Application {application_id} not found")
+            return
+
+        # Update application status
+        app.status = notify_status
+        app.save(update_fields=['status'])
+
+        # Create in-app notification
+        Notification.objects.create(
+            seeker=app.seeker,
+            type='status_updated',
+            title=f'Application Update — {app.session.job_title}',
+            message=f'Your application at {app.session.name} has been updated to: {notify_status.title()}.',
+            link=f'/jobs/applications?app_id={app.id}',
+        )
+
+        # Send email
+        send_status_update_to_seeker(
+            seeker_email=app.seeker.email,
+            seeker_name=app.seeker.full_name,
+            job_title=app.session.job_title,
+            company_name=app.session.name,
+            new_status=notify_status,
+        )
+        logger.info(f"release_round_results: Released status {notify_status} for app {application_id}")
+    except Exception as e:
+        logger.error(f"release_round_results failed: {e}")
 
 # Celery app alias
 app = celery_app

@@ -29,6 +29,32 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
     return name.slice(0, 2).toUpperCase();
   };
 
+  const getSkillName = (s) => {
+    if (typeof s === 'object' && s !== null) {
+      return s.canonical_skill || s.raw_skill || s.skill || s.name || '';
+    }
+    const strVal = String(s || '').trim();
+    if (strVal.startsWith('{') && strVal.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(strVal.replace(/'/g, '"').replace(/: None/g, ': null'));
+        return parsed.canonical_skill || parsed.raw_skill || parsed.skill || parsed.name || strVal;
+      } catch (e) {
+        const canonicalMatch = strVal.match(/'canonical_skill':\s*'([^']+)'/) || strVal.match(/"canonical_skill":\s*"([^"]+)"/);
+        if (canonicalMatch) return canonicalMatch[1];
+        
+        const rawMatch = strVal.match(/'raw_skill':\s*'([^']+)'/) || strVal.match(/"raw_skill":\s*"([^"]+)"/);
+        if (rawMatch) return rawMatch[1];
+
+        const skillMatch = strVal.match(/'skill':\s*'([^']+)'/) || strVal.match(/"skill":\s*"([^"]+)"/);
+        if (skillMatch) return skillMatch[1];
+
+        const nameMatch = strVal.match(/'name':\s*'([^']+)'/) || strVal.match(/"name":\s*"([^"]+)"/);
+        if (nameMatch) return nameMatch[1];
+      }
+    }
+    return strVal;
+  };
+
   const getHashColor = (name) => {
     if (!name) return "#2563EB";
     const colors = ["#2563EB", "#3B82F6", "#22C55E", "#8B5CF6", "#EF4444", "#F59E0B"];
@@ -59,13 +85,32 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
   const isLastRound = currentRoundIndex >= maxRound;
   const isHiredOrRejected = candidate?.status === "hired" || candidate?.status === "rejected";
 
+  const [showOfferModal, setShowOfferModal] = useState(false);
+
   const handleForwardOrHire = async () => {
     const isHire = isLastRound;
+    if (isHire) {
+      setShowOfferModal(true);
+      return;
+    }
 
     setAnimatingOut(true);
     try {
-      await candidatesAPI.action(sessionId, candidate?.id, isHire ? "hire" : "forward");
-      toast.success(isHire ? `${candidate?.name} has been hired! 🎉` : `${candidate?.name} forwarded to next round`);
+      await candidatesAPI.action(sessionId, candidate?.id, "forward");
+      toast.success(`${candidate?.name} forwarded to next round`);
+      if (onAction) onAction();
+    } catch (e) {
+      setAnimatingOut(false);
+      toast.error(e.message || "Action failed");
+    }
+  };
+
+  const submitHire = async (file) => {
+    setAnimatingOut(true);
+    setShowOfferModal(false);
+    try {
+      await candidatesAPI.action(sessionId, candidate?.id, "hire", file);
+      toast.success(`${candidate?.name} has been hired!`);
       if (onAction) onAction();
     } catch (e) {
       setAnimatingOut(false);
@@ -175,7 +220,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                   ? 'bg-green-50 text-green-700 border-green-100' 
                   : 'bg-blue-50 text-blue-700 border-blue-100'
               }`}>
-                {h}
+                {getSkillName(h)}
               </span>
             ))}
             {allSkills.length > 5 && (
@@ -217,17 +262,17 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
           )}
           {matchedSkills.slice(0, 4).map((s, i) => (
             <span key={i} className="bg-[#DCFCE7] text-[#166534] border border-[#BBF7D0] px-1.5 py-0.5 rounded text-[10px] font-semibold flex items-center gap-0.5">
-              ✓ {s}
+              ✓ {getSkillName(s)}
             </span>
           ))}
           {missingSkills.slice(0, 2).map((s, i) => (
             <span key={i} className="bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA] px-1.5 py-0.5 rounded text-[10px] font-semibold flex items-center gap-0.5">
-              ✗ {s}
+              ✗ {getSkillName(s)}
             </span>
           ))}
           {matchedSkills.length === 0 && missingSkills.length === 0 && normalizedSkills.slice(0, 5).map((s, i) => (
             <span key={i} className="bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded text-[10px] font-semibold">
-              {s}
+              {getSkillName(s)}
             </span>
           ))}
           {(matchedSkills.length > 4 || missingSkills.length > 2 || (matchedSkills.length === 0 && normalizedSkills.length > 5)) && (
@@ -440,19 +485,19 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                   <div className="flex flex-wrap gap-2">
                     {matchedSkills.map((s,i) => (
                       <span key={`m-${i}`} className="bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5">
-                        <CheckCircle size={14} className="text-green-500"/> {s}
+                        <CheckCircle size={14} className="text-green-500"/> {getSkillName(s)}
                       </span>
                     ))}
                     {missingSkills.map((s,i) => (
                       <span key={`x-${i}`} className="bg-gray-100 text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5">
-                        <XCircle size={14} className="text-gray-400"/> {s}
+                        <XCircle size={14} className="text-gray-400"/> {getSkillName(s)}
                       </span>
                     ))}
                     {otherSkills.map((s,i) => (
-                      <span key={`o-${i}`} className="bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold">{s}</span>
+                      <span key={`o-${i}`} className="bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold">{getSkillName(s)}</span>
                     ))}
                     {matchedSkills.length === 0 && missingSkills.length === 0 && normalizedSkills.map((s,i) => (
-                      <span key={`n-${i}`} className="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold">{s}</span>
+                      <span key={`n-${i}`} className="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold">{getSkillName(s)}</span>
                     ))}
                   </div>
                 </section>
@@ -637,6 +682,145 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
           </>
         )}
       </AnimatePresence>
+
+      {/* OFFER LETTER UPLOAD MODAL */}
+      <AnimatePresence>
+        {showOfferModal && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              onClick={() => setShowOfferModal(false)}
+              className="fixed inset-0 bg-[#2A2A2A]/40 backdrop-blur-sm z-[60]"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 m-auto w-full max-w-[480px] h-fit bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-2xl border border-white/20 z-[61] flex flex-col gap-4 text-[#2A2A2A]"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <Sparkles size={20} className="text-green-500" />
+                  Hire {candidate?.name}
+                </h3>
+                <button 
+                  onClick={() => setShowOfferModal(false)} 
+                  className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                To complete hiring, please upload the offer letter. The candidate will be notified and can view or download it from their dashboard.
+              </p>
+
+              {/* File drop zone */}
+              <OfferLetterUploadZone onSubmit={submitHire} onCancel={() => setShowOfferModal(false)} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
+  );
+}
+
+function OfferLetterUploadZone({ onSubmit, onCancel }) {
+  const [file, setFile] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div 
+        onDragEnter={handleDrag}
+        onDragOver={handleDrag}
+        onDragLeave={handleDrag}
+        onDrop={handleDrop}
+        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all flex flex-col items-center justify-center gap-2 cursor-pointer ${
+          dragActive 
+            ? 'border-green-500 bg-green-50/50' 
+            : file 
+              ? 'border-green-300 bg-green-50/20' 
+              : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'
+        }`}
+        onClick={() => document.getElementById('offer-file-input').click()}
+      >
+        <input 
+          id="offer-file-input" 
+          type="file" 
+          className="hidden" 
+          accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg" 
+          onChange={handleChange}
+        />
+        <FileText size={32} className={file ? 'text-green-500' : 'text-gray-400'} />
+        {file ? (
+          <div className="text-sm font-bold text-green-700 truncate max-w-full">
+            {file.name}
+            <span className="block text-[10px] text-gray-400 font-normal mt-0.5">
+              {(file.size / 1024).toFixed(1)} KB
+            </span>
+          </div>
+        ) : (
+          <div className="text-sm text-gray-600">
+            <span className="font-bold text-[#2563EB]">Click to upload</span> or drag and drop
+            <span className="block text-[10px] text-gray-400 mt-1">
+              Supports PDF, DOCX, DOC, TXT, PNG, JPG (Max 5MB)
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3 justify-end">
+        <button 
+          onClick={onCancel}
+          className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors"
+        >
+          Cancel
+        </button>
+        <button 
+          onClick={() => {
+            if (!file) {
+              toast.error("Please upload an offer letter to proceed");
+              return;
+            }
+            onSubmit(file);
+          }}
+          disabled={!file}
+          className={`px-4 py-2 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm ${
+            file ? 'bg-[#22C55E] hover:bg-[#166534]' : 'bg-gray-300 cursor-not-allowed shadow-none'
+          }`}
+        >
+          Confirm Hire
+        </button>
+      </div>
+    </div>
   );
 }

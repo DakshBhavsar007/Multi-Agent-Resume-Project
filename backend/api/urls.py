@@ -20,6 +20,8 @@ from api.views import (
     parse,
     google_auth,
     github_auth,
+    companies,
+    seeker_resume_builder,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -175,15 +177,39 @@ urlpatterns = [
     path('api/v1/seeker/resume', seeker_resume.get_resume, name='seeker-resume-get'),
     path('api/v1/seeker/resume/upload', seeker_resume.upload_resume, name='seeker-resume-upload'),
     path('api/v1/seeker/resume/enhance', seeker_resume.enhance_resume, name='seeker-resume-enhance'),
+    path('api/v1/seeker/resume/download', seeker_resume.download_enhanced_resume_file, name='seeker-resume-download'),
+    path('api/v1/seeker/resume/check-ats', seeker_resume.check_ats_score, name='seeker-resume-check-ats'),
 
     # ── Job Seeker Jobs & Applications ─────────────────────────────────────────
     path('api/v1/seeker/jobs', seeker_jobs.list_jobs, name='seeker-jobs-list'),
     path('api/v1/seeker/jobs/<str:session_id>', seeker_jobs.job_detail, name='seeker-jobs-detail'),
     path('api/v1/seeker/jobs/<str:session_id>/apply', seeker_jobs.apply_job, name='seeker-jobs-apply'),
     path('api/v1/seeker/applications', seeker_jobs.my_applications, name='seeker-applications'),
+    path('api/v1/seeker/applications/<str:app_id>/accept', seeker_jobs.accept_offer, name='seeker-applications-accept'),
 
     # ── Job Seeker Notifications ───────────────────────────────────────────────
     path('api/v1/seeker/notifications', seeker_jobs.get_notifications, name='seeker-notifications'),
     path('api/v1/seeker/notifications/read-all', seeker_jobs.mark_all_notifications_read, name='seeker-notifications-read-all'),
     path('api/v1/seeker/notifications/<str:notif_id>/read', seeker_jobs.mark_notification_read, name='seeker-notification-read'),
+
+    # ── Public Companies ──────────────────────────────────────────────────────
+    path('api/v1/public/companies', companies.public_list_companies, name='public-companies-list'),
+    path('api/v1/public/companies/<str:company_id>', companies.public_get_company, name='public-companies-detail'),
+
+    # ── Job Seeker Companies ──────────────────────────────────────────────────
+    path('api/v1/seeker/companies', companies.seeker_list_companies, name='seeker-companies-list'),
+    path('api/v1/seeker/companies/<str:company_id>', companies.seeker_get_company, name='seeker-companies-detail'),
+    path('api/v1/seeker/companies/<str:company_id>/follow', companies.seeker_follow_company, name='seeker-companies-follow'),
+
+    # ── Seeker Resume Builder Additions ───────────────────────────────────────
+    path('api/agents/ats-check', seeker_resume_builder.ats_check, name='seeker-ats-check'),
+    path('api/v1/seeker/resume/drafts', seeker_resume_builder.manage_drafts, name='seeker-drafts-root'),
+    path('api/v1/seeker/resume/drafts/optimize', seeker_resume_builder.optimize_resume_draft, name='seeker-draft-optimize'),
+    path('api/v1/seeker/resume/drafts/enhance', seeker_resume_builder.enhance_resume_draft, name='seeker-resume-draft-enhance'),
+    path('api/v1/seeker/resume/drafts/import-file', seeker_resume_builder.import_file_draft, name='seeker-draft-import-file'),
+    path('api/v1/seeker/resume/drafts/<str:draft_id>', seeker_resume_builder.draft_detail, name='seeker-drafts-detail'),
+    path('api/v1/seeker/resume/drafts/<str:draft_id>/activate', seeker_resume_builder.activate_draft, name='seeker-draft-activate'),
+    path('api/v1/seeker/resume/drafts/<str:draft_id>/export-pdf', seeker_resume_builder.export_draft_pdf, name='seeker-draft-export-pdf'),
+    path('api/v1/seeker/resume/recommend-templates', seeker_resume_builder.recommend_templates, name='seeker-recommend-templates'),
 ]
+

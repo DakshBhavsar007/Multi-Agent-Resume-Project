@@ -73,7 +73,7 @@ def parse_resume(request):
             if isinstance(s, str):
                 return s
             if isinstance(s, dict):
-                return s.get("skill") or s.get("name") or str(s)
+                return s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or s.get("name") or str(s)
             return str(s)
 
         raw_skills_flat = [flatten_skill(s) for s in raw_skills if s]

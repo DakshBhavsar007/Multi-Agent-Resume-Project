@@ -32,14 +32,15 @@ def scan_portfolio(request):
         uploaded_file = request.FILES.get("file")
 
         # Parse request body JSON if it is JSON
-        if request.body:
+        if request.content_type == 'application/json' or 'application/json' in request.headers.get('Content-Type', ''):
             try:
-                data = json.loads(request.body)
-                scan_type = data.get("scan_type", "user")
-                url_val = data.get("url", "").strip()
-                job_title = data.get("job_title", "").strip()
-                job_description = data.get("job_description", "").strip()
-                location_val = data.get("location", "Remote").strip()
+                if request.body:
+                    data = json.loads(request.body)
+                    scan_type = data.get("scan_type", "user")
+                    url_val = data.get("url", "").strip()
+                    job_title = data.get("job_title", "").strip()
+                    job_description = data.get("job_description", "").strip()
+                    location_val = data.get("location", "Remote").strip()
             except Exception:
                 pass
 

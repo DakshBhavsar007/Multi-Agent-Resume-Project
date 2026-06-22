@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, Check, Zap, BarChart3, Users, Brain, Sparkles, ArrowRight, X, MapPin, Mail, Briefcase, CheckCircle, XCircle, ChevronDown, Trophy, Star, Award, Phone } from 'lucide-react';
+import { Upload, FileText, Check, Zap, BarChart3, Users, Brain, Sparkles, ArrowRight, X, MapPin, Mail, Briefcase, CheckCircle, XCircle, ChevronDown, Trophy, Star, Award, Phone, History, Trash2, Calendar } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDropzone } from 'react-dropzone';
 
@@ -13,6 +13,114 @@ export default function SmartAnalyzerPage() {
   const [results, setResults] = useState([]);
   const [analysisStats, setAnalysisStats] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  
+  // History list and navigation states
+  const [historyList, setHistoryList] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadedFromHistory, setLoadedFromHistory] = useState(false);
+
+  const loadHistory = async () => {
+    setStep('history');
+    setLoadingHistory(true);
+    const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1");
+    try {
+      const headers = {};
+      const apiKey = localStorage.getItem("vish_api_key");
+      if (apiKey) headers["X-API-Key"] = String(apiKey).replace(/[^\x20-\x7E]/g, "");
+      const jwt = localStorage.getItem("vish_jwt");
+      if (jwt && jwt !== "undefined") headers["Authorization"] = `Bearer ${jwt}`;
+
+      const res = await fetch(`${BASE}/sessions?status=analysis`, { headers });
+      const data = await res.json();
+      if (data.success) {
+        // Filter sessions created by Smart Analyzer
+        const list = (data.data || []).filter(s => 
+          s.job_title === "Smart Analyzer Session" || 
+          s.name.startsWith("Smart Analysis")
+        );
+        setHistoryList(list);
+      } else {
+        toast.error("Failed to retrieve analysis history");
+      }
+    } catch (e) {
+      toast.error("Failed to connect to backend");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const viewHistoryResults = async (session) => {
+    setStep('analyzing');
+    setProgress(20);
+    const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1");
+    try {
+      const headers = {};
+      const apiKey = localStorage.getItem("vish_api_key");
+      if (apiKey) headers["X-API-Key"] = String(apiKey).replace(/[^\x20-\x7E]/g, "");
+      const jwt = localStorage.getItem("vish_jwt");
+      if (jwt && jwt !== "undefined") headers["Authorization"] = `Bearer ${jwt}`;
+
+      setProgress(50);
+      
+      // Load candidate list for the session
+      const candRes = await fetch(`${BASE}/sessions/${session.id}/candidates?limit=100&sort_by=match_score&sort_order=desc`, { headers });
+      const candResJson = await candRes.json();
+      setProgress(80);
+
+      if (candResJson.success) {
+        const candidates = candResJson.data?.candidates || candResJson.data || [];
+        setResults(candidates);
+        
+        const totalParsed = candidates.length;
+        const avgScore = totalParsed > 0 ? Math.round(candidates.reduce((s, c) => s + (c.match_score || 0), 0) / totalParsed) : 0;
+        const strongCount = candidates.filter(c => (c.match_score || 0) >= 70).length;
+        setAnalysisStats({ 
+          totalParsed, 
+          avgScore, 
+          strongCount, 
+          sessionId: session.id,
+          name: session.name 
+        });
+        setLoadedFromHistory(true);
+      } else {
+        throw new Error(candResJson.error || "Failed to load candidates");
+      }
+
+      setProgress(100);
+      setTimeout(() => setStep('results'), 400);
+    } catch (e) {
+      toast.error(e.message || "Failed to load results");
+      setStep('history');
+    }
+  };
+
+  const deleteHistorySession = async (session) => {
+    if (!window.confirm(`Are you sure you want to delete "${session.name}" from history?`)) return;
+    const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1");
+    try {
+      const headers = { "Content-Type": "application/json" };
+      const apiKey = localStorage.getItem("vish_api_key");
+      if (apiKey) headers["X-API-Key"] = String(apiKey).replace(/[^\x20-\x7E]/g, "");
+      const jwt = localStorage.getItem("vish_jwt");
+      if (jwt && jwt !== "undefined") headers["Authorization"] = `Bearer ${jwt}`;
+
+      // DELETE request with delete_candidates and hard_delete
+      const res = await fetch(`${BASE}/sessions/${session.id}`, { 
+        method: "DELETE", 
+        headers,
+        body: JSON.stringify({ delete_candidates: true, hard_delete: true })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Analysis deleted from history");
+        setHistoryList(prev => prev.filter(s => s.id !== session.id));
+      } else {
+        toast.error(data.error || "Failed to delete analysis");
+      }
+    } catch (e) {
+      toast.error("Failed to delete session");
+    }
+  };
 
   const onDrop = useCallback((files) => {
     setResumes(prev => [...prev, ...files]);
@@ -20,7 +128,12 @@ export default function SmartAnalyzerPage() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'application/pdf': ['.pdf'], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'] },
+    accept: { 
+      'application/pdf': ['.pdf'], 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
+      'text/plain': ['.txt']
+    },
   });
 
   const handleAnalysis = async () => {
@@ -164,7 +277,6 @@ export default function SmartAnalyzerPage() {
       // Fetch final results
       const candRes = await fetch(`${BASE}/sessions/${sessionId}/candidates?limit=100&sort_by=match_score&sort_order=desc`, { headers });
       const candResJson = await candRes.json();
-
       if (candResJson.success) {
         const candidates = candResJson.data?.candidates || candResJson.data || [];
         setResults(candidates);
@@ -172,7 +284,14 @@ export default function SmartAnalyzerPage() {
         const totalParsed = candidates.length;
         const avgScore = totalParsed > 0 ? Math.round(candidates.reduce((s, c) => s + (c.match_score || 0), 0) / totalParsed) : 0;
         const strongCount = candidates.filter(c => (c.match_score || 0) >= 70).length;
-        setAnalysisStats({ totalParsed, avgScore, strongCount, sessionId });
+        setAnalysisStats({ 
+          totalParsed, 
+          avgScore, 
+          strongCount, 
+          sessionId,
+          name: `Smart Analysis — ${new Date().toLocaleDateString()}`
+        });
+        setLoadedFromHistory(false);
       }
       
       setProgress(100);
@@ -221,6 +340,50 @@ export default function SmartAnalyzerPage() {
           </p>
         </div>
       </header>
+
+      {/* Navigation Tabs */}
+      {(step === 'idle' || step === 'uploading' || step === 'history') && (
+        <div className="flex border-b border-gray-200/85 gap-6 mb-2">
+          <button
+            onClick={() => setStep('idle')}
+            className={`pb-3 text-sm font-bold tracking-wide transition-all relative ${
+              (step === 'idle' || step === 'uploading')
+                ? 'text-accent'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Brain size={16} />
+              <span>New Analysis</span>
+            </div>
+            {(step === 'idle' || step === 'uploading') && (
+              <motion.div
+                layoutId="activeSmartAnalyzerTab"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+          </button>
+          <button
+            onClick={loadHistory}
+            className={`pb-3 text-sm font-bold tracking-wide transition-all relative ${
+              step === 'history' ? 'text-accent' : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <History size={16} />
+              <span>Analysis History</span>
+            </div>
+            {step === 'history' && (
+              <motion.div
+                layoutId="activeSmartAnalyzerTab"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+          </button>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {(step === 'idle' || step === 'uploading') && (
@@ -278,7 +441,7 @@ export default function SmartAnalyzerPage() {
                   <p className="font-bold text-gray-600 group-hover:text-accent transition-colors">
                     {isDragActive ? 'Drop files here...' : 'Drag & Drop Resumes'}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1 font-medium">PDF and DOCX supported • No limit</p>
+                  <p className="text-xs text-gray-400 mt-1 font-medium">PDF, DOCX, and TXT supported • No limit</p>
                 </div>
 
                 <AnimatePresence>
@@ -332,6 +495,112 @@ export default function SmartAnalyzerPage() {
                 </motion.button>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {step === 'history' && (
+          <motion.div
+            key="history"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-black text-[#2A2A2A]">Analysis History</h2>
+                <p className="text-gray-500 font-medium text-sm mt-0.5">
+                  View and manage previously run resume evaluations.
+                </p>
+              </div>
+              <button
+                onClick={loadHistory}
+                disabled={loadingHistory}
+                className="px-4 py-2 border border-gray-200 hover:border-accent/30 rounded-xl font-bold text-gray-500 hover:text-accent transition-all text-xs flex items-center gap-2 bg-white shadow-sm"
+              >
+                <span>Refresh List</span>
+              </button>
+            </div>
+
+            {loadingHistory ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-24 bg-gradient-to-r from-gray-50 to-gray-100/50 animate-pulse rounded-2xl border border-gray-100"
+                  />
+                ))}
+              </div>
+            ) : historyList.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {historyList.map((session) => (
+                  <motion.div
+                    key={session.id}
+                    className="p-5 rounded-2xl bg-white border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:border-accent/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    whileHover={{ y: -2 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                        <History size={22} />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-[#2A2A2A] text-base group-hover:text-accent transition-colors">
+                          {session.name || 'Untitled Analysis'}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-400 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Calendar size={13} className="text-gray-300" />
+                            {session.created_at ? new Date(session.created_at).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : 'Unknown Date'}
+                          </span>
+                          <span className="inline-flex items-center bg-[#E0E7FF] text-[#4F46E5] px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">
+                            {session.total_candidates || 0} candidate{(session.total_candidates !== 1) ? 's' : ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-center">
+                      <button
+                        onClick={() => viewHistoryResults(session)}
+                        className="px-4 py-2.5 bg-accent hover:bg-[#1D4ED8] text-white rounded-xl text-xs font-black transition-all shadow-md shadow-accent/15 active:scale-95"
+                      >
+                        View Results
+                      </button>
+                      <button
+                        onClick={() => deleteHistorySession(session)}
+                        className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                        title="Delete from History"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-16 bg-white rounded-2xl border border-gray-100 min-h-[350px] shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+                <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 text-gray-300">
+                  <History size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-[#2A2A2A] mb-1">No analysis history</h3>
+                <p className="text-sm font-medium text-gray-400 mb-6 text-center max-w-sm">
+                  You haven't run any smart analyses yet or they've been deleted.
+                </p>
+                <button
+                  onClick={() => setStep('idle')}
+                  className="bg-accent hover:bg-[#1D4ED8] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md shadow-accent/20 text-sm active:scale-95"
+                >
+                  Start New Analysis
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -394,12 +663,25 @@ export default function SmartAnalyzerPage() {
             {/* Overview */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4">
               <div>
-                <h2 className="text-3xl font-black text-[#2A2A2A]">Analysis Complete</h2>
+                <h2 className="text-3xl font-black text-[#2A2A2A]">{analysisStats?.name || "Analysis Complete"}</h2>
                 <p className="text-gray-500 font-medium mt-1">{results.length} candidate{results.length !== 1 ? 's' : ''} ranked by AI-powered multi-factor scoring</p>
               </div>
-              <button onClick={() => { setStep('idle'); setResults([]); setResumes([]); setJdText(''); setProgress(0); }} className="px-6 py-2.5 border-2 border-gray-200 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors text-sm">
-                ↻ New Analysis
-              </button>
+              <div className="flex items-center gap-3">
+                {loadedFromHistory && (
+                  <button 
+                    onClick={() => { setStep('history'); }} 
+                    className="px-6 py-2.5 border border-gray-200 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors text-sm flex items-center gap-1.5"
+                  >
+                    <span>← Back to History</span>
+                  </button>
+                )}
+                <button 
+                  onClick={() => { setStep('idle'); setResults([]); setResumes([]); setJdText(''); setProgress(0); setLoadedFromHistory(false); }} 
+                  className="px-6 py-2.5 border border-gray-200 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors text-sm"
+                >
+                  ↻ New Analysis
+                </button>
+              </div>
             </div>
 
             {/* Stats Cards */}

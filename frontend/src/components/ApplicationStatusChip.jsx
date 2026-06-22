@@ -4,7 +4,7 @@ const STATUS_CONFIG = {
   applied:     { label: 'Applied',     bg: '#eff6ff', color: '#3b82f6', dot: '#3b82f6' },
   shortlisted: { label: 'Shortlisted', bg: '#f0fdf4', color: '#22c55e', dot: '#22c55e' },
   rejected:    { label: 'Not Selected',bg: '#fef2f2', color: '#ef4444', dot: '#ef4444' },
-  hired:       { label: 'Hired 🎉',    bg: '#fffbeb', color: '#d97706', dot: '#f59e0b' },
+  hired:       { label: 'Hired',    bg: '#fffbeb', color: '#d97706', dot: '#f59e0b' },
 };
 
 export default function ApplicationStatusChip({ status, size = 'md' }) {

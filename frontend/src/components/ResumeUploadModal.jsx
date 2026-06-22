@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, CheckCircle2, AlertCircle, Loader } from 'lucide-react';
 import { publicJobsAPI } from '../lib/api';
 import { toast } from 'react-hot-toast';
 
-export default function ResumeUploadModal({ isOpen, onClose }) {
+export default function ResumeUploadModal({ isOpen, onClose, preselectedFile }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0); // 0: upload, 1: loading, 2: success
@@ -66,6 +66,12 @@ export default function ResumeUploadModal({ isOpen, onClose }) {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (isOpen && preselectedFile) {
+      onDrop([preselectedFile]);
+    }
+  }, [isOpen, preselectedFile, onDrop]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
