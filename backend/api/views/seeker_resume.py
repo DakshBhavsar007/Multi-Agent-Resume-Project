@@ -437,45 +437,108 @@ def check_ats_score(request):
                 
         job_description = body.get("job_description", "")
         
-        from agents.llm import RotateLLMClient
-        llm = RotateLLMClient()
-        
-        # Build prompt to grade the resume
-        skills_list = [s if isinstance(s, str) else s.get("skill", "") for s in resume_data.get("skills", [])]
-        if enhanced_resume and enhanced_resume.get("missing_keywords"):
-            skills_list.extend(enhanced_resume.get("missing_keywords"))
+        # If enhanced resume exists and contains enhanced experience, form virtual enhanced resume:
+        if enhanced_resume and enhanced_resume.get("enhanced_experience"):
+            active_resume_data = {
+                "personalInfo": resume_data.get("personalInfo", {}),
+                "summary": enhanced_resume.get("professional_summary_enhanced") or enhanced_resume.get("summary_rewrite") or resume_data.get("summary") or resume_data.get("professional_summary") or "",
+                "skills": list(set(resume_data.get("skills", []) + enhanced_resume.get("missing_keywords", []))),
+                "experience": [],
+                "education": resume_data.get("education", []),
+                "projects": [],
+                "certifications": resume_data.get("certifications", []),
+                "languages": resume_data.get("languages", [])
+            }
             
-        prompt = f"""
-You are an advanced Applicant Tracking System (ATS) checker.
-Analyze this enhanced resume against the job description.
+            # Map enhanced experiences
+            for exp in resume_data.get("experience", []):
+                company = exp.get("company", "")
+                role = exp.get("title", "") or exp.get("role", "")
+                bullets = exp.get("bullets", []) or exp.get("responsibilities", []) or []
+                
+                # Check for enhanced bullets match
+                for ee in enhanced_resume.get("enhanced_experience", []):
+                    if ee.get("company", "").lower() == company.lower() or ee.get("role", "").lower() == role.lower():
+                        bullets = ee.get("enhanced_bullets", bullets)
+                        break
+                active_resume_data["experience"].append({
+                    **exp,
+                    "bullets": bullets
+                })
 
-**Resume Info:**
-- Skills: {skills_list}
-- Summary: {enhanced_resume.get('summary_rewrite', '') or resume_data.get('summary', '')}
-- Experience: {[{'role': exp.get('role'), 'company': exp.get('company'), 'bullets': exp.get('enhanced_bullets', [])} for exp in enhanced_resume.get('enhanced_experience', [])]}
+            # Map enhanced projects
+            for proj in resume_data.get("projects", []):
+                name = proj.get("name", "")
+                desc = proj.get("description", "")
+                
+                # Check for enhanced project description match
+                for ep in enhanced_resume.get("enhanced_projects", []):
+                    if ep.get("name", "").lower() == name.lower():
+                        eb = ep.get("enhanced_bullets", [])
+                        if eb:
+                            desc = "\n".join(eb)
+                        else:
+                            desc = ep.get("enhanced_description", desc)
+                        break
+                active_resume_data["projects"].append({
+                    **proj,
+                    "description": desc
+                })
+        else:
+            active_resume_data = resume_data
 
-**Job Description:**
-{job_description or "General Software Engineer position"}
-
-Evaluate the matching score. Since this resume has been optimized with target keywords and professional bullet points, ensure the ATS score returned is above 90% (e.g., between 91% and 97%).
-Output ONLY valid JSON:
-{{
-  "score": 94,
-  "verdict": "Excellent Match",
-  "matched_keywords": ["Python", "Django", "React"],
-  "format_check": "Passed (Clean headers & margins)",
-  "keyword_check": "Passed (Critical keywords integrated)",
-  "structure_check": "Passed (Standard sections detected)",
-  "recommendations": []
-}}
-"""
-        raw = llm.generate(prompt)
-        cleaned = raw.strip().strip("```json").strip("```").strip()
-        result_json = _json.loads(cleaned)
+        # Use the deterministic AtsCompatibilityAgent
+        from agents.ats_compatibility_agent import AtsCompatibilityAgent
+        ats_agent = AtsCompatibilityAgent()
+        report = ats_agent.analyze(None, active_resume_data, job_description)
         
-        if result_json.get("score", 0) < 91:
-            result_json["score"] = 93
+        score = report.get("overallScore", 0)
+        
+        # Calculate verdict
+        if score >= 90:
+            verdict = "Excellent Match"
+        elif score >= 80:
+            verdict = "Good Match"
+        elif score >= 60:
+            verdict = "Fair Match"
+        else:
+            verdict = "Poor Match"
             
+        bd = report.get("detailed_breakdown", {})
+        fmt_score = bd.get("ats_formatting", {}).get("score", 100)
+        fmt_issues = bd.get("ats_formatting", {}).get("issues", [])
+        
+        kw_score = bd.get("keyword_match", {}).get("score", 100)
+        matched_kws = bd.get("keyword_match", {}).get("matched", [])
+        
+        edu_score = bd.get("education_match", {}).get("score", 100)
+        
+        # Build standard output checks matching frontend expectations
+        if fmt_score >= 90:
+            format_check = "Passed (Clean headers & margins)"
+        else:
+            format_check = f"Needs Improvement ({len(fmt_issues)} formatting warnings)"
+            
+        if kw_score >= 80:
+            keyword_check = "Passed (Critical keywords integrated)"
+        else:
+            keyword_check = "Needs Improvement (Missing target keywords)"
+            
+        if edu_score >= 90:
+            structure_check = "Passed (Standard sections & credentials detected)"
+        else:
+            structure_check = "Needs Improvement (Degree match warning)"
+            
+        result_json = {
+            "score": score,
+            "verdict": verdict,
+            "matched_keywords": matched_kws,
+            "format_check": format_check,
+            "keyword_check": keyword_check,
+            "structure_check": structure_check,
+            "recommendations": report.get("topSuggestions", [])
+        }
+        
         return JsonResponse(success_response(result_json))
         
     except Exception as e:

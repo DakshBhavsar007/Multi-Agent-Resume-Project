@@ -21,7 +21,11 @@ import {
   Loader2,
   RefreshCw,
   Target,
-  ArrowLeft
+  ArrowLeft,
+  Sun,
+  Moon,
+  History,
+  Clock
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -60,6 +64,115 @@ export default function ResumeEditor() {
   const [draftTitle, setDraftTitle] = useState("");
   const [templateId, setTemplateId] = useState("modern");
   const [content, setContent] = useState(emptyResume);
+
+  // Version History state
+  const [versions, setVersions] = useState([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [showVersionsPanel, setShowVersionsPanel] = useState(false);
+  const [newVersionName, setNewVersionName] = useState("");
+
+  // Dark Mode state
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("theme") === "dark" || 
+    document.documentElement.classList.contains("dark")
+  );
+
+  // Auto-save Status
+  const [autoSaveStatus, setAutoSaveStatus] = useState("Saved");
+  const isFirstMount = useRef(true);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
+  const loadVersions = async () => {
+    if (!resumeId) return;
+    setVersionsLoading(true);
+    try {
+      const res = await seekerAPI.getVersions(resumeId);
+      setVersions(res || []);
+    } catch (err) {
+      console.error("Failed to load versions:", err);
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+
+  const handleSaveVersion = async () => {
+    if (!resumeId) return;
+    try {
+      await seekerAPI.createVersion(resumeId, { title: newVersionName });
+      toast.success("Version checkpoint saved!");
+      setNewVersionName("");
+      loadVersions();
+    } catch (err) {
+      toast.error("Failed to save version checkpoint");
+      console.error(err);
+    }
+  };
+
+  const handleRestoreVersion = async (versionId) => {
+    if (!resumeId) return;
+    const confirmRestore = window.confirm("Are you sure you want to restore this version? Your unsaved edits will be overwritten.");
+    if (!confirmRestore) return;
+    
+    try {
+      const res = await seekerAPI.restoreVersion(resumeId, versionId);
+      setContent(res.content);
+      setDraftTitle(res.title);
+      setTemplateId(res.templateId || "modern");
+      setAtsReport(res.atsReport);
+      toast.success("Version restored successfully!");
+    } catch (err) {
+      toast.error("Failed to restore version");
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (showVersionsPanel) {
+      loadVersions();
+    }
+  }, [showVersionsPanel]);
+
+  // Set first mount ref
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        isFirstMount.current = false;
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
+  // Debounced Auto-save
+  useEffect(() => {
+    if (loading || !resumeId || isFirstMount.current) return;
+    
+    setAutoSaveStatus("Saving...");
+    const timer = setTimeout(async () => {
+      try {
+        await seekerAPI.updateDraft(resumeId, {
+          title: draftTitle,
+          templateId,
+          content: content
+        });
+        setAutoSaveStatus("Saved");
+      } catch (err) {
+        console.error("Auto-save failed:", err);
+        setAutoSaveStatus("Error saving");
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [content, draftTitle, templateId]);
+
   
   // Job tailoring state
   const [jobInfo, setJobInfo] = useState(null);
@@ -770,8 +883,26 @@ export default function ResumeEditor() {
             className="text-base font-semibold bg-transparent border-b border-transparent hover:border-border focus:border-primary focus:outline-none px-2 py-0.5"
             placeholder="Untitled Resume"
           />
+          <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium transition-all ${
+            autoSaveStatus === "Saved" ? "bg-green-500/10 text-green-600 dark:text-green-400" :
+            autoSaveStatus === "Saving..." ? "bg-blue-500/10 text-blue-600 animate-pulse" :
+            "bg-destructive/10 text-destructive"
+          }`}>
+            {autoSaveStatus}
+          </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowVersionsPanel(!showVersionsPanel)}
+            className={`inline-flex items-center gap-1.5 pill border px-4 py-2 text-xs font-semibold transition-all ${
+              showVersionsPanel 
+                ? "bg-primary/10 text-primary border-primary/20" 
+                : "border-border bg-background hover:bg-muted"
+            }`}
+          >
+            <History className="h-3.5 w-3.5" />
+            Versions
+          </button>
           <button
             disabled={saveLoading}
             onClick={() => handleSaveDraft(false)}
@@ -1382,6 +1513,13 @@ export default function ResumeEditor() {
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-2 border border-border bg-background hover:bg-muted text-foreground rounded-full transition-all flex items-center justify-center"
+                  title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                  {darkMode ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4" />}
+                </button>
+                <button
                   onClick={() => setShowAtsPanel(!showAtsPanel)}
                   className={`inline-flex items-center gap-1.5 pill border border-border px-4 py-2 text-xs font-semibold hover:bg-muted transition-all ${
                     showAtsPanel ? "bg-primary-soft text-primary border-primary/20" : "bg-background text-muted-foreground"
@@ -1404,6 +1542,100 @@ export default function ResumeEditor() {
               </div>
             </div>
           </main>
+
+        {/* VERSIONS PANEL */}
+        {showVersionsPanel && (
+          <aside className="w-[320px] border-l border-border bg-card flex flex-col overflow-hidden">
+            <div className="border-b border-border px-5 py-4 flex items-center justify-between bg-muted/20">
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <History className="h-4 w-4 text-primary" />
+                <span>Version History</span>
+              </div>
+              <button
+                onClick={() => setShowVersionsPanel(false)}
+                className="text-xs text-muted-foreground hover:text-foreground font-semibold px-2 py-1 rounded-lg hover:bg-muted"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {/* Save New Version snapshot */}
+              <div className="bg-muted/30 border border-border/60 p-3.5 rounded-2xl space-y-2.5">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Create Named Checkpoint
+                </span>
+                <input
+                  type="text"
+                  placeholder="e.g. Before AI Enhancements"
+                  value={newVersionName}
+                  onChange={(e) => setNewVersionName(e.target.value)}
+                  className="w-full text-xs font-medium px-3 py-2 bg-background border border-border rounded-xl focus:border-primary focus:outline-none"
+                />
+                <button
+                  onClick={handleSaveVersion}
+                  className="w-full bg-primary text-primary-foreground font-bold text-xs py-2 rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Save className="h-3.5 w-3.5" /> Save Backup
+                </button>
+              </div>
+
+              {/* Versions List */}
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Saved Snapshots
+                </span>
+                
+                {versionsLoading ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-2">
+                    <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                    <span className="text-xs text-muted-foreground">Loading checkpoints...</span>
+                  </div>
+                ) : versions.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic text-center py-4 bg-muted/10 rounded-xl">
+                    No saved checkpoints. Create one above to preserve draft states.
+                  </p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {versions.map((v) => {
+                      const dt = new Date(v.createdAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      });
+                      return (
+                        <div key={v.id} className="border border-border/60 p-3 rounded-2xl bg-muted/10 flex flex-col gap-2 hover:bg-muted/20 transition-all">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <span className="text-xs font-bold text-foreground block truncate" title={v.title}>
+                                {v.title}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                <Clock className="h-3 w-3" /> {dt}
+                              </span>
+                            </div>
+                            {v.atsScore !== null && (
+                              <span className="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full shrink-0">
+                                ATS {v.atsScore}%
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleRestoreVersion(v.id)}
+                            className="text-[10px] font-bold text-primary hover:underline self-end"
+                          >
+                            Restore snapshot ➔
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </aside>
+        )}
 
         {/* RIGHT PANEL: DYNAMIC ATS COMPATIBILITY AGENT */}
         {showAtsPanel && (
@@ -1570,12 +1802,45 @@ export default function ResumeEditor() {
                   <div className="space-y-3.5">
                     <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Checks Breakdown</h5>
                     
-                    <BreakdownBar label="Formatting" score={atsReport.breakdown?.formatting?.score} />
-                    <BreakdownBar label="Section Structure" score={atsReport.breakdown?.structure?.score} />
-                    <BreakdownBar label="Keywords Optimization" score={atsReport.breakdown?.keywords?.score} />
-                    <BreakdownBar label="Achievement Quality" score={atsReport.breakdown?.content?.score} />
-                    <BreakdownBar label="Document Integrity" score={atsReport.breakdown?.integrity?.score} />
+                    <BreakdownBar label="Keyword Match (35%)" score={atsReport.detailed_breakdown?.keyword_match?.score ?? atsReport.breakdown?.keywords?.score} />
+                    <BreakdownBar label="Skills Match (25%)" score={atsReport.detailed_breakdown?.skills_match?.score ?? atsReport.breakdown?.integrity?.score} />
+                    <BreakdownBar label="Experience Relevance (15%)" score={atsReport.detailed_breakdown?.experience_relevance?.score ?? 70} />
+                    <BreakdownBar label="Project Relevance (10%)" score={atsReport.detailed_breakdown?.project_relevance?.score ?? 70} />
+                    <BreakdownBar label="Education Match (5%)" score={atsReport.detailed_breakdown?.education_match?.score ?? atsReport.breakdown?.structure?.score} />
+                    <BreakdownBar label="ATS Formatting (10%)" score={atsReport.detailed_breakdown?.ats_formatting?.score ?? atsReport.breakdown?.formatting?.score} />
                   </div>
+
+                  {/* Strengths & Weaknesses */}
+                  {(atsReport.strengths?.length > 0 || atsReport.weaknesses?.length > 0) && (
+                    <div className="space-y-3 border-t border-border/60 pt-4">
+                      {atsReport.strengths?.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mb-1.5">Key Strengths</div>
+                          <ul className="space-y-1">
+                            {atsReport.strengths.map((str, idx) => (
+                              <li key={idx} className="flex gap-1.5 text-xs text-foreground items-start">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
+                                <span>{str}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {atsReport.weaknesses?.length > 0 && (
+                        <div className="mt-3.5">
+                          <div className="text-[10px] font-bold text-destructive/80 uppercase tracking-wider mb-1.5">Weaknesses / Gaps</div>
+                          <ul className="space-y-1">
+                            {atsReport.weaknesses.map((weak, idx) => (
+                              <li key={idx} className="flex gap-1.5 text-xs text-foreground items-start">
+                                <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                                <span>{weak}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Target Keywords matching (Job-Targeted specific) */}
                   {jobInfo && atsReport.breakdown?.keywords && (
@@ -1856,26 +2121,44 @@ export default function ResumeEditor() {
                   })()}
                 </div>
 
-                <div className="max-w-md text-center md:text-left">
+                <div className="max-w-md text-center md:text-left space-y-3">
                   {(() => {
                     const origScore = atsReport?.overallScore ?? enhancementReport.ats_score_original ?? 0;
                     const enhScore = enhancementReport.ats_score_enhanced ?? 0;
                     const diff = enhScore - origScore;
                     const isBoost = diff > 0;
+                    
+                    const keywordsAddedCount = enhancementReport.keywords_added?.length || 0;
+                    const skillsImprovedCount = enhancementReport.skills_improved || keywordsAddedCount;
+                    const sectionsCount = enhancementReport.sections_improved?.length || 0;
+                    const sectionsImprovedNames = enhancementReport.sections_improved?.join(", ") || "None";
+                    
                     return (
                       <>
                         <h4 className={`font-semibold text-sm ${isBoost ? 'text-green-700 dark:text-green-400' : 'text-destructive'}`}>
                           {isBoost
-                            ? `🚀 ATS Score Boosted by +${diff}%!`
-                            : `⚠ No improvement detected (${diff}%)`
+                            ? `🚀 ATS Score Boosted by +${diff}%! (+${enhancementReport.improvement_percentage || 0}% boost)`
+                            : `⚠ No improvement detected`
                           }
                         </h4>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                          {isBoost
-                            ? "By adopting these AI enhancements (rewritten bullets, missing keywords, and professional summary), your resume has a significantly higher chance of passing automated screening filters."
-                            : "Your resume is already well-optimized. Apply the missing keywords and summary rewrite to gain ATS points."
-                          }
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          By adopting these AI enhancements, your resume passes more automated filters.
                         </p>
+                        
+                        <div className="grid grid-cols-2 gap-2 border-t border-border/40 pt-2.5 text-left">
+                          <div className="bg-background/40 p-2 rounded-xl border border-border/50">
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider block">Keywords Added</span>
+                            <span className="text-xs font-bold text-foreground">{keywordsAddedCount} found in JD</span>
+                          </div>
+                          <div className="bg-background/40 p-2 rounded-xl border border-border/50">
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider block">Skills Improved</span>
+                            <span className="text-xs font-bold text-foreground">{skillsImprovedCount} target skills</span>
+                          </div>
+                          <div className="bg-background/40 p-2 rounded-xl border border-border/50 col-span-2">
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider block">Sections Optimized ({sectionsCount})</span>
+                            <span className="text-xs font-bold text-foreground truncate block">{sectionsImprovedNames}</span>
+                          </div>
+                        </div>
                       </>
                     );
                   })()}

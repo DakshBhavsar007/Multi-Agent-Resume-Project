@@ -69,6 +69,7 @@ All agents communicate through the `RotateLLMClient`, which distributes requests
 ### Job Seeker Portal
 - **Dedicated Seeker Accounts** — Separate login and registration flows for job seekers, redirecting directly to `/jobs` as the unified landing hub & dashboard.
 - **AI Resume Builder & Editor** — Create, edit, and export resumes using 7 professional, high-fidelity templates (Modern, Classic, Minimal, Executive, Creative, Compact, ATS Optimized).
+- **High-Fidelity Actual Template Previews** — Replaced all generic/AI-generated placeholder preview cards in the template gallery with exact, high-quality rendered images matching the actual template structures and styling.
 - **Dynamic Columns Selector** — Seamlessly toggle between 1-column and 2-column layouts on any template with automatic sections splitting/collapsing.
 - **ReportLab 2-Column PDF Exporter** — Backend PDF generator utilizing height-based wrapping and dummy canvas measurements to dynamically paginate 2-column documents across multiple pages without overflow.
 - **Active Profile Details Auto-Sync** — Setting a resume draft as the "Active Resume" automatically extracts and syncs experience, education, projects, skills, certifications, and languages directly to the seeker profile.

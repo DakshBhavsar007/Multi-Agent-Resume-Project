@@ -312,6 +312,10 @@ export const seekerAPI = {
     fd.append('file', file);
     return seekerReq('POST', '/api/v1/seeker/resume/drafts/import-file', fd, true);
   },
+  getVersions: (draftId) => seekerReq('GET', `/api/v1/seeker/resume/drafts/${draftId}/versions`),
+  createVersion: (draftId, b) => seekerReq('POST', `/api/v1/seeker/resume/drafts/${draftId}/versions`, b),
+  restoreVersion: (draftId, versionId) => seekerReq('POST', `/api/v1/seeker/resume/drafts/${draftId}/versions/${versionId}/restore`),
+
 
 
   // Jobs

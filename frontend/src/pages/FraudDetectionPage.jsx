@@ -28,6 +28,7 @@ export default function FraudDetectionPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   
   // Job specific inputs
+  const [jobUrlInput, setJobUrlInput] = useState("");
   const [jobTitleInput, setJobTitleInput] = useState("");
   const [jobDescriptionInput, setJobDescriptionInput] = useState("");
   const [jobLocationInput, setJobLocationInput] = useState("Remote");
@@ -74,8 +75,8 @@ export default function FraudDetectionPage() {
       toast.error("Please upload a file or enter a portfolio URL");
       return;
     }
-    if (scanType === "job" && (!jobTitleInput.trim() || !jobDescriptionInput.trim())) {
-      toast.error("Please enter a job title and description");
+    if (scanType === "job" && !jobUrlInput.trim() && (!jobTitleInput.trim() || !jobDescriptionInput.trim())) {
+      toast.error("Please enter a job URL or manual job details");
       return;
     }
 
@@ -93,6 +94,7 @@ export default function FraudDetectionPage() {
       } else {
         return await protectionAPI.scan({
           scan_type: "job",
+          url: jobUrlInput.trim(),
           job_title: jobTitleInput.trim(),
           job_description: jobDescriptionInput.trim(),
           location: jobLocationInput.trim()
@@ -138,6 +140,7 @@ export default function FraudDetectionPage() {
     setScannedResult(null);
     setSelectedFile(null);
     setUrlInput("");
+    setJobUrlInput("");
     setJobTitleInput("");
     setJobDescriptionInput("");
     setJobLocationInput("Remote");
@@ -502,36 +505,53 @@ export default function FraudDetectionPage() {
                   </>
                 ) : (
                   <div className="space-y-4">
+                    {/* URL Input */}
+                    <div className="relative">
+                      <LinkIcon className="absolute left-3.5 top-3.5 text-gray-400 w-4 h-4" />
+                      <input 
+                        type="text"
+                        value={jobUrlInput}
+                        onChange={(e) => setJobUrlInput(e.target.value)}
+                        placeholder="Enter LinkedIn Job Post URL (automatically extracts title & description)..."
+                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-10 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                      />
+                    </div>
+
+                    <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest my-1">OR ENTER DETAILS MANUALLY</div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Job Title</label>
                         <input
                           type="text"
-                          value={jobTitleInput}
+                          disabled={!!jobUrlInput.trim()}
+                          value={jobUrlInput.trim() ? "" : jobTitleInput}
                           onChange={(e) => setJobTitleInput(e.target.value)}
-                          placeholder="e.g. Senior Product Designer"
-                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                          placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "e.g. Senior Product Designer"}
+                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
                         />
                       </div>
                       <div>
                         <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Location / Category</label>
                         <input
                           type="text"
-                          value={jobLocationInput}
+                          disabled={!!jobUrlInput.trim()}
+                          value={jobUrlInput.trim() ? "" : jobLocationInput}
                           onChange={(e) => setJobLocationInput(e.target.value)}
-                          placeholder="e.g. Remote / Chicago, IL"
-                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                          placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "e.g. Remote / Chicago, IL"}
+                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
                         />
                       </div>
                     </div>
                     <div>
                       <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Job Posting Description</label>
                       <textarea
-                        value={jobDescriptionInput}
+                        disabled={!!jobUrlInput.trim()}
+                        value={jobUrlInput.trim() ? "" : jobDescriptionInput}
                         onChange={(e) => setJobDescriptionInput(e.target.value)}
-                        placeholder="Paste the description/requirements here to analyze for clone templates, ghost post indicators, or sketchy payment details..."
+                        placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "Paste the description/requirements here to analyze for clone templates, ghost post indicators, or sketchy payment details..."}
                         rows={4}
-                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none"
+                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -539,7 +559,7 @@ export default function FraudDetectionPage() {
 
                 <button 
                   type="submit" 
-                  disabled={(scanType === "user" && !selectedFile && !urlInput.trim()) || (scanType === "job" && (!jobTitleInput.trim() || !jobDescriptionInput.trim()))}
+                  disabled={(scanType === "user" && !selectedFile && !urlInput.trim()) || (scanType === "job" && !jobUrlInput.trim() && (!jobTitleInput.trim() || !jobDescriptionInput.trim()))}
                   className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Search size={16} />

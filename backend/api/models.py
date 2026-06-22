@@ -350,6 +350,21 @@ class ResumeDraft(models.Model):
         return f"Draft '{self.title}' for {self.seeker.full_name}"
 
 
+class ResumeVersion(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    draft = models.ForeignKey(ResumeDraft, on_delete=models.CASCADE, db_column="draft_id", related_name="versions")
+    title = models.CharField(max_length=255)
+    content = models.JSONField(default=dict)
+    ats_score = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "resume_versions"
+
+    def __str__(self):
+        return f"Version '{self.title}' of Draft '{self.draft.title}'"
+
+
 class SavedJob(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     seeker = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, db_column="seeker_id", related_name="saved_jobs")

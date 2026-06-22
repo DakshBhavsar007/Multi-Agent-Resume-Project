@@ -59,11 +59,21 @@ def scan_portfolio(request):
         agent = FraudDetectionAgent()
 
         if scan_type == "job":
+            company_name = "LinkedIn Company"
+            if url_val and "linkedin.com" in url_val.lower():
+                from api.services.linkedin_scraper import fetch_linkedin_job_details
+                details = fetch_linkedin_job_details(url_val)
+                job_title = details.get("job_title")
+                job_description = details.get("job_description")
+                location_val = details.get("location", location_val)
+                company_name = details.get("company_name", "LinkedIn Company")
+            
             if not job_title or not job_description:
                 return JsonResponse(error_response("Job title and description are required for job scanning"), status=400)
             
             analysis = agent.analyze_job(job_title, job_description, {
-                "location": location_val
+                "location": location_val,
+                "company_name": company_name
             })
             
             originality = analysis.get("originality_score", 95)
@@ -74,16 +84,24 @@ def scan_portfolio(request):
             if originality < 70 or plagiarism > 30 or analysis.get("ats_manipulation_detected", False):
                 status_str = "Suspicious Listing"
                 
+            log_title = f"Job: {job_title}"
+            if url_val and "linkedin.com" in url_val.lower():
+                log_title = f"LinkedIn Job: {job_title}"
+
+            flags = analysis.get("manipulation_flags", []) or ["Safety Audit Checked"]
+            if url_val and "linkedin.com" in url_val.lower():
+                flags = [f"Source: LinkedIn", f"Employer: {company_name}"] + [f for f in flags if f != "Safety Audit Checked"]
+                
             log = FraudScanLog.objects.create(
                 company=request.company,
-                candidate_name=f"Job: {job_title}",
+                candidate_name=log_title,
                 role="Job Posting",
                 location=location_val,
                 originality_score=originality,
                 ai_probability=ai_prob,
                 plagiarism_score=plagiarism,
                 status=status_str,
-                portfolios=analysis.get("manipulation_flags", []) or ["Safety Audit Checked"]
+                portfolios=flags
             )
             
         else:

@@ -138,6 +138,7 @@ Vishleshan includes the following built-in security controls:
 - **JWT Auth** — Recruiter sessions use short-lived JWT access tokens with refresh rotation
 - **Redis Rate Limiting** — Per-key monthly quota enforcement prevents abuse
 - **Fraud Detection Agent** — Scans uploaded resumes for AI-generated content, plagiarism, and ATS keyword stuffing
+- **LinkedIn Job Post URL Scanner** — Integrates public scraping with pattern analysis to verify external LinkedIn job postings for safety and legitimacy before candidate applications.
 - **LLM Key Rotation** — The `RotateLLMClient` rotates across multiple Gemini API keys to prevent single-key exposure
 - **CORS Configuration** — Restrict allowed origins to your frontend domain in production
 

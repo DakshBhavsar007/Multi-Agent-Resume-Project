@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
-from api.models import JobSeekerAccount, ResumeDraft
+from api.models import JobSeekerAccount, ResumeDraft, ResumeVersion
 from api.views.seeker_auth import require_seeker_jwt
 from models.schemas import success_response, error_response
 from agents.ats_compatibility_agent import AtsCompatibilityAgent
@@ -947,3 +947,149 @@ def export_draft_pdf(request, draft_id):
     except Exception as e:
         logger.error("PDF export failed for draft %s: %s", draft_id, e)
         return JsonResponse(error_response(f"Export failed: {e}"), status=500)
+
+
+@csrf_exempt
+@require_seeker_jwt
+def manage_versions(request, draft_id):
+    """
+    GET /api/v1/seeker/resume/drafts/<draft_id>/versions - List checkpoints
+    POST /api/v1/seeker/resume/drafts/<draft_id>/versions - Create a new Named Version checkpoint
+    """
+    try:
+        draft = ResumeDraft.objects.get(id=draft_id, seeker=request.seeker)
+    except ResumeDraft.DoesNotExist:
+        return JsonResponse(error_response("Resume draft not found"), status=404)
+
+    if request.method == "GET":
+        versions = ResumeVersion.objects.filter(draft=draft).order_by("-created_at")
+        data = []
+        for v in versions:
+            data.append({
+                "id": str(v.id),
+                "title": v.title,
+                "atsScore": v.ats_score,
+                "createdAt": v.created_at.isoformat()
+            })
+        return JsonResponse(success_response(data))
+
+    elif request.method == "POST":
+        try:
+            body = {}
+            if request.body:
+                body = json.loads(request.body)
+            
+            title = body.get("title")
+            if not title:
+                now_str = timezone.now().strftime("%b %d, %Y %H:%M")
+                title = f"Checkpoint - {now_str}"
+
+            version = ResumeVersion.objects.create(
+                draft=draft,
+                title=title,
+                content=draft.content,
+                ats_score=draft.ats_score
+            )
+            return JsonResponse(success_response({
+                "id": str(version.id),
+                "title": version.title,
+                "atsScore": version.ats_score,
+                "createdAt": version.created_at.isoformat()
+            }))
+        except Exception as e:
+            logger.error("Error creating version snapshot: %s", e)
+            return JsonResponse(error_response(f"Failed to create version: {e}"), status=500)
+
+    return JsonResponse(error_response("Method not allowed"), status=405)
+
+
+@csrf_exempt
+@require_seeker_jwt
+def restore_version(request, draft_id, version_id):
+    """
+    POST /api/v1/seeker/resume/drafts/<draft_id>/versions/<version_id>/restore - Restore to checkpoint
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    try:
+        draft = ResumeDraft.objects.get(id=draft_id, seeker=request.seeker)
+        version = ResumeVersion.objects.get(id=version_id, draft=draft)
+        
+        draft.content = version.content
+        draft.ats_score = version.ats_score
+        
+        # Recalculate ATS compatibility report on restore
+        ats_agent = AtsCompatibilityAgent()
+        report = ats_agent.analyze(None, draft.content)
+        draft.ats_report = report
+        
+        draft.save()
+        
+        return JsonResponse(success_response({
+            "id": str(draft.id),
+            "title": draft.title,
+            "templateId": draft.template_id,
+            "content": draft.content,
+            "atsScore": draft.ats_score,
+            "atsReport": draft.ats_report,
+            "updatedAt": draft.updated_at.isoformat()
+        }))
+    except ResumeDraft.DoesNotExist:
+        return JsonResponse(error_response("Resume draft not found"), status=404)
+    except ResumeVersion.DoesNotExist:
+        return JsonResponse(error_response("Version checkpoint not found"), status=404)
+    except Exception as e:
+        logger.error("Error restoring version: %s", e)
+        return JsonResponse(error_response(f"Restore failed: {e}"), status=500)
+
+
+@csrf_exempt
+def debug_project_relevance(request):
+    """
+    POST /api/debug/project-relevance
+    Debug endpoint for inspecting the new project relevance scoring logic.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+        
+    try:
+        body = json.loads(request.body)
+        resume_input = body.get("resume")
+        jd_text = body.get("job_description", "")
+        
+        parsed_data = {}
+        resume_text = ""
+        
+        if isinstance(resume_input, dict):
+            parsed_data = resume_input
+        elif isinstance(resume_input, list):
+            parsed_data = {"projects": resume_input}
+        elif isinstance(resume_input, str):
+            resume_text = resume_input
+            try:
+                parsed_data = json.loads(resume_input)
+                resume_text = ""
+            except Exception:
+                pass
+                
+        agent = AtsCompatibilityAgent()
+        report = agent.analyze(resume_text, parsed_data, jd_text)
+        
+        pr = report.get("detailed_breakdown", {}).get("project_relevance", {})
+        
+        output = {
+            "projects_found": pr.get("projects_found", []),
+            "keywords_extracted": pr.get("project_keywords", []),
+            "semantic_similarity": pr.get("semantic_similarity", 0.0),
+            "technology_overlap": pr.get("technology_overlap", 0.0),
+            "responsibility_overlap": pr.get("responsibility_overlap", 0.0),
+            "final_project_score": pr.get("score", 0.0),
+            "reasoning": [pr.get("reason", "")]
+        }
+        
+        return JsonResponse(success_response(output))
+    except Exception as e:
+        logger.error("Error in debug project relevance endpoint: %s", e)
+        return JsonResponse(error_response(f"Debug failed: {e}"), status=500)
+

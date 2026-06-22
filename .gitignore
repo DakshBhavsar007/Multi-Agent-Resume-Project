@@ -58,3 +58,4 @@ inspiration_ui/
 # Test output files
 backend/test_resume_2col.pdf
 backend/scratch/
+/*.pdf

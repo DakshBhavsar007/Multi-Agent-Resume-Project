@@ -17,13 +17,15 @@ import {
   Building,
   HelpCircle,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Link as LinkIcon
 } from 'lucide-react';
 
 export default function JobSeekerSafetyPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Inputs
+  const [jobUrl, setJobUrl] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -86,8 +88,8 @@ export default function JobSeekerSafetyPage() {
 
   const handleStartScan = async (e) => {
     e.preventDefault();
-    if (!jobTitle.trim() || !jobDescription.trim()) {
-      toast.error("Please enter both the Job Title and Job Description to scan.");
+    if (!jobUrl.trim() && (!jobTitle.trim() || !jobDescription.trim())) {
+      toast.error("Please enter a LinkedIn job URL or enter both the Job Title and Job Description to scan.");
       return;
     }
 
@@ -95,6 +97,7 @@ export default function JobSeekerSafetyPage() {
     setCurrentStepIdx(0);
 
     const apiPromise = publicJobsAPI.scanSafetyArbitrary({
+      url: jobUrl.trim(),
       job_title: jobTitle.trim(),
       job_description: jobDescription.trim(),
       company_name: companyName.trim() || "Unknown Company"
@@ -131,6 +134,7 @@ export default function JobSeekerSafetyPage() {
   const resetScanner = () => {
     setScanStep("idle");
     setScannedResult(null);
+    setJobUrl("");
     setCompanyName("");
     setJobTitle("");
     setJobDescription("");
@@ -203,6 +207,20 @@ export default function JobSeekerSafetyPage() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
+                  {/* URL Input */}
+                  <div className="relative">
+                    <LinkIcon className="absolute left-3.5 top-3.5 text-gray-400 w-4 h-4" />
+                    <input 
+                      type="text"
+                      value={jobUrl}
+                      onChange={(e) => setJobUrl(e.target.value)}
+                      placeholder="Enter LinkedIn Job Post URL (automatically extracts title & description)..."
+                      className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-10 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                    />
+                  </div>
+
+                  <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest my-1">OR ENTER DETAILS MANUALLY</div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Company Name</label>
@@ -210,11 +228,12 @@ export default function JobSeekerSafetyPage() {
                         <Building className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
                         <input
                           type="text"
-                          value={companyName}
+                          disabled={!!jobUrl.trim()}
+                          value={jobUrl.trim() ? "" : companyName}
                           onChange={(e) => handleCompanyChange(e.target.value)}
                           onFocus={() => setShowSuggestions(true)}
-                          placeholder="e.g. Acme Corporation (Optional)"
-                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-9 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                          placeholder={jobUrl.trim() ? "Locked: URL provided" : "e.g. Acme Corporation (Optional)"}
+                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-9 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
                         />
                         {showSuggestions && suggestions.length > 0 && (
                           <div className="absolute left-0 right-0 top-[110%] bg-white border border-[#e6dfcd] rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-60 overflow-y-auto text-left">
@@ -236,10 +255,11 @@ export default function JobSeekerSafetyPage() {
                       <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Job Title</label>
                       <input
                         type="text"
-                        value={jobTitle}
+                        disabled={!!jobUrl.trim()}
+                        value={jobUrl.trim() ? "" : jobTitle}
                         onChange={(e) => setJobTitle(e.target.value)}
-                        placeholder="e.g. Remote Data Entry Assistant"
-                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                        placeholder={jobUrl.trim() ? "Locked: URL provided" : "e.g. Remote Data Entry Assistant"}
+                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -247,17 +267,18 @@ export default function JobSeekerSafetyPage() {
                   <div>
                     <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Job Description Requirements</label>
                     <textarea
-                      value={jobDescription}
+                      disabled={!!jobUrl.trim()}
+                      value={jobUrl.trim() ? "" : jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
-                      placeholder="Paste the requirements, responsibilities, or contact paragraphs here..."
+                      placeholder={jobUrl.trim() ? "Locked: URL provided" : "Paste the requirements, responsibilities, or contact paragraphs here..."}
                       rows={6}
-                      className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none"
+                      className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none disabled:opacity-50"
                     />
                   </div>
 
                   <button 
                     type="submit" 
-                    disabled={!jobTitle.trim() || !jobDescription.trim()}
+                    disabled={!jobUrl.trim() && (!jobTitle.trim() || !jobDescription.trim())}
                     className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
                     <Search size={16} />

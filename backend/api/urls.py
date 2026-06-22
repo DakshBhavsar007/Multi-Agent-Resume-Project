@@ -210,6 +210,9 @@ urlpatterns = [
     path('api/v1/seeker/resume/drafts/<str:draft_id>', seeker_resume_builder.draft_detail, name='seeker-drafts-detail'),
     path('api/v1/seeker/resume/drafts/<str:draft_id>/activate', seeker_resume_builder.activate_draft, name='seeker-draft-activate'),
     path('api/v1/seeker/resume/drafts/<str:draft_id>/export-pdf', seeker_resume_builder.export_draft_pdf, name='seeker-draft-export-pdf'),
+    path('api/v1/seeker/resume/drafts/<str:draft_id>/versions', seeker_resume_builder.manage_versions, name='seeker-draft-versions-root'),
+    path('api/v1/seeker/resume/drafts/<str:draft_id>/versions/<str:version_id>/restore', seeker_resume_builder.restore_version, name='seeker-draft-version-restore'),
     path('api/v1/seeker/resume/recommend-templates', seeker_resume_builder.recommend_templates, name='seeker-recommend-templates'),
+    path('api/debug/project-relevance', seeker_resume_builder.debug_project_relevance, name='debug-project-relevance'),
 ]
 
