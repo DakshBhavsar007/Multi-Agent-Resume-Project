@@ -49,6 +49,7 @@ Vishleshan processes and stores the following sensitive information. Any vulnera
 - **Resume Contents** — Employment history, education records, project details
 - **API Keys** — Developer-issued `vish_live_*` and `vish_test_*` keys
 - **JWT Tokens & Seeker Tokens** — Recruiter session JWTs and seeker session tokens (`vish_seeker_token`)
+- **Fraud Analysis Audits** — Detailed scan logs, website validation outcomes, and recruiter email verification metadata stored in the audit trail database
 - **Payment Data** — Razorpay subscription metadata (no raw card data stored)
 - **LLM API Keys & Google OAuth Credentials** — Gemini API keys, Google client ID, and Google client secret stored in the environment configuration
 
@@ -138,7 +139,7 @@ Vishleshan includes the following built-in security controls:
 - **JWT Auth** — Recruiter sessions use short-lived JWT access tokens with refresh rotation
 - **Redis Rate Limiting** — Per-key monthly quota enforcement prevents abuse
 - **Fraud Detection Agent** — Scans uploaded resumes for AI-generated content, plagiarism, and ATS keyword stuffing
-- **LinkedIn Job Post URL Scanner** — Integrates public scraping with pattern analysis to verify external LinkedIn job postings for safety and legitimacy before candidate applications.
+- **LinkedIn Job Post & Legitimacy Scanner** — Integrates scraping with 6-point AI verification audits (website validation, recruiter email domain checks, salary realism, LinkedIn presence, cloned post templates, and duplicate posting detection) to protect seekers from phishing and recruitment fraud.
 - **LLM Key Rotation** — The `RotateLLMClient` rotates across multiple Gemini API keys to prevent single-key exposure
 - **CORS Configuration** — Restrict allowed origins to your frontend domain in production
 

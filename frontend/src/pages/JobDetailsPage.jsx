@@ -540,14 +540,14 @@ export default function JobDetailsPage() {
                 <h3 className="font-bold text-sm text-[#2A2A2A]">Legitimacy Verification</h3>
               </div>
               
-              {safetyReport ? (
+               {safetyReport ? (
                 <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-[#5c5c5c]">Legitimacy Rating:</span>
+                    <span className="text-xs text-[#5c5c5c]">Trust Score:</span>
                     <span className={`text-sm font-black ${
                       safetyReport.originality_score >= 80 ? "text-emerald-500" : safetyReport.originality_score >= 60 ? "text-amber-500" : "text-red-500"
                     }`}>
-                      {safetyReport.originality_score}%
+                      {safetyReport.originality_score}/100
                     </span>
                   </div>
                   <div className="w-full bg-[#f5f4ef] rounded-full h-1.5 overflow-hidden">
@@ -559,14 +559,23 @@ export default function JobDetailsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-bold">
+                  <div className="grid grid-cols-2 gap-2 text-center text-[9px] font-bold">
                     <div className="bg-[#f5f4ef]/60 p-2 rounded-lg border border-[#e6dfcd]">
-                      <p className="text-gray-400 font-extrabold uppercase">AI Content</p>
-                      <p className="text-xs font-black text-[#2A2A2A] mt-0.5">{safetyReport.ai_probability}%</p>
+                      <p className="text-gray-400 font-extrabold uppercase">Risk Level</p>
+                      <p className={`text-xs font-black mt-0.5 ${
+                        (safetyReport.risk_level || "Low") === "High" ? "text-red-500" :
+                        (safetyReport.risk_level || "Low") === "Medium" ? "text-amber-500" : "text-emerald-500"
+                      }`}>
+                        {safetyReport.risk_level || (safetyReport.originality_score >= 80 ? "Low" : safetyReport.originality_score >= 60 ? "Medium" : "High")}
+                      </p>
                     </div>
                     <div className="bg-[#f5f4ef]/60 p-2 rounded-lg border border-[#e6dfcd]">
-                      <p className="text-gray-400 font-extrabold uppercase">Boilerplate</p>
-                      <p className="text-xs font-black text-[#2A2A2A] mt-0.5">{safetyReport.plagiarism_score}%</p>
+                      <p className="text-gray-400 font-extrabold uppercase">Verified Co.</p>
+                      <p className={`text-xs font-black mt-0.5 ${
+                        (safetyReport.verified_company || "Yes") === "Yes" ? "text-emerald-500" : "text-red-500"
+                      }`}>
+                        {safetyReport.verified_company || (safetyReport.originality_score >= 70 ? "Yes" : "No")}
+                      </p>
                     </div>
                   </div>
 

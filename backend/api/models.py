@@ -241,6 +241,7 @@ class FraudScanLog(models.Model):
     plagiarism_score = models.IntegerField(default=0)
     status = models.CharField(max_length=100, default="Verified Clean")
     portfolios = models.JSONField(default=list)
+    detailed_checks = models.JSONField(default=dict)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

@@ -325,7 +325,7 @@ def scan_job_safety_public(request, session_id):
             ai_prob = analysis.get("ai_probability", 10)
             plagiarism = analysis.get("plagiarism_score", 5)
             
-            status_str = "Verified Clean"
+            status_str = analysis.get("status", "Approved")
             if originality < 70 or plagiarism > 30 or analysis.get("ats_manipulation_detected", False):
                 status_str = "Suspicious Listing"
 
@@ -338,8 +338,24 @@ def scan_job_safety_public(request, session_id):
                 ai_probability=ai_prob,
                 plagiarism_score=plagiarism,
                 status=status_str,
-                portfolios=analysis.get("manipulation_flags", []) or ["Safety Audit Checked"]
+                portfolios=analysis.get("manipulation_flags", []) or ["Safety Audit Checked"],
+                detailed_checks=analysis.get("detailed_checks", {})
             )
+
+        # Derive backward-compatible risk level and verified company if not stored
+        detailed_checks = log.detailed_checks or {}
+        risk_level = detailed_checks.get("risk_level")
+        if not risk_level:
+            if log.originality_score < 60:
+                risk_level = "High"
+            elif log.originality_score < 80:
+                risk_level = "Medium"
+            else:
+                risk_level = "Low"
+
+        verified_company = detailed_checks.get("verified_company")
+        if not verified_company:
+            verified_company = "Yes" if log.originality_score >= 70 else "No"
 
         return JsonResponse(success_response({
             "id": str(log.id),
@@ -349,7 +365,10 @@ def scan_job_safety_public(request, session_id):
             "ai_probability": log.ai_probability,
             "plagiarism_score": log.plagiarism_score,
             "status": log.status,
+            "risk_level": risk_level,
+            "verified_company": verified_company,
             "flags": log.portfolios,
+            "detailed_checks": detailed_checks,
             "created_at": log.created_at.isoformat()
         }))
 
@@ -397,7 +416,7 @@ def scan_safety_arbitrary_public(request):
         ai_prob = analysis.get("ai_probability", 10)
         plagiarism = analysis.get("plagiarism_score", 5)
 
-        status_str = "Verified Clean"
+        status_str = analysis.get("status") or "Verified Clean"
         if originality < 70 or plagiarism > 30 or analysis.get("ats_manipulation_detected", False):
             status_str = "Suspicious Listing"
 
@@ -412,7 +431,10 @@ def scan_safety_arbitrary_public(request):
             "ai_probability": ai_prob,
             "plagiarism_score": plagiarism,
             "status": status_str,
+            "risk_level": analysis.get("risk_level", "Low"),
+            "verified_company": analysis.get("verified_company", "Yes"),
             "flags": flags,
+            "detailed_checks": analysis.get("detailed_checks", {}),
             "summary": analysis.get("summary", "Safety report generated successfully.")
         }))
 

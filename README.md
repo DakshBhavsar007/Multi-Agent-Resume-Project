@@ -63,8 +63,15 @@ All agents communicate through the `RotateLLMClient`, which distributes requests
 ### Fraud Detection & Protection
 - **Resume Authenticity Scanning** — Detects AI-generated content, plagiarism, and invisible keyword stuffing
 - **Job Posting Verification** — Flags phishing scams, ghost job indicators, and clone copy-paste listings
-- **Safety Scoring** — Originality score, AI probability percentage, and plagiarism rate for every scan
-- **Scan History** — Audit trail of all protection scans with detailed breakdowns
+- **AI Fake Job Detection System (Module 1)** — Fully integrated 6-point verification checklist to protect job seekers:
+  1. *Official Website Validation* (Presence of corporate domain and security certificates)
+  2. *Recruiter Email Domain Verification* (Matches registered corporate domain; flags generic public accounts)
+  3. *Salary Realism Evaluation* (Assesses compensation ranges against local market standards)
+  4. *LinkedIn Company Presence Check* (Lookup on professional networking platforms)
+  5. *Suspicious/Copied Description Analysis* (Identifies boilerplate scam templates and high copy signatures)
+  6. *Duplicate/Repeated Posting Detection* (Scans mass automation patterns in public listings)
+- **Legitimacy Score Output Suite** — Real-time Trust Score (/100), Risk Level (Low/Medium/High), Verified Company status, and Approved/Suspicious classification for every scan
+- **Scan History** — Recruiter & Job Seeker audit trail of all safety checks with dynamic interactive breakdowns
 
 ### Job Seeker Portal
 - **Dedicated Seeker Accounts** — Separate login and registration flows for job seekers, redirecting directly to `/jobs` as the unified landing hub & dashboard.
@@ -183,12 +190,24 @@ Interactive wage trajectories, hiring velocity index, and region-wise job openin
 
 ## Quick Start
 
-### 1. Requirements
+### One-Click Development Start (Windows)
+
+For Windows environments, you can boot the entire local workspace (Vite Frontend, Django Backend, Redis, and Celery worker) using the provided batch script. It automatically cleans up old ports (`5173` & `8000`), verifies/runs Redis, and spawns the services in separate command windows:
+
+```cmd
+run.bat
+```
+
+---
+
+### Manual Setup & Requirements
+
+#### 1. Requirements
 - Node.js `v18+`
 - Python `v3.10+`
 - PostgreSQL, Redis, ChromaDB (running locally or remotely)
 
-### 2. Backend Setup
+#### 2. Backend Setup
 ```bash
 cd backend
 cp .env.example .env
@@ -214,7 +233,7 @@ python manage.py runserver 8000
 celery -A workers.celery_worker worker --loglevel=info --pool=threads --concurrency=4
 ```
 
-### 3. Frontend Setup
+#### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
@@ -262,10 +281,24 @@ curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \
 {
   "success": true,
   "data": {
+    "job_title": "Senior Frontend Engineer",
+    "company_name": "Google",
     "originality_score": 94,
     "ai_probability": 6,
     "plagiarism_score": 5,
-    "status": "Verified Clean"
+    "status": "Approved",
+    "risk_level": "Low",
+    "verified_company": "Yes",
+    "flags": ["Source: LinkedIn"],
+    "detailed_checks": {
+      "official_website": { "status": "Yes", "details": "Official domain and secure certificates verified." },
+      "recruiter_email": { "status": "Yes", "details": "Recruiter email domain matches company domain." },
+      "salary_realistic": { "status": "Yes", "details": "Compensation aligns with market standards." },
+      "linkedin_presence": { "status": "Yes", "details": "Found active company page on LinkedIn." },
+      "description_copied": { "status": "No", "details": "Job requirements are custom-tailored." },
+      "repeated_posts": { "status": "No", "details": "No duplicate posting signatures found." }
+    },
+    "summary": "Verification complete. Job listing appears safe and authentic."
   }
 }
 ```

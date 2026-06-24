@@ -38,9 +38,15 @@ frontend/.env.production.local
 .DS_Store
 Thumbs.db
 *.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Temp / Build artifacts
 /tmp/
+backend_output.log
 /backend_output.log
 dummy.pdf
 celerybeat-schedule
@@ -48,9 +54,14 @@ celerybeat.pid
 .coverage
 .pytest_cache/
 .eslintcache
+frontend/.eslintcache
 htmlcov/
 .gemini/
 .antigravity/
+.vite/
+frontend/.vite/
+frontend/dist/
+frontend/node_modules/
 
 # Inspiration / Design References
 inspiration_ui/
@@ -59,3 +70,5 @@ inspiration_ui/
 backend/test_resume_2col.pdf
 backend/scratch/
 /*.pdf
+*.pdf
+

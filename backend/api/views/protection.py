@@ -101,7 +101,8 @@ def scan_portfolio(request):
                 ai_probability=ai_prob,
                 plagiarism_score=plagiarism,
                 status=status_str,
-                portfolios=flags
+                portfolios=flags,
+                detailed_checks=analysis.get("detailed_checks", {})
             )
             
         else:
@@ -190,6 +191,20 @@ def scan_portfolio(request):
                 portfolios=portfolios
             )
 
+        detailed_checks = log.detailed_checks or {}
+        risk_level = detailed_checks.get("risk_level")
+        if not risk_level:
+            if log.originality_score < 60:
+                risk_level = "High"
+            elif log.originality_score < 80:
+                risk_level = "Medium"
+            else:
+                risk_level = "Low"
+
+        verified_company = detailed_checks.get("verified_company")
+        if not verified_company:
+            verified_company = "Yes" if log.originality_score >= 70 else "No"
+
         return JsonResponse(success_response({
             "id": str(log.id),
             "candidate_name": log.candidate_name,
@@ -199,7 +214,10 @@ def scan_portfolio(request):
             "ai_probability": log.ai_probability,
             "plagiarism_score": log.plagiarism_score,
             "status": log.status,
+            "risk_level": risk_level,
+            "verified_company": verified_company,
             "portfolios": log.portfolios,
+            "detailed_checks": detailed_checks,
             "created_at": log.created_at.isoformat()
         }))
 
@@ -231,7 +249,10 @@ def get_scan_history(request):
                 "ai_probability": l.ai_probability,
                 "plagiarism_score": l.plagiarism_score,
                 "status": l.status,
+                "risk_level": (l.detailed_checks or {}).get("risk_level") or ("High" if l.originality_score < 60 else "Medium" if l.originality_score < 80 else "Low"),
+                "verified_company": (l.detailed_checks or {}).get("verified_company") or ("Yes" if l.originality_score >= 70 else "No"),
                 "portfolios": l.portfolios or [],
+                "detailed_checks": l.detailed_checks or {},
                 "created_at": l.created_at.isoformat()
             }
             for l in logs

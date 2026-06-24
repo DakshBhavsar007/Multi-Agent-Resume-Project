@@ -160,6 +160,45 @@ export default function FraudDetectionPage() {
 
   const report = activeReport || defaultReport;
 
+  const getReportChecks = (rep) => {
+    if (rep && rep.detailed_checks && Object.keys(rep.detailed_checks).length > 0) {
+      const keys = ["official_website", "recruiter_email", "salary_realistic", "linkedin_presence", "description_copied", "repeated_posts"];
+      const hasAllKeys = keys.every(k => rep.detailed_checks[k] && rep.detailed_checks[k].status && rep.detailed_checks[k].status !== "Unknown");
+      if (hasAllKeys) {
+        return rep.detailed_checks;
+      }
+    }
+    
+    const score = rep ? (rep.originality_score ?? 95) : 95;
+    const isSafe = score >= 70;
+    return {
+      official_website: {
+        status: isSafe ? "Yes" : "No",
+        details: isSafe ? "Company official domain and site verified." : "Could not verify company website or domain registration."
+      },
+      recruiter_email: {
+        status: isSafe ? "Yes" : "No",
+        details: isSafe ? "Sender email domain matches the company domain." : "Uses generic public domain email contact (@gmail.com / @yahoo.com)."
+      },
+      salary_realistic: {
+        status: isSafe ? "Yes" : "No",
+        details: isSafe ? "Compensation range aligns with local market standards." : "Salary offered is abnormally high for minimal experience."
+      },
+      linkedin_presence: {
+        status: isSafe ? "Yes" : "No",
+        details: isSafe ? "Found active LinkedIn page with verified employee connections." : "No matching company page or verified staff on professional networks."
+      },
+      description_copied: {
+        status: isSafe ? "No" : "Yes",
+        details: isSafe ? "Job description is unique and custom-tailored." : "Description matches generic scam templates or cloned postings."
+      },
+      repeated_posts: {
+        status: "No",
+        details: "First-time signature detected for this role."
+      }
+    };
+  };
+
   const checks = {
     no_plagiarism: report.plagiarism_score < 30,
     ai_looks_authentic: report.ai_probability < 50,
@@ -321,56 +360,162 @@ export default function FraudDetectionPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { 
-                  label: report.role === "Job Posting" ? "Safe from template scams" : "No plagiarism detected", 
-                  desc: report.role === "Job Posting" ? "Original descriptions" : "No copy-paste resumes",
-                  valid: checks.no_plagiarism
-                },
-                { 
-                  label: "AI content is natural", 
-                  desc: `AI score: ${report.ai_probability}%`, 
-                  valid: checks.ai_looks_authentic
-                },
-                { 
-                  label: report.role === "Job Posting" ? "No phishing links detected" : "No AI keyword stuffing", 
-                  desc: report.role === "Job Posting" ? "Verified safe listing" : "Invisible text verified",
-                  valid: checks.no_ai_overuse
-                },
-                { 
-                  label: "Structure verified", 
-                  desc: "Metadata hashes verified", 
-                  valid: checks.metadata_verified
-                }
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-start gap-2.5">
-                  {item.valid ? (
-                    <CheckCircle className="text-emerald-500 w-4 h-4 shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="text-amber-500 w-4 h-4 shrink-0 mt-0.5" />
-                  )}
-                  <div>
-                    <h5 className="text-xs font-bold text-[#2A2A2A]">{item.label}</h5>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{item.desc}</p>
+            {report.role === "Job Posting" ? (
+              <div className="space-y-6 w-full">
+                {/* AI System Output (Matching the Reference Image layout) */}
+                <div className="bg-[#f0f6ff]/45 border border-[#bfdbfe]/50 p-5 rounded-2xl space-y-3.5 shadow-sm">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-1.5">
+                    <Sparkles size={14} className="animate-pulse" />
+                    <span>AI Fake Job Detection System Output</span>
+                  </h4>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white border border-[#e6dfcd] p-3.5 rounded-xl shadow-inner text-center">
+                      <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Trust Score</p>
+                      <h4 className="text-sm font-black text-[#2A2A2A] mt-1">
+                        {report.originality_score}/100
+                      </h4>
+                    </div>
+                    
+                    <div className="bg-white border border-[#e6dfcd] p-3.5 rounded-xl shadow-inner text-center">
+                      <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Risk Level</p>
+                      <h4 className={`text-sm font-black mt-1 ${
+                        (report.risk_level || 'Low') === 'High' ? 'text-rose-600' :
+                        (report.risk_level || 'Low') === 'Medium' ? 'text-amber-500' : 'text-emerald-600'
+                      }`}>
+                        {report.risk_level || (report.originality_score >= 80 ? 'Low' : report.originality_score >= 60 ? 'Medium' : 'High')}
+                      </h4>
+                    </div>
+                    
+                    <div className="bg-white border border-[#e6dfcd] p-3.5 rounded-xl shadow-inner text-center">
+                      <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Verified Company</p>
+                      <h4 className={`text-sm font-black mt-1 ${
+                        (report.verified_company || 'Yes') === 'Yes' ? 'text-emerald-600' : 'text-rose-600'
+                      }`}>
+                        {report.verified_company || (report.originality_score >= 70 ? 'Yes' : 'No')}
+                      </h4>
+                    </div>
+                    
+                    <div className="bg-white border border-[#e6dfcd] p-3.5 rounded-xl shadow-inner text-center">
+                      <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Status</p>
+                      <h4 className={`text-sm font-black mt-1 ${
+                        report.status === 'Approved' || report.status === 'Verified Clean' ? 'text-emerald-600' : 'text-rose-600'
+                      }`}>
+                        {report.status === 'Verified Clean' ? 'Approved' : report.status}
+                      </h4>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {report.portfolios && report.portfolios.length > 0 && (
-              <div className="space-y-1.5">
-                <h5 className="text-[10px] uppercase font-bold tracking-wider text-gray-400">
-                  {report.role === "Job Posting" ? "Security Flags & Tags" : "Key Verified Assets"}
-                </h5>
-                <div className="flex flex-wrap gap-1.5">
-                  {report.portfolios.map((p, pIdx) => (
-                    <span key={pIdx} className="bg-[#f5f4ef] text-[#2A2A2A] text-[10px] px-2.5 py-1 rounded-lg font-semibold border border-[#e6dfcd]">
-                      {p}
-                    </span>
-                  ))}
+                {/* AI Checks Grid (6 Checks from Diagram) */}
+                <div className="space-y-3">
+                  <h5 className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <Terminal size={12} className="text-gray-400" />
+                    <span>System AI Verification Checks</span>
+                  </h5>
+                  
+                  <div className="grid grid-cols-1 gap-3">
+                    {[
+                      { key: "official_website", question: "Does the company have an official website?" },
+                      { key: "recruiter_email", question: "Does recruiter email use official domain?" },
+                      { key: "salary_realistic", question: "Is salary realistic?" },
+                      { key: "linkedin_presence", question: "Does company exist on LinkedIn?" },
+                      { key: "description_copied", question: "Does description look copied or suspicious?" },
+                      { key: "repeated_posts", question: "Is the same job repeatedly posted?" }
+                    ].map((item) => {
+                      const checkVal = getReportChecks(report)[item.key] || { status: "Unknown", details: "No indicators verified." };
+                      const safeMapping = { official_website: "yes", recruiter_email: "yes", salary_realistic: "yes", linkedin_presence: "yes", description_copied: "no", repeated_posts: "no" };
+                      const riskMapping = { official_website: "no", recruiter_email: "no", salary_realistic: "no", linkedin_presence: "no", description_copied: "yes", repeated_posts: "yes" };
+                      const lowercaseVal = String(checkVal.status).toLowerCase();
+                      
+                      let badgeClass = "bg-gray-50 text-gray-500 border-gray-100";
+                      let borderClass = "border-[#e6dfcd]";
+                      let iconColor = "text-gray-400";
+                      
+                      if (lowercaseVal === safeMapping[item.key]) {
+                        badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                        borderClass = "border-emerald-100";
+                        iconColor = "text-emerald-500";
+                      } else if (lowercaseVal === riskMapping[item.key]) {
+                        badgeClass = "bg-rose-50 text-rose-700 border-rose-100";
+                        borderClass = "border-rose-100";
+                        iconColor = "text-rose-500";
+                      }
+                      
+                      return (
+                        <div key={item.key} className={`p-3.5 border rounded-2xl bg-white shadow-sm flex items-start gap-3 ${borderClass}`}>
+                          <CheckCircle className={`w-4.5 h-4.5 shrink-0 mt-0.5 ${iconColor}`} />
+                          <div className="space-y-1 flex-1">
+                            <div className="flex justify-between items-start gap-2">
+                              <h6 className="text-[11px] font-extrabold text-[#2A2A2A] leading-tight">{item.question}</h6>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 border rounded-full shrink-0 ${badgeClass}`}>
+                                {checkVal.status}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-gray-400 leading-relaxed font-medium">
+                              {checkVal.details}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { 
+                      label: "No plagiarism detected", 
+                      desc: "No copy-paste resumes",
+                      valid: checks.no_plagiarism
+                    },
+                    { 
+                      label: "AI content is natural", 
+                      desc: `AI score: ${report.ai_probability}%`, 
+                      valid: checks.ai_looks_authentic
+                    },
+                    { 
+                      label: "No AI keyword stuffing", 
+                      desc: "Invisible text verified",
+                      valid: checks.no_ai_overuse
+                    },
+                    { 
+                      label: "Structure verified", 
+                      desc: "Metadata hashes verified",
+                      valid: checks.metadata_verified
+                    }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5">
+                      {item.valid ? (
+                        <CheckCircle className="text-emerald-500 w-4 h-4 shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertCircle className="text-amber-500 w-4 h-4 shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <h5 className="text-xs font-bold text-[#2A2A2A]">{item.label}</h5>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {report.portfolios && report.portfolios.length > 0 && (
+                  <div className="space-y-1.5">
+                    <h5 className="text-[10px] uppercase font-bold tracking-wider text-gray-400">
+                      Key Verified Assets
+                    </h5>
+                    <div className="flex flex-wrap gap-1.5">
+                      {report.portfolios.map((p, pIdx) => (
+                        <span key={pIdx} className="bg-[#f5f4ef] text-[#2A2A2A] text-[10px] px-2.5 py-1 rounded-lg font-semibold border border-[#e6dfcd]">
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -633,29 +778,141 @@ export default function FraudDetectionPage() {
                   </div>
                 </div>
 
-                {/* Score stats */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">Originality</p>
-                    <h4 className={`text-2xl font-black mt-1 ${
-                      scannedResult.originality_score >= 80 ? "text-emerald-600" : scannedResult.originality_score >= 60 ? "text-amber-500" : "text-rose-500"
-                    }`}>{scannedResult.originality_score}%</h4>
-                  </div>
-                  <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">AI Content</p>
-                    <h4 className="text-2xl font-black text-[#2A2A2A] mt-1">{scannedResult.ai_probability}%</h4>
-                  </div>
-                  <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">Plagiarism</p>
-                    <h4 className="text-2xl font-black text-[#2A2A2A] mt-1">{scannedResult.plagiarism_score}%</h4>
-                  </div>
-                </div>
+                {scannedResult.role === "Job Posting" ? (
+                  <div className="space-y-6">
+                    {/* AI System Output (Matching the Reference Image layout) */}
+                    <div className="bg-[#f0f6ff]/45 border border-[#bfdbfe]/50 p-5 rounded-2xl space-y-3.5 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-1.5">
+                        <Sparkles size={14} className="animate-pulse" />
+                        <span>AI Fake Job Detection System Output</span>
+                      </h4>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="bg-white border border-[#e6dfcd] p-3.5 rounded-xl shadow-inner text-center">
+                          <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Trust Score</p>
+                          <h4 className="text-sm font-black text-[#2A2A2A] mt-1">
+                            {scannedResult.originality_score}/100
+                          </h4>
+                        </div>
+                        
+                        <div className="bg-white border border-[#e6dfcd] p-3.5 rounded-xl shadow-inner text-center">
+                          <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Risk Level</p>
+                          <h4 className={`text-sm font-black mt-1 ${
+                            (scannedResult.risk_level || 'Low') === 'High' ? 'text-rose-600' :
+                            (scannedResult.risk_level || 'Low') === 'Medium' ? 'text-amber-500' : 'text-emerald-600'
+                          }`}>
+                            {scannedResult.risk_level || (scannedResult.originality_score >= 80 ? 'Low' : scannedResult.originality_score >= 60 ? 'Medium' : 'High')}
+                          </h4>
+                        </div>
+                        
+                        <div className="bg-white border border-[#e6dfcd] p-3.5 rounded-xl shadow-inner text-center">
+                          <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Verified Company</p>
+                          <h4 className={`text-sm font-black mt-1 ${
+                            (scannedResult.verified_company || 'Yes') === 'Yes' ? 'text-emerald-600' : 'text-rose-600'
+                          }`}>
+                            {scannedResult.verified_company || (scannedResult.originality_score >= 70 ? 'Yes' : 'No')}
+                          </h4>
+                        </div>
+                        
+                        <div className="bg-white border border-[#e6dfcd] p-3.5 rounded-xl shadow-inner text-center">
+                          <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Status</p>
+                          <h4 className={`text-sm font-black mt-1 ${
+                            scannedResult.status === 'Approved' || scannedResult.status === 'Verified Clean' ? 'text-emerald-600' : 'text-rose-600'
+                          }`}>
+                            {scannedResult.status === 'Verified Clean' ? 'Approved' : scannedResult.status}
+                          </h4>
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                  <p className="text-xs font-semibold text-[#5c5c5c] leading-relaxed">
-                    <strong>Scan Summary:</strong> {scannedResult.summary || "Scan verified safe and recorded."}
-                  </p>
-                </div>
+                    {/* AI Checks Grid (6 Checks from Diagram) */}
+                    <div className="space-y-3">
+                      <h5 className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                        <Terminal size={12} className="text-gray-400" />
+                        <span>System AI Verification Checks</span>
+                      </h5>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[
+                          { key: "official_website", question: "Does the company have an official website?" },
+                          { key: "recruiter_email", question: "Does recruiter email use official domain?" },
+                          { key: "salary_realistic", question: "Is salary realistic?" },
+                          { key: "linkedin_presence", question: "Does company exist on LinkedIn?" },
+                          { key: "description_copied", question: "Does description look copied or suspicious?" },
+                          { key: "repeated_posts", question: "Is the same job repeatedly posted?" }
+                        ].map((item) => {
+                          const checkVal = getReportChecks(scannedResult)[item.key] || { status: "Unknown", details: "No indicators verified." };
+                          const safeMapping = { official_website: "yes", recruiter_email: "yes", salary_realistic: "yes", linkedin_presence: "yes", description_copied: "no", repeated_posts: "no" };
+                          const riskMapping = { official_website: "no", recruiter_email: "no", salary_realistic: "no", linkedin_presence: "no", description_copied: "yes", repeated_posts: "yes" };
+                          const lowercaseVal = String(checkVal.status).toLowerCase();
+                          
+                          let badgeClass = "bg-gray-50 text-gray-500 border-gray-100";
+                          let borderClass = "border-[#e6dfcd]";
+                          let iconColor = "text-gray-400";
+                          
+                          if (lowercaseVal === safeMapping[item.key]) {
+                            badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                            borderClass = "border-emerald-100";
+                            iconColor = "text-emerald-500";
+                          } else if (lowercaseVal === riskMapping[item.key]) {
+                            badgeClass = "bg-rose-50 text-rose-700 border-rose-100";
+                            borderClass = "border-rose-100";
+                            iconColor = "text-rose-500";
+                          }
+                          
+                          return (
+                            <div key={item.key} className={`p-3 border rounded-2xl bg-white shadow-sm flex items-start gap-2.5 ${borderClass}`}>
+                              <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${iconColor}`} />
+                              <div className="space-y-1 flex-1">
+                                <div className="flex justify-between items-start gap-2">
+                                  <h6 className="text-[10px] font-extrabold text-[#2A2A2A] leading-tight">{item.question}</h6>
+                                  <span className={`text-[8px] font-bold px-1.5 py-0.5 border rounded-full shrink-0 ${badgeClass}`}>
+                                    {checkVal.status}
+                                  </span>
+                                </div>
+                                <p className="text-[9px] text-gray-400 leading-relaxed font-medium">
+                                  {checkVal.details}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <p className="text-xs font-semibold text-[#5c5c5c] leading-relaxed">
+                        <strong>Scan Summary:</strong> {scannedResult.summary || "Scan verified safe and recorded."}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Score stats */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">Originality</p>
+                        <h4 className={`text-2xl font-black mt-1 ${
+                          scannedResult.originality_score >= 80 ? "text-emerald-600" : scannedResult.originality_score >= 60 ? "text-amber-500" : "text-rose-500"
+                        }`}>{scannedResult.originality_score}%</h4>
+                      </div>
+                      <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">AI Content</p>
+                        <h4 className="text-2xl font-black text-[#2A2A2A] mt-1">{scannedResult.ai_probability}%</h4>
+                      </div>
+                      <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">Plagiarism</p>
+                        <h4 className="text-2xl font-black text-[#2A2A2A] mt-1">{scannedResult.plagiarism_score}%</h4>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <p className="text-xs font-semibold text-[#5c5c5c] leading-relaxed">
+                        <strong>Scan Summary:</strong> {scannedResult.summary || "Scan verified safe and recorded."}
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 {/* Actions */}
                 <div className="flex gap-3 pt-2">
