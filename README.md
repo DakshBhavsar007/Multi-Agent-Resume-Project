@@ -13,7 +13,8 @@
     <a href="#features">Features</a> •
     <a href="#quick-start">Quick Start</a> •
     <a href="#developer-portal">Developer Portal</a> •
-    <a href="#api-reference">API Reference</a>
+    <a href="#api-reference">API Reference</a> •
+    <a href="#license--attributions">License</a>
   </p>
 </div>
 
@@ -90,7 +91,7 @@ All agents communicate through the `RotateLLMClient`, which distributes requests
 - **Cross-Portal Session Sync** — Logging out from the Recruiter/Company dashboard automatically invalidates and terminates sessions across other active Seeker and Developer portal tabs.
 
 ### Recruiter & Premium Features
-- **Premium Feature Inidication** — Shows product design thinking for monetization with a `👑 Premium` plan lock badge on bulk upload (ZIP, PDF, DOCX) buttons.
+- **Premium Feature Indication** — Shows product design thinking for monetization with a `👑 Premium` plan lock badge on bulk upload (ZIP, PDF, DOCX) buttons.
 - **Batch Resume Ingestion** — Mocked and protected under the Premium tier to optimize resource consumption.
 
 ### Developer Portal (SaaS API)
@@ -238,7 +239,7 @@ celery -A workers.celery_worker worker --loglevel=info --pool=threads --concurre
 cd frontend
 npm install
 cp .env.local.example .env.local
-# Set VITE_GOOGLE_CLIENT_ID in .env.local
+# Set NEXT_PUBLIC_API_URL, VITE_GOOGLE_CLIENT_ID, and VITE_GITHUB_CLIENT_ID in .env.local
 npm run dev
 ```
 
@@ -362,6 +363,9 @@ curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \
 
 ## License & Attributions
 
-Engineered for optimal performance, zero-downtime operation, and seamless enterprise integration.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+### Academic Context
 **Built as a Sem-IV Project** | *Multi-Agent Recruitment Intelligence Platform*
+
+Engineered for optimal performance, zero-downtime operation, and seamless enterprise integration.
