@@ -98,7 +98,44 @@ export default function UserDashboard() {
   const strengths = atsReport.strengths || [];
   const weaknesses = atsReport.weaknesses || [];
   const topSuggestions = atsReport.topSuggestions || [];
-  const bd = atsReport.detailed_breakdown || {
+  const getDetailedBreakdown = (report) => {
+    if (!report) return null;
+    if (report.detailed_breakdown) return report.detailed_breakdown;
+    
+    const legacy = report.breakdown || {};
+    return {
+      keyword_match: {
+        score: legacy.keywords?.score ?? 0,
+        matched: legacy.keywords?.matchedKeywords ?? [],
+        missing: legacy.keywords?.missingKeywords ?? []
+      },
+      skills_match: {
+        score: legacy.integrity?.score ?? 0,
+        matched: [],
+        missing: []
+      },
+      experience_relevance: {
+        score: legacy.content?.score ?? 0,
+        details: "Derived from content score",
+        years: 0,
+        required_years: 0
+      },
+      project_relevance: {
+        score: legacy.content?.score ?? 0,
+        details: "Derived from content score"
+      },
+      education_match: {
+        score: legacy.structure?.score ?? 0,
+        details: "Derived from structure score"
+      },
+      ats_formatting: {
+        score: legacy.formatting?.score ?? 0,
+        issues: legacy.formatting?.issues ?? []
+      }
+    };
+  };
+
+  const bd = getDetailedBreakdown(atsReport) || {
     keyword_match: { score: 0, matched: [], missing: [] },
     skills_match: { score: 0, matched: [], missing: [] },
     experience_relevance: { score: 0, details: "Not analyzed", years: 0, required_years: 0 },

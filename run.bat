@@ -37,15 +37,21 @@ if %errorlevel% equ 0 (
 
 echo.
 echo ===================================================
-echo [3/4] Starting Django Backend on port 8000...
+echo [3/5] Starting Django Backend on port 8000...
 echo ===================================================
 start "Django Backend (Port 8000)" cmd /k "cd backend && python manage.py runserver 0.0.0.0:8000"
 
 echo.
 echo ===================================================
-echo [4/4] Starting Vite Frontend on port 5173...
+echo [4/5] Starting Vite Frontend on port 5173...
 echo ===================================================
 start "Vite Frontend (Port 5173)" cmd /k "cd frontend && npm run dev"
+
+echo.
+echo ===================================================
+echo [5/5] Starting Celery Worker...
+echo ===================================================
+start "Celery Worker" cmd /k "cd backend && celery -A workers.celery_worker worker --loglevel=info --pool=threads --concurrency=4"
 
 echo.
 echo ===================================================
@@ -54,3 +60,4 @@ echo - Frontend: http://localhost:5173
 echo - Backend: http://127.0.0.1:8000
 echo ===================================================
 pause
+
