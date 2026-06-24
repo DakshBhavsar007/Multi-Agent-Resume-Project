@@ -130,25 +130,53 @@ The frontend hosts all three portals (Recruiter ATS, Job Seeker, Developer) as a
 
 ## Platform Highlights
 
-### Interactive Applicant Tracking System (ATS)
+### 1. Interactive Recruiter ATS (Applicant Tracking System)
 Complete AI evaluation panels with semantic match scoring, candidate filtering, and multi-round hiring pipelines.
 
 <div align="center">
   <img src="./assets/ats_dashboard.png" alt="ATS Dashboard" width="100%" />
 </div>
 
-### Developer API Portal
-Full SaaS portal for third-party integrations with usage analytics, billing, and interactive documentation.
+### 2. Recruiter Recruitment Sessions
+Track and manage all hiring rounds, candidates, and job applications in one visual board.
+
+<div align="center">
+  <img src="./assets/recruiter_sessions.png" alt="Recruitment Sessions" width="100%" />
+</div>
+
+### 3. Interactive AI Resume Builder & Editor
+Build your resume using high-fidelity templates with a real-time side-by-side ATS compatibility score and AI suggestions.
+
+<div align="center">
+  <img src="./assets/resume_builder_editor.png" alt="AI Resume Builder" width="100%" />
+</div>
+
+### 4. Job Seeker Dashboard & ATS Scoring
+Track your applications pipeline and review real-time feedback with a breakdown of keywords, skills, formatting, and experience.
+
+<div align="center">
+  <img src="./assets/seeker_dashboard.png" alt="Job Seeker Dashboard" width="100%" />
+</div>
+
+### 5. Developer API Portal (SaaS Dashboard)
+Full SaaS portal for third-party integrations with usage analytics, Razorpay subscription billing, and interactive documentation.
 
 <div align="center">
   <img src="./assets/dev_portal.png" alt="Developer SDK Portal" width="100%" />
 </div>
 
-### Job Seeker Portal
-Smart job discovery with city-aware search, one-click apply, hiring safety verification, and salary trend insights — helping candidates find and verify opportunities safely.
+### 6. Job Seeker Landing & Smart Job Discovery
+City-aware job search, live state-to-city Indian autocomplete suggestions, and domain safety verification.
 
 <div align="center">
-  <img src="./assets/jobs.png" alt="Jobs Portal" width="100%" />
+  <img src="./assets/jobs.png" alt="Jobs Portal Landing" width="100%" />
+</div>
+
+### 7. Market Trends & Salary Insights
+Interactive wage trajectories, hiring velocity index, and region-wise job opening distribution charts.
+
+<div align="center">
+  <img src="./assets/market_trends.png" alt="Market Trends" width="100%" />
 </div>
 
 ---
