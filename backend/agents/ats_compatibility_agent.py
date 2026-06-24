@@ -527,6 +527,8 @@ class AtsCompatibilityAgent:
         jd_techs_all = set()
         matched_techs = []
         semantic_sim_score = 0.0
+        technology_overlap_score = 0.0
+        responsibility_overlap_score = 0.0
         
         # 2. Match calculations
         if target_job_description and target_job_description.strip():
