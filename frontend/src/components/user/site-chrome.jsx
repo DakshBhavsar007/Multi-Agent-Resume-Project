@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import logoWhite from "../../assets/logo_white.png";
+import logoBlack from "../../assets/logo_black.png";
 
 const links = [
   { to: "/", label: "Home", icon: LayoutDashboard },
@@ -57,10 +59,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <Link to="/jobs" className="flex shrink-0 items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground">
-            <Briefcase className="h-4 w-4" />
-          </div>
-          <span className="font-display text-lg font-semibold tracking-tight">CareerEngine</span>
+          <img src={logoWhite} alt="Vishleshan Logo" className="h-8 w-auto max-w-[150px] object-contain" />
         </Link>
 
         <nav className="ml-4 hidden flex-1 items-center gap-1 md:flex">
@@ -180,10 +179,7 @@ export function Footer() {
       <div className="mx-auto flex flex-col md:flex-row justify-between items-start max-w-7xl w-full px-6 py-12 gap-10 relative z-10">
         <div className="max-w-xs w-full space-y-4">
           <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground">
-              <Briefcase className="h-3.5 w-3.5" />
-            </div>
-            <span className="font-display text-base font-semibold">CareerEngine</span>
+            <img src={logoWhite} alt="Vishleshan Logo" className="h-7 w-auto max-w-[130px] object-contain" />
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
             A calmer job search. Built for humans, not algorithms.
@@ -219,7 +215,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground relative z-10 bg-white/80 backdrop-blur-sm">
-        © 2026 CareerEngine · Designed with care
+        © 2026 Vishleshan · Designed with care
       </div>
     </footer>
   );

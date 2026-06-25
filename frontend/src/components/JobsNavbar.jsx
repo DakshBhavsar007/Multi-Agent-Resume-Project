@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, LogOut, Upload, Briefcase, TrendingUp, FolderGit, Home, Shield, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
 import ResumeUploadModal from './ResumeUploadModal';
+import logoWhite from '../assets/logo_white.png';
 
 export default function JobsNavbar({ onUploadClick }) {
   const location = useLocation();
@@ -83,7 +84,7 @@ export default function JobsNavbar({ onUploadClick }) {
       {/* Brand logo */}
       <div className="flex items-center space-x-8">
         <Link to="/jobs" className="flex items-center space-x-2">
-          <span className="text-xl font-extrabold text-[#111111] font-sans tracking-tight">CareerEngine</span>
+          <img src={logoWhite} alt="Vishleshan Logo" className="h-8 w-auto max-w-[150px] object-contain" />
         </Link>
 
         {/* Links */}
