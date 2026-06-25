@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+db.sqlite3
+*.log
+uploads/
+photos/
+test_resume_2col.pdf
+scratch/
