@@ -201,7 +201,7 @@ const AuthPage = () => {
         transition={{ duration: 0.8, ease: [0.21, 0.45, 0.32, 0.9] }}
       >
         <div className="auth-header" style={{ transform: "translateZ(50px)" }}>
-          <span className="auth-logo">Vishleshan</span>
+          <span className="auth-logo">Between</span>
           <AnimatePresence mode="wait">
             <motion.h2 key={isLogin ? 'login' : 'signup'} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="auth-title">
               {isLogin ? 'Sign In' : 'Create Account'}
@@ -300,7 +300,7 @@ const AuthPage = () => {
         </div>
 
         <div className="auth-footer" style={{ transform: "translateZ(10px)" }}>
-          {isLogin ? "New to Vishleshan?" : "Have an account?"}
+          {isLogin ? "New to Between?" : "Have an account?"}
           <button className="auth-toggle-link" onClick={() => setIsLogin(!isLogin)}>{isLogin ? 'Sign Up' : 'Sign In'}</button>
         </div>
 

@@ -129,7 +129,7 @@ export default function RegisterPage() {
           <>
             <div className="text-center mb-8">
               <span className="text-accent text-3xl font-bold tracking-tight">
-                Vishleshan
+                Between
               </span>
               <h1 className="text-xl font-semibold text-charcoal mt-4">Create your account</h1>
               <p className="text-muted text-sm mt-1">Start hiring smarter with AI</p>

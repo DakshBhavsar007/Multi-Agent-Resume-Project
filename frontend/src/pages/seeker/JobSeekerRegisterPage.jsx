@@ -53,7 +53,7 @@ export default function JobSeekerRegisterPage() {
       setAuth(data);
       localStorage.setItem('vish_seeker_token', data.seeker_token);
       localStorage.setItem('vish_seeker_data', JSON.stringify(data.seeker));
-      toast.success('Account created! Welcome to Vishleshan!');
+      toast.success('Account created! Welcome to Between!');
       navigate('/jobs/dashboard');
     } catch (err) {
       toast.error(err.message || 'Registration failed');

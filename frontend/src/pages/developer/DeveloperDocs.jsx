@@ -257,7 +257,7 @@ export default function DeveloperDocs() {
           <section id="getting-started" className="mb-16 pt-8">
             <h1 className="text-4xl font-black text-charcoal mb-4">Getting Started</h1>
             <p className="text-gray-600 font-medium mb-6 leading-relaxed">
-              Welcome to the Vishleshan Developer API. Our REST API allows you to programmatically ingest resumes, match candidate skills to job descriptions, interact with our AI-powered candidate querying chatbot, and stream structural entity extraction securely into your HR infrastructure.
+              Welcome to the Between Developer API. Our REST API allows you to programmatically ingest resumes, match candidate skills to job descriptions, interact with our AI-powered candidate querying chatbot, and stream structural entity extraction securely into your HR infrastructure.
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-6">
               <h3 className="font-bold text-charcoal mb-4">Quick Start</h3>
@@ -278,7 +278,7 @@ export default function DeveloperDocs() {
                Test keys have the prefix <code>vish_test_</code> and do not incur billing charges, but are tightly rate-limited. Production keys use <code>vish_live_</code>.
             </div>
             <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "13px" }}>
-{`curl -X GET "https://api.vishleshan.ai/api/v1/sessions" \\
+{`curl -X GET "https://api.between.indevs.in/api/v1/sessions" \\
   -H "X-API-Key: vish_live_xxxxxxxx"`}
             </SyntaxHighlighter>
           </section>
@@ -296,7 +296,7 @@ export default function DeveloperDocs() {
             </div>
             <p className="text-gray-600 font-medium text-sm mb-4">List all active sessions for your account.</p>
             <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px", marginBottom: "24px" }}>
-{`curl -X GET "https://api.vishleshan.ai/api/v1/sessions" \
+{`curl -X GET "https://api.between.indevs.in/api/v1/sessions" \
   -H "X-API-Key: YOUR_KEY"`}
             </SyntaxHighlighter>
             <div className="flex items-center gap-3 mb-4">
@@ -309,7 +309,7 @@ export default function DeveloperDocs() {
                <div>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Request</span>
                  <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl -X POST "https://api.vishleshan.ai/api/v1/sessions" \
+{`curl -X POST "https://api.between.indevs.in/api/v1/sessions" \
   -H "X-API-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name": "Q3 Engineering Hire"}'`}
@@ -373,7 +373,7 @@ export default function DeveloperDocs() {
                  <div className="flex flex-col">
                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1">Request</span>
                    <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px", flex: 1, margin: 0 }}>
-{`curl -X POST "https://api.vishleshan.ai/api/v1/parse" \\
+{`curl -X POST "https://api.between.indevs.in/api/v1/parse" \\
   -H "X-API-Key: YOUR_KEY" \\
   -F "file=@resume.pdf"`}
                    </SyntaxHighlighter>
@@ -405,7 +405,7 @@ export default function DeveloperDocs() {
               </div>
               <p className="text-gray-600 font-medium text-sm mb-4">Sync resumes directly from a Gmail inbox using OAuth credentials.</p>
               <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl -X POST "https://api.vishleshan.ai/api/v1/ingest/gmail" \
+{`curl -X POST "https://api.between.indevs.in/api/v1/ingest/gmail" \
   -H "X-API-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"oauth_token": "ya29.xxx", "label": "HR/Resumes"}'`}
@@ -420,7 +420,7 @@ export default function DeveloperDocs() {
               </div>
               <p className="text-gray-600 font-medium text-sm mb-4">Ingest resumes from a Google Drive folder. Supports recursive folder scanning and deduplication.</p>
               <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl -X POST "https://api.vishleshan.ai/api/v1/ingest/drive" \
+{`curl -X POST "https://api.between.indevs.in/api/v1/ingest/drive" \
   -H "X-API-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"oauth_token": "ya29.xxx", "folder_id": "1BxiMVs0XRA...", "recursive": true}'`}
@@ -435,7 +435,7 @@ export default function DeveloperDocs() {
               </div>
               <p className="text-gray-600 font-medium text-sm mb-4">Import candidates from ATS platforms (Greenhouse, Lever, Workday). Requires ATS credentials configured in developer portal settings.</p>
               <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl -X POST "https://api.vishleshan.ai/api/v1/ingest/ats" \
+{`curl -X POST "https://api.between.indevs.in/api/v1/ingest/ats" \
   -H "X-API-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"platform": "greenhouse", "job_id": "7291028"}'`}
@@ -457,7 +457,7 @@ export default function DeveloperDocs() {
                <div>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Request</span>
                  <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl "https://api.vishleshan.ai/api/v1/candidates?page=1&limit=20" \
+{`curl "https://api.between.indevs.in/api/v1/candidates?page=1&limit=20" \
   -H "X-API-Key: YOUR_KEY"`}
                  </SyntaxHighlighter>
                </div>
@@ -484,7 +484,7 @@ export default function DeveloperDocs() {
             </div>
             <p className="text-gray-600 font-medium text-sm mb-4">Retrieve a single candidate's full structured profile.</p>
             <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl "https://api.vishleshan.ai/api/v1/candidates/cnd_12345" \
+{`curl "https://api.between.indevs.in/api/v1/candidates/cnd_12345" \
   -H "X-API-Key: YOUR_KEY"`}
             </SyntaxHighlighter>
           </section>
@@ -503,7 +503,7 @@ export default function DeveloperDocs() {
                <div>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Request</span>
                  <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl -X POST "https://api.vishleshan.ai/api/v1/match" \
+{`curl -X POST "https://api.between.indevs.in/api/v1/match" \
   -H "X-API-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -548,7 +548,7 @@ export default function DeveloperDocs() {
                <div>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Request</span>
                  <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl -X POST "https://api.vishleshan.ai/api/v1/chat" \
+{`curl -X POST "https://api.between.indevs.in/api/v1/chat" \
   -H "X-API-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -636,7 +636,7 @@ export default function DeveloperDocs() {
                <div className="flex flex-col">
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1">Request Example</span>
                  <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px", flex: 1, margin: 0 }}>
-{`curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \\
+{`curl -X POST "https://api.between.indevs.in/api/v1/protection/scan" \\
   -H "X-API-Key: YOUR_KEY" \\
   -d '{
     "scan_type": "job",
@@ -668,7 +668,7 @@ export default function DeveloperDocs() {
           <section id="webhooks" className="mb-16 pt-8 border-t border-gray-200">
             <h2 className="text-3xl font-black text-charcoal mb-4">Webhooks</h2>
             <p className="text-gray-600 font-medium mb-6 leading-relaxed">
-              Vishleshan sends webhook events to notify your application when async tasks complete. Register your endpoint URL in the developer portal or pass <code className="bg-gray-100 rounded px-1">webhook_url</code> inline with any request.
+              Between sends webhook events to notify your application when async tasks complete. Register your endpoint URL in the developer portal or pass <code className="bg-gray-100 rounded px-1">webhook_url</code> inline with any request.
             </p>
             <h4 className="font-bold text-charcoal text-sm uppercase mb-3 text-gray-400">Event Types</h4>
             <div className="overflow-x-auto mb-6 border border-gray-200 rounded-xl">
@@ -702,13 +702,13 @@ export default function DeveloperDocs() {
 }`}
             </SyntaxHighlighter>
             <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800 font-semibold">
-              <strong>Signature Verification:</strong> Each webhook includes a <code>X-Vishleshan-Signature</code> header. Verify it using your webhook secret to ensure authenticity.
+              <strong>Signature Verification:</strong> Each webhook includes a <code>X-Between-Signature</code> header. Verify it using your webhook secret to ensure authenticity.
             </div>
           </section>
 <section id="rate-limits" className="mb-16 pt-8 border-t border-gray-200">
             <h2 className="text-3xl font-black text-charcoal mb-4">Rate Limits & Errors</h2>
             <p className="text-gray-600 font-medium mb-6 leading-relaxed">
-              Vishleshan uses standard HTTP response codes to indicate the success or failure of an API request.
+              Between uses standard HTTP response codes to indicate the success or failure of an API request.
             </p>
             
             <h4 className="font-bold text-charcoal text-sm uppercase mb-3 text-gray-400">Plan Quotas</h4>
@@ -781,13 +781,13 @@ export default function DeveloperDocs() {
           <section id="sdks" className="mb-16 pt-8 border-t border-gray-200">
             <h2 className="text-3xl font-black text-charcoal mb-4">SDKs &amp; Examples</h2>
             <p className="text-gray-600 font-medium mb-6 leading-relaxed">
-              Official client libraries and code examples to help you integrate Vishleshan into your stack quickly.
+              Official client libraries and code examples to help you integrate Between into your stack quickly.
             </p>
             <div className="grid md:grid-cols-3 gap-4 mb-8">
               {[
-                { lang: "Python", pkg: "vishleshan-py", icon: "??", install: "pip install vishleshan-py" },
-                { lang: "JavaScript", pkg: "vishleshan-js", icon: "?", install: "npm install vishleshan-js" },
-                { lang: "Go", pkg: "go-vishleshan", icon: "??", install: "go get vishleshan.ai/go-vishleshan" }
+                { lang: "Python", pkg: "between-py", icon: "??", install: "pip install between-py" },
+                { lang: "JavaScript", pkg: "between-js", icon: "?", install: "npm install between-js" },
+                { lang: "Go", pkg: "go-between", icon: "??", install: "go get between.indevs.in/go-between" }
               ].map(sdk => (
                 <div key={sdk.lang} className="border border-gray-200 rounded-2xl p-5 bg-gray-50/40 hover:bg-gray-50 transition-colors">
                   <div className="text-2xl mb-2">{sdk.icon}</div>
@@ -801,9 +801,9 @@ export default function DeveloperDocs() {
             </div>
             <h4 className="font-bold text-charcoal text-sm uppercase mb-3 text-gray-400">Python Example</h4>
             <SyntaxHighlighter language="python" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px", marginBottom: "16px" }}>
-{`import vishleshan
+{`import between
 
-client = vishleshan.Client(api_key="vish_live_xxxxxxxx")
+client = between.Client(api_key="vish_live_xxxxxxxx")
 
 # Parse a resume
 result = client.parse(file=open("resume.pdf", "rb"))
@@ -817,8 +817,8 @@ for m in matches:
             </SyntaxHighlighter>
             <h4 className="font-bold text-charcoal text-sm uppercase mb-3 text-gray-400">JavaScript / Node.js Example</h4>
             <SyntaxHighlighter language="javascript" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`import { VishleshanClient } from 'vishleshan-js';
-const client = new VishleshanClient({ apiKey: 'vish_live_xxxxxxxx' });
+{`import { BetweenClient } from 'between-js';
+const client = new BetweenClient({ apiKey: 'vish_live_xxxxxxxx' });
 
 // Parse a resume
 const { data } = await client.parse({ file: fs.createReadStream('resume.pdf') });

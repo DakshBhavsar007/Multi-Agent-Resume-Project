@@ -238,7 +238,7 @@ export default function DeveloperWebhooks() {
                   <form onSubmit={handleCreate} className="flex flex-col gap-6">
                     <div className="flex flex-col gap-1.5">
                        <label className="text-sm font-semibold text-charcoal">Endpoint URL*</label>
-                       <input autoFocus type="url" placeholder="https://yourapp.com/webhooks/vishleshan" value={url} onChange={e=>setUrl(e.target.value)} required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none font-medium text-sm" />
+                       <input autoFocus type="url" placeholder="https://yourapp.com/webhooks/between" value={url} onChange={e=>setUrl(e.target.value)} required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none font-medium text-sm" />
                     </div>
                     <div>
                        <label className="text-sm font-semibold text-charcoal mb-2 block">Events to send</label>

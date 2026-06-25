@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 /**
  * ProtectedRoute — wraps children and only renders them if
- * "vishleshan_user" exists in localStorage.
+ * "between_user" exists in localStorage.
  *
  * Otherwise redirects to /login.
  *
@@ -20,7 +20,7 @@ export default function ProtectedRoute({ children }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem("vishleshan_user");
+    const user = localStorage.getItem("between_user");
     if (user) {
       setAuthorized(true);
     } else {

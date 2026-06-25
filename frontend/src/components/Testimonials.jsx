@@ -6,7 +6,7 @@ import './Testimonials.css';
 
 const testimonials = [
   {
-    quote: "Vishleshan transformed our screening process. We reduced our time-to-hire by 60% in just one quarter. The AI accuracy is unparalleled.",
+    quote: "Between transformed our screening process. We reduced our time-to-hire by 60% in just one quarter. The AI accuracy is unparalleled.",
     author: "Sarah Jenkins",
     role: "Head of Talent @ TechFlow",
     initials: "SJ",

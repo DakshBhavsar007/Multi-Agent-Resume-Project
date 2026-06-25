@@ -514,7 +514,7 @@ export default function JobsLandingPage() {
 
       {/* Footer */}
       <footer className="w-full bg-[#FFFFFF] border-t border-[#e6dfcd] px-6 py-8 mt-12 text-center text-xs text-[#5c5c5c]">
-        &copy; {new Date().getFullYear()} Vishleshan Job Engine. Built for recruitment intelligence and career path mapping.
+        &copy; {new Date().getFullYear()} Between Job Engine. Built for recruitment intelligence and career path mapping.
       </footer>
 
       {/* Upload modal */}

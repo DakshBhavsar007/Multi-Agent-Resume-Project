@@ -62,7 +62,7 @@ export default function DeveloperUsage() {
      const url = window.URL.createObjectURL(blob);
      const a = document.createElement('a');
      a.setAttribute('href', url);
-     a.setAttribute('download', `vishleshan_usage_${days}d.csv`);
+     a.setAttribute('download', `between_usage_${days}d.csv`);
      a.click();
   };
 

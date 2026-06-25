@@ -6,6 +6,8 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { portalBilling, portalAuth } from "../../lib/portalApi";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
+import logoWhite from "../../assets/logo_white.png";
+import logoBlack from "../../assets/logo_black.png";
 
 export default function DeveloperLandingPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -59,11 +61,11 @@ export default function DeveloperLandingPage() {
 
   const heroCode = `// One API call. Complete intelligence.
 const response = await fetch(
-  'https://api.vishleshan.ai/api/v1/parse',
+  'https://api.between.indevs.in/api/v1/parse',
   {
     method: 'POST',
     headers: {
-      'X-API-Key': 'vish_live_abc123...'
+      'X-API-Key': 'between_live_abc123...'
     },
     body: formData  // attach resume PDF
   }
@@ -83,8 +85,8 @@ const { data } = await response.json();
   const tabs = {
     Python: `import requests
 response = requests.post(
-    "https://api.vishleshan.ai/api/v1/ingest/upload",
-    headers={"X-API-Key": "vish_live_your_key"},
+    "https://api.between.indevs.in/api/v1/ingest/upload",
+    headers={"X-API-Key": "between_live_your_key"},
     files={"files": open("resume.pdf", "rb")},
     data={"session_id": "your_session_id"}
 )
@@ -94,16 +96,16 @@ formData.append('files', resumeFile);
 formData.append('session_id', 'your_session_id');
 
 const response = await fetch(
-  'https://api.vishleshan.ai/api/v1/ingest/upload',
+  'https://api.between.indevs.in/api/v1/ingest/upload',
   {
     method: 'POST',
-    headers: { 'X-API-Key': 'vish_live_your_key' },
+    headers: { 'X-API-Key': 'between_live_your_key' },
     body: formData
   }
 );`,
     cURL: `curl -X POST \
-  https://api.vishleshan.ai/api/v1/ingest/upload \
-  -H "X-API-Key: vish_live_your_key" \\
+  https://api.between.indevs.in/api/v1/ingest/upload \
+  -H "X-API-Key: between_live_your_key" \\
   -F "session_id=your_session_id" \
   -F "files=@resume.pdf"`
   };
@@ -111,10 +113,12 @@ const response = await fetch(
   return (
     <div className="min-h-screen font-sans text-charcoal bg-bg">
       {/* NAVBAR */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-3" : "bg-white/90 backdrop-blur-md py-4"}`}>
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-1" : "bg-white/90 backdrop-blur-md py-2"}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-accent cursor-pointer" onClick={() => window.scrollTo(0, 0)}>Vishleshan</span>
+            <div className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
+              <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+            </div>
             <span className="text-[13px] text-gray-500 font-medium">for Developers</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
@@ -383,8 +387,10 @@ const response = await fetch(
       <footer className="bg-charcoal text-white/70 py-16">
          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex flex-col items-center md:items-start gap-2">
-               <span className="text-2xl font-bold text-white">Vishleshan <span className="text-accent">Portal</span></span>
-               <p className="text-sm">Built for smarter hiring.</p>
+               <div className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
+                  <img src={logoBlack} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+               </div>
+               <p className="text-sm mt-1">Built for smarter hiring.</p>
             </div>
             
             <div className="flex flex-wrap justify-center gap-8 text-sm font-medium">
@@ -395,7 +401,7 @@ const response = await fetch(
             </div>
             
             <div className="text-sm">
-               © {new Date().getFullYear()} Vishleshan API.
+               © {new Date().getFullYear()} Between API.
             </div>
          </div>
       </footer>

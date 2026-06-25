@@ -391,13 +391,13 @@ export default function DeveloperKeys({ defaultTab }) {
 
   const tabs = {
     cURL: `curl -X POST \\
-  https://api.vishleshan.ai/api/v1/parse \\
+  https://api.between.indevs.in/api/v1/parse \\
   -H "X-API-Key: YOUR_KEY" \\
   -F "files=@resume.pdf"`,
     Python: `import requests
  
 response = requests.post(
-    "https://api.vishleshan.ai/api/v1/parse",
+    "https://api.between.indevs.in/api/v1/parse",
     headers={"X-API-Key": "YOUR_KEY"},
     files={"files": open("resume.pdf", "rb")}
 )
@@ -405,7 +405,7 @@ print(response.json())`,
     JavaScript: `const formData = new FormData();
 formData.append('files', resumeFile);
  
-const response = await fetch('https://api.vishleshan.ai/api/v1/parse', {
+const response = await fetch('https://api.between.indevs.in/api/v1/parse', {
   method: 'POST',
   headers: { 'X-API-Key': 'YOUR_KEY' },
   body: formData

@@ -54,7 +54,7 @@ export default function Sidebar() {
       {/* Top Section */}
       <div className="pt-6 px-5 pb-4">
         <div>
-          <h1 className="text-[#2563EB] text-[20px] font-bold tracking-tight">Vishleshan</h1>
+          <h1 className="text-[#2563EB] text-[20px] font-bold tracking-tight">Between</h1>
           <p className="text-[#9CA3AF] text-xs mt-0.5">Recruiter Dashboard</p>
         </div>
       </div>
@@ -89,8 +89,18 @@ export default function Sidebar() {
             {logo ? (
               <img src={logo} alt="Company Logo" className="w-9 h-9 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-bold shrink-0">
-                {company?.name?.charAt(0)?.toUpperCase() || 'V'}
+              <div className="w-9 h-9 rounded-full bg-charcoal border border-white/10 flex items-center justify-center text-white shrink-0 p-1.5">
+                <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="logo-grad-side" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="100%" stopColor="#2563eb" />
+                    </linearGradient>
+                  </defs>
+                  <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-side)" strokeWidth="12" strokeLinecap="round" />
+                  <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+                  <circle cx="68" cy="32" r="24" fill="#2563eb" />
+                </svg>
               </div>
             )}
             <div className="overflow-hidden">

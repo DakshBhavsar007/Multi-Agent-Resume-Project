@@ -7,7 +7,7 @@ export const useAuthStore = create((set) => ({
       localStorage.setItem("vish_jwt", data.jwt_token || "");
       localStorage.setItem("vish_api_key", data.api_key || data.secret_key || "");
       localStorage.setItem("vish_company", JSON.stringify(data));
-      localStorage.setItem("vishleshan_user", JSON.stringify({
+      localStorage.setItem("between_user", JSON.stringify({
         id: data.id || data.company_id,
         user_id: data.id || data.company_id,
         email: data.email,
@@ -38,8 +38,8 @@ export const useAuthStore = create((set) => ({
     if (company && jwt) {
       set({company, jwt, apiKey, 
            tier: company.tier || "free"})
-      if (!localStorage.getItem("vishleshan_user")) {
-        localStorage.setItem("vishleshan_user", JSON.stringify({
+      if (!localStorage.getItem("between_user")) {
+        localStorage.setItem("between_user", JSON.stringify({
           id: company.id || company.company_id,
           user_id: company.id || company.company_id,
           email: company.email,

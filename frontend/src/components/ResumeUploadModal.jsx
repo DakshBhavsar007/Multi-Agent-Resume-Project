@@ -155,7 +155,7 @@ export default function ResumeUploadModal({ isOpen, onClose, preselectedFile }) 
                 <div className="text-center">
                   <h4 className="text-base font-bold text-[#2A2A2A]">{loadingText}</h4>
                   <p className="text-xs text-[#5c5c5c] mt-1">
-                    Vishleshan is parsing your resume utilizing local models...
+                    Between is parsing your resume utilizing local models...
                   </p>
                 </div>
                 {/* Simulated bar */}

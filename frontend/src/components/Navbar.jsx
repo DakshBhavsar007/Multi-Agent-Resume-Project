@@ -6,11 +6,15 @@ import logoWhite from '../assets/logo_white.png';
 
 const Logo = () => (
   <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="45" cy="45" r="35" stroke="currentColor" strokeWidth="8"/>
-    <line x1="70" y1="70" x2="90" y2="90" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
-    <rect x="30" y="45" width="8" height="20" fill="currentColor" />
-    <rect x="42" y="35" width="8" height="30" fill="currentColor" />
-    <rect x="54" y="25" width="10" height="40" fill="currentColor" clipPath="inset(0 0 0 0 round 0 0 8 0)"/>
+    <defs>
+      <linearGradient id="logo-grad-nav" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#38bdf8" />
+        <stop offset="100%" stopColor="#2563eb" />
+      </linearGradient>
+    </defs>
+    <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-nav)" strokeWidth="12" strokeLinecap="round" />
+    <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+    <circle cx="68" cy="32" r="24" fill="#2563eb" />
   </svg>
 );
 
@@ -31,8 +35,8 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
       animate={{ y: 0 }}
       transition={{ duration: 0.8, ease: [0.21, 0.45, 0.32, 0.9] }}
     >
-      <Link to="/" className="nav-left flex items-center cursor-pointer no-underline text-inherit">
-        <img src={logoWhite} alt="Vishleshan Logo" className="h-8 w-auto max-w-[150px] object-contain" />
+      <Link to="/" className="nav-left relative flex shrink-0 items-center w-64 h-16 overflow-hidden no-underline text-inherit cursor-pointer">
+        <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
       </Link>
 
       <div className="nav-center">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 /**
- * useAuth — reads "vishleshan_user" from localStorage.
+ * useAuth — reads "between_user" from localStorage.
  *
  * If not found → redirect to /login.
  * Returns { user, logout } where logout clears localStorage and redirects.
@@ -19,7 +19,7 @@ export function useAuth() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("vishleshan_user");
+      const raw = localStorage.getItem("between_user");
       if (raw) {
         const parsed = JSON.parse(raw);
         setUser(parsed);
@@ -34,7 +34,7 @@ export function useAuth() {
   }, [navigate]);
 
   const logout = () => {
-    localStorage.removeItem("vishleshan_user");
+    localStorage.removeItem("between_user");
     localStorage.removeItem("vish_jwt");
     localStorage.removeItem("vish_company");
     localStorage.removeItem("vish_api_key");

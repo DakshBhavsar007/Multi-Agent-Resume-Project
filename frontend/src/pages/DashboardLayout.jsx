@@ -118,11 +118,21 @@ export default function DashboardLayout() {
         </button>
 
         <Link to="/dashboard" className="flex items-center gap-2 pr-1 sm:pr-3 shrink-0">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm" style={{ background: "linear-gradient(135deg,#111111 0%,#111111 100%)" }}>
-            V
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-charcoal p-1">
+            <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logo-grad-dash" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="100%" stopColor="#2563eb" />
+                </linearGradient>
+              </defs>
+              <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-dash)" strokeWidth="14" strokeLinecap="round" />
+              <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+              <circle cx="68" cy="32" r="24" fill="#2563eb" />
+            </svg>
           </div>
           <span className="font-display text-[20px] sm:text-[22px] text-foreground tracking-tight hidden xs:inline sm:inline">
-            Vishleshan
+            Between
           </span>
           <span className="text-muted-foreground text-sm hidden lg:inline ml-1 font-medium">Workspace</span>
         </Link>

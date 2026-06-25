@@ -67,7 +67,7 @@ export default function DeveloperBilling() {
       const rzp = new window.Razorpay({
         key: orderData.razorpay_key_id || "rzp_test_mock",
         order_id: orderData.order_id,
-        name: "Vishleshan",
+        name: "Between",
         description: `Upgrade to ${plans.find(p=>p.id===planId).name} Plan`,
         theme: { color: "#111111" },
         handler: async function(response) {

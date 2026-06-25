@@ -38,8 +38,8 @@ export default function AuthVerifyPage() {
 
         const userData = data.data;
 
-        // Save user identity for the Vishleshan frontend session
-        localStorage.setItem("vishleshan_user", JSON.stringify(userData));
+        // Save user identity for the Between frontend session
+        localStorage.setItem("between_user", JSON.stringify(userData));
 
         // Also populate the existing auth stores so the dashboard works seamlessly
         localStorage.setItem("vish_jwt", token);
@@ -56,7 +56,7 @@ export default function AuthVerifyPage() {
         setUser(userData);
         setStatus("success");
 
-        // Navigate to the Vishleshan dashboard
+        // Navigate to the Between dashboard
         setTimeout(() => {
           navigate("/dashboard");
         }, 1200);
@@ -79,7 +79,7 @@ export default function AuthVerifyPage() {
               Verifying Your Login
             </h2>
             <p className="text-gray-500 font-medium text-sm">
-              Authenticating with Vishleshan...
+              Authenticating with Between...
             </p>
           </>
         )}
@@ -122,7 +122,7 @@ export default function AuthVerifyPage() {
         )}
 
         <div className="mt-8 flex items-center justify-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-          <Shield size={12} /> Vishleshan Secure Auth
+          <Shield size={12} /> Between Secure Auth
         </div>
       </div>
     </div>

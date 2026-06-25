@@ -34,7 +34,7 @@ export default function RateLimitBanner() {
           </div>
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => window.open('https://portal.vishleshan.com', '_blank')}
+              onClick={() => window.open('https://portal.between.indevs.in', '_blank')}
               className="bg-[#2563EB] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#1D4ED8] transition-colors shadow-sm cursor-pointer"
             >
               Upgrade Plan

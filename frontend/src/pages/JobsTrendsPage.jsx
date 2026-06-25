@@ -33,7 +33,7 @@ export default function JobsTrendsPage() {
           <span className="text-xs font-bold text-[#2563EB] uppercase tracking-wider">Market Intelligence</span>
           <h1 className="text-3xl font-extrabold text-[#2A2A2A]">Market Trends & Insights</h1>
           <p className="text-sm text-[#5c5c5c] max-w-2xl">
-            Analyze wage trajectories, regional volumes, and domain demands processed across the Vishleshan ingestion engine.
+            Analyze wage trajectories, regional volumes, and domain demands processed across the Between ingestion engine.
           </p>
         </div>
 

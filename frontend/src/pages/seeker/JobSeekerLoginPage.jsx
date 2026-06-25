@@ -68,7 +68,7 @@ export default function JobSeekerLoginPage() {
       <div className="w-full max-w-md bg-white rounded-3xl p-8 relative z-10 shadow-2xl shadow-gray-200/50 border border-gray-100 m-4">
         <div className="flex flex-col items-center mb-8">
           <span className="text-gray-500 text-[14px] font-medium mb-1">Job Seeker Portal</span>
-          <h1 className="text-3xl font-black tracking-tight text-accent">Vishleshan</h1>
+          <h1 className="text-3xl font-black tracking-tight text-accent">Between</h1>
         </div>
 
         <form onSubmit={handle} className="flex flex-col gap-4">

@@ -58,8 +58,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
-        <Link to="/jobs" className="flex shrink-0 items-center gap-2">
-          <img src={logoWhite} alt="Vishleshan Logo" className="h-8 w-auto max-w-[150px] object-contain" />
+        <Link to="/jobs" className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
+          <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
         </Link>
 
         <nav className="ml-4 hidden flex-1 items-center gap-1 md:flex">
@@ -178,8 +178,8 @@ export function Footer() {
     <footer className="mt-24 border-t border-border/60 bg-white relative overflow-hidden">
       <div className="mx-auto flex flex-col md:flex-row justify-between items-start max-w-7xl w-full px-6 py-12 gap-10 relative z-10">
         <div className="max-w-xs w-full space-y-4">
-          <div className="flex items-center gap-2">
-            <img src={logoWhite} alt="Vishleshan Logo" className="h-7 w-auto max-w-[130px] object-contain" />
+          <div className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
+            <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
             A calmer job search. Built for humans, not algorithms.
@@ -215,7 +215,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground relative z-10 bg-white/80 backdrop-blur-sm">
-        © 2026 Vishleshan · Designed with care
+        © 2026 Between · Designed with care
       </div>
     </footer>
   );
