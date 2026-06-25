@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import './Footer.css';
+import logoBlack from '../assets/logo_black.png';
 
 const Footer = () => {
   const containerVariants = {
@@ -44,11 +45,7 @@ const Footer = () => {
       >
         <motion.div className="footer-brand" variants={itemVariants}>
           <div className="footer-logo-wrapper">
-             <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="45" cy="45" r="35" stroke="white" strokeWidth="8"/>
-                <line x1="70" y1="70" x2="90" y2="90" stroke="white" strokeWidth="12" strokeLinecap="round"/>
-            </svg>
-            <span className="footer-logo-text">Vishleshan</span>
+            <img src={logoBlack} alt="Vishleshan Logo" className="h-7 w-auto max-w-[130px] object-contain" />
           </div>
           <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', maxWidth: '240px', lineHeight: '1.6' }}>
             The next generation of AI-driven recruitment screening.

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import './Navbar.css';
+import logoWhite from '../assets/logo_white.png';
 
 const Logo = () => (
   <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -31,8 +32,7 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
       transition={{ duration: 0.8, ease: [0.21, 0.45, 0.32, 0.9] }}
     >
       <Link to="/" className="nav-left flex items-center cursor-pointer no-underline text-inherit">
-        <Logo />
-        <span className="logo-text ml-2">Vishleshan</span>
+        <img src={logoWhite} alt="Vishleshan Logo" className="h-8 w-auto max-w-[150px] object-contain" />
       </Link>
 
       <div className="nav-center">
