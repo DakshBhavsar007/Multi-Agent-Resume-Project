@@ -84,7 +84,7 @@ def list_public_jobs(request):
         location_filter = request.GET.get("location", "").strip()
         
         # Only active, non-archived sessions
-        qs = Session.objects.filter(status="active")
+        qs = Session.objects.filter(status="active").select_related("company")
         
         if query:
             qs = qs.filter(job_title__icontains=query) | qs.filter(job_description__icontains=query)

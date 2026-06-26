@@ -6,9 +6,10 @@ from api.models import Company, Session
 from api.views.seeker_auth import require_seeker_jwt
 from models.schemas import success_response, error_response
 
-def _serialize_company(company, is_following=False):
+def _serialize_company(company, is_following=False, active_sessions=None):
     # Get active job sessions for this company
-    active_sessions = Session.objects.filter(company=company, status="active")
+    if active_sessions is None:
+        active_sessions = Session.objects.filter(company=company, status="active")
     open_jobs = []
     for s in active_sessions:
         criteria = s.criteria or {}
@@ -48,7 +49,17 @@ def public_list_companies(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
     try:
         companies = Company.objects.filter(is_active=True).order_by("name")
-        serialized = [_serialize_company(c) for c in companies]
+        
+        # Bulk fetch active sessions to avoid N+1 query
+        company_ids = [c.id for c in companies]
+        active_sessions_qs = Session.objects.filter(company_id__in=company_ids, status="active")
+        
+        sessions_by_company = {}
+        for s in active_sessions_qs:
+            cid_str = str(s.company_id)
+            sessions_by_company.setdefault(cid_str, []).append(s)
+
+        serialized = [_serialize_company(c, active_sessions=sessions_by_company.get(str(c.id), [])) for c in companies]
         return JsonResponse(success_response({"companies": serialized}))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
@@ -84,7 +95,20 @@ def seeker_list_companies(request):
         seeker = request.seeker
         followed = seeker.resume_data.get("followed_companies", []) if seeker.resume_data else []
         companies = Company.objects.filter(is_active=True).order_by("name")
-        serialized = [_serialize_company(c, str(c.id) in followed) for c in companies]
+        
+        # Bulk fetch active sessions to avoid N+1 query
+        company_ids = [c.id for c in companies]
+        active_sessions_qs = Session.objects.filter(company_id__in=company_ids, status="active")
+        
+        sessions_by_company = {}
+        for s in active_sessions_qs:
+            cid_str = str(s.company_id)
+            sessions_by_company.setdefault(cid_str, []).append(s)
+
+        serialized = [
+            _serialize_company(c, str(c.id) in followed, active_sessions=sessions_by_company.get(str(c.id), []))
+            for c in companies
+        ]
         return JsonResponse(success_response({"companies": serialized}))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {e}"), status=500)

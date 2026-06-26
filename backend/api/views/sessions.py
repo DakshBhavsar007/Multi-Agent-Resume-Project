@@ -79,13 +79,27 @@ def session_root(request):
             offset = (page - 1) * per_page
             sessions = qs[offset:offset+per_page]
 
+            # Optimize candidate count N+1 query:
+            session_ids = [s.id for s in sessions]
+            candidate_counts_qs = Candidate.objects.filter(session_id__in=session_ids) \
+                                                   .values('session_id', 'status') \
+                                                   .annotate(count=Count('id'))
+            
+            # Group by session ID in Python
+            counts_by_session = {}
+            for item in candidate_counts_qs:
+                sid = str(item['session_id'])
+                c_status = item['status']
+                c_count = item['count']
+                counts_by_session.setdefault(sid, {})[c_status] = c_count
+
             result = []
             for s in sessions:
-                status_counts_qs = Candidate.objects.filter(session_id=s.id).values('status').annotate(count=Count('id'))
-                status_counts = {item['status']: item['count'] for item in status_counts_qs}
+                sid_str = str(s.id)
+                status_counts = counts_by_session.get(sid_str, {})
 
                 result.append({
-                    "id": str(s.id),
+                    "id": sid_str,
                     "name": s.name,
                     "job_title": s.job_title,
                     "status": s.status,

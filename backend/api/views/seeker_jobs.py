@@ -72,7 +72,7 @@ def _session_to_job(session: Session, match_score=None, applied=False) -> dict:
         "created_at": session.created_at.isoformat() if session.created_at else None,
         "match_score": match_score,
         "applied": applied,
-        "applicant_count": session.seeker_applications.count(),
+        "applicant_count": session.applicant_count if hasattr(session, "applicant_count") else session.seeker_applications.count(),
         "salary_range": meta["salary_range"],
         "location": meta["location"],
         "employment_type": meta["employment_type"],
@@ -137,7 +137,8 @@ def list_jobs(request):
         location = request.GET.get("location", "").strip().lower()
         job_type = request.GET.get("job_type", "").strip().lower()
 
-        sessions = Session.objects.filter(status="active").order_by("-created_at")
+        from django.db.models import Count
+        sessions = Session.objects.filter(status="active").select_related("company").annotate(applicant_count=Count("seeker_applications")).order_by("-created_at")
 
         if q:
             sessions = sessions.filter(job_title__icontains=q)
