@@ -218,40 +218,10 @@ def me(request):
 def health_check(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
-    
-    raw_redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-    masked_redis_url = raw_redis_url
-    if "@" in raw_redis_url:
-        parts = raw_redis_url.split("@", 1)
-        protocol_user = parts[0].rsplit(":", 1)[0]
-        masked_redis_url = f"{protocol_user}:****@{parts[1]}"
-        
-    redis_connected = False
-    redis_err = None
-    try:
-        redis_connected = redis_client.ping()
-    except Exception as e:
-        redis_err = str(e)
-
-    try:
-        from workers.celery_worker import celery_app
-        celery_broker = celery_app.conf.broker_url or "not_configured"
-        masked_celery_broker = celery_broker
-        if "@" in celery_broker:
-            parts = celery_broker.split("@", 1)
-            protocol_user = parts[0].rsplit(":", 1)[0]
-            masked_celery_broker = f"{protocol_user}:****@{parts[1]}"
-    except Exception as ce:
-        masked_celery_broker = f"Error: {str(ce)}"
-
     return JsonResponse(success_response({
         "status": "ok",
         "version": "1.0.0",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "redis_url": masked_redis_url,
-        "redis_connected": redis_connected,
-        "redis_error": redis_err,
-        "celery_broker": masked_celery_broker
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }))
 
 @csrf_exempt
