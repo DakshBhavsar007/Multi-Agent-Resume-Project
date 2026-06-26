@@ -1,4 +1,4 @@
-const rawBase = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) || "http://127.0.0.1:8000/api/v1";
+const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 const BASE = rawBase.replace("/api/v1", "/api/developer");
 
 function getJwt() {

@@ -100,8 +100,8 @@ export default function MyResumePage() {
         headers['Content-Type'] = 'application/json';
         body = JSON.stringify({ format, template_type: selectedTemplate });
       }
-      
-      const response = await fetch('http://127.0.0.1:8000/api/v1/seeker/resume/download', {
+      const BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+      const response = await fetch(`${BASE}/seeker/resume/download`, {
         method: 'POST',
         headers,
         body
