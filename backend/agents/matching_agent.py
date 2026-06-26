@@ -1,14 +1,12 @@
-from sentence_transformers import SentenceTransformer
 import numpy as np
+from agents.embeddings import get_embedding_model
 
 class SemanticMatchingAgent:
     def __init__(self):
-        self._model = None
+        pass
 
     def _get_model(self):
-        if not self._model:
-            self._model = SentenceTransformer('all-MiniLM-L6-v2')
-        return self._model
+        return get_embedding_model()
 
     async def match(self, candidate: dict, criteria: dict) -> dict:
         weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})

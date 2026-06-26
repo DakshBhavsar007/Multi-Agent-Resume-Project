@@ -4,20 +4,8 @@ import re
 from datetime import datetime, timezone
 from collections import Counter
 from agents.llm import RotateLLMClient
-from sentence_transformers import SentenceTransformer
 import numpy as np
-
-# Global model cache to avoid reloading on each request
-_model_cache = None
-
-def get_embedding_model():
-    global _model_cache
-    if _model_cache is None:
-        try:
-            _model_cache = SentenceTransformer('all-MiniLM-L6-v2')
-        except Exception as e:
-            logger.error("Failed to load SentenceTransformer all-MiniLM-L6-v2: %s", e)
-    return _model_cache
+from agents.embeddings import get_embedding_model
 
 def compute_semantic_similarity(queries, candidates):
     model = get_embedding_model()
