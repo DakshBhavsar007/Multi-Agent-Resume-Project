@@ -37,7 +37,7 @@ class RotateCompletions:
         max_tokens = kwargs.get("max_tokens")
         
         # Optimize timeouts to fail fast and prevent browser/scanner hangs
-        timeout = kwargs.get("timeout") or 3.0
+        timeout = kwargs.get("timeout") or 30.0
 
         global _current_key_idx
         global _bad_keys
