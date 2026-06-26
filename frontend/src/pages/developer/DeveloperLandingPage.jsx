@@ -116,8 +116,8 @@ const response = await fetch(
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-1" : "bg-white/90 backdrop-blur-md py-2"}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
-              <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+            <div className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
+              <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
             </div>
             <span className="text-[13px] text-gray-500 font-medium">for Developers</span>
           </div>

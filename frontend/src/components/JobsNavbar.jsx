@@ -83,8 +83,8 @@ export default function JobsNavbar({ onUploadClick }) {
     <nav className="w-full bg-[#FFFFFF] border-b border-[#e6dfcd] sticky top-0 z-40 px-6 py-4 flex items-center justify-between shadow-sm">
       {/* Brand logo */}
       <div className="flex items-center space-x-8">
-        <Link to="/jobs" className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
-          <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+        <Link to="/jobs" className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden">
+          <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
         </Link>
 
         {/* Links */}

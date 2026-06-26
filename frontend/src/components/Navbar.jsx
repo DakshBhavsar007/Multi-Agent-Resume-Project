@@ -35,8 +35,8 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
       animate={{ y: 0 }}
       transition={{ duration: 0.8, ease: [0.21, 0.45, 0.32, 0.9] }}
     >
-      <Link to="/" className="nav-left relative flex shrink-0 items-center w-64 h-16 overflow-hidden no-underline text-inherit cursor-pointer">
-        <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+      <Link to="/" className="nav-left relative flex shrink-0 items-center w-44 h-16 overflow-hidden no-underline text-inherit cursor-pointer">
+        <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
       </Link>
 
       <div className="nav-center">

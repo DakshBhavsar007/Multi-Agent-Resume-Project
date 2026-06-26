@@ -81,8 +81,8 @@ export default function DeveloperPortalLayout() {
         
         <div className="p-6 pb-2">
           <div className="flex items-start flex-col mb-8 gap-0.5 mt-4 md:mt-0">
-             <div className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden cursor-pointer" onClick={() => navigate("/developer")}>
-               <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+             <div className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden cursor-pointer" onClick={() => navigate("/developer")}>
+               <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
              </div>
              <span className="text-xs font-bold text-gray-700 uppercase tracking-widest pl-0.5">Dev Portal</span>
           </div>

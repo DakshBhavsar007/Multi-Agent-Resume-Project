@@ -58,8 +58,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
-        <Link to="/jobs" className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
-          <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+        <Link to="/jobs" className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden">
+          <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
         </Link>
 
         <nav className="ml-4 hidden flex-1 items-center gap-1 md:flex overflow-x-auto hide-scrollbar">
