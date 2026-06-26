@@ -38,6 +38,9 @@ class RotateCompletions:
         
         # Optimize timeouts to fail fast and prevent browser/scanner hangs
         timeout = kwargs.get("timeout") or 30.0
+        # Defined once up-front so it's always available, whether we reach it
+        # via the Groq branch or skip straight to the OpenAI fallback branch.
+        fallback_timeout = kwargs.get("timeout") or 25.0
 
         global _current_key_idx
         global _bad_keys
@@ -130,7 +133,6 @@ class RotateCompletions:
                     unique_models.append(m)
                     seen.add(m)
                     
-            fallback_timeout = kwargs.get("timeout") or 25.0
             for model_name in unique_models:
                 print(f"[LLM ROTATION] Trying Groq model: {model_name} (timeout={fallback_timeout})", flush=True)
                 try:

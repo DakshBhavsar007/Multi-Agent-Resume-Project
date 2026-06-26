@@ -590,6 +590,15 @@ class AtsCompatibilityAgent:
                                 matched_skills.append(s)
                             else:
                                 missing_skills.append(s)
+                elif candidate_skills:
+                    # Embedding model unavailable (e.g. running on low-RAM host without
+                    # HF_SPACE_EMBEDDING_URL configured) -> fall back to substring matching
+                    # instead of marking every required skill as missing.
+                    for s in jd_skills:
+                        if any(s in cs or cs in s for cs in candidate_skills):
+                            matched_skills.append(s)
+                        else:
+                            missing_skills.append(s)
                 else:
                     missing_skills = jd_skills[:]
                 skills_match_score = int((len(matched_skills) / len(jd_skills)) * 100) if jd_skills else 100

@@ -234,6 +234,10 @@ def download_enhanced_resume_file(request):
             content.append("-" * 25)
             experience = data_to_use.get("enhanced_experience") or resume_data.get("experience") or []
             for exp in experience:
+                if not isinstance(exp, dict):
+                    content.append(str(exp))
+                    content.append("")
+                    continue
                 role = exp.get("role") or exp.get("title") or "Role"
                 company = exp.get("company") or "Company"
                 content.append(f"{role} - {company}")
@@ -242,9 +246,33 @@ def download_enhanced_resume_file(request):
                     content.append(f"  • {b}")
                 content.append("")
                 
+            # PROJECTS
+            projects = data_to_use.get("enhanced_projects") or resume_data.get("projects") or []
+            if projects:
+                content.append("PROJECTS")
+                content.append("-" * 25)
+                for proj in projects:
+                    if not isinstance(proj, dict):
+                        content.append(str(proj))
+                        content.append("")
+                        continue
+                    name = proj.get("name") or proj.get("title") or "Project"
+                    content.append(name)
+                    bullets = proj.get("enhanced_bullets") or proj.get("bullets") or []
+                    if bullets:
+                        for b in bullets:
+                            content.append(f"  • {b}")
+                    else:
+                        desc = proj.get("description") or ""
+                        if isinstance(desc, str):
+                            for line in desc.split("\n"):
+                                if line.strip():
+                                    content.append(f"  • {line.strip()}")
+                    content.append("")
+                
             content.append("TECHNICAL SKILLS")
             content.append("-" * 20)
-            skills = data_to_use.get("skills") or []
+            skills = data_to_use.get("skills") or resume_data.get("skills") or []
             skills_flat = [s if isinstance(s, str) else s.get("skill", "") for s in skills]
             content.append(", ".join(skills_flat) + "\n")
             
@@ -280,10 +308,31 @@ def download_enhanced_resume_file(request):
                 exp_list = []
                 experience = data_to_use.get("enhanced_experience") or resume_data.get("experience") or []
                 for exp in experience:
+                    if not isinstance(exp, dict):
+                        exp_list.append(str(exp))
+                        continue
                     role = exp.get("role") or exp.get("title") or "Role"
                     company = exp.get("company") or "Company"
                     bullets = "\n".join([f"• {b}" for b in (exp.get("enhanced_bullets") or exp.get("bullets") or [])])
                     exp_list.append(f"{role} @ {company}\n{bullets}")
+                    
+                proj_list = []
+                projects = data_to_use.get("enhanced_projects") or resume_data.get("projects") or []
+                for proj in projects:
+                    if not isinstance(proj, dict):
+                        proj_list.append(str(proj))
+                        continue
+                    name = proj.get("name") or proj.get("title") or "Project"
+                    bullets = proj.get("enhanced_bullets") or proj.get("bullets") or []
+                    if bullets:
+                        bullets_str = "\n".join([f"• {b}" for b in bullets])
+                    else:
+                        desc = proj.get("description") or ""
+                        if isinstance(desc, str):
+                            bullets_str = "\n".join([f"• {line.strip()}" for line in desc.split("\n") if line.strip()])
+                        else:
+                            bullets_str = str(desc)
+                    proj_list.append(f"{name}\n{bullets_str}")
                     
                 edu_list = []
                 education = resume_data.get("education") or []
@@ -299,6 +348,7 @@ def download_enhanced_resume_file(request):
                     "{{summary}}": data_to_use.get("summary_rewrite") or resume_data.get("summary") or "",
                     "{{skills}}": ", ".join(flat_skills),
                     "{{experience}}": "\n\n".join(exp_list),
+                    "{{projects}}": "\n\n".join(proj_list),
                     "{{education}}": "\n".join(edu_list)
                 }
                 
@@ -363,6 +413,9 @@ def download_enhanced_resume_file(request):
                     run.font.size = Pt(12)
                 experience = data_to_use.get("enhanced_experience") or resume_data.get("experience") or []
                 for exp in experience:
+                    if not isinstance(exp, dict):
+                        doc.add_paragraph(str(exp))
+                        continue
                     p = doc.add_paragraph()
                     r_run = p.add_run(exp.get("role") or exp.get("title") or "Role")
                     r_run.bold = True
@@ -372,11 +425,35 @@ def download_enhanced_resume_file(request):
                     for b in bullets:
                         doc.add_paragraph(b, style='List Bullet')
                         
+                projects = data_to_use.get("enhanced_projects") or resume_data.get("projects") or []
+                if projects:
+                    h = doc.add_heading("PROJECTS", level=2)
+                    for run in h.runs:
+                        run.font.color.rgb = primary_color
+                        run.font.size = Pt(12)
+                    for proj in projects:
+                        if not isinstance(proj, dict):
+                            doc.add_paragraph(str(proj))
+                            continue
+                        p = doc.add_paragraph()
+                        p_run = p.add_run(proj.get("name") or proj.get("title") or "Project")
+                        p_run.bold = True
+                        bullets = proj.get("enhanced_bullets") or proj.get("bullets") or []
+                        if bullets:
+                            for b in bullets:
+                                doc.add_paragraph(b, style='List Bullet')
+                        else:
+                            desc = proj.get("description") or ""
+                            if isinstance(desc, str):
+                                for line in desc.split("\n"):
+                                    if line.strip():
+                                        doc.add_paragraph(line.strip(), style='List Bullet')
+                        
                 h = doc.add_heading("TECHNICAL SKILLS", level=2)
                 for run in h.runs:
                     run.font.color.rgb = primary_color
                     run.font.size = Pt(12)
-                skills = data_to_use.get("skills") or []
+                skills = data_to_use.get("skills") or resume_data.get("skills") or []
                 skills_flat = [s if isinstance(s, str) else s.get("skill", "") for s in skills]
                 doc.add_paragraph(", ".join(skills_flat))
                 
