@@ -40,6 +40,14 @@ def session_root(request):
                 })
 
             status_val = "analysis" if job_title == "Smart Analyzer Session" else "active"
+            if status_val == "active":
+                active_count = Session.objects.filter(company=request.company, status="active").count()
+                company_tier = (request.company.tier or "free").lower()
+                if company_tier == "free" and active_count >= 1:
+                    return JsonResponse(error_response("Starter (Free) plan is limited to 1 active session. Please upgrade your plan for more active sessions."), status=403)
+                elif company_tier == "business" and active_count >= 5:
+                    return JsonResponse(error_response("Business plan is limited to 5 active sessions. Please upgrade to Enterprise plan for unlimited sessions."), status=403)
+
             new_session = Session.objects.create(
                 company=request.company,
                 name=name,
@@ -187,6 +195,13 @@ def session_detail(request, session_id):
                     })
                 session.rounds = rounds_data
             if "status" in data and data["status"] is not None:
+                if data["status"] == "active" and session.status != "active":
+                    active_count = Session.objects.filter(company=request.company, status="active").count()
+                    company_tier = (request.company.tier or "free").lower()
+                    if company_tier == "free" and active_count >= 1:
+                        return JsonResponse(error_response("Starter (Free) plan is limited to 1 active session. Please upgrade your plan to activate more sessions."), status=403)
+                    elif company_tier == "business" and active_count >= 5:
+                        return JsonResponse(error_response("Business plan is limited to 5 active sessions. Please upgrade to Enterprise plan to activate more sessions."), status=403)
                 session.status = data["status"]
 
             session.updated_at = timezone.now()

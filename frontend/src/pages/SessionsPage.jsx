@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { Building, Search, Plus, MoreVertical, Archive, Trash2, FolderOpen, ArrowUpDown } from 'lucide-react';
 import { sessionsAPI } from '../lib/api';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 export default function SessionsPage() {
   const navigate = useNavigate();
@@ -162,7 +163,21 @@ export default function SessionsPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-48 bg-gray-100/50 animate-pulse rounded-2xl border border-gray-200/60"></div>
+            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col justify-between h-48">
+              <div className="flex items-center gap-3">
+                <LoadingSkeleton width="40px" height="40px" borderRadius="12px" className="shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <LoadingSkeleton width="70%" height="14px" />
+                  <LoadingSkeleton width="45%" height="10px" />
+                </div>
+              </div>
+              <LoadingSkeleton width="60px" height="16px" borderRadius="9999px" className="mt-3" />
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                <LoadingSkeleton width="100%" height="32px" borderRadius="10px" />
+                <LoadingSkeleton width="100%" height="32px" borderRadius="10px" />
+                <LoadingSkeleton width="100%" height="32px" borderRadius="10px" />
+              </div>
+            </div>
           ))}
         </div>
       ) : filteredSessions.length > 0 ? (

@@ -179,6 +179,14 @@ export const exportAPI = {
       localStorage.getItem("vish_jwt")||""}`
 }
 
+// BILLING
+export const billingAPI = {
+  plans: () => req("GET", "/billing/plans"),
+  subscribe: (plan) => req("POST", "/billing/subscribe", { plan }),
+  verifyPayment: (b) => req("POST", "/billing/verify-payment", b),
+  current: () => req("GET", "/billing/current")
+}
+
 // PUBLIC JOBS (Job Seeker Portal API)
 export const publicJobsAPI = {
   list: (query = "", location = "") => {
@@ -344,6 +352,11 @@ export const seekerAPI = {
   getNotifications: () => seekerReq('GET', '/api/v1/seeker/notifications'),
   markRead: (id) => seekerReq('PATCH', `/api/v1/seeker/notifications/${id}/read`),
   markAllRead: () => seekerReq('POST', '/api/v1/seeker/notifications/read-all'),
+
+  // Billing
+  getBillingCurrent: () => seekerReq('GET', '/api/v1/seeker/billing/current'),
+  billingSubscribe: (plan) => seekerReq('POST', '/api/v1/seeker/billing/subscribe', { plan }),
+  billingVerify: (b) => seekerReq('POST', '/api/v1/seeker/billing/verify-payment', b),
 };
 
 // ── PUBLIC API (no auth required) ──────────────────────────────────────────────

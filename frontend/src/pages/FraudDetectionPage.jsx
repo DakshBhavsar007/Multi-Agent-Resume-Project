@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { protectionAPI } from '../lib/api';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 import { 
   Shield, 
   AlertTriangle, 
@@ -967,8 +968,23 @@ export default function FraudDetectionPage() {
         </div>
 
         {loadingHistory ? (
-          <div className="py-8 flex justify-center items-center">
-            <RefreshCw className="animate-spin text-gray-300 w-8 h-8" />
+          <div className="space-y-4 py-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between py-4 border-b border-[#f5f4ef]">
+                <div className="flex items-center gap-3 flex-1">
+                  <LoadingSkeleton width="36px" height="36px" borderRadius="9999px" className="shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <LoadingSkeleton width="180px" height="14px" />
+                    <LoadingSkeleton width="120px" height="10px" />
+                  </div>
+                </div>
+                <div className="flex gap-12 items-center flex-1 justify-end">
+                  <LoadingSkeleton width="50px" height="16px" className="shrink-0" />
+                  <LoadingSkeleton width="120px" height="20px" borderRadius="4px" className="shrink-0" />
+                  <LoadingSkeleton width="90px" height="24px" borderRadius="9999px" className="shrink-0" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : historyList.length === 0 ? (
           <div className="text-center py-8 text-xs text-gray-400">

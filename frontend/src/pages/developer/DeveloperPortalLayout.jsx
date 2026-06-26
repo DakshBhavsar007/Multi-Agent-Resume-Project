@@ -1,11 +1,62 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
-import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle } from "lucide-react";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { portalAuth } from "../../lib/portalApi";
 import { motion } from "framer-motion";
 import UsageProgress from "../../components/developer/UsageProgress";
 import logoWhite from "../../assets/logo_white.png";
+import { OnboardingTour, useTour } from "../../components/OnboardingTour";
+
+const DEVELOPER_TOUR_STEPS = [
+  {
+    id: 'welcome',
+    title: 'Welcome to Between Dev Portal! 🛠️',
+    content: 'Build powerful recruitment tools using our API. Let\'s explore what you can do here.',
+    icon: '🧑‍💻',
+    target: null,
+  },
+  {
+    id: 'dashboard',
+    title: 'Overview Dashboard',
+    content: 'Track your API usage, see rate limits, and monitor your integration health in real time.',
+    icon: '📊',
+    target: '[data-tour="dev-nav-dashboard"]',
+    placement: 'right',
+  },
+  {
+    id: 'keys',
+    title: 'API Keys',
+    content: 'Generate and manage your API keys. Use them to authenticate all API calls to Between.',
+    icon: '🔑',
+    target: '[data-tour="dev-nav-keys"]',
+    placement: 'right',
+  },
+  {
+    id: 'usage',
+    title: 'Usage & Logs',
+    content: 'View detailed call logs, response times, and usage analytics across all your API keys.',
+    icon: '📈',
+    target: '[data-tour="dev-nav-usage"]',
+    placement: 'right',
+  },
+  {
+    id: 'billing',
+    title: 'Billing & Plans',
+    content: 'Upgrade your developer plan to get higher rate limits and access to advanced features.',
+    icon: '💳',
+    target: '[data-tour="dev-nav-billing"]',
+    placement: 'right',
+  },
+  {
+    id: 'help',
+    title: 'Help anytime!',
+    content: 'Click the ❓ button to replay this tour whenever you need a refresher.',
+    icon: '💡',
+    target: '[data-tour="dev-help-btn"]',
+    placement: 'right',
+  },
+];
 
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { hasError: false }; }
@@ -23,6 +74,7 @@ export default function DeveloperPortalLayout() {
   const pathname = location.pathname;
   const [mobileMenu, setMobileMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { isOpen: tourOpen, startTour, closeTour } = useTour('developer_portal');
 
   useEffect(() => {
     initFromStorage();
@@ -49,12 +101,12 @@ export default function DeveloperPortalLayout() {
   if (!mounted || !jwt) return null;
 
   const navItems = [
-    { name: "Overview", href: "/developer/portal/dashboard", icon: LayoutDashboard },
-    { name: "API Keys", href: "/developer/portal/keys", icon: Key },
-    { name: "Usage & Logs", href: "/developer/portal/usage", icon: BarChart2 },
+    { name: "Overview", href: "/developer/portal/dashboard", icon: LayoutDashboard, tourAttr: 'dev-nav-dashboard' },
+    { name: "API Keys", href: "/developer/portal/keys", icon: Key, tourAttr: 'dev-nav-keys' },
+    { name: "Usage & Logs", href: "/developer/portal/usage", icon: BarChart2, tourAttr: 'dev-nav-usage' },
     { name: "Webhooks", href: "/developer/portal/webhooks", icon: Webhook },
     { name: "Embed", href: "/developer/portal/embed", icon: Code },
-    { name: "Billing", href: "/developer/portal/billing", icon: CreditCard },
+    { name: "Billing", href: "/developer/portal/billing", icon: CreditCard, tourAttr: 'dev-nav-billing' },
   ];
 
   const bottomItems = [
@@ -96,6 +148,7 @@ export default function DeveloperPortalLayout() {
               return (
                 <button
                   key={item.href}
+                  data-tour={item.tourAttr || undefined}
                   onClick={() => { navigate(item.href); setMobileMenu(false); }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
                     isActive ? "bg-gray-100 border border-gray-200 text-black" : "text-gray-850 hover:bg-gray-50 hover:text-black"
@@ -132,6 +185,14 @@ export default function DeveloperPortalLayout() {
                 <LogOut size={18} className="text-red-400" />
                 Logout
               </button>
+              <button
+                data-tour="dev-help-btn"
+                onClick={startTour}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-indigo-500 hover:bg-indigo-50 transition-all text-left"
+              >
+                <HelpCircle size={18} className="text-indigo-400" />
+                Help & Tour
+              </button>
           </div>
         </div>
 
@@ -167,6 +228,14 @@ export default function DeveloperPortalLayout() {
           onClick={() => setMobileMenu(false)}
         />
       )}
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        tourKey="developer_portal"
+        steps={DEVELOPER_TOUR_STEPS}
+        isOpen={tourOpen}
+        onClose={closeTour}
+      />
     </div>
   );
 }

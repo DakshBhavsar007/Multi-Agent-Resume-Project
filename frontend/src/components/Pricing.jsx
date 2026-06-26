@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import './Pricing.css';
 
@@ -17,8 +18,8 @@ const plans = [
   },
   {
     name: "Business plan",
-    monthlyPrice: 19,
-    yearlyPrice: 15,
+    monthlyPrice: 1499,
+    yearlyPrice: 1199,
     description: "Perfect for growing teams.",
     features: ["Five active sessions", "Up to 2,000 resumes", "Advanced matching", "API access"],
     cta: "Get started",
@@ -27,8 +28,8 @@ const plans = [
   },
   {
     name: "Enterprise plan",
-    monthlyPrice: 49,
-    yearlyPrice: 39,
+    monthlyPrice: 3999,
+    yearlyPrice: 3199,
     description: "Deep automation for power users.",
     features: ["Unlimited sessions", "Priority VIP support", "Custom integrations", "Advanced analytics"],
     cta: "Get started",
@@ -38,6 +39,7 @@ const plans = [
 ];
 
 const PricingCard = ({ plan, isYearly, index, onStart, isLoggedIn, userTier }) => {
+  const navigate = useNavigate();
   const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
 
   const getPlanTierValue = (name) => {
@@ -66,6 +68,14 @@ const PricingCard = ({ plan, isYearly, index, onStart, isLoggedIn, userTier }) =
       buttonText = "Upgrade";
     }
   }
+
+  const handleClick = () => {
+    if (isLoggedIn) {
+      navigate('/dashboard/settings?tab=billing');
+    } else {
+      onStart();
+    }
+  };
 
   return (
     <motion.div 
@@ -99,7 +109,7 @@ const PricingCard = ({ plan, isYearly, index, onStart, isLoggedIn, userTier }) =
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              ${price}
+              ₹{price}
             </motion.span>
           </AnimatePresence>
           <span className="price-unit">/mo</span>
@@ -129,7 +139,7 @@ const PricingCard = ({ plan, isYearly, index, onStart, isLoggedIn, userTier }) =
           className="plan-btn"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={onStart}
+          onClick={handleClick}
         >
           {buttonText}
         </motion.button>
@@ -137,6 +147,7 @@ const PricingCard = ({ plan, isYearly, index, onStart, isLoggedIn, userTier }) =
     </motion.div>
   );
 };
+
 
 const Pricing = ({ onStart, isLoggedIn }) => {
   const [isYearly, setIsYearly] = useState(false);

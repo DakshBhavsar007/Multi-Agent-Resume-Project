@@ -58,6 +58,7 @@ export default function ResumeEditor() {
   const targetJobId = searchParams.get("targetJob");
 
   // State
+  const [seeker, setSeeker] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [activateLoading, setActivateLoading] = useState(false);
@@ -218,8 +219,12 @@ export default function ResumeEditor() {
     const fetchInitData = async () => {
       try {
         setLoading(true);
-        // Load Draft
-        const draft = await seekerAPI.getDraft(resumeId);
+        // Load Draft and Profile
+        const [draft, profile] = await Promise.all([
+          seekerAPI.getDraft(resumeId),
+          seekerAPI.getMe().catch(() => null)
+        ]);
+        setSeeker(profile);
         setDraftTitle(draft.title || "My Resume");
         setTemplateId(draft.templateId || "modern");
         
@@ -313,6 +318,11 @@ export default function ResumeEditor() {
   }, [content, jobInfo, loading, autoScan, targetJobDescription]);
 
   const runAtsCheck = async (contentToCheck) => {
+    if (seeker?.tier !== 'premium') {
+      setAtsReport(null);
+      setAtsError("ATS Score Checker is a Premium feature. Please upgrade to unlock ATS scoring and recommendations.");
+      return;
+    }
     setAtsLoading(true);
     setAtsError(null);
     try {
@@ -339,6 +349,23 @@ export default function ResumeEditor() {
   };
 
   const handleAITailor = async () => {
+    if (seeker?.tier !== 'premium') {
+      toast((t) => (
+        <span className="flex flex-col gap-2">
+          <span>✨ <strong>AI Resume Enhancer</strong> is a Premium feature. Please upgrade to unlock!</span>
+          <button 
+            onClick={() => {
+              toast.dismiss(t.id);
+              navigate('/jobs/billing');
+            }}
+            className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold w-fit"
+          >
+            Upgrade Now
+          </button>
+        </span>
+      ), { duration: 5000 });
+      return;
+    }
     setOptimizing(true);
     try {
       const payload = {
@@ -358,6 +385,23 @@ export default function ResumeEditor() {
   };
 
   const handleAIEnhance = async () => {
+    if (seeker?.tier !== 'premium') {
+      toast((t) => (
+        <span className="flex flex-col gap-2">
+          <span>✨ <strong>AI Resume Enhancer</strong> is a Premium feature. Please upgrade to unlock!</span>
+          <button 
+            onClick={() => {
+              toast.dismiss(t.id);
+              navigate('/jobs/billing');
+            }}
+            className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold w-fit"
+          >
+            Upgrade Now
+          </button>
+        </span>
+      ), { duration: 5000 });
+      return;
+    }
     setEnhancing(true);
     try {
       const payload = {
@@ -934,17 +978,40 @@ export default function ResumeEditor() {
               <select
                 value={templateId}
                 onChange={(e) => {
-                  setTemplateId(e.target.value);
+                  const val = e.target.value;
+                  const isPremium = ['executive', 'creative', 'compact'].includes(val);
+                  if (isPremium && seeker?.tier !== 'premium') {
+                    toast((t) => (
+                      <span className="flex flex-col gap-2 text-left">
+                        <span>✨ <strong>{TEMPLATE_META[val].name}</strong> is a Premium template. Please upgrade to use it!</span>
+                        <button 
+                          onClick={() => {
+                            toast.dismiss(t.id);
+                            navigate('/jobs/billing');
+                          }}
+                          className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold w-fit"
+                        >
+                          Upgrade Now
+                        </button>
+                      </span>
+                    ), { duration: 5000 });
+                    return;
+                  }
+                  setTemplateId(val);
                   // Trigger auto-save on template change
                   setTimeout(() => handleSaveDraft(true), 100);
                 }}
                 className="rounded-full border border-border bg-background px-2.5 py-1.5 text-xs font-semibold focus:border-primary focus:outline-none"
               >
-                {Object.keys(TEMPLATE_META).map((id) => (
-                  <option key={id} value={id}>
-                    {TEMPLATE_META[id].name}
-                  </option>
-                ))}
+                {Object.keys(TEMPLATE_META).map((id) => {
+                  const isPremium = ['executive', 'creative', 'compact'].includes(id);
+                  const isLocked = isPremium && seeker?.tier !== 'premium';
+                  return (
+                    <option key={id} value={id}>
+                      {TEMPLATE_META[id].name} {isLocked ? "🔒" : ""}
+                    </option>
+                  );
+                })}
               </select>
               <select
                 value={content.columns || 1}

@@ -226,6 +226,16 @@ def apply_job(request, session_id):
         if not seeker.resume_data:
             return JsonResponse(error_response("Please upload your resume before applying"), status=400)
 
+        # Enforce free plan limits
+        if seeker.tier != "premium":
+            from django.utils import timezone
+            from datetime import timedelta
+            from api.models import JobApplication
+            thirty_days_ago = timezone.now() - timedelta(days=30)
+            app_count = JobApplication.objects.filter(seeker=seeker, applied_at__gte=thirty_days_ago).count()
+            if app_count >= 3:
+                return JsonResponse(error_response("You have reached the limit of 3 job applications per month on the Free Plan. Please upgrade to Premium for unlimited applications."), status=403)
+
         session = Session.objects.filter(id=session_id, status="active").first()
         if not session:
             return JsonResponse(error_response("Job posting not found or no longer active"), status=404)

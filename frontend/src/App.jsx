@@ -48,6 +48,7 @@ import JobSeekerRegisterPage from './pages/seeker/JobSeekerRegisterPage';
 import MyResumePage from './pages/seeker/MyResumePage';
 import MyApplicationsPage from './pages/seeker/MyApplicationsPage';
 import NotificationsPage from './pages/seeker/NotificationsPage';
+import SeekerBillingPage from './pages/seeker/SeekerBillingPage';
 import UserCompanies from './pages/user/UserCompanies';
 import UserCompanyDetail from './pages/user/UserCompanyDetail';
 import UserProfile from './pages/user/UserProfile';
@@ -183,6 +184,7 @@ export default function App() {
           <Route path="/jobs/applications" element={<UserApplications />} />
           <Route path="/jobs/resume" element={<MyResumePage />} />
           <Route path="/jobs/notifications" element={<NotificationsPage />} />
+          <Route path="/jobs/billing" element={<SeekerBillingPage />} />
           <Route path="/jobs/:jobId" element={<UserJobDetail />} />
           <Route path="/resume-builder" element={<ResumeBuilderLanding />} />
           <Route path="/resume-builder/edit/:resumeId" element={<ResumeEditor />} />

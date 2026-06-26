@@ -166,7 +166,17 @@ export default function UserDashboard() {
             <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
               Welcome back, {seeker?.full_name?.split(" ")[0] || "Seeker"}
             </h1>
-            <p className="mt-3 text-muted-foreground">Here's where you are with your job search.</p>
+            <p className="mt-3 text-muted-foreground">
+              Here's where you are with your job search. Plan:{" "}
+              <span className={`font-bold ${seeker?.tier === 'premium' ? 'text-amber-600' : 'text-gray-500'} uppercase`}>
+                {seeker?.tier || 'Free'}
+              </span>
+              {seeker?.tier !== 'premium' && (
+                <Link to="/jobs/billing" className="ml-3 text-xs font-black text-indigo-600 hover:text-indigo-800 underline underline-offset-2">
+                  Upgrade to Premium ⚡
+                </Link>
+              )}
+            </p>
           </div>
           <Link to="/jobs/search" className="pill shrink-0 bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">Find more jobs</Link>
         </div>

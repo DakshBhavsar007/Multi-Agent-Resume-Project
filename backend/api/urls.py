@@ -22,6 +22,8 @@ from api.views import (
     github_auth,
     companies,
     seeker_resume_builder,
+    recruiter_billing,
+    seeker_billing,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -139,6 +141,14 @@ urlpatterns = [
     path('api/developer/billing/subscription', dev_billing.current_subscription, name='dev-billing-subscription'),
     path('api/developer/billing/current', dev_billing.current_subscription, name='dev-billing-current'),
 
+    # ── Recruiter Billing ──────────────────────────────────────────────────────
+    path('api/v1/billing/plans', recruiter_billing.get_plans, name='recruiter-billing-plans'),
+    path('api/v1/billing/subscribe', recruiter_billing.subscribe, name='recruiter-billing-subscribe'),
+    path('api/v1/billing/verify-payment', recruiter_billing.verify_payment, name='recruiter-billing-verify'),
+    path('api/v1/billing/subscription', recruiter_billing.current_subscription, name='recruiter-billing-subscription'),
+    path('api/v1/billing/current', recruiter_billing.current_subscription, name='recruiter-billing-current'),
+
+
     # ── Developer Portal — Webhooks ────────────────────────────────────────────
     path('api/developer/webhooks', dev_webhooks.webhooks_root, name='dev-webhooks-root'),
     path('api/developer/webhooks/<str:webhook_id>', dev_webhooks.webhook_operations, name='dev-webhooks-ops'),
@@ -214,5 +224,11 @@ urlpatterns = [
     path('api/v1/seeker/resume/drafts/<str:draft_id>/versions/<str:version_id>/restore', seeker_resume_builder.restore_version, name='seeker-draft-version-restore'),
     path('api/v1/seeker/resume/recommend-templates', seeker_resume_builder.recommend_templates, name='seeker-recommend-templates'),
     path('api/debug/project-relevance', seeker_resume_builder.debug_project_relevance, name='debug-project-relevance'),
+
+    # ── Seeker Billing ─────────────────────────────────────────────────────────
+    path('api/v1/seeker/billing/plans', seeker_billing.get_plans, name='seeker-billing-plans'),
+    path('api/v1/seeker/billing/subscribe', seeker_billing.subscribe, name='seeker-billing-subscribe'),
+    path('api/v1/seeker/billing/verify-payment', seeker_billing.verify_payment, name='seeker-billing-verify'),
+    path('api/v1/seeker/billing/current', seeker_billing.current_subscription, name='seeker-billing-current'),
 ]
 

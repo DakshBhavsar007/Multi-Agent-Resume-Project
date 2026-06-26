@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { authAPI } from '../lib/api';
+import { authAPI, billingAPI } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import PageTransition from '../components/PageTransition';
 import { 
@@ -16,13 +16,17 @@ import {
   Bell, 
   User, 
   Check, 
-  Lock 
+  Lock,
+  CreditCard,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { company, clearAuth } = useAuthStore();
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const { company, clearAuth, tier, setAuth } = useAuthStore();
   const [companyName, setCompanyName] = useState(company?.name || '');
   const [logo, setLogo] = useState(localStorage.getItem('vish_company_logo') || '');
 
@@ -31,7 +35,7 @@ export default function SettingsPage() {
     navigate("/login");
   };
   
-  const [activeTab, setActiveTab] = useState('api-keys'); // 'profile' | 'api-keys' | 'notifications' | 'account'
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'api-keys'); // 'profile' | 'api-keys' | 'notifications' | 'account' | 'billing'
   const [copiedKeyId, setCopiedKeyId] = useState(null);
   
   // New key modal state
@@ -39,11 +43,124 @@ export default function SettingsPage() {
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyEnv, setNewKeyEnv] = useState('production');
 
+  useEffect(() => {
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
+  useEffect(() => {
+    // Dynamically load Razorpay
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
   const { data: keysData, refetch: refetchKeys } = useQuery({
     queryKey: ['api-keys'],
     queryFn: () => authAPI.getKeys(),
     retry: false
   });
+
+  const { data: plans } = useQuery({
+    queryKey: ["recruiter-billing-plans"],
+    queryFn: billingAPI.plans,
+    initialData: [
+      { id: "free", name: "Starter Plan", price: 0, features: ["One active session", "Up to 100 resumes", "Basic AI screening", "Standard support"] },
+      { id: "business", name: "Business Plan", price: 1499, features: ["Five active sessions", "Up to 2,000 resumes", "Advanced matching", "API access"] },
+      { id: "enterprise", name: "Enterprise Plan", price: 3999, features: ["Unlimited sessions", "Priority VIP support", "Custom integrations", "Advanced analytics"] }
+    ]
+  });
+
+  const { data: currentSub, refetch: refetchSub } = useQuery({
+    queryKey: ["recruiter-billing-current"],
+    queryFn: async () => {
+      try {
+        return await billingAPI.current();
+      } catch (e) {
+        return { plan: company?.tier || tier || "free", status: "active" };
+      }
+    }
+  });
+
+  const [loadingPlan, setLoadingPlan] = useState(null);
+  const [cancelModal, setCancelModal] = useState(false);
+
+  const handleUpgrade = async (planId) => {
+    setLoadingPlan(planId);
+    try {
+      const orderData = await billingAPI.subscribe(planId);
+      if (orderData.order_id.startsWith("order_mock_")) {
+         setTimeout(async () => {
+           try {
+             await billingAPI.verifyPayment({
+               razorpay_payment_id: "pay_mock_" + Math.random().toString(36).substring(7),
+               razorpay_order_id: orderData.order_id,
+               razorpay_signature: "sig_mock_" + Math.random().toString(36).substring(7),
+               plan: planId
+             });
+             toast.success("Successfully upgraded plan (Mock Mode)!");
+             
+             const updatedCompany = { ...company, tier: planId, jwt_token: localStorage.getItem("vish_jwt") };
+             setAuth(updatedCompany);
+             refetchSub();
+             window.location.reload();
+           } catch (err) {
+             toast.error("Mock upgrade verification failed");
+             setLoadingPlan(null);
+           }
+         }, 1000);
+         return;
+      }
+
+      const rzp = new window.Razorpay({
+        key: orderData.razorpay_key_id || "rzp_test_mock",
+        order_id: orderData.order_id,
+        name: "Between",
+        description: `Upgrade to ${planId.toUpperCase()} Plan`,
+        theme: { color: "#111111" },
+        handler: async function(response) {
+          try {
+            await billingAPI.verifyPayment({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              plan: planId
+            });
+            toast.success("Successfully upgraded plan!");
+            
+            const updatedCompany = { ...company, tier: planId, jwt_token: localStorage.getItem("vish_jwt") };
+            setAuth(updatedCompany);
+            refetchSub();
+            window.location.reload();
+          } catch (err) {
+            toast.error("Payment verification failed");
+          }
+        }
+      });
+
+      rzp.on('payment.failed', function () { toast.error("Payment failed"); setLoadingPlan(null); });
+      rzp.open();
+    } catch (e) {
+      toast.error(e.message || "Failed to initiate payment");
+      setLoadingPlan(null);
+    }
+  };
+
+  const handleCancel = async () => {
+     try {
+       toast.error("Plan cancelled. You will be downgraded to Free at the end of the period.");
+       setCancelModal(false);
+     } catch(e) {}
+  };
+
+  const activePlan = currentSub?.plan || company?.tier || tier || "free";
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
@@ -106,6 +223,7 @@ export default function SettingsPage() {
   const tabItems = [
     { id: 'profile', label: 'Company profile', icon: Building },
     { id: 'api-keys', label: 'API keys', icon: Key },
+    { id: 'billing', label: 'Billing & Plan', icon: CreditCard },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'account', label: 'Account', icon: User },
   ];
@@ -351,6 +469,102 @@ export default function SettingsPage() {
                   Sign out
                 </button>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'billing' && (
+            <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] border border-gray-100 p-8 space-y-6">
+              <h2 className="text-md font-bold text-charcoal flex items-center gap-2 pb-4 border-b border-gray-100">
+                <CreditCard className="w-5 h-5 text-accent" /> Recruiter subscription
+              </h2>
+
+              {/* Current plan card */}
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-accent"></div>
+                <div className="flex flex-col gap-2 pl-2">
+                  <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest pl-0.5">Current Plan</span>
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-2xl font-black text-charcoal flex items-center gap-3">
+                      <CreditCard size={24} className="text-accent" /> {plans.find(p=>p.id===activePlan)?.name || (activePlan.charAt(0).toUpperCase() + activePlan.slice(1)) + " Plan"}
+                    </h2>
+                    <span className="bg-green-100 text-green-700 text-[9px] uppercase font-black px-2 py-0.5 rounded-full">● {currentSub?.status || "Active"}</span>
+                  </div>
+                  {activePlan !== "free" && (
+                    <p className="text-gray-500 font-medium text-xs mt-1">₹{plans.find(p=>p.id===activePlan)?.price.toLocaleString()}/month. Status is active.</p>
+                  )}
+                </div>
+                {activePlan !== "free" && (
+                  <button onClick={() => setCancelModal(true)} className="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">Cancel Plan</button>
+                )}
+              </div>
+
+              {/* Comparison grid */}
+              <div>
+                <h3 className="font-bold text-md text-charcoal mb-4">Available recruiter plans</h3>
+                <div className="grid md:grid-cols-3 gap-6">
+                  {plans.map(p => {
+                    const isActive = activePlan === p.id;
+                    return (
+                      <div key={p.id} className={`flex flex-col border rounded-2xl p-6 bg-white transition-all relative overflow-hidden ${isActive ? "border-accent shadow-[0_4px_20px_rgba(59,130,246,0.15)]" : "border-gray-100"}`}>
+                        {isActive && <div className="absolute top-0 left-0 w-full h-1 bg-accent"></div>}
+                        
+                        <div className="flex justify-between items-center mb-3">
+                          <h3 className="text-sm font-bold text-charcoal">{p.name}</h3>
+                          {isActive && <span className="bg-blue-50 text-accent text-[9px] font-black uppercase px-2 py-0.5 rounded-md">Current</span>}
+                        </div>
+                        
+                        <div className="mb-4 pb-4 border-b border-gray-100">
+                           <span className="text-3xl font-black text-charcoal">₹{p.price}</span>
+                           <span className="text-gray-500 font-medium text-xs">/month</span>
+                        </div>
+                        
+                        <ul className="flex flex-col gap-2.5 font-medium text-xs text-gray-500 mb-6 flex-1">
+                          {p.features.map(f => (
+                            <li key={f} className="flex gap-2 items-start">
+                              <Check size={14} className="text-green-500 shrink-0 mt-0.5" /> 
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {!isActive && (
+                          <button 
+                            disabled={loadingPlan === p.id}
+                            onClick={() => handleUpgrade(p.id)} 
+                            className="w-full py-2.5 rounded-xl font-bold text-xs bg-charcoal text-white hover:bg-black transition-all disabled:opacity-50"
+                          >
+                            {loadingPlan === p.id ? "Processing..." : `Upgrade to ${p.name.split(" ")[0]}`}
+                          </button>
+                        )}
+                        {isActive && (
+                          <div className="w-full py-2.5 rounded-xl font-bold text-xs bg-gray-50 text-gray-400 text-center cursor-default">
+                            Current Plan
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Cancel Modal */}
+              {cancelModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/40 backdrop-blur-sm">
+                  <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative p-6 space-y-4">
+                    <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center"><AlertTriangle size={24}/></div>
+                    <div>
+                      <h2 className="text-lg font-black text-charcoal">Cancel Subscription?</h2>
+                      <p className="text-gray-500 font-medium text-xs leading-relaxed mt-1">
+                        Downgrading will revert your account to the Starter Plan tier. You will lose access to premium active sessions and increased resume capacity.
+                      </p>
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <button onClick={()=>setCancelModal(false)} className="flex-1 py-2.5 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 text-xs transition-colors">Keep Plan</button>
+                      <button onClick={handleCancel} className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 text-xs transition-colors shadow-md shadow-red-500/20">Yes, Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

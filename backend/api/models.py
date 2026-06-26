@@ -378,3 +378,39 @@ class SavedJob(models.Model):
 
     def __str__(self):
         return f"{self.seeker.full_name} bookmarked {self.session.job_title}"
+
+
+class CompanyBillingSubscription(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, db_column="company_id")
+    plan = models.CharField(max_length=50, default="free")
+    payment_id = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=50, default="active")
+    current_period_start = models.DateTimeField(null=True, blank=True)
+    current_period_end = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "company_billing_subscriptions"
+
+    def __str__(self):
+        return f"{self.company.name} - {self.plan} ({self.status})"
+
+
+class SeekerBillingSubscription(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seeker = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, db_column="seeker_id")
+    plan = models.CharField(max_length=50, default="free")
+    payment_id = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=50, default="active")
+    current_period_start = models.DateTimeField(null=True, blank=True)
+    current_period_end = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "seeker_billing_subscriptions"
+
+    def __str__(self):
+        return f"{self.seeker.full_name} - {self.plan} ({self.status})"
+
+

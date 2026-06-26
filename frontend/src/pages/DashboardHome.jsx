@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { sessionsAPI } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 export default function DashboardHome() {
   const navigate = useNavigate();
@@ -39,11 +40,23 @@ export default function DashboardHome() {
 
   if (sessionsLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-10 bg-muted animate-pulse rounded-xl w-64"></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-8 max-w-6xl mx-auto">
+        <div className="space-y-2">
+          <LoadingSkeleton width="200px" height="28px" />
+          <LoadingSkeleton width="300px" height="16px" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-muted animate-pulse rounded-2xl border border-gray-200"></div>
+            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col justify-between h-32">
+              <div className="flex justify-between items-start">
+                <LoadingSkeleton width="32px" height="32px" borderRadius="10px" className="shrink-0" />
+                <LoadingSkeleton width="50px" height="10px" className="shrink-0" />
+              </div>
+              <div className="space-y-2 mt-2">
+                <LoadingSkeleton width="80px" height="24px" />
+                <LoadingSkeleton width="120px" height="12px" />
+              </div>
+            </div>
           ))}
         </div>
       </div>

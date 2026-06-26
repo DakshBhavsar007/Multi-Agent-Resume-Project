@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, Check, Zap, BarChart3, Users, Brain, Sparkles, ArrowRight, X, MapPin, Mail, Briefcase, CheckCircle, XCircle, ChevronDown, Trophy, Star, Award, Phone, History, Trash2, Calendar } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDropzone } from 'react-dropzone';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 export default function SmartAnalyzerPage() {
   const [step, setStep] = useState('idle');
@@ -527,8 +528,20 @@ export default function SmartAnalyzerPage() {
                 {[...Array(3)].map((_, i) => (
                   <div
                     key={i}
-                    className="h-24 bg-gradient-to-r from-gray-50 to-gray-100/50 animate-pulse rounded-2xl border border-gray-100"
-                  />
+                    className="p-5 rounded-2xl bg-white border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <LoadingSkeleton width="48px" height="48px" borderRadius="12px" className="shrink-0" />
+                      <div className="space-y-2">
+                        <LoadingSkeleton width="180px" height="16px" />
+                        <div className="flex gap-2">
+                          <LoadingSkeleton width="100px" height="12px" />
+                          <LoadingSkeleton width="65px" height="12px" />
+                        </div>
+                      </div>
+                    </div>
+                    <LoadingSkeleton width="100px" height="36px" borderRadius="12px" className="shrink-0" />
+                  </div>
                 ))}
               </div>
             ) : historyList.length > 0 ? (

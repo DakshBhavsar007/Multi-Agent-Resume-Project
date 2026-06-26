@@ -13,6 +13,7 @@ import { useCandidateStore } from '../stores/candidateStore';
 import ChatPanel from '../components/ChatPanel';
 import CandidateCard from '../components/CandidateCard';
 import PremiumBadge from '../components/PremiumBadge';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
   const [input, setInput] = useState("");
@@ -288,7 +289,30 @@ export default function SessionWorkspacePage() {
     return () => window.removeEventListener("message", handleMessage);
   }, [id, queryClient, driveUrl, addJob]);
 
-  if (isLoading) return <div className="p-8 h-[calc(100vh-60px)] flex items-center justify-center font-bold text-gray-400">Loading session workspace...</div>;
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6 max-w-6xl mx-auto">
+        <div className="space-y-2">
+          <LoadingSkeleton width="250px" height="28px" />
+          <LoadingSkeleton width="180px" height="18px" />
+        </div>
+        <div className="flex gap-4 border-b border-gray-200 pb-4 mt-6">
+          <LoadingSkeleton width="100px" height="32px" borderRadius="10px" />
+          <LoadingSkeleton width="100px" height="32px" borderRadius="10px" />
+          <LoadingSkeleton width="100px" height="32px" borderRadius="10px" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div className="md:col-span-2 space-y-4">
+            <LoadingSkeleton width="100%" height="200px" borderRadius="16px" />
+            <LoadingSkeleton width="100%" height="150px" borderRadius="16px" />
+          </div>
+          <div className="space-y-4">
+            <LoadingSkeleton width="100%" height="380px" borderRadius="16px" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!session) return <div className="p-8 h-[calc(100vh-60px)] flex items-center justify-center font-bold text-gray-400">Session not found.</div>;
 
   const handleMatchAll = async () => {

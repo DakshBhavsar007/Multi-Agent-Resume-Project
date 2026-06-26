@@ -45,6 +45,21 @@ def upload_resumes(request):
         max_batch = limits["per_batch"]
         use_llm = limits["llm_enrichment"]
 
+        total_candidates = Candidate.objects.filter(session__company=request.company).count()
+        tier_lower = tier.lower()
+        if tier_lower == 'free':
+            candidate_limit = 100
+        elif tier_lower == 'business':
+            candidate_limit = 2000
+        else:
+            candidate_limit = float('inf')
+
+        if total_candidates + len(files) > candidate_limit:
+            return JsonResponse(error_response(
+                f"Your '{tier}' plan limit of {candidate_limit} total resumes has been exceeded or would be exceeded by this batch. "
+                f"Currently you have {total_candidates} resumes. Please upgrade your plan."
+            ), status=403)
+
         if len(files) > max_batch:
             return JsonResponse(error_response(
                 f"Your '{tier}' plan allows max {max_batch} files per batch. "
@@ -131,6 +146,26 @@ def upload_zip(request):
                 if ext in [".pdf", ".docx", ".doc", ".txt"]:
                     z.extract(name, save_dir)
                     extracted.append(f"{save_dir}/{name}")
+
+        total_candidates = Candidate.objects.filter(session__company=request.company).count()
+        tier_lower = tier.lower()
+        if tier_lower == 'free':
+            candidate_limit = 100
+        elif tier_lower == 'business':
+            candidate_limit = 2000
+        else:
+            candidate_limit = float('inf')
+
+        if total_candidates + len(extracted) > candidate_limit:
+            for p in extracted:
+                try: os.remove(p)
+                except: pass
+            try: os.remove(zip_path)
+            except: pass
+            return JsonResponse(error_response(
+                f"Your '{tier}' plan limit of {candidate_limit} total resumes has been exceeded or would be exceeded by this batch. "
+                f"Currently you have {total_candidates} resumes. Please upgrade your plan."
+            ), status=403)
 
         session = Session.objects.filter(id=session_id).first()
         if not session:
@@ -401,6 +436,23 @@ def ats_import(request):
         elif fmt == "xlsx":
             df = pd.read_excel(path)
             records = df.to_dict("records")
+
+        total_candidates = Candidate.objects.filter(session__company=request.company).count()
+        tier_lower = (session.company.tier or 'free').lower()
+        if tier_lower == 'free':
+            candidate_limit = 100
+        elif tier_lower == 'business':
+            candidate_limit = 2000
+        else:
+            candidate_limit = float('inf')
+
+        if total_candidates + len(records) > candidate_limit:
+            try: os.remove(path)
+            except: pass
+            return JsonResponse(error_response(
+                f"Your '{session.company.tier}' plan limit of {candidate_limit} total resumes has been exceeded or would be exceeded by this batch. "
+                f"Currently you have {total_candidates} resumes. Please upgrade your plan."
+            ), status=403)
 
         norm_agent = SkillNormalizationAgent()
         imported = 0

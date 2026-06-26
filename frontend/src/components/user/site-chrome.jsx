@@ -1,9 +1,68 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText } from "lucide-react";
+import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import logoWhite from "../../assets/logo_white.png";
 import logoBlack from "../../assets/logo_black.png";
+import { OnboardingTour, useTour } from "../OnboardingTour";
+
+const SEEKER_TOUR_STEPS = [
+  {
+    id: 'welcome',
+    title: 'Welcome to Between! 🚀',
+    content: 'A calmer, AI-powered job search experience. Let\'s take a 1-minute tour to help you get started!',
+    icon: '✨',
+    target: null,
+  },
+  {
+    id: 'dashboard',
+    title: 'Your Dashboard',
+    content: 'View your applications, active ATS scores, and top improvements in one clean layout.',
+    icon: '📊',
+    target: '[data-tour="seeker-nav-dashboard"]',
+    placement: 'bottom',
+  },
+  {
+    id: 'jobs',
+    title: 'Search Jobs',
+    content: 'Browse hand-picked positions, check match scores, and apply directly to matching roles.',
+    icon: '🔍',
+    target: '[data-tour="seeker-nav-jobs"]',
+    placement: 'bottom',
+  },
+  {
+    id: 'resume',
+    title: 'AI Resume Builder',
+    content: 'Create ATS-friendly resumes, import profile details, and optimize drafts against job descriptions.',
+    icon: '📝',
+    target: '[data-tour="seeker-nav-resume-builder"]',
+    placement: 'bottom',
+  },
+  {
+    id: 'safety',
+    title: 'Hiring Safety',
+    content: 'Scan company profiles and job descriptions to flag potential scams and hiring red flags.',
+    icon: '🛡️',
+    target: '[data-tour="seeker-nav-hiring-safety"]',
+    placement: 'bottom',
+  },
+  {
+    id: 'billing',
+    title: 'Pricing & Plans',
+    content: 'Upgrade to our Premium plan for just ₹199/month to get unlimited applications and full AI diagnostics.',
+    icon: '💳',
+    target: '[data-tour="seeker-nav-premium-plans"]',
+    placement: 'bottom',
+  },
+  {
+    id: 'help',
+    title: 'Need help anytime?',
+    content: 'Click the ❓ button in the navbar to replay this onboarding tour whenever you want!',
+    icon: '💡',
+    target: '[data-tour="seeker-help-btn"]',
+    placement: 'bottom',
+  },
+];
 
 const links = [
   { to: "/", label: "Home", icon: LayoutDashboard },
@@ -13,6 +72,7 @@ const links = [
   { to: "/jobs/safety-checker", label: "Hiring Safety", icon: Shield },
   { to: "/jobs/trends", label: "Market Trends", icon: TrendingUp },
   { to: "/jobs/applications", label: "Applications", icon: Briefcase },
+  { to: "/jobs/billing", label: "Premium Plans", icon: Sparkles },
   { to: "/jobs/profile", label: "Profile", icon: User },
 ];
 
@@ -26,6 +86,7 @@ export function Header() {
     }
     return null;
   });
+  const { isOpen: tourOpen, startTour, closeTour } = useTour('seeker_portal');
 
   useEffect(() => {
     const handleProfileUpdate = () => {
@@ -49,7 +110,7 @@ export function Header() {
   };
 
   const filteredLinks = links.filter((l) => {
-    if (l.to === "/jobs/applications" || l.to === "/jobs/profile") {
+    if (l.to === "/jobs/applications" || l.to === "/jobs/profile" || l.to === "/jobs/billing") {
       return isLoggedIn;
     }
     return true;
@@ -65,10 +126,12 @@ export function Header() {
         <nav className="ml-4 hidden flex-1 items-center gap-1 md:flex overflow-x-auto hide-scrollbar">
           {filteredLinks.map((l) => {
             const active = pathname === l.to;
+            const tourId = `seeker-nav-${l.label.toLowerCase().replace(/\s+/g, '-')}`;
             return (
               <Link
                 key={l.to}
                 to={l.to}
+                data-tour={tourId}
                 className={`pill px-4 py-2 text-sm font-medium whitespace-nowrap transition ${
                   active
                     ? "bg-muted text-foreground font-medium shadow-sm"
@@ -82,10 +145,22 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          {isLoggedIn && (
+            <button
+              data-tour="seeker-help-btn"
+              aria-label="Help & Tour"
+              onClick={startTour}
+              className="pill p-2 text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-center transition shrink-0"
+              title="Help & Tour"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </button>
+          )}
           {isLoggedIn ? (
             <>
               <Link
                 to="/jobs/dashboard"
+                data-tour="seeker-nav-dashboard"
                 className="pill hidden border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
               >
                 Dashboard
@@ -133,10 +208,12 @@ export function Header() {
         {filteredLinks.map((l) => {
           const active = pathname === l.to;
           const Icon = l.icon;
+          const tourId = `seeker-nav-${l.label.toLowerCase().replace(/\s+/g, '-')}`;
           return (
             <Link
               key={l.to}
               to={l.to}
+              data-tour={tourId}
               className={`pill flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-xs font-medium ${
                 active 
                   ? "bg-muted text-foreground font-medium shadow-sm" 
@@ -149,6 +226,15 @@ export function Header() {
           );
         })}
       </nav>
+
+      {isLoggedIn && (
+        <OnboardingTour
+          tourKey="seeker_portal"
+          steps={SEEKER_TOUR_STEPS}
+          isOpen={tourOpen}
+          onClose={closeTour}
+        />
+      )}
     </header>
   );
 }

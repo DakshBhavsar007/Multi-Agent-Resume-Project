@@ -20,6 +20,65 @@ import {
 import { useAuthStore } from '../stores/authStore';
 import { authAPI } from '../lib/api';
 import RateLimitBanner from '../components/RateLimitBanner';
+import { OnboardingTour, useTour } from '../components/OnboardingTour';
+
+const RECRUITER_TOUR_STEPS = [
+  {
+    id: 'welcome',
+    title: 'Welcome to Between! 🎉',
+    content: 'Your AI-powered recruitment platform. Let\'s take a quick tour to help you get started hiring smarter.',
+    icon: '🚀',
+    target: null,
+  },
+  {
+    id: 'dashboard',
+    title: 'Dashboard Overview',
+    content: 'Your central hub shows key metrics, recent sessions, and quick actions at a glance.',
+    icon: '📊',
+    target: '[data-tour="dashboard-home"]',
+    placement: 'bottom',
+  },
+  {
+    id: 'sessions',
+    title: 'Recruitment Sessions',
+    content: 'Create sessions for each job opening. Upload resumes and let AI rank and score candidates automatically.',
+    icon: '📁',
+    target: '[data-tour="nav-sessions"]',
+    placement: 'right',
+  },
+  {
+    id: 'smart-analyzer',
+    title: 'Smart Analyzer',
+    content: 'Deep-dive into candidate profiles with AI insights, skill matching, and cultural fit scores.',
+    icon: '✨',
+    target: '[data-tour="nav-smart-analyzer"]',
+    placement: 'right',
+  },
+  {
+    id: 'protection',
+    title: 'Fraud Protection',
+    content: 'Detect fake resumes, plagiarism, and fraudulent applications powered by our AI fraud engine.',
+    icon: '🛡️',
+    target: '[data-tour="nav-protection"]',
+    placement: 'right',
+  },
+  {
+    id: 'settings',
+    title: 'Settings & Billing',
+    content: 'Manage your company profile, API keys, and upgrade your plan for more sessions and resumes.',
+    icon: '⚙️',
+    target: '[data-tour="nav-settings"]',
+    placement: 'right',
+  },
+  {
+    id: 'help',
+    title: 'Need help anytime?',
+    content: 'Click the ❓ button in the top bar whenever you want to replay this tour.',
+    icon: '💡',
+    target: '[data-tour="help-btn"]',
+    placement: 'bottom',
+  },
+];
 
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -39,6 +98,7 @@ export default function DashboardLayout() {
   const pathname = location.pathname;
   const { initFromStorage, company, clearAuth } = useAuthStore();
   const [initDone, setInitDone] = useState(false);
+  const { isOpen: tourOpen, startTour, closeTour } = useTour('recruiter_dashboard');
 
   const isDesktop = useIsDesktop();
   const [open, setOpen] = useState(false);
@@ -87,11 +147,11 @@ export default function DashboardLayout() {
 
   const navItems = [
     { to: "/", label: "Home Page", icon: Home, exact: true },
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-    { to: "/dashboard/smart-analyzer", label: "Smart Analyzer", icon: Sparkles },
-    { to: "/dashboard/protection", label: "Protection", icon: Shield },
-    { to: "/dashboard/sessions", label: "Sessions", icon: Layers },
-    { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon },
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true, tourAttr: 'dashboard-home' },
+    { to: "/dashboard/smart-analyzer", label: "Smart Analyzer", icon: Sparkles, tourAttr: 'nav-smart-analyzer' },
+    { to: "/dashboard/protection", label: "Protection", icon: Shield, tourAttr: 'nav-protection' },
+    { to: "/dashboard/sessions", label: "Sessions", icon: Layers, tourAttr: 'nav-sessions' },
+    { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, tourAttr: 'nav-settings' },
   ];
 
   // Parses usage configuration
@@ -193,7 +253,14 @@ export default function DashboardLayout() {
           >
             <Search size={20} />
           </button>
-          <IconBtn label="Help" hideOn="sm"><HelpCircle size={20} /></IconBtn>
+          <button
+            data-tour="help-btn"
+            aria-label="Help / Tour"
+            onClick={startTour}
+            className="hidden sm:flex w-10 h-10 rounded-full hover:bg-gray-100 items-center justify-center text-gray-500 transition shrink-0"
+          >
+            <HelpCircle size={20} />
+          </button>
           <IconBtn label="Notifications"><Bell size={20} /></IconBtn>
           <IconBtn label="Apps" hideOn="sm"><Grid3x3 size={20} /></IconBtn>
           
@@ -270,6 +337,7 @@ export default function DashboardLayout() {
               <Link
                 key={item.to}
                 to={item.to}
+                data-tour={item.tourAttr || undefined}
                 onClick={() => { if (!isDesktop) setOpen(false); }}
                 className={`flex items-center h-12 rounded-full px-3 gap-5 relative group transition-colors duration-200 ${
                   active 
@@ -343,6 +411,14 @@ export default function DashboardLayout() {
           <Outlet />
         </div>
       </main>
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        tourKey="recruiter_dashboard"
+        steps={RECRUITER_TOUR_STEPS}
+        isOpen={tourOpen}
+        onClose={closeTour}
+      />
     </div>
   );
 }

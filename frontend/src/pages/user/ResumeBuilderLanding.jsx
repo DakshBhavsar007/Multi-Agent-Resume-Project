@@ -47,6 +47,7 @@ export default function ResumeBuilderLanding() {
 
   const [drafts, setDrafts] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [seeker, setSeeker] = useState(null);
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
   
@@ -58,12 +59,14 @@ export default function ResumeBuilderLanding() {
   const fetchLandingData = async () => {
     try {
       setLoading(true);
-      const [draftsData, recsData] = await Promise.all([
+      const [draftsData, recsData, profileData] = await Promise.all([
         seekerAPI.getDrafts(),
-        seekerAPI.recommendTemplates().catch(() => ({ recommendations: [] }))
+        seekerAPI.recommendTemplates().catch(() => ({ recommendations: [] })),
+        seekerAPI.getMe().catch(() => null)
       ]);
       setDrafts(draftsData || []);
       setRecommendations(recsData?.recommendations || []);
+      setSeeker(profileData);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load drafts");
@@ -77,6 +80,25 @@ export default function ResumeBuilderLanding() {
   }, []);
 
   const handleCreateDraft = async (templateId) => {
+    const isPremiumTemplate = ['executive', 'creative', 'compact'].includes(templateId);
+    if (isPremiumTemplate && seeker?.tier !== 'premium') {
+      toast((t) => (
+        <span className="flex flex-col gap-2">
+          <span>✨ <strong>{TEMPLATE_META[templateId].name}</strong> is a Premium template. Please upgrade to use it!</span>
+          <button 
+            onClick={() => {
+              toast.dismiss(t.id);
+              navigate('/jobs/billing');
+            }}
+            className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold w-fit"
+          >
+            Upgrade Now
+          </button>
+        </span>
+      ), { duration: 5000 });
+      return;
+    }
+
     setBtnLoading(true);
     try {
       const title = `Resume - ${TEMPLATE_META[templateId].name}`;
@@ -85,7 +107,7 @@ export default function ResumeBuilderLanding() {
       navigate(`/resume-builder/edit/${draft.id}`);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to create resume draft");
+      toast.error(err.message || "Failed to create resume draft");
     } finally {
       setBtnLoading(false);
     }
@@ -102,7 +124,7 @@ export default function ResumeBuilderLanding() {
       navigate(`/resume-builder/edit/${draft.id}`);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to import profile resume");
+      toast.error(err.message || "Failed to import profile resume");
     } finally {
       setBtnLoading(false);
     }
@@ -142,6 +164,10 @@ export default function ResumeBuilderLanding() {
   };
 
   const handleScanCurrentResume = async () => {
+    if (seeker?.tier !== 'premium') {
+      setAtsError("ATS Compatibility Scanner is a Premium feature. Please upgrade to Premium to unlock ATS compatibility checks.");
+      return;
+    }
     setAtsLoading(true);
     setAtsReport(null);
     setAtsError(null);
@@ -372,6 +398,7 @@ export default function ResumeBuilderLanding() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(TEMPLATE_META).map(([id, meta]) => {
               const isRecommended = recommendations.includes(id);
+              const isPremium = ['executive', 'creative', 'compact'].includes(id);
               return (
                 <div 
                   key={id}
@@ -383,6 +410,11 @@ export default function ResumeBuilderLanding() {
                     {isRecommended && (
                       <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-elevation-1">
                         <Sparkles className="h-3 w-3" /> Recommended
+                      </span>
+                    )}
+                    {isPremium && (
+                      <span className="absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1 text-xs font-medium text-white shadow-elevation-1">
+                        ⚡ Premium
                       </span>
                     )}
                     
@@ -404,9 +436,9 @@ export default function ResumeBuilderLanding() {
                     <button
                       disabled={btnLoading}
                       onClick={() => handleCreateDraft(id)}
-                      className="pill bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-all shrink-0"
+                      className={`pill px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-all shrink-0 ${isPremium && seeker?.tier !== 'premium' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-primary'}`}
                     >
-                      Use Template
+                      {isPremium && seeker?.tier !== 'premium' ? 'Unlock Premium' : 'Use Template'}
                     </button>
                   </div>
                 </div>

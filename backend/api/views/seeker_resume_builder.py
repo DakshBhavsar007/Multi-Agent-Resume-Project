@@ -98,7 +98,11 @@ def ats_check(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
         
     try:
-        user_id = str(request.seeker.id)
+        seeker = request.seeker
+        if seeker.tier != "premium":
+            return JsonResponse(error_response("ATS Score Checker is a Premium feature. Please upgrade to Premium to run ATS compatibility checks."), status=403)
+
+        user_id = str(seeker.id)
         
         # 1. Rate Limiting: 1 check per 5 seconds, max 15 checks per minute
         now = time.time()
@@ -216,6 +220,13 @@ def manage_drafts(request):
         
     elif request.method == "POST":
         try:
+            seeker = request.seeker
+            if seeker.tier != "premium":
+                from api.models import ResumeDraft
+                existing_drafts_count = ResumeDraft.objects.filter(seeker=seeker).count()
+                if existing_drafts_count >= 1:
+                    return JsonResponse(error_response("You have reached the limit of 1 active resume draft on the Free Plan. Please upgrade to Premium for unlimited drafts."), status=403)
+
             body = json.loads(request.body)
             title = body.get("title", "Untitled Resume")
             template_id = body.get("templateId", "modern")
@@ -673,6 +684,10 @@ def optimize_resume_draft(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
         
     try:
+        seeker = request.seeker
+        if seeker.tier != "premium":
+            return JsonResponse(error_response("AI Resume Enhancer is a Premium feature. Please upgrade to Premium to use AI tailoring and optimization."), status=403)
+
         body = json.loads(request.body)
         content = body.get("content", {})
         target_job_desc = body.get("targetJobDescription", "")
@@ -840,6 +855,10 @@ def enhance_resume_draft(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
 
     try:
+        seeker = request.seeker
+        if seeker.tier != "premium":
+            return JsonResponse(error_response("AI Resume Enhancer is a Premium feature. Please upgrade to Premium to use AI enhancement."), status=403)
+
         body = json.loads(request.body)
         resume_draft_id = body.get("resumeDraftId")
         content = body.get("content")
