@@ -291,7 +291,7 @@ const AuthPage = () => {
             className="sso-btn"
             onClick={() => {
               const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
-              const redirectUri = encodeURIComponent(import.meta.env.VITE_GITHUB_REDIRECT_URI);
+              const redirectUri = encodeURIComponent(window.location.origin + '/auth/github/callback');
               window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email&state=recruiter`;
             }}
           >
