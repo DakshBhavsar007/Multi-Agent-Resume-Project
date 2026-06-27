@@ -49,11 +49,15 @@ Sare requirements ke mutabik saare bug fixes aur optimization badlav kar diye ga
 ### 11. Company Logo in Jobs Search Cards
 - **Logo Serialization Added**: [jobs.py](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/backend/api/views/jobs.py) and [seeker_jobs.py](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/backend/api/views/seeker_jobs.py) me serialized output fields list me `company_logo_path` field append kiya hai. Is se jobs search list cards me company initials circle placeholders ke badle correct corporate logos fetch aur render honge.
 
-### 12. aligned Developer Layout to match Recruiter Workspace Sidebar
+### 12. Aligned Developer Layout to match Recruiter Workspace Sidebar
 - **Unified Portal Layouts**: [DeveloperPortalLayout.jsx](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/frontend/src/pages/developer/DeveloperPortalLayout.jsx) layout structure ko full redesign kiya hai. Ab isme top fixed header bar render hoga jisme top-left hamburger menu circular toggle button, inline premium gradient blue SVG Between logo, aur standard gray border line (`border-gray-200`) configured hain, jo exact workspace dashboard style aur width transitions follow karega.
+
+### 13. Hover-Activated Product Dropdown & Visible New Badge
+- **Product Dropdown implementation**: [Navbar.jsx](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/frontend/src/components/Navbar.jsx) me "Product" link ko hover-activated dynamic dropdown panel me wrap kiya hai. CSS details [Navbar.css](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/frontend/src/components/Navbar.css) append kiye hain jo white card background, soft shadows, aur direct feature scroll links (AI Recruiter, Smart Analyzer, Fraud Protection) style karte hain.
+- **NEW Badge contrast tag**: [HeroHeader.css](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/frontend/src/components/HeroHeader.css) me `.badge-tag` style rules update kiye hain. Ab isme high-contrast royal blue background (#2563eb) aur white font color use kiya hai, jisse badge container me "NEW" label text 100% visible aur clean readable dikhta hai.
 
 ---
 
 ## Verification & Status
-- **Build Pass**: `npm run build` completely pass ho gaya hai (built in 1m 23s).
+- **Build Pass**: `npm run build` completely pass ho gaya hai (built in 14.53s).
 - **Git State**: Local modifications completely committed and pushed to git local refs. Working tree is clean.

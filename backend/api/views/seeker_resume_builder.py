@@ -226,7 +226,6 @@ def manage_drafts(request):
         try:
             seeker = request.seeker
             if seeker.tier != "premium":
-                from api.models import ResumeDraft
                 existing_drafts_count = ResumeDraft.objects.filter(seeker=seeker).count()
                 if existing_drafts_count >= 1:
                     return JsonResponse(error_response("You have reached the limit of 1 active resume draft on the Free Plan. Please upgrade to Premium for unlimited drafts."), status=403)

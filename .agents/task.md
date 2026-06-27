@@ -33,5 +33,7 @@
 - [x] Wrap GET drafts request in a try-except block in `seeker_resume_builder.py` to return JSON error trace instead of HTML traceback pages
 - [x] Add `company_logo_path` serialization fields in `jobs.py` and `seeker_jobs.py` to enable actual company logo rendering in job search cards
 - [x] Redesign `DeveloperPortalLayout.jsx` sidebar to match recruiter dashboard header bar layout, using standard gray borders, circular menu hamburger toggle button, and inline SVG logo
+- [x] Create a premium hover-activated dropdown for the "Product" header nav link in `Navbar.jsx` with direct jump links to product features
+- [x] Restyle the `[ NEW ]` tag inside `HeroHeader.jsx` badge using high-contrast solid royal blue background to make the "NEW" text completely visible
 - [x] Verify build compiles successfully (`npm run build`)
 - [x] Stage and commit all changes locally (DO NOT push)
