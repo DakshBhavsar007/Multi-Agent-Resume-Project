@@ -50,8 +50,17 @@ def public_list_companies(request):
     try:
         companies = Company.objects.filter(is_active=True).order_by("name")
         
+        # Pagination
+        page = int(request.GET.get("page", 1))
+        per_page = min(int(request.GET.get("per_page", 12)), 100)
+        
+        total_companies = companies.count()
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_companies = companies[start:end]
+        
         # Bulk fetch active sessions to avoid N+1 query
-        company_ids = [c.id for c in companies]
+        company_ids = [c.id for c in paginated_companies]
         active_sessions_qs = Session.objects.filter(company_id__in=company_ids, status="active")
         
         sessions_by_company = {}
@@ -59,8 +68,14 @@ def public_list_companies(request):
             cid_str = str(s.company_id)
             sessions_by_company.setdefault(cid_str, []).append(s)
 
-        serialized = [_serialize_company(c, active_sessions=sessions_by_company.get(str(c.id), [])) for c in companies]
-        return JsonResponse(success_response({"companies": serialized}))
+        serialized = [_serialize_company(c, active_sessions=sessions_by_company.get(str(c.id), [])) for c in paginated_companies]
+        return JsonResponse(success_response({
+            "companies": serialized,
+            "total": total_companies,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (total_companies + per_page - 1) // per_page if per_page else 1
+        }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
 
@@ -96,8 +111,17 @@ def seeker_list_companies(request):
         followed = seeker.resume_data.get("followed_companies", []) if seeker.resume_data else []
         companies = Company.objects.filter(is_active=True).order_by("name")
         
+        # Pagination
+        page = int(request.GET.get("page", 1))
+        per_page = min(int(request.GET.get("per_page", 12)), 100)
+        
+        total_companies = companies.count()
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_companies = companies[start:end]
+        
         # Bulk fetch active sessions to avoid N+1 query
-        company_ids = [c.id for c in companies]
+        company_ids = [c.id for c in paginated_companies]
         active_sessions_qs = Session.objects.filter(company_id__in=company_ids, status="active")
         
         sessions_by_company = {}
@@ -107,11 +131,18 @@ def seeker_list_companies(request):
 
         serialized = [
             _serialize_company(c, str(c.id) in followed, active_sessions=sessions_by_company.get(str(c.id), []))
-            for c in companies
+            for c in paginated_companies
         ]
-        return JsonResponse(success_response({"companies": serialized}))
+        return JsonResponse(success_response({
+            "companies": serialized,
+            "total": total_companies,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (total_companies + per_page - 1) // per_page if per_page else 1
+        }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
+
 
 @csrf_exempt
 @require_seeker_jwt

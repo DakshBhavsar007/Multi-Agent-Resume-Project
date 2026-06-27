@@ -5,6 +5,14 @@ import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "../../components/ui/pagination";
 import toast from "react-hot-toast";
 
 export default function UserCompanies() {
@@ -12,12 +20,15 @@ export default function UserCompanies() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchCompanies = () => {
     setLoading(true);
-    publicAPI.listCompanies()
+    publicAPI.listCompanies({ page, per_page: 9 })
       .then((data) => {
         setCompanies(data.companies || []);
+        setTotalPages(data.total_pages || 1);
       })
       .catch((err) => {
         console.error(err);
@@ -30,7 +41,7 @@ export default function UserCompanies() {
 
   useEffect(() => {
     fetchCompanies();
-  }, []);
+  }, [page]);
 
   const filtered = companies.filter((c) => {
     const term = search.toLowerCase();
@@ -150,6 +161,36 @@ export default function UserCompanies() {
                 </div>
               </Link>
             ))}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                {page > 1 && (
+                  <PaginationItem>
+                    <PaginationPrevious onClick={() => setPage((p) => p - 1)} />
+                  </PaginationItem>
+                )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      isActive={p === page}
+                      onClick={() => setPage(p)}
+                      className="cursor-pointer"
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                {page < totalPages && (
+                  <PaginationItem>
+                    <PaginationNext onClick={() => setPage((p) => p + 1)} />
+                  </PaginationItem>
+                )}
+              </PaginationContent>
+            </Pagination>
           </div>
         )}
       </section>
