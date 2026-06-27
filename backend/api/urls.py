@@ -47,6 +47,7 @@ urlpatterns = [
     path('api/v1/auth/logout', recruiter_auth.logout, name='auth-logout'),
     path('api/v1/auth/change-password', recruiter_auth.change_password, name='auth-change-password'),
     path('api/v1/auth/update-profile', recruiter_auth.update_profile, name='auth-update-profile'),
+    path('api/v1/auth/upload-logo', recruiter_auth.upload_logo, name='auth-upload-logo'),
 
     # Recruiter portal API-key management
     # Frontend calls: POST /auth/api-keys/generate, GET /auth/api-keys, DELETE /auth/api-keys/{id}

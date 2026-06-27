@@ -139,7 +139,9 @@ export default function ResumeBuilderLanding() {
     try {
       const draft = await seekerAPI.importFileDraft(file);
       toast.success("Resume parsed and imported successfully!", { id: toastId });
-      navigate(`/resume-builder/edit/${draft.id}`);
+      setTimeout(() => {
+        navigate(`/resume-builder/edit/${draft.id}`);
+      }, 1500);
     } catch (err) {
       console.error(err);
       toast.error(err.message || "Failed to parse and import resume file", { id: toastId });

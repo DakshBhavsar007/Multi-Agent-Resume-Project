@@ -80,7 +80,12 @@ export const authAPI = {
     return d
   },
   getMe: () => req("GET","/auth/me"),
-  updateProfile: (b) => req("POST","/auth/update-profile",b)
+  updateProfile: (b) => req("POST","/auth/update-profile",b),
+  uploadLogo: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return req("POST", "/auth/upload-logo", formData, true);
+  }
 }
 
 // SESSIONS

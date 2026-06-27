@@ -5,6 +5,7 @@ import { NotificationBell } from "./NotificationBell";
 import logoWhite from "../../assets/logo_white.png";
 import logoBlack from "../../assets/logo_black.png";
 import { OnboardingTour, useTour } from "../OnboardingTour";
+import { SocialTooltip } from "../ui/social-media";
 
 const SEEKER_TOUR_STEPS = [
   {
@@ -260,26 +261,96 @@ const Instagram = ({ className }) => (
 );
 
 export function Footer() {
+  const [logoHovered, setLogoHovered] = useState(false);
+
+  const socialLinks = [
+    {
+      href: "#",
+      ariaLabel: "LinkedIn",
+      tooltip: "LinkedIn",
+      color: "#0A66C2",
+      svgUrl: "https://svgl.app/library/linkedin.svg",
+    },
+    {
+      href: "#",
+      ariaLabel: "Twitter",
+      tooltip: "Twitter",
+      color: "#000000",
+      svgUrl: "https://svgl.app/library/x.svg",
+    },
+    {
+      href: "#",
+      ariaLabel: "Instagram",
+      tooltip: "Instagram",
+      color: "#E1306C",
+      svgUrl: "https://svgl.app/library/instagram.svg",
+    },
+    {
+      href: "#",
+      ariaLabel: "Facebook",
+      tooltip: "Facebook",
+      color: "#3B5998",
+      svgUrl: "https://svgl.app/library/facebook.svg",
+    },
+    {
+      href: "#",
+      ariaLabel: "Telegram",
+      tooltip: "Telegram",
+      color: "#0088CC",
+      svgUrl: "https://svgl.app/library/telegram.svg",
+    },
+  ];
+
   return (
     <footer className="mt-24 border-t border-border/60 bg-white relative overflow-hidden">
       <div className="mx-auto flex flex-col md:flex-row justify-between items-start max-w-7xl w-full px-6 py-12 gap-10 relative z-10">
         <div className="max-w-xs w-full space-y-4">
-          <div className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
-            <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
-          </div>
+          <Link 
+            to="/jobs" 
+            className="flex items-center gap-2.5 w-max group"
+            onMouseEnter={() => setLogoHovered(true)}
+            onMouseLeave={() => setLogoHovered(false)}
+          >
+            <div className={`w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center shrink-0 p-1.5 transition-all duration-300 ${logoHovered ? 'scale-105 shadow-sm border-gray-300' : 'border-gray-200'} border`}>
+              <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="logo-grad-footer" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#2563eb" />
+                  </linearGradient>
+                </defs>
+                <line 
+                  x1="32" y1="68" x2="68" y2="32" 
+                  stroke={logoHovered ? "url(#logo-grad-footer)" : "#9ca3af"} 
+                  strokeWidth="12" 
+                  strokeLinecap="round" 
+                  className="transition-all duration-300"
+                />
+                <circle 
+                  cx="32" cy="68" r="16" 
+                  fill={logoHovered ? "#38bdf8" : "#9ca3af"} 
+                  className="transition-all duration-300"
+                />
+                <circle 
+                  cx="68" cy="32" r="24" 
+                  fill={logoHovered ? "#2563eb" : "#9ca3af"} 
+                  className="transition-all duration-300"
+                />
+              </svg>
+            </div>
+            <span className={`font-display text-2xl font-bold tracking-tight transition-all duration-300 ${
+              logoHovered 
+                ? "text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600" 
+                : "text-charcoal"
+            }`}>
+              Between
+            </span>
+          </Link>
           <p className="text-sm text-muted-foreground leading-relaxed">
             A calmer job search. Built for humans, not algorithms.
           </p>
-          <div className="flex items-center gap-3 pt-2">
-            <a href="#" className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition">
-              <Linkedin className="h-4 w-4" />
-            </a>
-            <a href="#" className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition">
-              <Twitter className="h-4 w-4" />
-            </a>
-            <a href="#" className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition">
-              <Instagram className="h-4 w-4" />
-            </a>
+          <div className="pt-2">
+            <SocialTooltip items={socialLinks} className="justify-start" />
           </div>
         </div>
 

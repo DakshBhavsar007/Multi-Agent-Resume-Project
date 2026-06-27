@@ -25,7 +25,9 @@ export default function UserUploadResume() {
     try {
       await seekerAPI.uploadResume(rawFile);
       toast.success("Resume parsed successfully!", { id: toastId });
-      navigate("/jobs/profile");
+      setTimeout(() => {
+        navigate("/jobs/profile");
+      }, 1500);
     } catch (err) {
       console.error(err);
       toast.error(err.message || "Failed to upload and parse resume", { id: toastId });

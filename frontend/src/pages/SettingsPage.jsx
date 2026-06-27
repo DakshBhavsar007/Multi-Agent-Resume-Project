@@ -28,7 +28,16 @@ export default function SettingsPage() {
   const tabFromUrl = searchParams.get('tab');
   const { company, clearAuth, tier, setAuth } = useAuthStore();
   const [companyName, setCompanyName] = useState(company?.name || '');
-  const [logo, setLogo] = useState(localStorage.getItem('vish_company_logo') || '');
+
+  const getFullUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("data:") || path.startsWith("http")) return path;
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
+    return `${apiBase}${path}`;
+  };
+
+  const [logo, setLogo] = useState(company?.logo_path ? getFullUrl(company.logo_path) : (localStorage.getItem('vish_company_logo') || ''));
+  const [logoFile, setLogoFile] = useState(null);
 
   const handleLogout = () => {
     clearAuth();
@@ -173,10 +182,11 @@ export default function SettingsPage() {
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image must be smaller than 2MB");
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be smaller than 5MB");
         return;
       }
+      setLogoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogo(reader.result);
@@ -187,16 +197,47 @@ export default function SettingsPage() {
 
   const handleRemoveLogo = () => {
     setLogo('');
+    setLogoFile(null);
   };
 
-  const handleSave = () => {
-    if (logo) {
-      localStorage.setItem('vish_company_logo', logo);
-    } else {
-      localStorage.removeItem('vish_company_logo');
+  const handleSave = async () => {
+    try {
+      // 1. Update company name
+      const updatedProfile = await authAPI.updateProfile({ name: companyName });
+      
+      let updatedLogoPath = company?.logo_path;
+
+      // 2. If a new logo file was selected, upload it to the backend
+      if (logoFile) {
+        const uploadResult = await authAPI.uploadLogo(logoFile);
+        updatedLogoPath = uploadResult.logo_path;
+        setLogoFile(null);
+      } else if (!logo) {
+        // If the logo was cleared/removed, update backend to empty string (which sets it to None in DB)
+        const clearedProfile = await authAPI.updateProfile({ name: companyName, logo_path: "" });
+        updatedLogoPath = null;
+      }
+
+      // 3. Update auth state in zustand store
+      const updatedCompanyData = {
+        ...company,
+        name: companyName,
+        logo_path: updatedLogoPath
+      };
+      setAuth(updatedCompanyData);
+
+      // Sync local storage for sidebar backward compatibility
+      if (logo) {
+        localStorage.setItem('vish_company_logo', logo);
+      } else {
+        localStorage.removeItem('vish_company_logo');
+      }
+
+      window.dispatchEvent(new Event('company_logo_updated'));
+      toast.success("Settings saved successfully");
+    } catch (err) {
+      toast.error(err.message || "Failed to save settings");
     }
-    window.dispatchEvent(new Event('company_logo_updated'));
-    toast.success("Settings saved");
   };
 
   const handleCreateKey = async (e) => {
@@ -319,7 +360,7 @@ export default function SettingsPage() {
                           className="hidden" 
                         />
                       </label>
-                      <span className="text-[9px] text-gray-400 font-medium">PNG, JPG or SVG up to 2MB</span>
+                      <span className="text-[9px] text-gray-400 font-medium">PNG, JPG, JPEG, SVG or WEBP up to 5MB</span>
                     </div>
                   </div>
                 </div>

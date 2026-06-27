@@ -61,6 +61,7 @@ def register(request):
             "name": new_company.name,
             "email": new_company.email,
             "tier": new_company.tier,
+            "logo_path": new_company.logo_path,
             "secret_key": secret,
             "api_key": public,
             "public_key": public,
@@ -106,6 +107,7 @@ def login(request):
             "name": company.name,
             "email": company.email,
             "tier": company.tier,
+            "logo_path": company.logo_path,
             "api_key": masked_secret
         }))
     except Exception as e:
@@ -211,6 +213,7 @@ def me(request):
         "name": request.company.name,
         "email": request.company.email,
         "tier": request.company.tier,
+        "logo_path": request.company.logo_path,
         "created_at": request.company.created_at.isoformat() if request.company.created_at else None
     }))
 
@@ -270,14 +273,67 @@ def update_profile(request):
                 return JsonResponse(error_response("Email already registered by another account"), status=400)
             company.email = email
 
+        if "logo_path" in data:
+            logo_val = data.get("logo_path")
+            company.logo_path = logo_val if logo_val else None
+
         company.save()
         return JsonResponse(success_response({
             "id": str(company.id),
             "name": company.name,
             "email": company.email,
             "tier": company.tier,
+            "logo_path": company.logo_path,
             "created_at": company.created_at.isoformat() if company.created_at else None
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+@csrf_exempt
+@require_recruiter_jwt
+def upload_logo(request):
+    """
+    POST /api/v1/auth/upload-logo
+    Upload a company logo image. Size limit: 5MB.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        import uuid
+        file = request.FILES.get("file")
+        if not file:
+            return JsonResponse(error_response("No file provided"), status=400)
+
+        # 5MB size limit
+        if file.size > 5 * 1024 * 1024:
+            return JsonResponse(error_response("File size must be under 5 MB"), status=400)
+
+        allowed_ext = (".png", ".jpg", ".jpeg", ".svg", ".webp")
+        ext = os.path.splitext(file.name.lower())[1]
+        if ext not in allowed_ext:
+            return JsonResponse(error_response("Only PNG, JPG, JPEG, SVG, or WEBP images are allowed"), status=400)
+
+        # Save to uploads/companies/{company_id}/logo_{uuid}{ext}
+        company = request.company
+        UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+        company_dir = os.path.join(UPLOAD_DIR, "companies", str(company.id))
+        os.makedirs(company_dir, exist_ok=True)
+
+        fname = f"logo_{uuid.uuid4().hex}{ext}"
+        file_path = os.path.join(company_dir, fname)
+        with open(file_path, "wb+") as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+
+        # Save URL path (Django handles uploads/ path directly)
+        logo_url_path = f"/uploads/companies/{company.id}/{fname}"
+        company.logo_path = logo_url_path
+        company.save(update_fields=["logo_path"])
+
+        return JsonResponse(success_response({
+            "logo_path": logo_url_path
+        }))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
 

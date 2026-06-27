@@ -11,6 +11,15 @@ export default function Sidebar() {
   const { company, clearAuth } = useAuthStore();
   const [logo, setLogo] = useState(localStorage.getItem('vish_company_logo') || '');
 
+  const getFullUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("data:") || path.startsWith("http")) return path;
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
+    return `${apiBase}${path}`;
+  };
+
+  const logoUrl = company?.logo_path ? getFullUrl(company.logo_path) : logo;
+
   useEffect(() => {
     const updateLogo = () => {
       setLogo(localStorage.getItem('vish_company_logo') || '');
@@ -86,8 +95,8 @@ export default function Sidebar() {
       <div className="mt-auto p-4">
         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
           <div className="flex items-center gap-3 mb-3">
-            {logo ? (
-              <img src={logo} alt="Company Logo" className="w-9 h-9 rounded-full object-cover shrink-0" />
+            {logoUrl ? (
+              <img src={logoUrl} alt="Company Logo" className="w-9 h-9 rounded-full object-cover shrink-0" />
             ) : (
               <div className="w-9 h-9 rounded-full bg-charcoal border border-white/10 flex items-center justify-center text-white shrink-0 p-1.5">
                 <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
