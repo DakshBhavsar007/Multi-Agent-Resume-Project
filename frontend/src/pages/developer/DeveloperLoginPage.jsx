@@ -91,7 +91,7 @@ export default function DeveloperLoginPage() {
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-center">
               <label className="text-sm font-semibold text-charcoal">Password</label>
-              <button type="button" className="text-xs text-gray-500 hover:text-accent font-medium">Forgot password?</button>
+              <button type="button" onClick={() => navigate('/developer/forgot-password?type=developer')} className="text-xs text-gray-500 hover:text-accent font-medium">Forgot password?</button>
             </div>
             <div className="relative w-full">
               <input 

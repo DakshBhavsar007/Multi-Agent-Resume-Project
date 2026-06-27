@@ -6,6 +6,7 @@ import { portalAuth } from "../../lib/portalApi";
 import { motion } from "framer-motion";
 import UsageProgress from "../../components/developer/UsageProgress";
 import { OnboardingTour, useTour } from "../../components/OnboardingTour";
+import ThemeToggle from "../../components/ThemeToggle";
 
 const DEVELOPER_TOUR_STEPS = [
   {
@@ -147,6 +148,8 @@ export default function DeveloperPortalLayout() {
           </span>
           <span className="text-muted-foreground text-sm hidden sm:inline ml-1 font-medium">Developer Portal</span>
         </div>
+        <div className="flex-1" />
+        <ThemeToggle />
       </header>
 
       {/* Sidebar */}

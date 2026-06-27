@@ -4,7 +4,7 @@ import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
-import { ArrowLeft, CheckCircle2, FileText, Upload, AlertCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, FileText, Upload, AlertCircle, Sparkles, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function UserApply() {
@@ -24,6 +24,27 @@ export default function UserApply() {
     phone: ""
   });
 
+  const [generatingLetter, setGeneratingLetter] = useState(false);
+
+  const handleGenerateLetter = async () => {
+    if (!job) return;
+    setGeneratingLetter(true);
+    const toastId = toast.loading("Generating tailored cover letter...");
+    try {
+      const data = await seekerAPI.generateCoverLetter({
+        job_title: job.title,
+        job_description: job.description || "",
+        company_name: job.company
+      });
+      setCoverNote(data.cover_letter);
+      toast.success("Tailored cover letter generated!", { id: toastId });
+    } catch (err) {
+      toast.error(err.message || "Failed to generate cover letter", { id: toastId });
+    } finally {
+      setGeneratingLetter(false);
+    }
+  };
+
   useEffect(() => {
     if (!jobId) return;
     setLoading(true);
@@ -35,6 +56,7 @@ export default function UserApply() {
           id: data.id,
           company: data.company_name,
           title: data.job_title,
+          description: data.full_description || data.job_description || "",
           logoColor: "#4F46E5",
           logoPath: data.company_logo_path,
         });
@@ -250,7 +272,18 @@ export default function UserApply() {
               <>
                 <h2 className="font-display text-lg font-semibold">Why this role?</h2>
                 <div>
-                  <label className="text-sm font-medium">A short note to the team (optional)</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="text-sm font-medium">A short note to the team (optional)</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateLetter}
+                      disabled={generatingLetter}
+                      className="text-xs text-accent hover:underline font-semibold flex items-center gap-1 disabled:opacity-50"
+                    >
+                      {generatingLetter ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+                      <span>Write with AI</span>
+                    </button>
+                  </div>
                   <textarea
                     rows={6}
                     value={coverNote}

@@ -326,6 +326,42 @@ export default function UserProfile() {
     }
   };
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = ['.png', '.jpg', '.jpeg', '.webp'];
+    const isAllowed = allowed.some(ext => file.name.toLowerCase().endsWith(ext));
+    if (!isAllowed) {
+      toast.error("Please upload a PNG, JPG, JPEG, or WEBP image");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image file size must be under 5MB");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const toastId = toast.loading("Uploading profile photo...");
+    try {
+      const data = await seekerAPI.uploadAvatar(file);
+      setSeeker(data);
+      if (typeof window !== "undefined") {
+        localStorage.setItem('vish_seeker_data', JSON.stringify(data));
+      }
+      window.dispatchEvent(new Event('seeker_profile_updated')); // update navbar
+      toast.success("Profile photo updated successfully!", { id: toastId });
+    } catch (err) {
+      toast.error(err.message || "Failed to upload profile photo", { id: toastId });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-between">
@@ -408,8 +444,31 @@ export default function UserProfile() {
           />
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-5">
-              <div className="grid h-20 w-20 shrink-0 place-items-center rounded-3xl bg-gradient-to-br from-[var(--google-blue)] to-[var(--google-green)] font-display text-3xl font-semibold text-white">
-                {initials}
+              <div className="relative group cursor-pointer">
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  disabled={uploadingAvatar}
+                />
+                <label htmlFor="avatar-upload" className="cursor-pointer block relative">
+                  {seeker?.avatar_url ? (
+                    <img
+                      src={seeker.avatar_url.startsWith('http') ? seeker.avatar_url : `${import.meta.env.VITE_API_URL || ''}${seeker.avatar_url}`}
+                      alt={seeker.full_name}
+                      className="h-20 w-20 shrink-0 object-cover rounded-3xl border border-border bg-muted shadow-sm transition group-hover:opacity-85"
+                    />
+                  ) : (
+                    <div className="grid h-20 w-20 shrink-0 place-items-center rounded-3xl bg-gradient-to-br from-[var(--google-blue)] to-[var(--google-green)] font-display text-3xl font-semibold text-white transition group-hover:opacity-85">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 rounded-3xl transition duration-200">
+                    <UploadCloud className="h-6 w-6 text-white" />
+                  </div>
+                </label>
               </div>
               <div className="min-w-0">
                 {isEditing ? (

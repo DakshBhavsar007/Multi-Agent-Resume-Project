@@ -24,6 +24,9 @@ import { useAuthStore } from '../stores/authStore';
 import { authAPI } from '../lib/api';
 import RateLimitBanner from '../components/RateLimitBanner';
 import { OnboardingTour, useTour } from '../components/OnboardingTour';
+import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
+import { toast } from 'react-hot-toast';
+import ThemeToggle from '../components/ThemeToggle';
 
 const RECRUITER_TOUR_STEPS = [
   {
@@ -108,6 +111,58 @@ export default function DashboardLayout() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [showGlobalSuggestions, setShowGlobalSuggestions] = useState(false);
+
+  // Global keyboard shortcuts
+  useKeyboardShortcuts({
+    onSearch: () => setSearchOpen(true),
+    onNew: () => navigate('/dashboard/sessions/new'),
+    onEscape: () => { setSearchOpen(false); setShowGlobalSuggestions(false); },
+  });
+
+  const [notifications, setNotifications] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await authAPI.getNotifications();
+      setNotifications(data || []);
+      setUnreadCount(data ? data.filter(n => !n.is_read).length : 0);
+    } catch (e) {
+      console.error("Failed to load notifications", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await authAPI.markAllNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+      toast.success("All notifications marked as read");
+    } catch (e) {
+      toast.error("Failed to update notifications");
+    }
+  };
+
+  const handleMarkRead = async (id, link) => {
+    try {
+      await authAPI.markNotificationRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      if (link) {
+        setNotifOpen(false);
+        navigate(link);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     initFromStorage();
@@ -265,7 +320,63 @@ export default function DashboardLayout() {
           >
             <HelpCircle size={20} />
           </button>
-          <IconBtn label="Notifications"><Bell size={20} /></IconBtn>
+          <ThemeToggle />
+          {/* Notifications Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setNotifOpen(!notifOpen)}
+              className="relative w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition shrink-0"
+              aria-label="Notifications"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+              )}
+            </button>
+
+            {notifOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+                    <span className="font-display font-semibold text-sm text-charcoal">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-xs text-accent hover:underline font-medium animate-fade-in"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-xs text-gray-400">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => handleMarkRead(n.id, n.link)}
+                          className={`px-4 py-3 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${
+                            !n.is_read ? "bg-blue-50/20 font-medium" : ""
+                          }`}
+                        >
+                          <div className="text-xs text-charcoal">{n.title}</div>
+                          <div className="text-[11px] text-gray-500 mt-0.5">{n.message}</div>
+                          <div className="text-[9px] text-gray-400 mt-1">
+                            {n.created_at ? new Date(n.created_at).toLocaleDateString() : ""}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           <IconBtn label="Apps" hideOn="sm"><Grid3x3 size={20} /></IconBtn>
           
           {/* User profile identifier */}

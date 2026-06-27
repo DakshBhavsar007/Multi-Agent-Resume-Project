@@ -106,6 +106,8 @@ def _seeker_dict(seeker: JobSeekerAccount) -> dict:
         "id": str(seeker.id),
         "full_name": seeker.full_name,
         "email": seeker.email,
+        "avatar_path": seeker.avatar_path,
+        "avatar_url": seeker.avatar_path,
         "phone": seeker.phone,
         "location": seeker.location,
         "headline": seeker.headline,
@@ -256,3 +258,49 @@ def update_profile(request):
         return JsonResponse(success_response(_seeker_dict(seeker)))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
+
+
+@csrf_exempt
+@require_seeker_jwt
+def upload_avatar(request):
+    """
+    POST /api/v1/seeker/auth/upload-avatar
+    Upload a seeker profile photo/avatar. Size limit: 5MB.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        import os
+        import uuid
+        file = request.FILES.get("file") or request.FILES.get("avatar")
+        if not file:
+            return JsonResponse(error_response("No file provided"), status=400)
+
+        # 5MB size limit
+        if file.size > 5 * 1024 * 1024:
+            return JsonResponse(error_response("File size must be under 5 MB"), status=400)
+
+        allowed_ext = (".png", ".jpg", ".jpeg", ".webp")
+        ext = os.path.splitext(file.name.lower())[1]
+        if ext not in allowed_ext:
+            return JsonResponse(error_response("Only PNG, JPG, JPEG, or WEBP images are allowed"), status=400)
+
+        seeker = request.seeker
+        UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+        seeker_dir = os.path.join(UPLOAD_DIR, "seekers", str(seeker.id))
+        os.makedirs(seeker_dir, exist_ok=True)
+
+        fname = f"avatar_{uuid.uuid4().hex}{ext}"
+        file_path = os.path.join(seeker_dir, fname)
+        with open(file_path, "wb+") as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+
+        avatar_url_path = f"/uploads/seekers/{seeker.id}/{fname}"
+        seeker.avatar_path = avatar_url_path
+        seeker.save(update_fields=["avatar_path"])
+
+        return JsonResponse(success_response(_seeker_dict(seeker)))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+

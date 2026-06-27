@@ -87,7 +87,7 @@ export default function JobSeekerLoginPage() {
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-center">
               <label className="text-sm font-semibold text-charcoal">Password</label>
-              <button type="button" className="text-xs text-gray-500 hover:text-accent font-medium">Forgot password?</button>
+              <button type="button" onClick={() => navigate('/seeker/forgot-password?type=seeker')} className="text-xs text-gray-500 hover:text-accent font-medium">Forgot password?</button>
             </div>
             <div className="relative w-full">
               <input 

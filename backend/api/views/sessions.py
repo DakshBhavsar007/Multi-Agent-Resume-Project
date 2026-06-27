@@ -358,3 +358,29 @@ def trigger_match_all(request, session_id):
         return JsonResponse(success_response({"job_id": str(job.id), "status": "pending"}))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_api_key
+def generate_jd(request):
+    """POST /api/v1/sessions/generate-jd"""
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        data = json.loads(request.body)
+        job_title = data.get("job_title")
+        skills = data.get("skills", [])
+        experience_years = data.get("experience_years", 3)
+        company_name = request.company.name if request.company else "Our Company"
+        
+        if not job_title:
+            return JsonResponse(error_response("job_title is required"), status=400)
+            
+        from agents.jd_generator_agent import JobDescriptionGeneratorAgent
+        agent = JobDescriptionGeneratorAgent()
+        jd_text = agent.generate_jd(job_title, skills, experience_years, company_name)
+        
+        return JsonResponse(success_response({"job_description": jd_text}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+

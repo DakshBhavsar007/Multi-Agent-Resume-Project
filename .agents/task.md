@@ -43,5 +43,15 @@
 - [x] Implement backend page/per_page pagination parameters in `list_public_jobs` (`jobs.py`) and `list_jobs` (`seeker_jobs.py`) endpoints
 - [x] Integrate pagination component into `/jobs` (`UserJobs.jsx`) page using dynamic API query triggers and total pages display
 - [x] Dynamically load real featured jobs and hiring companies inside Seeker Landing Home page (`UserHome.jsx`), falling back to mock files for offline support
+- [x] Implement standard ErrorBoundary wrapper (`ErrorBoundary.jsx`) to avoid blank/white screens on JS crashes
+- [x] Create custom, user-friendly 404 NotFound page (`NotFoundPage.jsx`) to handle invalid URLs
+- [x] Make email dispatch URLs dynamic in `email_service.py` by referencing the `FRONTEND_URL` environment variable (falling back to staging custom domain)
+- [x] Add strict file size (10MB) and type validation on resume uploads endpoint in `ingest.py`
+- [x] Implement SEO page meta title and descriptions using the `useDocumentTitle` React hook across major routes
 - [x] Verify build compiles successfully (`npm run build`)
 - [x] Stage and commit all changes locally (DO NOT push)
+- [x] Implement Skills Gap Analysis on Seeker Job Detail Page (`UserJobDetail.jsx` and `seeker_jobs.py`)
+- [x] Implement AI Job Description Generator for Recruiter Session workspace (`NewSessionPage.jsx` and `jd_generator_agent.py` backend)
+- [x] Implement AI Cover Letter Generator for Seeker Apply Page (`UserApply.jsx` and `cover_letter_agent.py` backend)
+- [x] Implement dynamic CSS-based Hiring Funnel analytics visualization inside Recruiter Session Workspace (`SessionWorkspacePage.jsx`)
+

@@ -845,7 +845,7 @@ export default function SessionWorkspacePage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
                 <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[360px] flex flex-col">
                   <h3 className="font-black text-charcoal text-lg mb-6 flex items-center gap-2"><div className="w-2 h-6 bg-accent rounded-full"></div>Score Distribution</h3>
                   <div className="flex-1 -ml-4">
@@ -893,6 +893,38 @@ export default function SessionWorkspacePage() {
                       <span className="text-3xl font-black text-charcoal">{totalParsed}</span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Total</span>
                     </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[360px] flex flex-col">
+                  <h3 className="font-black text-charcoal text-lg mb-6 flex items-center gap-2"><div className="w-2 h-6 bg-green-500 rounded-full"></div>Hiring Funnel</h3>
+                  <div className="flex-1 flex flex-col justify-between py-2 text-sm">
+                    {(() => {
+                      const funnelData = [
+                        { stage: "Applied / Ingested", count: totalParsed, color: "bg-blue-600" },
+                        { stage: "Screening Round", count: (session.candidate_counts_per_round?.["1"] || 0) + (session.candidate_counts_per_round?.["2"] || 0) + (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-indigo-500" },
+                        { stage: "Technical Round", count: (session.candidate_counts_per_round?.["2"] || 0) + (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-purple-500" },
+                        { stage: "HR Round", count: (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-pink-500" },
+                        { stage: "Hired Final", count: hiredFinal, color: "bg-emerald-500" }
+                      ];
+                      
+                      const maxCount = totalParsed || 1;
+                      return funnelData.map((f, i) => {
+                        const pct = Math.round((f.count / maxCount) * 105); // slight padding for visibility
+                        const widthPct = Math.min(100, pct);
+                        return (
+                          <div key={i} className="space-y-1">
+                            <div className="flex justify-between items-center text-[11px] font-bold text-charcoal">
+                              <span>{f.stage}</span>
+                              <span className="text-gray-400 font-mono font-bold">{f.count}</span>
+                            </div>
+                            <div className="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
+                              <div className={`${f.color} h-full rounded-full transition-all duration-500`} style={{ width: `${widthPct}%` }}></div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               </div>

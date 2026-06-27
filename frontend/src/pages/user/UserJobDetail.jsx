@@ -63,6 +63,7 @@ export default function UserJobDetail() {
           tags: inferredTags,
           applied: data.applied || false,
           isSaved: data.is_saved || false,
+          skillAlignment: data.skill_alignment,
         };
         setJob(mappedJob);
       })
@@ -262,6 +263,87 @@ export default function UserJobDetail() {
                 ))}
               </dl>
             </div>
+
+            {/* Skills Gap Analysis */}
+            {job.skillAlignment && (
+              <div className="rounded-3xl border border-border bg-card p-6 space-y-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display font-semibold text-sm text-charcoal">Skills Gap Analysis</h3>
+                  <span className="text-[10px] font-bold text-accent px-2 py-0.5 rounded-full bg-accent/10">
+                    {job.skillAlignment.match_pct}% Match
+                  </span>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-accent h-full rounded-full transition-all duration-500"
+                    style={{ width: `${job.skillAlignment.match_pct}%` }}
+                  />
+                </div>
+
+                <div className="space-y-4 text-xs">
+                  {/* Matched skills */}
+                  {job.skillAlignment.matched?.length > 0 && (
+                    <div>
+                      <div className="font-semibold text-[10px] text-emerald-600 mb-2 flex items-center gap-1.5">
+                        <span>Skills you have</span>
+                        <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] font-bold">
+                          {job.skillAlignment.matched.length}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {job.skillAlignment.matched.slice(0, 8).map((skill) => (
+                          <span key={skill} className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-medium border border-emerald-100">
+                            ✅ {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing skills */}
+                  {job.skillAlignment.missing?.length > 0 && (
+                    <div>
+                      <div className="font-semibold text-[10px] text-amber-600 mb-2 flex items-center gap-1.5">
+                        <span>Skills to learn</span>
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-50 text-[9px] font-bold">
+                          {job.skillAlignment.missing.length}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {job.skillAlignment.missing.slice(0, 8).map((skill) => (
+                          <span key={skill} className="px-2 py-1 bg-amber-50/50 text-amber-700 rounded-lg text-[10px] font-medium border border-amber-100">
+                            📚 {skill}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Course suggestions */}
+                      <div className="mt-3 p-3 bg-gray-50 rounded-2xl border border-gray-100 space-y-1.5">
+                        <div className="text-[10px] font-bold text-charcoal">Recommended resources:</div>
+                        <ul className="space-y-1 text-[10px] text-muted-foreground">
+                          {job.skillAlignment.missing.slice(0, 3).map((skill) => (
+                            <li key={skill} className="flex items-center justify-between">
+                              <span>Learn {skill}</span>
+                              <a
+                                href={`https://www.coursera.org/courses?query=${encodeURIComponent(skill)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-accent hover:underline font-semibold"
+                              >
+                                Find courses &rarr;
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <Link
               to={`/jobs/companies/${job.companyId}`}
               className="block rounded-3xl border border-border bg-card p-6 transition hover:google-shadow"

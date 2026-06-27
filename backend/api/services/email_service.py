@@ -122,3 +122,27 @@ def _send(to_email: str, subject: str, message: str) -> bool:
         # Log but never crash — email failure should not block the application flow
         logger.warning("Email failed to %s (%s): %s", to_email, subject, exc)
         return False
+
+
+def send_email(to_email: str, subject: str, html_body: str = "", text_body: str = "") -> bool:
+    """
+    Public helper — sends an email with optional HTML body.
+    Used by password reset and other features.
+    """
+    try:
+        from django.core.mail import EmailMultiAlternatives
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body or "Please view this email in an HTML-capable client.",
+            from_email=FROM_EMAIL,
+            to=[to_email],
+        )
+        if html_body:
+            msg.attach_alternative(html_body, "text/html")
+        msg.send(fail_silently=False)
+        logger.info("Email sent to %s: %s", to_email, subject)
+        return True
+    except Exception as exc:
+        logger.warning("Email failed to %s (%s): %s", to_email, subject, exc)
+        return False
+

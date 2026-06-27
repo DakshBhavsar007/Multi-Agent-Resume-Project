@@ -66,6 +66,7 @@ import UserApply from './pages/user/UserApply';
 import UserApplications from './pages/user/UserApplications';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function ScrollToTop() {
   const location = useLocation();
@@ -115,6 +116,15 @@ export default function App() {
       }
     }
   }));
+
+  useEffect(() => {
+    const isDark = localStorage.getItem("theme") === "dark";
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
 
   useEffect(() => {
     const handleStorageChange = (e) => {
@@ -185,6 +195,8 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/refund-policy" element={<RefundPolicyPage />} />
+          <Route path="/forgot-password" element={<ResetPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Job Seeker Routes */}
           <Route path="/jobs" element={<UserHome />} />
@@ -208,11 +220,15 @@ export default function App() {
           {/* Job Seeker Portal — Auth */}
           <Route path="/jobs/login"    element={<JobSeekerLoginPage />} />
           <Route path="/jobs/register" element={<JobSeekerRegisterPage />} />
+          <Route path="/seeker/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/seeker/forgot-password" element={<ResetPasswordPage />} />
 
           {/* Developer Portal Routes */}
           <Route path="/developer" element={<DeveloperLandingPage />} />
           <Route path="/developer/login" element={<DeveloperLoginPage />} />
           <Route path="/developer/register" element={<DeveloperRegisterPage />} />
+          <Route path="/developer/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/developer/forgot-password" element={<ResetPasswordPage />} />
           
           <Route path="/developer/portal" element={
             <DeveloperPortalLayout />

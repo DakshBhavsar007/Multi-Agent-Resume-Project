@@ -38,6 +38,23 @@ export default function DashboardHome() {
   const activeSessions = sessions.filter(s => s.status === "active").length;
   const completedSessions = sessions.filter(s => s.status === "completed").length;
 
+  // Dynamic trend computation
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const sessionsThisWeek = sessions.filter(s => s.created_at && new Date(s.created_at) >= oneWeekAgo).length;
+  const candidatesToday = sessions
+    .filter(s => s.created_at && new Date(s.created_at) >= oneDayAgo)
+    .reduce((acc, s) => acc + (s.total_candidates || 0), 0);
+  const endingSoon = sessions.filter(s => s.status === "active" && s.rounds?.length > 0).length;
+  const hireRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+
+  const sessionsTrend = sessionsThisWeek > 0 ? `+${sessionsThisWeek} this week` : "No new this week";
+  const candidatesTrend = candidatesToday > 0 ? `+${candidatesToday} today` : "No new today";
+  const activeTrend = endingSoon > 0 ? `${endingSoon} in progress` : "None active";
+  const completedTrend = `${hireRate}% completion rate`;
+
   if (sessionsLoading) {
     return (
       <div className="space-y-8 max-w-6xl mx-auto">
@@ -83,10 +100,10 @@ export default function DashboardHome() {
 
       {/* Stat cards */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Layers} label="Total sessions" value={totalSessions} trend="+3 this week" tone="primary" />
-        <StatCard icon={Users} label="Total candidates" value={totalCandidates} trend="+18 today" tone="success" />
-        <StatCard icon={Activity} label="Active sessions" value={activeSessions} trend="2 ending soon" tone="warning" />
-        <StatCard icon={CheckCircle2} label="Completed" value={completedSessions} trend="75% hire rate" tone="muted" />
+        <StatCard icon={Layers} label="Total sessions" value={totalSessions} trend={sessionsTrend} tone="primary" />
+        <StatCard icon={Users} label="Total candidates" value={totalCandidates} trend={candidatesTrend} tone="success" />
+        <StatCard icon={Activity} label="Active sessions" value={activeSessions} trend={activeTrend} tone="warning" />
+        <StatCard icon={CheckCircle2} label="Completed" value={completedSessions} trend={completedTrend} tone="muted" />
       </section>
 
       {/* Quick actions */}

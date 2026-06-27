@@ -1,10 +1,12 @@
+import io
+import json as json_stdlib
 import pandas as pd
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from api.models import Session, Candidate
 from api.decorators import require_api_key
-from models.schemas import error_response
+from models.schemas import error_response, success_response
 
 @csrf_exempt
 @require_api_key
@@ -13,6 +15,7 @@ def export_candidates(request, session_id):
         return JsonResponse(error_response("Method not allowed"), status=405)
     try:
         status = request.GET.get("status", "all")
+        export_format = request.GET.get("format", "csv").lower()
         
         query = Candidate.objects.filter(session_id=session_id)
         if status != "all":
@@ -61,11 +64,30 @@ def export_candidates(request, session_id):
             })
 
         df = pd.DataFrame(rows)
-        
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="candidates_{session_id[:8]}.csv"'
-        df.to_csv(path_or_buf=response, index=False)
-        return response
+
+        if export_format == "json":
+            return JsonResponse(success_response({
+                "candidates": rows,
+                "total": len(rows),
+                "session_id": str(session_id)
+            }))
+
+        elif export_format == "excel":
+            buffer = io.BytesIO()
+            df.to_excel(buffer, index=False, engine="openpyxl", sheet_name="Candidates")
+            buffer.seek(0)
+            response = HttpResponse(
+                buffer.getvalue(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            response['Content-Disposition'] = f'attachment; filename="candidates_{session_id[:8]}.xlsx"'
+            return response
+
+        else:  # csv (default)
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="candidates_{session_id[:8]}.csv"'
+            df.to_csv(path_or_buf=response, index=False)
+            return response
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 

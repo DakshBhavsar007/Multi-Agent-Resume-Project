@@ -109,6 +109,33 @@ export default function NewSessionPage() {
   const [lastAnalyzedJD, setLastAnalyzedJD] = useState("");
   const [inferring, setInferring] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [generatingJD, setGeneratingJD] = useState(false);
+
+  const handleGenerateJD = async () => {
+    if (!formData.job_title) {
+      toast.error("Please enter a Job Title first so AI knows what to write!");
+      return;
+    }
+    setGeneratingJD(true);
+    const toastId = toast.loading("Generating professional job description...");
+    try {
+      const data = await sessionsAPI.generateJD({
+        job_title: formData.job_title,
+        skills: formData.required_skills,
+        experience_years: formData.min_experience || 3
+      });
+      setFormData(prev => ({
+        ...prev,
+        job_description: data.job_description
+      }));
+      toast.success("Job description generated successfully!", { id: toastId });
+    } catch (e) {
+      toast.error(e.message || "Failed to generate job description", { id: toastId });
+    } finally {
+      setGeneratingJD(false);
+    }
+  };
+
 
   const renderStepIndicator = () => {
     const steps = [
@@ -350,10 +377,21 @@ export default function NewSessionPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-charcoal mb-1.5">Job Description*</label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-sm font-medium text-charcoal">Job Description*</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateJD}
+                    disabled={generatingJD}
+                    className="text-xs text-accent hover:underline font-semibold flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {generatingJD ? <Loader2 className="animate-spin" size={12} /> : <Sparkles size={12} />}
+                    <span>Generate with AI</span>
+                  </button>
+                </div>
                 <textarea
                   value={formData.job_description} onChange={e => setFormData({...formData, job_description: e.target.value})}
-                  placeholder="Paste the complete job description..."
+                  placeholder="Paste the complete job description or click 'Generate with AI' to write one automatically..."
                   rows={10}
                   className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none resize-y"
                 />

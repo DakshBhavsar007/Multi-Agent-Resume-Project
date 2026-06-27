@@ -24,6 +24,7 @@ from api.views import (
     seeker_resume_builder,
     recruiter_billing,
     seeker_billing,
+    password_reset,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -48,6 +49,11 @@ urlpatterns = [
     path('api/v1/auth/change-password', recruiter_auth.change_password, name='auth-change-password'),
     path('api/v1/auth/update-profile', recruiter_auth.update_profile, name='auth-update-profile'),
     path('api/v1/auth/upload-logo', recruiter_auth.upload_logo, name='auth-upload-logo'),
+    path('api/v1/auth/notifications', recruiter_auth.get_recruiter_notifications, name='auth-notifications'),
+    path('api/v1/auth/notifications/read-all', recruiter_auth.mark_all_recruiter_notifications_read, name='auth-notifications-read-all'),
+    path('api/v1/auth/notifications/<str:notif_id>/read', recruiter_auth.mark_recruiter_notification_read, name='auth-notification-read'),
+    path('api/v1/auth/forgot-password', password_reset.forgot_password_recruiter, name='auth-forgot-password'),
+    path('api/v1/auth/reset-password', password_reset.reset_password_recruiter, name='auth-reset-password'),
 
     # Recruiter portal API-key management
     # Frontend calls: POST /auth/api-keys/generate, GET /auth/api-keys, DELETE /auth/api-keys/{id}
@@ -69,6 +75,7 @@ urlpatterns = [
     path('api/v1/sessions/<str:session_id>/infer-skills', sessions.infer_skills, name='sessions-infer-skills'),
     # Frontend calls: POST /sessions/{id}/match-all
     path('api/v1/sessions/<str:session_id>/match-all', sessions.trigger_match_all, name='sessions-match-all'),
+    path('api/v1/sessions/generate-jd', sessions.generate_jd, name='sessions-generate-jd'),
 
     # ── Candidates ─────────────────────────────────────────────────────────────
     path('api/v1/sessions/<str:session_id>/candidates',
@@ -120,6 +127,8 @@ urlpatterns = [
     path('api/developer/auth/login-github', github_auth.developer_auth_github, name='dev-auth-login-github'),
     path('api/developer/auth/me', dev_auth.get_me, name='dev-auth-me'),
     path('api/developer/auth/profile', dev_auth.patch_me, name='dev-auth-patch-me'),
+    path('api/developer/auth/forgot-password', password_reset.forgot_password_developer, name='dev-auth-forgot-password'),
+    path('api/developer/auth/reset-password', password_reset.reset_password_developer, name='dev-auth-reset-password'),
 
     # ── Developer Portal — API Keys ────────────────────────────────────────────
     path('api/developer/keys', dev_keys.keys_root, name='dev-keys-root'),
@@ -185,6 +194,9 @@ urlpatterns = [
     path('api/v1/seeker/auth/login-github', github_auth.seeker_auth_github, name='seeker-auth-login-github'),
     path('api/v1/seeker/auth/me', seeker_auth.me, name='seeker-auth-me'),
     path('api/v1/seeker/auth/profile', seeker_auth.update_profile, name='seeker-auth-profile'),
+    path('api/v1/seeker/auth/upload-avatar', seeker_auth.upload_avatar, name='seeker-auth-upload-avatar'),
+    path('api/v1/seeker/auth/forgot-password', password_reset.forgot_password_seeker, name='seeker-auth-forgot-password'),
+    path('api/v1/seeker/auth/reset-password', password_reset.reset_password_seeker, name='seeker-auth-reset-password'),
 
     # ── Job Seeker Resume ──────────────────────────────────────────────────────
     path('api/v1/seeker/resume', seeker_resume.get_resume, name='seeker-resume-get'),
@@ -199,6 +211,7 @@ urlpatterns = [
     path('api/v1/seeker/jobs/<str:session_id>', seeker_jobs.job_detail, name='seeker-jobs-detail'),
     path('api/v1/seeker/jobs/<str:session_id>/save', seeker_jobs.save_job, name='seeker-jobs-save'),
     path('api/v1/seeker/jobs/<str:session_id>/apply', seeker_jobs.apply_job, name='seeker-jobs-apply'),
+    path('api/v1/seeker/jobs/generate-cover-letter', seeker_jobs.generate_cover_letter, name='seeker-generate-cover-letter'),
     path('api/v1/seeker/applications', seeker_jobs.my_applications, name='seeker-applications'),
     path('api/v1/seeker/applications/<str:app_id>/accept', seeker_jobs.accept_offer, name='seeker-applications-accept'),
 

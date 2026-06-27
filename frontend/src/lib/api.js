@@ -100,7 +100,10 @@ export const authAPI = {
     const formData = new FormData();
     formData.append("file", file);
     return req("POST", "/auth/upload-logo", formData, true);
-  }
+  },
+  getNotifications: () => req("GET", "/auth/notifications"),
+  markAllNotificationsRead: () => req("POST", "/auth/notifications/read-all"),
+  markNotificationRead: (id) => req("POST", `/auth/notifications/${id}/read`)
 }
 
 // SESSIONS
@@ -115,7 +118,8 @@ export const sessionsAPI = {
   inferSkills: (id,b) => 
     req("POST",`/sessions/${id}/infer-skills`,b),
   matchAll: (id) => 
-    req("POST",`/sessions/${id}/match-all`)
+    req("POST",`/sessions/${id}/match-all`),
+  generateJD: (b) => req("POST", "/sessions/generate-jd", b)
 }
 
 // INGEST
@@ -308,6 +312,11 @@ export const seekerAPI = {
   },
   getMe: () => seekerReq('GET', '/api/v1/seeker/auth/me'),
   updateProfile: (b) => seekerReq('PATCH', '/api/v1/seeker/auth/profile', b),
+  uploadAvatar: (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return seekerReq('POST', '/api/v1/seeker/auth/upload-avatar', fd, true);
+  },
 
   // Resume
   getResume: () => seekerReq('GET', '/api/v1/seeker/resume'),
@@ -355,6 +364,7 @@ export const seekerAPI = {
   getJob: (id) => seekerReq('GET', `/api/v1/seeker/jobs/${id}`),
   applyJob: (id, coverNote = '') =>
     seekerReq('POST', `/api/v1/seeker/jobs/${id}/apply`, { cover_note: coverNote }),
+  generateCoverLetter: (b) => seekerReq('POST', '/api/v1/seeker/jobs/generate-cover-letter', b),
   
   // Saved Jobs / Bookmarks
   saveJob: (id, save = true) => seekerReq(save ? 'POST' : 'DELETE', `/api/v1/seeker/jobs/${id}/save`),

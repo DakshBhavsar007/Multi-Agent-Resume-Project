@@ -138,7 +138,7 @@ def list_candidates(request, session_id):
         page = int(request.GET.get("page", 1))
         per_page = int(request.GET.get("per_page", 50))
 
-        query = Candidate.objects.filter(session_id=session_id)
+        query = Candidate.objects.filter(session_id=session_id, deleted_at__isnull=True)
 
         if round_index is not None:
             if round_index <= 1:
@@ -197,13 +197,14 @@ def list_candidates(request, session_id):
 def get_candidate(request, session_id, cand_id):
     """Handles GET (retrieve) and DELETE (delete) for a single candidate."""
     try:
-        candidate = Candidate.objects.filter(id=cand_id, session_id=session_id).first()
+        candidate = Candidate.objects.filter(id=cand_id, session_id=session_id, deleted_at__isnull=True).first()
         if not candidate:
             return JsonResponse(error_response("Candidate not found"), status=404)
 
         if request.method == "DELETE":
-            candidate.delete()
-            return JsonResponse(success_response({"message": "Candidate deleted"}))
+            candidate.deleted_at = timezone.now()
+            candidate.save(update_fields=['deleted_at'])
+            return JsonResponse(success_response({"message": "Candidate moved to trash"}))
 
         if request.method == "GET":
             parsed = candidate.raw_resume_data or {}
@@ -437,7 +438,7 @@ def list_candidates_no_session(request):
         page = int(request.GET.get("page", 1))
         per_page = int(request.GET.get("per_page", 50))
 
-        query = Candidate.objects.filter(session_id__in=session_ids)
+        query = Candidate.objects.filter(session_id__in=session_ids, deleted_at__isnull=True)
 
         if round_index is not None:
             if round_index <= 1:
@@ -558,13 +559,14 @@ def get_candidate_no_session(request, cand_id):
                 "created_at": timezone.now().isoformat()
             }))
 
-        candidate = Candidate.objects.filter(id=cand_id, session_id__in=session_ids).first()
+        candidate = Candidate.objects.filter(id=cand_id, session_id__in=session_ids, deleted_at__isnull=True).first()
         if not candidate:
             return JsonResponse(error_response("Candidate not found"), status=404)
 
         if request.method == "DELETE":
-            candidate.delete()
-            return JsonResponse(success_response({"message": "Candidate deleted"}))
+            candidate.deleted_at = timezone.now()
+            candidate.save(update_fields=['deleted_at'])
+            return JsonResponse(success_response({"message": "Candidate moved to trash"}))
 
         if request.method == "GET":
             parsed = candidate.raw_resume_data or {}

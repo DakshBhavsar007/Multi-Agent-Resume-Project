@@ -6,6 +6,7 @@ import logoWhite from "../../assets/logo_white.png";
 import logoBlack from "../../assets/logo_black.png";
 import { OnboardingTour, useTour } from "../OnboardingTour";
 import { SocialTooltip } from "../ui/social-media";
+import ThemeToggle from "../ThemeToggle";
 
 const SEEKER_TOUR_STEPS = [
   {
@@ -146,6 +147,7 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
           {isLoggedIn && (
             <button
               data-tour="seeker-help-btn"
@@ -172,9 +174,17 @@ export function Header() {
                   to="/jobs/profile"
                   className="flex items-center gap-2 pill bg-accent/10 px-3 py-2 text-sm font-medium text-accent hover:bg-accent/20"
                 >
-                  <div className="grid h-6 w-6 place-items-center rounded-full bg-accent text-[10px] font-bold text-white">
-                    {seekerData?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
+                  {seekerData?.avatar_url ? (
+                    <img
+                      src={seekerData.avatar_url.startsWith('http') ? seekerData.avatar_url : `${import.meta.env.VITE_API_URL || ''}${seekerData.avatar_url}`}
+                      alt={seekerData.full_name}
+                      className="h-6 w-6 rounded-full object-cover border border-accent/20 bg-muted"
+                    />
+                  ) : (
+                    <div className="grid h-6 w-6 place-items-center rounded-full bg-accent text-[10px] font-bold text-white">
+                      {seekerData?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                  )}
                   <span className="hidden sm:inline">{seekerData?.full_name?.split(' ')[0] || 'Profile'}</span>
                 </Link>
                 <button

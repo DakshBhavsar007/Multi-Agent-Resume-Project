@@ -226,7 +226,7 @@ const AuthPage = () => {
           <div className="input-group">
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <label>Password</label>
-              {isLogin && <button type="button" style={{ background: 'none', border: 'none', fontSize: '11px', color: '#6b6375', cursor: 'pointer' }}>Forgot?</button>}
+              {isLogin && <button type="button" onClick={() => navigate('/forgot-password?type=recruiter')} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#6b6375', cursor: 'pointer' }}>Forgot?</button>}
             </div>
             <div className="relative" style={{ width: '100%' }}>
               <input 

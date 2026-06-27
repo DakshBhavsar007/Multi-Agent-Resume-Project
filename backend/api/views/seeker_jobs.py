@@ -728,3 +728,41 @@ def get_saved_jobs(request):
     except Exception as e:
         logger.error(f"Error in get_saved_jobs: {str(e)}", exc_info=True)
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_seeker_jwt
+def generate_cover_letter(request):
+    """POST /api/v1/seeker/jobs/generate-cover-letter"""
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        data = json.loads(request.body)
+        job_title = data.get("job_title")
+        job_description = data.get("job_description", "")
+        company_name = data.get("company_name", "the hiring company")
+        
+        if not job_title:
+            return JsonResponse(error_response("job_title is required"), status=400)
+            
+        seeker = request.seeker
+        from agents.cover_letter_agent import CoverLetterGeneratorAgent
+        agent = CoverLetterGeneratorAgent()
+        
+        # Pull candidate details
+        seeker_skills = seeker.skills or []
+        seeker_experience = seeker.resume_data.get("experience") or seeker.resume_data.get("work_experience") or []
+        
+        letter = agent.generate_cover_letter(
+            seeker_name=seeker.full_name,
+            seeker_skills=seeker_skills,
+            seeker_experience=seeker_experience,
+            job_title=job_title,
+            job_description=job_description,
+            company_name=company_name
+        )
+        
+        return JsonResponse(success_response({"cover_letter": letter}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+

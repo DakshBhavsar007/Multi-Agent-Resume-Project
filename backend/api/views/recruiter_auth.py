@@ -221,9 +221,60 @@ def me(request):
 def health_check(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
+
+    checks = {}
+
+    # Check database
+    try:
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        checks["database"] = {"status": "ok", "detail": "PostgreSQL connected"}
+    except Exception as db_err:
+        checks["database"] = {"status": "error", "detail": str(db_err)}
+
+    # Check Redis
+    try:
+        if redis_client:
+            redis_client.ping()
+            checks["redis"] = {"status": "ok", "detail": "Redis connected"}
+        else:
+            checks["redis"] = {"status": "warning", "detail": "Redis client not configured"}
+    except Exception as redis_err:
+        checks["redis"] = {"status": "error", "detail": str(redis_err)}
+
+    # Check LLM API keys
+    try:
+        import os
+        llm_keys = os.getenv("LLM_API_KEYS", "")
+        key_count = len([k for k in llm_keys.split(",") if k.strip()]) if llm_keys else 0
+        if key_count > 0:
+            checks["llm_api"] = {"status": "ok", "detail": f"{key_count} API key(s) configured"}
+        else:
+            checks["llm_api"] = {"status": "warning", "detail": "No LLM API keys configured"}
+    except Exception as llm_err:
+        checks["llm_api"] = {"status": "error", "detail": str(llm_err)}
+
+    # Check Celery
+    try:
+        from workers.celery_worker import celery_app
+        inspector = celery_app.control.inspect(timeout=1)
+        active = inspector.active()
+        if active is not None:
+            checks["celery"] = {"status": "ok", "detail": f"{len(active)} worker(s) active"}
+        else:
+            checks["celery"] = {"status": "warning", "detail": "No workers responding"}
+    except Exception as cel_err:
+        checks["celery"] = {"status": "warning", "detail": f"Could not reach Celery: {str(cel_err)}"}
+
+    all_ok = all(v["status"] == "ok" for v in checks.values())
+    has_error = any(v["status"] == "error" for v in checks.values())
+    overall = "ok" if all_ok else ("degraded" if not has_error else "unhealthy")
+
     return JsonResponse(success_response({
-        "status": "ok",
+        "status": overall,
         "version": "1.0.0",
+        "checks": checks,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }))
 
@@ -335,5 +386,63 @@ def upload_logo(request):
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_recruiter_jwt
+def get_recruiter_notifications(request):
+    """GET /api/v1/auth/notifications"""
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        from api.models import Notification
+        notifs = Notification.objects.filter(company=request.company).order_by("-created_at")[:100]
+        data = []
+        for n in notifs:
+            data.append({
+                "id": str(n.id),
+                "type": n.type,
+                "title": n.title,
+                "message": n.message,
+                "is_read": n.is_read,
+                "link": n.link,
+                "created_at": n.created_at.isoformat() if n.created_at else None
+            })
+        return JsonResponse(success_response(data))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_recruiter_jwt
+def mark_recruiter_notification_read(request, notif_id):
+    """POST /api/v1/auth/notifications/{id}/read"""
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        from api.models import Notification
+        n = Notification.objects.filter(id=notif_id, company=request.company).first()
+        if not n:
+            return JsonResponse(error_response("Notification not found"), status=404)
+        n.is_read = True
+        n.save(update_fields=["is_read"])
+        return JsonResponse(success_response({"message": "Marked as read"}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_recruiter_jwt
+def mark_all_recruiter_notifications_read(request):
+    """POST /api/v1/auth/notifications/read-all"""
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        from api.models import Notification
+        Notification.objects.filter(company=request.company, is_read=False).update(is_read=True)
+        return JsonResponse(success_response({"message": "All marked as read"}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
 
 

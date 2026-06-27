@@ -76,6 +76,7 @@ class Candidate(models.Model):
     status = models.CharField(max_length=50, default="new")
     source = models.CharField(max_length=50, default="upload")
     created_at = models.DateTimeField(default=timezone.now)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "candidates"
@@ -258,6 +259,7 @@ class JobSeekerAccount(models.Model):
     phone             = models.CharField(max_length=50, null=True, blank=True)
     location          = models.CharField(max_length=255, null=True, blank=True)
     headline          = models.CharField(max_length=255, null=True, blank=True)  # e.g. "Frontend Developer"
+    avatar_path       = models.CharField(max_length=500, null=True, blank=True)
     resume_file_path  = models.CharField(max_length=500, null=True, blank=True)
     resume_data       = models.JSONField(default=dict)    # parsed resume JSON
     enhanced_resume   = models.JSONField(default=dict)    # AI-enhanced version
