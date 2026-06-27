@@ -205,18 +205,39 @@ def get_google_oauth_url(request):
         elif oauth_type in ["gdrive", "form"]:
             scopes = ["https://www.googleapis.com/auth/drive.readonly"]
 
-        client_secrets_file = os.getenv("GOOGLE_CLIENT_SECRETS_FILE", "credentials.json")
-        if not os.path.exists(client_secrets_file):
-            return JsonResponse(error_response("Google OAuth not configured locally."), status=400)
+        client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+        client_secret = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:3000/api/oauth/callback")
 
         state = f"{oauth_type}:{session_id}"
-        flow = Flow.from_client_secrets_file(
-            client_secrets_file,
-            scopes=scopes,
-            state=state
-        )
-        flow.redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:3000/api/oauth/callback")
 
+        if client_id and client_secret:
+            client_config = {
+                "web": {
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                    "redirect_uris": [redirect_uri]
+                }
+            }
+            flow = Flow.from_client_config(
+                client_config,
+                scopes=scopes,
+                state=state
+            )
+        else:
+            client_secrets_file = os.getenv("GOOGLE_CLIENT_SECRETS_FILE", "credentials.json")
+            if not os.path.exists(client_secrets_file):
+                return JsonResponse(error_response("Google OAuth not configured. Please set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET env variables."), status=400)
+            flow = Flow.from_client_secrets_file(
+                client_secrets_file,
+                scopes=scopes,
+                state=state
+            )
+
+        flow.redirect_uri = redirect_uri
         auth_url, _ = flow.authorization_url(
             access_type="offline",
             prompt="consent"
