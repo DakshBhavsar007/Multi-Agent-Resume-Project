@@ -250,7 +250,8 @@ export default function SeekerBillingPage() {
     try {
       const orderData = await seekerAPI.billingSubscribe(planId);
 
-      if (!orderData || orderData.order_id?.startsWith('order_mock_')) {
+      // Mock order flow — backend returned a mock order (no real Razorpay keys)
+      if (!orderData || orderData.order_id?.startsWith('order_mock_') || !orderData.razorpay_key_id) {
         await seekerAPI.billingVerify({
           razorpay_payment_id: 'pay_mock_' + Math.random().toString(36).substring(7),
           razorpay_order_id: orderData?.order_id || 'order_mock_test',
@@ -264,11 +265,12 @@ export default function SeekerBillingPage() {
         return;
       }
 
+      // Real Razorpay flow
       const rzp = new window.Razorpay({
-        key: orderData.razorpay_key_id || 'rzp_test_mock',
+        key: orderData.razorpay_key_id,
         order_id: orderData.order_id,
         name: 'Between',
-        description: `Upgrade to ${planId.toUpperCase()} Plan`,
+        description: `Upgrade to ${planId.charAt(0).toUpperCase() + planId.slice(1)} Plan`,
         amount: orderData.amount,
         currency: 'INR',
         theme: { color: '#111111' },
@@ -290,8 +292,10 @@ export default function SeekerBillingPage() {
             setLoading(null);
           }
         },
+      rzp.on('payment.failed', () => {
+        toast.error('Payment failed. Please try again.');
+        setLoading(null);
       });
-      rzp.on('payment.failed', () => { toast.error('Payment failed. Please try again.'); setLoading(null); });
       rzp.open();
     } catch (e) {
       toast.error(e.message || 'Failed to initiate payment');
