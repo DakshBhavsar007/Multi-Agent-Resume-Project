@@ -27,7 +27,7 @@ export default function ContactPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-full px-4.5 py-1.5 mb-6 text-xs font-bold uppercase tracking-wider text-gray-600"
+            className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-full px-4 py-1.5 mb-6 text-xs font-bold uppercase tracking-wider text-gray-600"
           >
             <Clock size={12} /> Contact Us
           </motion.div>
@@ -52,7 +52,7 @@ export default function ContactPage() {
         <div className="grid lg:grid-cols-5 gap-10">
           {/* Info Side */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white border border-gray-200 rounded-3xl p-6.5 space-y-6">
+            <div className="bg-white border border-gray-200 rounded-3xl p-7 space-y-6 overflow-hidden">
               <div>
                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Entity Details</h3>
                 <p className="text-sm font-bold text-gray-900">Between Technologies Private Limited</p>
@@ -90,7 +90,7 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-gray-50 border border-gray-200 rounded-3xl p-6 flex gap-3 text-xs leading-relaxed text-gray-500">
-              <Clock className="h-4.5 w-4.5 text-gray-400 shrink-0 mt-0.5" />
+              <Clock className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
               <p>
                 Our standard support desk hours are Monday to Friday, 9:00 AM to 6:00 PM IST. We strive to reply to all queries within 1 business day.
               </p>
@@ -98,7 +98,7 @@ export default function ContactPage() {
           </div>
 
           {/* Form Side */}
-          <div className="lg:col-span-3 bg-white border border-gray-200 rounded-3xl p-6.5 sm:p-8">
+          <div className="lg:col-span-3 bg-white border border-gray-200 rounded-3xl p-7 sm:p-8 overflow-hidden">
             <h3 className="font-display text-xl font-bold mb-6 text-gray-900">Send us a Message</h3>
             
             <form onSubmit={handleSubmit} className="space-y-4">

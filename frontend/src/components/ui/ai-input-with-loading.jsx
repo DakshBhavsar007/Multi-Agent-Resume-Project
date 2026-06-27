@@ -60,13 +60,13 @@ export function AIInputWithLoading({
 
   return (
     <div className={cn("w-full py-4", className)}>
-      <div className="relative max-w-xl w-full mx-auto flex items-start flex-col gap-2">
-        <div className="relative max-w-xl w-full mx-auto">
+      <div className="relative w-full flex items-start flex-col gap-2">
+        <div className="relative w-full">
           <Textarea
             id={id}
             placeholder={placeholder}
             className={cn(
-              "max-w-xl bg-black/5 dark:bg-white/5 w-full rounded-3xl pl-6 pr-10 py-4",
+              "bg-black/5 dark:bg-white/5 w-full rounded-3xl pl-6 pr-10 py-4",
               "placeholder:text-black/70 dark:placeholder:text-white/70",
               "border-none ring-black/30 dark:ring-white/30",
               "text-black dark:text-white resize-none text-wrap leading-[1.2]",

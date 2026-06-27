@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
-import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { portalAuth } from "../../lib/portalApi";
 import { motion } from "framer-motion";
@@ -74,6 +74,7 @@ export default function DeveloperPortalLayout() {
   const pathname = location.pathname;
   const [mobileMenu, setMobileMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { isOpen: tourOpen, startTour, closeTour } = useTour('developer_portal');
 
   useEffect(() => {
@@ -129,15 +130,32 @@ export default function DeveloperPortalLayout() {
       </div>
 
       {/* Sidebar */}
-      <aside className={`${mobileMenu ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 fixed md:relative z-40 w-64 h-full bg-white border-r border-[#e6dfcd] flex flex-col transition-transform duration-300 ease-in-out`}>
+      <aside className={`${mobileMenu ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 fixed md:relative z-40 ${sidebarCollapsed ? "w-16" : "w-64"} h-full bg-white border-r border-[#e6dfcd] flex flex-col transition-all duration-300 ease-in-out`}>
         
-        <div className="p-6 pb-2">
-          <div className="flex items-start flex-col mb-8 gap-0.5 mt-4 md:mt-0">
-             <div className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden cursor-pointer" onClick={() => navigate("/developer")}>
-               <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
-             </div>
-             <span className="text-xs font-bold text-gray-700 uppercase tracking-widest pl-0.5">Dev Portal</span>
+        <div className="p-4 pb-2">
+          <div className={`flex items-start flex-col mb-6 gap-0.5 mt-4 md:mt-0 ${sidebarCollapsed ? "items-center" : ""}`}>
+            {!sidebarCollapsed && (
+              <>
+                <div className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden cursor-pointer" onClick={() => navigate("/developer")}>
+                  <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
+                </div>
+                <span className="text-xs font-bold text-gray-700 uppercase tracking-widest pl-0.5">Dev Portal</span>
+              </>
+            )}
+            {sidebarCollapsed && (
+              <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center cursor-pointer mt-2" onClick={() => navigate("/developer")}>
+                <Code size={16} className="text-accent" />
+              </div>
+            )}
           </div>
+          {/* Desktop collapse toggle button */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`hidden md:flex items-center justify-center w-full h-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors duration-200 ${sidebarCollapsed ? "" : ""}`}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 hide-scrollbar">
@@ -155,7 +173,7 @@ export default function DeveloperPortalLayout() {
                     isActive 
                       ? "text-[#111111] font-semibold" 
                       : "text-charcoal hover:bg-gray-100 font-medium"
-                  }`}
+                  } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
                   title={item.name}
                 >
                   {isActive && (
@@ -170,9 +188,11 @@ export default function DeveloperPortalLayout() {
                   }`}>
                     <Icon size={20} />
                   </span>
-                  <span className="text-sm truncate relative z-10">
-                    {item.name}
-                  </span>
+                  {!sidebarCollapsed && (
+                    <span className="text-sm truncate relative z-10">
+                      {item.name}
+                    </span>
+                  )}
                 </Link>
               )
             })}
@@ -191,7 +211,7 @@ export default function DeveloperPortalLayout() {
                     isActive 
                       ? "text-[#111111] font-semibold" 
                       : "text-charcoal hover:bg-gray-100 font-medium"
-                  }`}
+                  } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
                   title={item.name}
                 >
                   {isActive && (
@@ -206,48 +226,61 @@ export default function DeveloperPortalLayout() {
                   }`}>
                     <Icon size={20} />
                   </span>
-                  <span className="text-sm truncate relative z-10">
-                    {item.name}
-                  </span>
+                  {!sidebarCollapsed && (
+                    <span className="text-sm truncate relative z-10">
+                      {item.name}
+                    </span>
+                  )}
                 </Link>
               )
             })}
              <button
                 onClick={clearAuth}
-                className="flex items-center h-10 rounded-full px-3 gap-5 text-gray-500 hover:text-red-600 hover:bg-red-50 transition mt-2 text-left w-full"
+                className={`flex items-center h-10 rounded-full px-3 gap-5 text-gray-500 hover:text-red-600 hover:bg-red-50 transition mt-2 text-left w-full ${sidebarCollapsed ? "justify-center px-0" : ""}`}
+                title="Logout"
               >
                 <span className="w-6 flex items-center justify-center shrink-0">
                   <LogOut size={18} />
                 </span>
-                <span className="text-sm font-medium">Logout</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Logout</span>}
               </button>
               <button
                 data-tour="dev-help-btn"
                 onClick={startTour}
-                className="flex items-center h-10 rounded-full px-3 gap-5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition text-left w-full"
+                className={`flex items-center h-10 rounded-full px-3 gap-5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition text-left w-full ${sidebarCollapsed ? "justify-center px-0" : ""}`}
+                title="Help & Tour"
               >
                 <span className="w-6 flex items-center justify-center shrink-0">
                   <HelpCircle size={18} />
                 </span>
-                <span className="text-sm font-medium">Help & Tour</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Help & Tour</span>}
               </button>
           </div>
         </div>
 
-        {/* User Card */}
-        <div className="p-4 border-t border-[#e6dfcd] bg-gray-50/50">
-           <UsageProgress />
-            
-            <div className="flex items-center gap-2 pt-4 mt-3 border-t border-gray-100">
-              <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter shrink-0 cursor-default">
-                {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
+        {/* User Card - hide when collapsed */}
+        {!sidebarCollapsed && (
+          <div className="p-4 border-t border-[#e6dfcd] bg-gray-50/50">
+             <UsageProgress />
+              
+              <div className="flex items-center gap-2 pt-4 mt-3 border-t border-gray-100">
+                <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter shrink-0 cursor-default">
+                  {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-sm font-bold truncate text-charcoal">{company_name || "Developer"}</span>
+                  <span className="text-[11px] text-gray-750 truncate font-bold">{developer?.email || "developer@example.com"}</span>
+                </div>
               </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-sm font-bold truncate text-charcoal">{company_name || "Developer"}</span>
-                <span className="text-[11px] text-gray-750 truncate font-bold">{developer?.email || "developer@example.com"}</span>
-              </div>
+          </div>
+        )}
+        {sidebarCollapsed && (
+          <div className="p-3 border-t border-[#e6dfcd] bg-gray-50/50 flex justify-center">
+            <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter cursor-default" title={company_name || "Developer"}>
+              {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
             </div>
-        </div>
+          </div>
+        )}
       </aside>
 
       {/* Main Content */}

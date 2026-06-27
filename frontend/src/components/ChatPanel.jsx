@@ -132,25 +132,6 @@ export default function ChatPanel({ sessionId, fullWidth = false }) {
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Bot size={48} className="text-gray-300 mb-4" />
             <h3 className="font-black text-[#111111] mb-2 text-lg">Ask me about candidates</h3>
-            
-            <div className="grid grid-cols-2 gap-2 w-full mt-6">
-              {[
-                "Candidates in Mumbai", 
-                "Best for backend role", 
-                "Python experts",
-                "Score above 80%",
-                "5+ years experience",
-                "List all candidates"
-              ].map((suggestion, i) => (
-                <button 
-                  key={i}
-                  onClick={() => { handleSend(suggestion); }}
-                  className="bg-white border-2 border-gray-200 hover:border-[#111111] text-[11px] font-bold text-[#111111] py-2 px-2.5 rounded-xl transition-all shadow-sm text-left leading-tight hover:shadow-md"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
           </div>
         ) : (
           <div className="space-y-4 pb-4">

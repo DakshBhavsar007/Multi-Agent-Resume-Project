@@ -14,7 +14,7 @@ export default function AboutPage() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-full px-4.5 py-1.5 mb-6 text-xs font-bold uppercase tracking-wider text-gray-600"
+          className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-full px-4 py-1.5 mb-6 text-xs font-bold uppercase tracking-wider text-gray-600"
         >
           <Sparkles size={12} /> About Us
         </motion.div>
@@ -64,7 +64,7 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="rounded-3xl border border-gray-200 bg-white p-6.5 space-y-4 hover:shadow-lg transition duration-300"
+              className="rounded-3xl border border-gray-200 bg-white p-7 space-y-4 hover:shadow-lg transition duration-300 overflow-hidden"
             >
               <div className="w-10 h-10 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
                 <item.icon size={20} strokeWidth={2} />
