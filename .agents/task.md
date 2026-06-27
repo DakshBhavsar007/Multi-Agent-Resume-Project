@@ -1,0 +1,35 @@
+# Task List (Updated)
+
+- [x] Update backend `recruiter_auth.py`
+  - [x] Add `upload_logo` endpoint with size validation <= 5MB
+  - [x] Update `me`, `login`, `register`, and `update_profile` views to return `logo_path`
+- [x] Add URL route for `upload-logo` in `backend/api/urls.py`
+- [x] Update `seed_imported_data.py` to add logo API URLs for seeded companies
+- [x] Update frontend API integration in `frontend/src/lib/api.js`
+  - [x] Add `uploadLogo` method
+- [x] Update `SettingsPage.jsx` in the frontend
+  - [x] Update file size limit warning to 5MB
+  - [x] Implement backend logo upload on file select and update profile
+- [x] Update `Sidebar.jsx` to render database logo instead of/in addition to local storage
+- [x] Run seed script to update database with seeded company logos
+- [x] Fix "Failed to load drafts" error on Resume Builder Page (Dynamic BASE / API_HOST origin resolution in `api.js`)
+- [x] Replace all raw emojis with Lucide SVG Icons (`Sparkles`, `Bot`, `Search`, etc.) in `DashboardLayout.jsx`, `ResumeBuilderLanding.jsx`, and `ResumeEditor.jsx`
+- [x] Match templates warning toasts to the app's premium color palette
+- [x] Fix Premium plan sync issue between frontend auth store (Zustand) and backend database in `SeekerBillingPage.jsx`
+- [x] Fix missing company logos due to Clearbit Logo API deprecation by migrating to Hunter.io logo API
+- [x] Fix broken footer social icons by migrating to Simple Icons CDN in `site-chrome.jsx`
+- [x] Make static data on `/jobs` and `/jobs/trends` pages dynamic:
+  - [x] Implement dynamic statistics endpoint (`public_market_trends` view) on the backend
+  - [x] Integrate frontend call `publicAPI.getMarketTrends()` in `api.js`
+  - [x] Update `UserHome.jsx` to show dynamic roles, companies count, hired stats, average response rate
+  - [x] Update `JobsTrendsPage.jsx` to render dynamic salary progress chart, regional posting share chart, base metrics
+  - [x] Implement boneyard `LoadingSkeleton` loaders to run during loading states
+- [x] Fix LinkedIn logo rendering using inline SVGs to bypass CDN loading issues in `social-media.jsx`
+- [x] Integrate standard social media logos and tooltips in all footers (Job Seeker, Seeker Home, Landing Page, Developer Portal Landing, and Main Landing Page Footer.jsx)
+- [x] Fix Offer Letter upload error by solving PATCH multipart body parsing in `candidates.py`
+- [x] Increase Offer Letter upload size limit to 10MB (frontend checks, backend validator, Django memory configuration in `settings.py`)
+- [x] Fix "Contact Sales" button on Landing Page by wiring it to the `/contact` form page in `FinalCTA.jsx`
+- [x] Fix NameError for `JobApplication` in `public_market_trends` view inside `companies.py` to restore dynamic real count functionality
+- [x] Wrap GET drafts request in a try-except block in `seeker_resume_builder.py` to return JSON error trace instead of HTML traceback pages
+- [x] Verify build compiles successfully (`npm run build`)
+- [x] Stage and commit all changes locally (DO NOT push)

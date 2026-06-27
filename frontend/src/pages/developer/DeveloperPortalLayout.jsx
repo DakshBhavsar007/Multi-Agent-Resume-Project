@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
-import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { portalAuth } from "../../lib/portalApi";
 import { motion } from "framer-motion";
 import UsageProgress from "../../components/developer/UsageProgress";
-import logoWhite from "../../assets/logo_white.png";
 import { OnboardingTour, useTour } from "../../components/OnboardingTour";
 
 const DEVELOPER_TOUR_STEPS = [
@@ -72,7 +71,6 @@ export default function DeveloperPortalLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
-  const [mobileMenu, setMobileMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { isOpen: tourOpen, startTour, closeTour } = useTour('developer_portal');
@@ -115,60 +113,58 @@ export default function DeveloperPortalLayout() {
     { name: "Settings", href: "/developer/portal/settings", icon: Settings },
   ];
 
+  const cleanPath = pathname.replace(/\/$/, "");
+
   return (
-    <div className="flex h-screen bg-bg overflow-hidden font-sans text-charcoal">
+    <div className="min-h-screen bg-white text-foreground font-sans developer-portal-page">
       
-      {/* Mobile Toggle */}
-      <div className="md:hidden fixed top-0 w-full bg-white border-b z-50 p-4 flex justify-between items-center text-charcoal shadow-sm">
-        <div className="flex items-center gap-2">
-          <Key className="text-accent" size={24} />
-          <span className="font-bold">Portal</span>
-        </div>
-        <button onClick={() => setMobileMenu(!mobileMenu)} className="p-2">
-          {mobileMenu ? <X /> : <Menu />}
+      {/* Top App Bar — Google / Recruiter style */}
+      <header className="fixed top-0 inset-x-0 z-40 h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-2">
+        <button
+          onClick={() => setSidebarCollapsed((v) => !v)}
+          className="w-12 h-12 shrink-0 rounded-full hover:bg-gray-100 flex items-center justify-center text-muted-foreground transition"
+          aria-label="Toggle menu"
+        >
+          <Menu size={22} />
         </button>
-      </div>
+
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/developer")}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-charcoal p-1">
+            <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logo-grad-dev-portal" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="100%" stopColor="#2563eb" />
+                </linearGradient>
+              </defs>
+              <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-dev-portal)" strokeWidth="14" strokeLinecap="round" />
+              <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+              <circle cx="68" cy="32" r="24" fill="#2563eb" />
+            </svg>
+          </div>
+          <span className="font-display text-[22px] text-foreground tracking-tight font-semibold">
+            Between
+          </span>
+          <span className="text-muted-foreground text-sm hidden sm:inline ml-1 font-medium">Developer Portal</span>
+        </div>
+      </header>
 
       {/* Sidebar */}
-      <aside className={`${mobileMenu ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 fixed md:relative z-40 ${sidebarCollapsed ? "w-16" : "w-64"} h-full bg-white border-r border-[#e6dfcd] flex flex-col transition-all duration-300 ease-in-out`}>
+      <aside className={`fixed top-16 bottom-0 left-0 z-40 bg-white border-r border-gray-200 transition-[width] duration-200 ${
+        sidebarCollapsed ? "w-[72px]" : "w-[260px]"
+      } flex flex-col`}>
         
-        <div className="p-4 pb-2">
-          <div className={`flex items-start flex-col mb-6 gap-0.5 mt-4 md:mt-0 ${sidebarCollapsed ? "items-center" : ""}`}>
-            {!sidebarCollapsed && (
-              <>
-                <div className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden cursor-pointer" onClick={() => navigate("/developer")}>
-                  <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
-                </div>
-                <span className="text-xs font-bold text-gray-700 uppercase tracking-widest pl-0.5">Dev Portal</span>
-              </>
-            )}
-            {sidebarCollapsed && (
-              <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center cursor-pointer mt-2" onClick={() => navigate("/developer")}>
-                <Code size={16} className="text-accent" />
-              </div>
-            )}
-          </div>
-          {/* Desktop collapse toggle button */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`hidden md:flex items-center justify-center w-full h-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors duration-200 ${sidebarCollapsed ? "" : ""}`}
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 hide-scrollbar">
-          <div className="flex flex-col gap-1 mb-8">
+        <div className="flex-1 overflow-y-auto px-2 py-3 hide-scrollbar">
+          <div className="flex flex-col gap-1 mb-6">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname.startsWith(item.href);
+              const isActive = cleanPath.startsWith(item.href.replace(/\/$/, ""));
+              const showLabel = !sidebarCollapsed;
               return (
                 <Link
                   key={item.href}
                   to={item.href}
                   data-tour={item.tourAttr || undefined}
-                  onClick={() => setMobileMenu(false)}
                   className={`flex items-center h-12 rounded-full px-3 gap-5 relative group transition-colors duration-200 ${
                     isActive 
                       ? "text-[#111111] font-semibold" 
@@ -188,7 +184,7 @@ export default function DeveloperPortalLayout() {
                   }`}>
                     <Icon size={20} />
                   </span>
-                  {!sidebarCollapsed && (
+                  {showLabel && (
                     <span className="text-sm truncate relative z-10">
                       {item.name}
                     </span>
@@ -198,15 +194,15 @@ export default function DeveloperPortalLayout() {
             })}
           </div>
 
-          <div className="flex flex-col gap-1 mb-4 border-t border-[#e6dfcd] pt-4">
+          <div className="flex flex-col gap-1 mb-4 border-t border-gray-200 pt-4">
             {bottomItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive = cleanPath === item.href.replace(/\/$/, "");
+              const showLabel = !sidebarCollapsed;
               return (
                 <Link
                   key={item.href}
                   to={item.href}
-                  onClick={() => setMobileMenu(false)}
                   className={`flex items-center h-12 rounded-full px-3 gap-5 relative group transition-colors duration-200 ${
                     isActive 
                       ? "text-[#111111] font-semibold" 
@@ -226,7 +222,7 @@ export default function DeveloperPortalLayout() {
                   }`}>
                     <Icon size={20} />
                   </span>
-                  {!sidebarCollapsed && (
+                  {showLabel && (
                     <span className="text-sm truncate relative z-10">
                       {item.name}
                     </span>
@@ -259,23 +255,21 @@ export default function DeveloperPortalLayout() {
         </div>
 
         {/* User Card - hide when collapsed */}
-        {!sidebarCollapsed && (
-          <div className="p-4 border-t border-[#e6dfcd] bg-gray-50/50">
+        {!sidebarCollapsed ? (
+          <div className="p-3 border-t border-gray-200 bg-gray-50/50">
              <UsageProgress />
-              
-              <div className="flex items-center gap-2 pt-4 mt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2 pt-3 mt-2 border-t border-gray-200/60">
                 <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter shrink-0 cursor-default">
                   {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-sm font-bold truncate text-charcoal">{company_name || "Developer"}</span>
-                  <span className="text-[11px] text-gray-750 truncate font-bold">{developer?.email || "developer@example.com"}</span>
+                  <span className="text-xs font-bold truncate text-charcoal">{company_name || "Developer"}</span>
+                  <span className="text-[10px] text-gray-500 truncate font-semibold">{developer?.email || "developer@example.com"}</span>
                 </div>
               </div>
           </div>
-        )}
-        {sidebarCollapsed && (
-          <div className="p-3 border-t border-[#e6dfcd] bg-gray-50/50 flex justify-center">
+        ) : (
+          <div className="p-3 border-t border-gray-200 bg-gray-50/50 flex justify-center">
             <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter cursor-default" title={company_name || "Developer"}>
               {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
             </div>
@@ -284,21 +278,18 @@ export default function DeveloperPortalLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 h-full overflow-y-auto bg-white md:mt-0 mt-16 md:p-8 p-4 relative z-0 hide-scrollbar">
+      <main 
+        className="pt-16 transition-[padding] duration-200 min-h-screen flex-1 bg-white overflow-y-auto"
+        style={{ paddingLeft: sidebarCollapsed ? 72 : 260 }}
+      >
+        <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto">
           <ErrorBoundary>
-              <motion.div key={pathname} initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.08}} className="w-full h-full">
-                <Outlet />
-              </motion.div>
+            <motion.div key={pathname} initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.08}} className="w-full h-full">
+              <Outlet />
+            </motion.div>
           </ErrorBoundary>
+        </div>
       </main>
-
-      {/* Mobile overlay */}
-      {mobileMenu && (
-        <div 
-          className="fixed inset-0 bg-charcoal/40 backdrop-blur-sm z-30 md:hidden"
-          onClick={() => setMobileMenu(false)}
-        />
-      )}
 
       {/* Onboarding Tour */}
       <OnboardingTour

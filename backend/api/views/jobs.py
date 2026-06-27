@@ -116,6 +116,7 @@ def list_public_jobs(request):
                 "job_title": s.job_title,
                 "job_description": s.job_description,
                 "company_name": company_name,
+                "company_logo_path": s.company.logo_path if s.company else None,
                 "required_skills": criteria.get("required_skills", []),
                 "nice_to_have": criteria.get("nice_to_have", []),
                 "preferred_locations": preferred_locations,
