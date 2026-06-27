@@ -69,9 +69,9 @@ export function AIInputWithLoading({
               "bg-black/5 dark:bg-white/5 w-full rounded-3xl pl-6 pr-10 py-4",
               "placeholder:text-black/70 dark:placeholder:text-white/70",
               "border-none ring-black/30 dark:ring-white/30",
-              "text-black dark:text-white resize-none text-wrap leading-[1.2]",
-              `min-h-[${minHeight}px]`
+              "text-black dark:text-white resize-none overflow-hidden text-wrap leading-[1.2]"
             )}
+            style={{ minHeight: `${minHeight}px` }}
             ref={textareaRef}
             value={inputValue}
             onChange={(e) => {
