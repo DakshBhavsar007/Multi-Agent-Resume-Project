@@ -2,7 +2,7 @@ import json
 import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from api.models import Company, Session
+from api.models import Company, Session, JobApplication
 from api.views.seeker_auth import require_seeker_jwt
 from models.schemas import success_response, error_response
 

@@ -201,22 +201,26 @@ def manage_drafts(request):
     POST /api/v1/seeker/resume/drafts - Create draft
     """
     if request.method == "GET":
-        drafts = ResumeDraft.objects.filter(seeker=request.seeker).order_by("-updated_at")
-        data = []
-        for d in drafts:
-            data.append({
-                "id": str(d.id),
-                "title": d.title,
-                "templateId": d.template_id,
-                "content": d.content,
-                "atsScore": d.ats_score,
-                "atsReport": d.ats_report,
-                "exportedPdfPath": d.exported_pdf_path,
-                "isActive": d.is_active,
-                "createdAt": d.created_at.isoformat(),
-                "updatedAt": d.updated_at.isoformat()
-            })
-        return JsonResponse(success_response(data))
+        try:
+            drafts = ResumeDraft.objects.filter(seeker=request.seeker).order_by("-updated_at")
+            data = []
+            for d in drafts:
+                data.append({
+                    "id": str(d.id),
+                    "title": d.title,
+                    "templateId": d.template_id,
+                    "content": d.content,
+                    "atsScore": d.ats_score,
+                    "atsReport": d.ats_report,
+                    "exportedPdfPath": d.exported_pdf_path,
+                    "isActive": d.is_active,
+                    "createdAt": d.created_at.isoformat(),
+                    "updatedAt": d.updated_at.isoformat()
+                })
+            return JsonResponse(success_response(data))
+        except Exception as e:
+            logger.error("Error listing drafts: %s", e)
+            return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
         
     elif request.method == "POST":
         try:
