@@ -8,7 +8,7 @@ export default function RefundPolicyPage() {
     <div className="min-h-screen bg-[#fafafa] text-[#111111] font-sans">
       <Header />
 
-      <section className="mx-auto max-w-4xl px-6 pt-24 pb-16">
+      <section className="mx-auto max-w-4xl px-6 pt-36 pb-16">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <motion.div
             initial={{ opacity: 0, y: -10 }}

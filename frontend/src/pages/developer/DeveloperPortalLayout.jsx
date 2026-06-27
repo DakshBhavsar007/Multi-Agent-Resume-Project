@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
 import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle } from "lucide-react";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { portalAuth } from "../../lib/portalApi";
@@ -146,17 +146,34 @@ export default function DeveloperPortalLayout() {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
               return (
-                <button
+                <Link
                   key={item.href}
+                  to={item.href}
                   data-tour={item.tourAttr || undefined}
-                  onClick={() => { navigate(item.href); setMobileMenu(false); }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
-                    isActive ? "bg-gray-100 border border-gray-200 text-black" : "text-gray-850 hover:bg-gray-50 hover:text-black"
+                  onClick={() => setMobileMenu(false)}
+                  className={`flex items-center h-12 rounded-full px-3 gap-5 relative group transition-colors duration-200 ${
+                    isActive 
+                      ? "text-[#111111] font-semibold" 
+                      : "text-charcoal hover:bg-gray-100 font-medium"
                   }`}
+                  title={item.name}
                 >
-                  <Icon size={18} className={isActive ? "text-black stroke-[2.5]" : "text-gray-700"} />
-                  {item.name}
-                </button>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeDevNavBackground"
+                      className="absolute inset-0 bg-gray-100 rounded-full border border-[#111111]/10"
+                      transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                    />
+                  )}
+                  <span className={`w-6 flex items-center justify-center shrink-0 transition-colors duration-200 relative z-10 ${
+                    isActive ? "text-[#111111]" : "text-gray-500 group-hover:text-charcoal"
+                  }`}>
+                    <Icon size={20} />
+                  </span>
+                  <span className="text-sm truncate relative z-10">
+                    {item.name}
+                  </span>
+                </Link>
               )
             })}
           </div>
@@ -166,32 +183,53 @@ export default function DeveloperPortalLayout() {
               const Icon = item.icon;
               const isActive = pathname === item.href;
               return (
-                <button
+                <Link
                   key={item.href}
-                  onClick={() => { navigate(item.href); setMobileMenu(false); }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-left ${
-                    isActive ? "bg-gray-100 text-black" : "text-gray-850 hover:bg-gray-50 hover:text-black"
+                  to={item.href}
+                  onClick={() => setMobileMenu(false)}
+                  className={`flex items-center h-12 rounded-full px-3 gap-5 relative group transition-colors duration-200 ${
+                    isActive 
+                      ? "text-[#111111] font-semibold" 
+                      : "text-charcoal hover:bg-gray-100 font-medium"
                   }`}
+                  title={item.name}
                 >
-                  <Icon size={18} className={isActive ? "text-black" : "text-gray-700"} />
-                  {item.name}
-                </button>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeDevNavBackgroundBottom"
+                      className="absolute inset-0 bg-gray-100 rounded-full border border-[#111111]/10"
+                      transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                    />
+                  )}
+                  <span className={`w-6 flex items-center justify-center shrink-0 transition-colors duration-200 relative z-10 ${
+                    isActive ? "text-[#111111]" : "text-gray-500 group-hover:text-charcoal"
+                  }`}>
+                    <Icon size={20} />
+                  </span>
+                  <span className="text-sm truncate relative z-10">
+                    {item.name}
+                  </span>
+                </Link>
               )
             })}
              <button
                 onClick={clearAuth}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-red-500 hover:bg-red-50 transition-all mt-2 text-left"
+                className="flex items-center h-10 rounded-full px-3 gap-5 text-gray-500 hover:text-red-600 hover:bg-red-50 transition mt-2 text-left w-full"
               >
-                <LogOut size={18} className="text-red-400" />
-                Logout
+                <span className="w-6 flex items-center justify-center shrink-0">
+                  <LogOut size={18} />
+                </span>
+                <span className="text-sm font-medium">Logout</span>
               </button>
               <button
                 data-tour="dev-help-btn"
                 onClick={startTour}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-indigo-500 hover:bg-indigo-50 transition-all text-left"
+                className="flex items-center h-10 rounded-full px-3 gap-5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition text-left w-full"
               >
-                <HelpCircle size={18} className="text-indigo-400" />
-                Help & Tour
+                <span className="w-6 flex items-center justify-center shrink-0">
+                  <HelpCircle size={18} />
+                </span>
+                <span className="text-sm font-medium">Help & Tour</span>
               </button>
           </div>
         </div>

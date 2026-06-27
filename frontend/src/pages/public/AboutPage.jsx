@@ -10,7 +10,7 @@ export default function AboutPage() {
       <Header />
       
       {/* Hero Section */}
-      <section className="mx-auto max-w-4xl px-6 pt-24 pb-16 text-center">
+      <section className="mx-auto max-w-4xl px-6 pt-36 pb-16 text-center">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
