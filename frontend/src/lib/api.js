@@ -398,6 +398,7 @@ async function publicReq(method, path) {
 export const publicAPI = {
   listCompanies: () => publicReq('GET', '/api/v1/public/companies'),
   getCompany: (id) => publicReq('GET', `/api/v1/public/companies/${id}`),
+  getMarketTrends: () => publicReq('GET', '/api/v1/public/market-trends'),
   listJobs: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return publicReq('GET', `/api/v1/public/jobs${qs ? '?' + qs : ''}`);

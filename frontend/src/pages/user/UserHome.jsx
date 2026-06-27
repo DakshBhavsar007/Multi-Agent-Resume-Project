@@ -9,6 +9,8 @@ import {
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { jobs, companies } from "../../lib/data";
+import { publicAPI } from "../../lib/api";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 import spotResume from "../../assets/spot-resume.png";
 import spotDashboard from "../../assets/spot-dashboard.png";
 import { ScrollingAnimation } from "../../components/user/ui/scrolling-animation";
@@ -82,6 +84,8 @@ function Home() {
 
   const [isMounted, setIsMounted] = useState(false);
   const [wordIndex, setWordIndex] = useState(0);
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const words = useMemo(() => ["fits", "inspires", "values", "respects", "excites"], []);
 
@@ -92,6 +96,20 @@ function Home() {
     }, 2500);
     return () => clearInterval(interval);
   }, [words.length]);
+
+  useEffect(() => {
+    setStatsLoading(true);
+    publicAPI.getMarketTrends()
+      .then((data) => {
+        setStats(data.stats);
+      })
+      .catch((err) => {
+        console.error("Failed to load market trends stats:", err);
+      })
+      .finally(() => {
+        setStatsLoading(false);
+      });
+  }, []);
 
   const handleSearch = (e) => {
     if (e) e.preventDefault();
@@ -130,8 +148,14 @@ function Home() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="pill inline-flex items-center gap-2 border border-border bg-background/70 px-3 py-1 text-[11px] font-medium text-muted-foreground backdrop-blur"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--google-green)]" />
-              12,480 new roles this week · updated hourly
+              {statsLoading ? (
+                <LoadingSkeleton width="180px" height="12px" />
+              ) : (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--google-green)]" />
+                  {Number(stats?.open_roles || 12480).toLocaleString()} new roles this week · updated hourly
+                </>
+              )}
             </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -314,7 +338,14 @@ function Home() {
               className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground"
             >
               <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-[var(--google-green)]" /> Verified employers</span>
-              <span className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-[var(--google-yellow)]" /> Avg response 48h</span>
+              <span className="flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-[var(--google-yellow)]" /> 
+                {statsLoading ? (
+                  <LoadingSkeleton width="70px" height="12px" />
+                ) : (
+                  `Avg response ${stats?.avg_response_hours || 48}h`
+                )}
+              </span>
               <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 fill-[var(--google-yellow)] text-[var(--google-yellow)]" /> 4.8 from 12k seekers</span>
             </motion.div>
           </div>
@@ -331,14 +362,20 @@ function Home() {
       >
         <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-4 sm:grid-cols-4 sm:p-5">
           {[
-            { k: "Open roles", v: "12,480", c: "var(--google-blue)" },
-            { k: "Companies", v: "3,200+", c: "var(--google-green)" },
-            { k: "Hired this month", v: "1,940", c: "var(--google-yellow)" },
-            { k: "Avg. response", v: "48 hrs", c: "var(--google-red)" },
+            { k: "Open roles", v: statsLoading ? null : Number(stats?.open_roles || 12480).toLocaleString(), c: "var(--google-blue)" },
+            { k: "Companies", v: statsLoading ? null : `${Number(stats?.companies || 3200).toLocaleString()}+`, c: "var(--google-green)" },
+            { k: "Hired this month", v: statsLoading ? null : Number(stats?.hired_this_month || 1940).toLocaleString(), c: "var(--google-yellow)" },
+            { k: "Avg. response", v: statsLoading ? null : `${stats?.avg_response_hours || 48} hrs`, c: "var(--google-red)" },
           ].map((s) => (
             <div key={s.k} className="px-2">
               <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{s.k}</div>
-              <div className="mt-0.5 font-display text-xl font-semibold sm:text-2xl" style={{ color: s.c }}>{s.v}</div>
+              <div className="mt-0.5 font-display text-xl font-semibold sm:text-2xl min-h-[32px] flex items-center" style={{ color: s.c }}>
+                {s.v === null ? (
+                  <LoadingSkeleton width="80px" height="24px" />
+                ) : (
+                  s.v
+                )}
+              </div>
             </div>
           ))}
         </div>
