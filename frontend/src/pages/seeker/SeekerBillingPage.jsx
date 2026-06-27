@@ -292,6 +292,7 @@ export default function SeekerBillingPage() {
             setLoading(null);
           }
         },
+      });
       rzp.on('payment.failed', () => {
         toast.error('Payment failed. Please try again.');
         setLoading(null);
