@@ -6,6 +6,7 @@ import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recha
 import JobsNavbar from '../components/JobsNavbar';
 import ResumeUploadModal from '../components/ResumeUploadModal';
 import { publicJobsAPI } from '../lib/api';
+import { Footer } from '../components/user/site-chrome';
 
 const salaryData = [
   { name: 'Q1', growth: 4.2 },
@@ -513,9 +514,7 @@ export default function JobsLandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-[#FFFFFF] border-t border-[#e6dfcd] px-6 py-8 mt-12 text-center text-xs text-[#5c5c5c]">
-        &copy; {new Date().getFullYear()} Between Job Engine. Built for recruitment intelligence and career path mapping.
-      </footer>
+      <Footer />
 
       {/* Upload modal */}
       <ResumeUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />

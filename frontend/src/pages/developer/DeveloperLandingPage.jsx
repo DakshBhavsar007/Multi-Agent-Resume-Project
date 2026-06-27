@@ -8,8 +8,16 @@ import { portalBilling, portalAuth } from "../../lib/portalApi";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import logoWhite from "../../assets/logo_white.png";
 import logoBlack from "../../assets/logo_black.png";
+import { SocialTooltip } from "../../components/ui/social-media";
 
 export default function DeveloperLandingPage() {
+  const socialLinks = [
+    { href: "#", ariaLabel: "LinkedIn", tooltip: "LinkedIn", color: "#0A66C2" },
+    { href: "#", ariaLabel: "Twitter", tooltip: "Twitter", color: "#000000" },
+    { href: "#", ariaLabel: "Instagram", tooltip: "Instagram", color: "#E1306C" },
+    { href: "#", ariaLabel: "Facebook", tooltip: "Facebook", color: "#3B5998" },
+    { href: "#", ariaLabel: "Telegram", tooltip: "Telegram", color: "#0088CC" }
+  ];
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState("Python");
@@ -399,8 +407,11 @@ const response = await fetch(
                 <a href="/contact" className="hover:text-accent transition-colors">Contact Support</a>
              </div>
             
-            <div className="text-sm">
-               © {new Date().getFullYear()} Between API.
+            <div className="flex flex-col items-center md:items-end gap-4">
+               <SocialTooltip items={socialLinks} className="justify-center md:justify-end" />
+               <div className="text-sm">
+                  © {new Date().getFullYear()} Between API.
+               </div>
             </div>
          </div>
       </footer>
