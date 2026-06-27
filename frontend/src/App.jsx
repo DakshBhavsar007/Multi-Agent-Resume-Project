@@ -19,6 +19,7 @@ import SessionWorkspacePage from './pages/SessionWorkspacePage';
 import SmartAnalyzerPage from './pages/SmartAnalyzerPage';
 import SettingsPage from './pages/SettingsPage';
 import AiRecruiterPage from './pages/AiRecruiterPage';
+import GoogleCallbackPage from './pages/GoogleCallbackPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import FraudDetectionPage from './pages/FraudDetectionPage';
 
@@ -176,6 +177,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/auth/verify" element={<AuthVerifyPage />} />
           <Route path="/auth/github/callback" element={<GitHubCallbackPage />} />
+          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/terms" element={<TermsPage />} />
