@@ -59,8 +59,11 @@ Sare requirements ke mutabik saare bug fixes aur optimization badlav kar diye ga
 ### 14. Fix ResumeDraft UnboundLocalError
 - **Removed Redundant Local Import**: [seeker_resume_builder.py](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/backend/api/views/seeker_resume_builder.py#L229) ke POST section me `from api.models import ResumeDraft` local import redundant statement tha, jiski wajah se compiler pure view namespace scope me `ResumeDraft` ko local variable treat kar raha tha. Iske karan GET requests ke time compilation error `UnboundLocalError: cannot access local variable 'ResumeDraft' where it is not associated with a value` throw ho rahi thi. Humne is local line ko delete karke variable scope clean fix kar diya hai.
 
+### 15. Cancel Subscription Handler in Seeker Billing
+- **Cancel Subscription option**: [SeekerBillingPage.jsx](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/frontend/src/pages/seeker/SeekerBillingPage.jsx) me active subscription state check par Premium plan card ke main "Current Plan" box ke directly niche dashed light-red style border wala **Cancel Subscription** text button register kiya hai. Yeh backend sub cancellation endpoint `/api/v1/seeker/billing/cancel` trigger karke locally store validation sync update karta hai.
+
 ---
 
 ## Verification & Status
-- **Build Pass**: `npm run build` completely pass ho gaya hai (built in 14.53s).
+- **Build Pass**: `npm run build` completely pass ho gaya hai (built in 17.32s).
 - **Git State**: Local modifications completely committed and pushed to git local refs. Working tree is clean.

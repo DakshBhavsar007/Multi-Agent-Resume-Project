@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { seekerAPI } from "../../lib/api";
-import { Bookmark, Briefcase, CheckCircle2, Clock, TrendingUp, Sparkles, AlertCircle, Edit, Plus, Check, FileText } from "lucide-react";
+import { Bookmark, Briefcase, CheckCircle2, Clock, TrendingUp, Sparkles, AlertCircle, Edit, Plus, Check, FileText, Zap } from "lucide-react";
 import toast from "react-hot-toast";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 
@@ -219,8 +219,8 @@ export default function UserDashboard() {
                 {seeker?.tier || 'Free'}
               </span>
               {seeker?.tier !== 'premium' && (
-                <Link to="/jobs/billing" className="ml-3 text-xs font-black text-indigo-600 hover:text-indigo-800 underline underline-offset-2">
-                  Upgrade to Premium ⚡
+                <Link to="/jobs/billing" className="ml-3 text-xs font-black text-indigo-600 hover:text-indigo-800 underline underline-offset-2 inline-flex items-center gap-0.5">
+                  Upgrade to Premium <Zap size={11} className="text-blue-600 fill-blue-600 shrink-0" />
                 </Link>
               )}
             </p>
@@ -323,10 +323,14 @@ export default function UserDashboard() {
                 </div>
 
                 <div className="w-full text-center lg:text-left space-y-1">
-                  <div className="text-sm font-bold">
-                    {overallScore >= 80 ? '🎉 Excellent Match!' :
-                     overallScore >= 50 ? '⚡ Good Progress (Needs Tweaks)' :
-                     '⚠️ Strong Gap Detected'}
+                  <div className="text-sm font-bold flex items-center justify-center lg:justify-start gap-1.5">
+                    {overallScore >= 80 ? (
+                      <><Sparkles className="h-4 w-4 text-green-600" /> Excellent Match!</>
+                    ) : overallScore >= 50 ? (
+                      <><TrendingUp className="h-4 w-4 text-blue-600" /> Good Progress (Needs Tweaks)</>
+                    ) : (
+                      <><AlertCircle className="h-4 w-4 text-red-600" /> Strong Gap Detected</>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Active Draft: <span className="font-medium text-foreground">{activeDraft.title}</span>

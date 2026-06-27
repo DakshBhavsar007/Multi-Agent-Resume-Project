@@ -13,7 +13,8 @@ import {
   Loader2, 
   AlertCircle, 
   FileCheck,
-  TrendingUp
+  TrendingUp,
+  Zap
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { TEMPLATE_META } from "../../components/user/templates/ResumePreview";
@@ -418,8 +419,8 @@ export default function ResumeBuilderLanding() {
                       </span>
                     )}
                     {isPremium && (
-                      <span className="absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1 text-xs font-medium text-white shadow-elevation-1">
-                        ⚡ Premium
+                      <span className="absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow-elevation-1">
+                        <Zap className="h-3 w-3 fill-white" /> Premium
                       </span>
                     )}
                     
@@ -441,7 +442,7 @@ export default function ResumeBuilderLanding() {
                     <button
                       disabled={btnLoading}
                       onClick={() => handleCreateDraft(id)}
-                      className={`pill px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-all shrink-0 ${isPremium && seeker?.tier !== 'premium' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-primary'}`}
+                      className={`pill px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-all shrink-0 ${isPremium && seeker?.tier !== 'premium' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary'}`}
                     >
                       {isPremium && seeker?.tier !== 'premium' ? 'Unlock Premium' : 'Use Template'}
                     </button>
