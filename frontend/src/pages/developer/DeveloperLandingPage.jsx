@@ -393,12 +393,11 @@ const response = await fetch(
                <p className="text-sm mt-1">Built for smarter hiring.</p>
             </div>
             
-            <div className="flex flex-wrap justify-center gap-8 text-sm font-medium">
-               <a href="#" className="hover:text-accent transition-colors">Privacy Policy</a>
-               <a href="#" className="hover:text-accent transition-colors">Terms of Service</a>
-               <a href="#" className="hover:text-accent transition-colors">API Status</a>
-               <a href="#" className="hover:text-accent transition-colors">Contact Support</a>
-            </div>
+             <div className="flex flex-wrap justify-center gap-8 text-sm font-medium">
+                <a href="/terms" className="hover:text-accent transition-colors">Privacy Policy</a>
+                <a href="/terms" className="hover:text-accent transition-colors">Terms of Service</a>
+                <a href="/contact" className="hover:text-accent transition-colors">Contact Support</a>
+             </div>
             
             <div className="text-sm">
                © {new Date().getFullYear()} Between API.

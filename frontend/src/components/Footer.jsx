@@ -19,15 +19,17 @@ const Footer = () => {
   };
 
   const linkUrls = {
-    "For Enterprise": "/#features",
     "For Developers": "/developer",
     "Board": "/dashboard",
     "Pricing": "/#pricing",
     "Sign In": "/login",
     "Careers": "/jobs",
-    "About": "/#product",
-    "Documentation": "/developer/portal/docs",
-    "API Reference": "/developer/portal/docs"
+    "About": "/about",
+    "Documentation": "/developer",
+    "API Reference": "/developer",
+    "Terms of Service": "/terms",
+    "Privacy Policy": "/terms",
+    "Refund Policy": "/refund-policy"
   };
 
   const getLinkUrl = (name) => {
@@ -53,10 +55,10 @@ const Footer = () => {
         </motion.div>
 
         {[
-          { title: "Product", links: ["For Enterprise", "For Developers", "Board", "Pricing", "Sign In"] },
-          { title: "Company", links: ["Newsletter", "Careers", "About", "Blog"] },
-          { title: "Resources", links: ["Documentation", "API Reference", "Community", "Guide"] },
-          { title: "Legal", links: ["Terms of Service", "Privacy Policy", "Cookie Settings"] }
+          { title: "Product", links: ["For Developers", "Board", "Pricing", "Sign In"] },
+          { title: "Company", links: ["About", "Careers"] },
+          { title: "Resources", links: ["Documentation", "API Reference"] },
+          { title: "Legal", links: ["Terms of Service", "Privacy Policy", "Refund Policy"] }
         ].map((column, i) => (
           <motion.div key={i} className="footer-column" variants={itemVariants}>
             <h4>{column.title}</h4>
