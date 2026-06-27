@@ -17,7 +17,7 @@ SEED_DATA = [
         "founded_year": None,
         "website_url": None,
         "about": None,
-        "logo_path": "https://logo.clearbit.com/google.com",
+        "logo_path": "https://logos.hunter.io/google.com",
         "slug": "yuvraj",
         "api_keys": [
             {
@@ -559,7 +559,7 @@ SEED_DATA = [
         "founded_year": None,
         "website_url": None,
         "about": None,
-        "logo_path": "https://logo.clearbit.com/google.com",
+        "logo_path": "https://logos.hunter.io/google.com",
         "slug": "test-company",
         "api_keys": [
             {
@@ -607,7 +607,7 @@ SEED_DATA = [
         "founded_year": 2018,
         "website_url": "https://acmelabs.com",
         "about": "Acme Labs is a leading biotechnology firm specializing in clinical research and medical imaging analysis.",
-        "logo_path": "https://logo.clearbit.com/acme.com",
+        "logo_path": "https://logos.hunter.io/acme.com",
         "slug": "acme-labs",
         "api_keys": [],
         "jobs": [
@@ -734,7 +734,7 @@ SEED_DATA = [
         "founded_year": 2020,
         "website_url": "https://zenithfin.com",
         "about": "Zenith FinTech builds next-generation digital banking APIs and decentralized finance protocols for institutional asset managers.",
-        "logo_path": "https://logo.clearbit.com/zenith.com",
+        "logo_path": "https://logos.hunter.io/zenith.com",
         "slug": "zenith-fintech",
         "api_keys": [],
         "jobs": [
@@ -863,7 +863,7 @@ SEED_DATA = [
         "founded_year": 2015,
         "website_url": "https://cloudgrid.io",
         "about": "CloudGrid builds global distributed database systems and hyper-scale infrastructure engines.",
-        "logo_path": "https://logo.clearbit.com/cloudflare.com",
+        "logo_path": "https://logos.hunter.io/cloudflare.com",
         "slug": "cloudgrid-systems",
         "api_keys": [],
         "jobs": [
@@ -994,7 +994,7 @@ SEED_DATA = [
         "founded_year": 2021,
         "website_url": "https://pixelperfect.co",
         "about": "PixelPerfect is a premium creative agency designing award-winning digital consumer interfaces and motion branding assets.",
-        "logo_path": "https://logo.clearbit.com/canva.com",
+        "logo_path": "https://logos.hunter.io/canva.com",
         "slug": "pixelperfect-studios",
         "api_keys": [],
         "jobs": [
@@ -1123,7 +1123,7 @@ SEED_DATA = [
         "founded_year": 2017,
         "website_url": "https://smarted.org",
         "about": "SmartEd develops interactive digital curriculum software and virtual math-learning environments for public schools.",
-        "logo_path": "https://logo.clearbit.com/duolingo.com",
+        "logo_path": "https://logos.hunter.io/duolingo.com",
         "slug": "smarted-solutions",
         "api_keys": [],
         "jobs": [
@@ -1250,7 +1250,7 @@ SEED_DATA = [
         "founded_year": 2019,
         "website_url": "https://growthengine.com",
         "about": "GrowthEngine is a performance marketing team helping B2B SaaS applications scale using hyper-targeted digital media buys.",
-        "logo_path": "https://logo.clearbit.com/mailchimp.com",
+        "logo_path": "https://logos.hunter.io/mailchimp.com",
         "slug": "growthengine-media",
         "api_keys": [],
         "jobs": [
@@ -1379,7 +1379,7 @@ SEED_DATA = [
         "founded_year": 2012,
         "website_url": "https://apexlogistics.com",
         "about": "Apex Logistics manages nationwide automated freight networks and inventory optimization hubs.",
-        "logo_path": "https://logo.clearbit.com/dhl.com",
+        "logo_path": "https://logos.hunter.io/dhl.com",
         "slug": "apex-logistics",
         "api_keys": [],
         "jobs": [
@@ -1510,7 +1510,7 @@ SEED_DATA = [
         "founded_year": 2022,
         "website_url": "https://neuroai.org",
         "about": "NeuroAI Research designs self-supervised vision models and generative networks for autonomous robotics systems.",
-        "logo_path": "https://logo.clearbit.com/openai.com",
+        "logo_path": "https://logos.hunter.io/openai.com",
         "slug": "neuroai-research",
         "api_keys": [],
         "jobs": [
@@ -1641,7 +1641,7 @@ SEED_DATA = [
         "founded_year": 2014,
         "website_url": "https://brighthorizon.com",
         "about": "Bright Horizon is a global wealth management fund trading commodities and high-growth equity options.",
-        "logo_path": "https://logo.clearbit.com/robinhood.com",
+        "logo_path": "https://logos.hunter.io/robinhood.com",
         "slug": "bright-horizon-capital",
         "api_keys": [],
         "jobs": [
@@ -1768,7 +1768,7 @@ SEED_DATA = [
         "founded_year": 2016,
         "website_url": "https://helixbiomed.com",
         "about": "Helix BioMed integrates high-throughput gene sequencing platforms with clinical oncology diagnostics databases.",
-        "logo_path": "https://logo.clearbit.com/helix.com",
+        "logo_path": "https://logos.hunter.io/helix.com",
         "slug": "helix-biomed",
         "api_keys": [],
         "jobs": [
@@ -1897,7 +1897,7 @@ SEED_DATA = [
         "founded_year": 1998,
         "website_url": "https://google.com",
         "about": "Google's mission is to organize the world's information and make it universally accessible and useful.",
-        "logo_path": "https://logo.clearbit.com/google.com",
+        "logo_path": "https://logos.hunter.io/google.com",
         "slug": "google",
         "api_keys": [
             {
@@ -1924,7 +1924,7 @@ SEED_DATA = [
         "founded_year": 175,
         "website_url": "https://microsoft.com",
         "about": "Microsoft enables digital transformation for the era of an intelligent cloud and an intelligent edge.",
-        "logo_path": "https://logo.clearbit.com/microsoft.com",
+        "logo_path": "https://logos.hunter.io/microsoft.com",
         "slug": "microsoft",
         "api_keys": [
             {
@@ -1951,7 +1951,7 @@ SEED_DATA = [
         "founded_year": 2004,
         "website_url": "https://meta.com",
         "about": "Meta builds technologies that help people connect, find communities, and grow businesses.",
-        "logo_path": "https://logo.clearbit.com/meta.com",
+        "logo_path": "https://logos.hunter.io/meta.com",
         "slug": "meta",
         "api_keys": [
             {
@@ -1978,7 +1978,7 @@ SEED_DATA = [
         "founded_year": 2024,
         "website_url": "https://workly.ai",
         "about": "Workly AI is an intelligent recruiting platform that uses advanced AI agents to screen, match, and tailor candidate hiring workflows.",
-        "logo_path": "https://logo.clearbit.com/workday.com",
+        "logo_path": "https://logos.hunter.io/workday.com",
         "slug": "workly-ai",
         "api_keys": [
             {
@@ -2005,7 +2005,7 @@ SEED_DATA = [
         "founded_year": 2010,
         "website_url": "https://stripe.com",
         "about": "Stripe is a financial infrastructure platform for the internet.",
-        "logo_path": "https://logo.clearbit.com/stripe.com",
+        "logo_path": "https://logos.hunter.io/stripe.com",
         "slug": "stripe",
         "api_keys": [
             {

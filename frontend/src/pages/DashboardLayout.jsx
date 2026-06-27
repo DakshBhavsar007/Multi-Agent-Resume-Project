@@ -221,26 +221,26 @@ export default function DashboardLayout() {
                 <>
                   <div className="text-[10px] font-bold text-gray-400 px-3 py-1 uppercase tracking-wider">Search Actions</div>
                   <button onClick={() => { navigate(`/dashboard/sessions?q=${encodeURIComponent(globalSearch)}`); setGlobalSearch(""); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-accent flex items-center gap-2 rounded-lg">
-                    🔍 Search sessions for "{globalSearch}"
+                    <Search className="w-3.5 h-3.5 text-accent" /> Search sessions for "{globalSearch}"
                   </button>
                   <button onClick={() => { navigate(`/dashboard/sessions`); setGlobalSearch(""); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
-                    👥 Find candidates matching "{globalSearch}"
+                    <Users className="w-3.5 h-3.5 text-gray-500" /> Find candidates matching "{globalSearch}"
                   </button>
                 </>
               ) : (
                 <>
                   <div className="text-[10px] font-bold text-gray-400 px-3 py-1 uppercase tracking-wider">Quick Actions</div>
                   <button onClick={() => { navigate("/dashboard/sessions/new"); setShowGlobalSuggestions(false); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
-                    ✨ Create Recruitment Session
+                    <Sparkles className="w-3.5 h-3.5 text-gray-500" /> Create Recruitment Session
                   </button>
                   <button onClick={() => { navigate("/dashboard/smart-analyzer"); setShowGlobalSuggestions(false); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
-                    🚀 Analyze with AI (Smart Analyzer)
+                    <Bot className="w-3.5 h-3.5 text-gray-500" /> Analyze with AI (Smart Analyzer)
                   </button>
                   <button onClick={() => { navigate("/dashboard/protection"); setShowGlobalSuggestions(false); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
-                    🛡️ View Security & Fraud Logs
+                    <Shield className="w-3.5 h-3.5 text-gray-500" /> View Security & Fraud Logs
                   </button>
                   <button onClick={() => { navigate("/dashboard/sessions"); setShowGlobalSuggestions(false); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
-                    📂 View All Sessions
+                    <Layers className="w-3.5 h-3.5 text-gray-500" /> View All Sessions
                   </button>
                 </>
               )}

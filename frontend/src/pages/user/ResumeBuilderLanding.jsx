@@ -84,13 +84,16 @@ export default function ResumeBuilderLanding() {
     if (isPremiumTemplate && seeker?.tier !== 'premium') {
       toast((t) => (
         <span className="flex flex-col gap-2">
-          <span>✨ <strong>{TEMPLATE_META[templateId].name}</strong> is a Premium template. Please upgrade to use it!</span>
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+            <span><strong>{TEMPLATE_META[templateId].name}</strong> is a Premium template. Please upgrade to use it!</span>
+          </span>
           <button 
             onClick={() => {
               toast.dismiss(t.id);
               navigate('/jobs/billing');
             }}
-            className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold w-fit"
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold w-fit transition-colors"
           >
             Upgrade Now
           </button>

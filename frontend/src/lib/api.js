@@ -1,5 +1,20 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL ||
-             "http://127.0.0.1:8000/api/v1"
+const getApiBase = () => {
+  if (typeof window !== "undefined") {
+    // If we have a custom API URL in Vite env (for development or specific staging)
+    const viteApiUrl = import.meta.env?.VITE_API_URL;
+    if (viteApiUrl) return viteApiUrl;
+
+    // Otherwise, if we are on a custom domain, use the current origin
+    const host = window.location.origin;
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      return "http://127.0.0.1:8000/api/v1";
+    }
+    return `${host}/api/v1`;
+  }
+  return "http://127.0.0.1:8000/api/v1";
+};
+
+const BASE = getApiBase();
 
 export const API_HOST = BASE.replace("/api/v1", "");
 

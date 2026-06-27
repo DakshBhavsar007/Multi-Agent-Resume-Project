@@ -8,6 +8,7 @@ import {
 import { Header, Footer } from '../../components/user/site-chrome';
 import { seekerAPI } from '../../lib/api';
 import toast from 'react-hot-toast';
+import { useSeekerAuthStore } from '../../stores/seekerAuthStore';
 
 const PLANS = [
   {
@@ -224,6 +225,7 @@ function PlanCard({ plan, isActive, onUpgrade, loading }) {
 }
 
 export default function SeekerBillingPage() {
+  const updateSeeker = useSeekerAuthStore(s => s.updateSeeker);
   const [currentPlan, setCurrentPlan] = useState('free');
   const [loading, setLoading] = useState(null);
   const [loadingPlan, setLoadingPlan] = useState(true);
@@ -260,6 +262,7 @@ export default function SeekerBillingPage() {
         });
         setCurrentPlan(planId);
         localStorage.setItem('seeker_tier', planId);
+        updateSeeker({ tier: planId });
         toast.success('Welcome to Between Premium!');
         setLoading(null);
         return;
@@ -285,6 +288,7 @@ export default function SeekerBillingPage() {
             });
             setCurrentPlan(planId);
             localStorage.setItem('seeker_tier', planId);
+            updateSeeker({ tier: planId });
             toast.success('Welcome to Between Premium!');
           } catch {
             toast.error('Payment verification failed. Please contact support.');
