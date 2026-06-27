@@ -20,10 +20,10 @@ export default function NotFoundPage() {
           <h1 className="text-8xl font-black tracking-tighter bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
             404
           </h1>
-          <h2 className="text-xl font-bold tracking-tight text-gray-200">
+          <h2 className="text-xl font-bold tracking-tight text-white">
             Page Not Found
           </h2>
-          <p className="text-sm text-gray-400 max-w-sm mx-auto leading-relaxed">
+          <p className="text-sm max-w-sm mx-auto leading-relaxed" style={{ color: '#d1d5db' }}>
             The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
           </p>
         </div>
