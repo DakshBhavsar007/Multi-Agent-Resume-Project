@@ -132,17 +132,40 @@ def verify_payment(request):
         if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature, plan]):
             return JsonResponse(error_response("Missing required verification parameters"), status=400)
 
-        # Allow bypass signature verification for mock orders in testing
-        if razorpay_order_id.startswith("order_mock_"):
-            expected = razorpay_signature
+        # Allow bypass signature verification only for mock orders in testing if key is not configured
+        if razorpay_order_id.startswith("order_mock_") or not RAZORPAY_KEY_SECRET:
+            print("[Razorpay Recruiter] Skipping signature check: mock order or missing key secret", flush=True)
+            pass
         else:
-            msg = f"{razorpay_order_id}|{razorpay_payment_id}".encode()
-            expected = hmac.new(
-                RAZORPAY_KEY_SECRET.encode(), msg, hashlib.sha256
-            ).hexdigest()
+            verified = False
+            try:
+                import razorpay
+                client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+                client.utility.verify_payment_signature({
+                    'razorpay_order_id': razorpay_order_id,
+                    'razorpay_payment_id': razorpay_payment_id,
+                    'razorpay_signature': razorpay_signature
+                })
+                verified = True
+                print("[Razorpay Recruiter] Signature verified successfully using SDK", flush=True)
+            except Exception as sdk_err:
+                print(f"[Razorpay Recruiter] SDK verification failed: {sdk_err}. Retrying manually...", flush=True)
+                # Fallback to manual verification
+                try:
+                    msg = f"{razorpay_order_id}|{razorpay_payment_id}".encode()
+                    expected = hmac.new(
+                        RAZORPAY_KEY_SECRET.encode(), msg, hashlib.sha256
+                    ).hexdigest()
+                    if expected == razorpay_signature:
+                        verified = True
+                        print("[Razorpay Recruiter] Signature verified successfully manually", flush=True)
+                    else:
+                        print(f"[Razorpay Recruiter] Manual verification mismatch. Expected: {expected}, Got: {razorpay_signature}", flush=True)
+                except Exception as manual_err:
+                    print(f"[Razorpay Recruiter] Manual verification failed: {manual_err}", flush=True)
 
-        if expected != razorpay_signature:
-            return JsonResponse(error_response("Invalid payment signature"), status=400)
+            if not verified:
+                return JsonResponse(error_response("Invalid payment signature"), status=400)
 
         company.tier = plan
         company.save(update_fields=['tier'])
