@@ -16,7 +16,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
-from api.models import Session, Candidate, JobApplication, Notification, JobSeekerAccount
+from api.models import Session, Candidate, JobApplication, Notification, JobSeekerAccount, SavedJob
 from api.views.seeker_auth import require_seeker_jwt
 from api.services.email_service import (
     send_application_received_to_company,
@@ -57,7 +57,7 @@ def _parse_job_description_meta(description: str) -> dict:
     return meta
 
 
-def _session_to_job(session: Session, match_score=None, applied=False) -> dict:
+def _session_to_job(session: Session, match_score=None, applied=False, is_saved=False) -> dict:
     """Serialize a Session as a public job listing."""
     meta = _parse_job_description_meta(session.job_description)
     return {
@@ -72,6 +72,7 @@ def _session_to_job(session: Session, match_score=None, applied=False) -> dict:
         "created_at": session.created_at.isoformat() if session.created_at else None,
         "match_score": match_score,
         "applied": applied,
+        "is_saved": is_saved,
         "applicant_count": session.applicant_count if hasattr(session, "applicant_count") else session.seeker_applications.count(),
         "salary_range": meta["salary_range"],
         "location": meta["location"],
@@ -151,10 +152,18 @@ def list_jobs(request):
             JobApplication.objects.filter(seeker=seeker).values_list("session_id", flat=True)
         )
 
+        # Get seeker's saved session IDs
+        saved_ids = set(
+            str(sid) for sid in
+            SavedJob.objects.filter(seeker=seeker).values_list("session_id", flat=True)
+        )
+
         jobs = []
         for s in sessions[:50]:
             score = _compute_match_score(seeker.skills, s.inferred_skills)
-            jobs.append(_session_to_job(s, match_score=score, applied=str(s.id) in applied_ids))
+            is_applied = str(s.id) in applied_ids
+            is_saved = str(s.id) in saved_ids
+            jobs.append(_session_to_job(s, match_score=score, applied=is_applied, is_saved=is_saved))
 
         # Sort by match score descending
         jobs.sort(key=lambda j: j["match_score"] or 0, reverse=True)
@@ -182,6 +191,7 @@ def job_detail(request, session_id):
 
         score = _compute_match_score(seeker.skills, session.inferred_skills)
         applied = JobApplication.objects.filter(seeker=seeker, session=session).exists()
+        is_saved = SavedJob.objects.filter(seeker=seeker, session=session).exists()
 
         # Compute skill alignment
         flat_seeker = _get_flat_skills(seeker.skills)
@@ -191,7 +201,7 @@ def job_detail(request, session_id):
         matched_skills = [s for s in job_skills if s.lower() in seeker_lower]
         missing_skills = [s for s in job_skills if s.lower() not in seeker_lower]
 
-        job = _session_to_job(session, match_score=score, applied=applied)
+        job = _session_to_job(session, match_score=score, applied=applied, is_saved=is_saved)
         job["skill_alignment"] = {
             "matched": matched_skills,
             "missing": missing_skills,
@@ -645,3 +655,61 @@ def get_company_notifications(company, limit=20):
         "link": n.link,
         "created_at": n.created_at.isoformat(),
     } for n in notifs]
+
+
+@csrf_exempt
+@require_seeker_jwt
+def save_job(request, session_id):
+    """
+    POST /api/v1/seeker/jobs/<session_id>/save -> Save a job
+    DELETE /api/v1/seeker/jobs/<session_id>/save -> Unsave a job
+    """
+    if request.method not in ["POST", "DELETE"]:
+        return JsonResponse(error_response("Method not allowed"), status=405)
+        
+    try:
+        seeker = request.seeker
+        try:
+            session = Session.objects.get(id=session_id)
+        except Session.DoesNotExist:
+            return JsonResponse(error_response("Job session not found"), status=404)
+            
+        if request.method == "POST":
+            saved_job, created = SavedJob.objects.get_or_create(seeker=seeker, session=session)
+            return JsonResponse(success_response({"saved": True, "created": created}))
+            
+        elif request.method == "DELETE":
+            SavedJob.objects.filter(seeker=seeker, session=session).delete()
+            return JsonResponse(success_response({"saved": False}))
+            
+    except Exception as e:
+        logger.error(f"Error in save_job view: {str(e)}", exc_info=True)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_seeker_jwt
+def get_saved_jobs(request):
+    """GET /api/v1/seeker/jobs/saved -> List seeker's saved jobs"""
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        seeker = request.seeker
+        saved_jobs_qs = SavedJob.objects.filter(seeker=seeker).select_related("session", "session__company")
+        
+        # Get seeker's applied session IDs
+        applied_ids = set(
+            str(sid) for sid in
+            JobApplication.objects.filter(seeker=seeker).values_list("session_id", flat=True)
+        )
+        
+        jobs = []
+        for sj in saved_jobs_qs:
+            s = sj.session
+            score = _compute_match_score(seeker.skills, s.inferred_skills)
+            jobs.append(_session_to_job(s, match_score=score, applied=str(s.id) in applied_ids, is_saved=True))
+            
+        return JsonResponse(success_response({"jobs": jobs}))
+    except Exception as e:
+        logger.error(f"Error in get_saved_jobs: {str(e)}", exc_info=True)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
