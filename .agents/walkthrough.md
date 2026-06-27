@@ -46,8 +46,14 @@ Sare requirements ke mutabik saare bug fixes aur optimization badlav kar diye ga
 ### 10. Robust Drafts Listing JSON Response Wrapper
 - **HTML 500 fallback prevented**: Seeker drafts handler [seeker_resume_builder.py](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/backend/api/views/seeker_resume_builder.py#L198) GET route ko clean try-except block se wrap kiya hai, taaki database check fail hone par direct HTML traceback page ke badle clear exception parameters ke saath valid JSON details console par reflect ho sakein (jaise missing migrations errors).
 
+### 11. Company Logo in Jobs Search Cards
+- **Logo Serialization Added**: [jobs.py](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/backend/api/views/jobs.py) and [seeker_jobs.py](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/backend/api/views/seeker_jobs.py) me serialized output fields list me `company_logo_path` field append kiya hai. Is se jobs search list cards me company initials circle placeholders ke badle correct corporate logos fetch aur render honge.
+
+### 12. aligned Developer Layout to match Recruiter Workspace Sidebar
+- **Unified Portal Layouts**: [DeveloperPortalLayout.jsx](file:///c:/Users/parul/Desktop/Resume%20Project/DAIICT_Hackathon-26/frontend/src/pages/developer/DeveloperPortalLayout.jsx) layout structure ko full redesign kiya hai. Ab isme top fixed header bar render hoga jisme top-left hamburger menu circular toggle button, inline premium gradient blue SVG Between logo, aur standard gray border line (`border-gray-200`) configured hain, jo exact workspace dashboard style aur width transitions follow karega.
+
 ---
 
 ## Verification & Status
-- **Build Pass**: `npm run build` completely pass ho gaya hai (built in 44.00s).
+- **Build Pass**: `npm run build` completely pass ho gaya hai (built in 1m 23s).
 - **Git State**: Local modifications completely committed and pushed to git local refs. Working tree is clean.

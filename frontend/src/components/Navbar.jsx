@@ -63,6 +63,32 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
               </Link>
             );
           }
+          if (item === 'Product') {
+            return (
+              <div key={item} className="product-dropdown-container">
+                <button className="nav-link dropdown-trigger font-semibold transition-all hover:translate-y-[-2px] flex items-center gap-1">
+                  Product
+                  <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
+                </button>
+                <div className="product-dropdown-menu">
+                  <a href="/#how-it-works" className="product-dropdown-item">
+                    <span className="product-dropdown-item-title">AI Recruiter</span>
+                    <span className="product-dropdown-item-desc">Automated resume ranking & matching</span>
+                  </a>
+                  <a href="/#features" className="product-dropdown-item">
+                    <span className="product-dropdown-item-title">Smart Analyzer</span>
+                    <span className="product-dropdown-item-desc">Deep-dive candidate profiles</span>
+                  </a>
+                  <a href="/#detailed-showcase" className="product-dropdown-item">
+                    <span className="product-dropdown-item-title">Fraud Protection</span>
+                    <span className="product-dropdown-item-desc">Detect fake resumes & plagiarisms</span>
+                  </a>
+                </div>
+              </div>
+            );
+          }
           return (
             <motion.a 
               key={item}
@@ -72,11 +98,6 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
               transition={{ type: "spring", stiffness: 400 }}
             >
               {item}
-              {item === 'Product' && (
-                <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m6 9 6 6 6-6"/>
-                </svg>
-              )}
             </motion.a>
           );
         })}

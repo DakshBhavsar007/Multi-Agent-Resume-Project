@@ -31,5 +31,7 @@
 - [x] Fix "Contact Sales" button on Landing Page by wiring it to the `/contact` form page in `FinalCTA.jsx`
 - [x] Fix NameError for `JobApplication` in `public_market_trends` view inside `companies.py` to restore dynamic real count functionality
 - [x] Wrap GET drafts request in a try-except block in `seeker_resume_builder.py` to return JSON error trace instead of HTML traceback pages
+- [x] Add `company_logo_path` serialization fields in `jobs.py` and `seeker_jobs.py` to enable actual company logo rendering in job search cards
+- [x] Redesign `DeveloperPortalLayout.jsx` sidebar to match recruiter dashboard header bar layout, using standard gray borders, circular menu hamburger toggle button, and inline SVG logo
 - [x] Verify build compiles successfully (`npm run build`)
 - [x] Stage and commit all changes locally (DO NOT push)
