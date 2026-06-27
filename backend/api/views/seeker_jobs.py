@@ -138,6 +138,12 @@ def list_jobs(request):
         q = request.GET.get("q", "").strip().lower()
         location = request.GET.get("location", "").strip().lower()
         job_type = request.GET.get("job_type", "").strip().lower()
+        try:
+            page = int(request.GET.get("page", 1))
+            per_page = int(request.GET.get("per_page", 10))
+        except ValueError:
+            page = 1
+            per_page = 10
 
         from django.db.models import Count
         sessions = Session.objects.filter(status="active").select_related("company").annotate(applicant_count=Count("seeker_applications")).order_by("-created_at")
@@ -160,7 +166,7 @@ def list_jobs(request):
         )
 
         jobs = []
-        for s in sessions[:50]:
+        for s in sessions[:200]:
             score = _compute_match_score(seeker.skills, s.inferred_skills)
             is_applied = str(s.id) in applied_ids
             is_saved = str(s.id) in saved_ids
@@ -169,9 +175,17 @@ def list_jobs(request):
         # Sort by match score descending
         jobs.sort(key=lambda j: j["match_score"] or 0, reverse=True)
 
+        total_jobs = len(jobs)
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_jobs = jobs[start:end]
+
         return JsonResponse(success_response({
-            "jobs": jobs,
-            "total": len(jobs),
+            "jobs": paginated_jobs,
+            "total": total_jobs,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (total_jobs + per_page - 1) // per_page if per_page else 1
         }))
     except Exception as e:
         logger.error("list_jobs error: %s", e)

@@ -37,5 +37,7 @@
 - [x] Restyle the `[ NEW ]` tag inside `HeroHeader.jsx` badge using high-contrast solid royal blue background to make the "NEW" text completely visible
 - [x] Fix UnboundLocalError for `ResumeDraft` in `manage_drafts` view inside `seeker_resume_builder.py` by removing the redundant local import statement
 - [x] Add a hover-styled "Cancel Subscription" button on the Premium plan card in `SeekerBillingPage.jsx` when it is the user's current active plan
+- [x] Replace `⚡` and other raw emojis in Seeker template selection and dashboard match score with high-contrast, premium styled Lucide SVG icons (`Zap`, `Sparkles`, `TrendingUp`, `AlertCircle`)
+- [x] Change Premium badges and Unlock buttons styling to match brand blue palette instead of orange/amber
 - [x] Verify build compiles successfully (`npm run build`)
 - [x] Stage and commit all changes locally (DO NOT push)

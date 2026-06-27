@@ -82,6 +82,12 @@ def list_public_jobs(request):
     try:
         query = request.GET.get("query", "").strip()
         location_filter = request.GET.get("location", "").strip()
+        try:
+            page = int(request.GET.get("page", 1))
+            per_page = int(request.GET.get("per_page", 10))
+        except ValueError:
+            page = 1
+            per_page = 10
         
         # Only active, non-archived sessions
         qs = Session.objects.filter(status="active").select_related("company")
@@ -127,7 +133,18 @@ def list_public_jobs(request):
                 "employment_type": meta["employment_type"]
             })
             
-        return JsonResponse(success_response(jobs))
+        total_jobs = len(jobs)
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_jobs = jobs[start:end]
+        
+        return JsonResponse(success_response({
+            "jobs": paginated_jobs,
+            "total": total_jobs,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (total_jobs + per_page - 1) // per_page if per_page else 1
+        }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 

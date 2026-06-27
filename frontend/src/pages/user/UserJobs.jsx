@@ -6,6 +6,14 @@ import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI, seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { Slider } from "../../components/user/ui/slider";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "../../components/ui/pagination";
 import toast from "react-hot-toast";
 import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
 
@@ -78,9 +86,19 @@ export default function UserJobs() {
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [showLocSuggestions, setShowLocSuggestions] = useState(false);
 
-  const fetchJobs = () => {
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
+
+  const fetchJobs = (resetPage = false) => {
     setLoading(true);
-    const params = {};
+    const targetPage = resetPage ? 1 : page;
+    if (resetPage) setPage(1);
+
+    const params = {
+      page: targetPage,
+      per_page: 10
+    };
     if (search) params.q = search;
     if (location) params.location = location;
     
@@ -90,6 +108,8 @@ export default function UserJobs() {
     apiCall
       .then((data) => {
         setJobs(data.jobs || []);
+        setTotalPages(data.total_pages || 1);
+        setTotalJobs(data.total || 0);
       })
       .catch((err) => {
         console.error(err);
@@ -101,11 +121,15 @@ export default function UserJobs() {
   };
 
   useEffect(() => {
+    fetchJobs();
+  }, [page]);
+
+  useEffect(() => {
     const params = {};
     if (search) params.q = search;
     if (location) params.location = location;
     setSearchParams(params, { replace: true });
-    fetchJobs();
+    fetchJobs(true);
   }, [search, location]);
 
   const toggle = (arr, set, v) =>
@@ -147,7 +171,7 @@ export default function UserJobs() {
           <div className="max-w-2xl">
             <div className="text-[11px] font-medium uppercase tracking-wider text-[var(--google-blue)]">Jobs</div>
             <h1 className="mt-1.5 font-display text-2xl font-semibold tracking-tight sm:text-3xl">Find your perfect role</h1>
-            <p className="mt-1 text-xs text-muted-foreground">Showing {filtered.length} of {jobs.length} roles</p>
+            <p className="mt-1 text-xs text-muted-foreground">Showing {filtered.length} of {totalJobs} roles</p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto relative z-20">
             <div className="relative flex-1 sm:w-[240px]">
@@ -332,7 +356,7 @@ export default function UserJobs() {
           )}
 
           <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
-            <span>{filtered.length} roles</span>
+            <span>{totalJobs} roles</span>
             <span>Sort: Best match</span>
           </div>
 
@@ -402,6 +426,36 @@ export default function UserJobs() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  {page > 1 && (
+                    <PaginationItem>
+                      <PaginationPrevious onClick={() => setPage(p => p - 1)} />
+                    </PaginationItem>
+                  )}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <PaginationItem key={p}>
+                      <PaginationLink
+                        isActive={p === page}
+                        onClick={() => setPage(p)}
+                        className="cursor-pointer"
+                      >
+                        {p}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  {page < totalPages && (
+                    <PaginationItem>
+                      <PaginationNext onClick={() => setPage(p => p + 1)} />
+                    </PaginationItem>
+                  )}
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </div>

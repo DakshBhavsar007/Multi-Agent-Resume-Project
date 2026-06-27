@@ -203,18 +203,6 @@ Only one login per company. In reality, companies have multiple recruiters who n
 
 ### 3. Developer Portal
 
-#### 3.1 ❌ DeveloperSettings Page is Empty
-**File:** `frontend/src/pages/developer/DeveloperSettings.jsx` — **Only 7 lines**
-
-The settings page just renders `DeveloperKeys` with a different tab prop. No actual settings functionality.
-
-**Fix:** Add real settings:
-- Account details (name, email, company)
-- Change password
-- Delete account
-- Notification preferences
-- API webhook notification settings
-
 #### 3.2 ❌ No API Sandbox / Playground
 **File:** `frontend/src/pages/developer/DeveloperDocs.jsx`
 
@@ -224,16 +212,6 @@ The docs page has code examples but no interactive API sandbox where developers 
 - Add "Try it Live" section next to each endpoint
 - Pre-fill with user's test API key
 - Show real request/response with timing
-
-#### 3.3 ❌ No SDKs or Client Libraries
-No downloadable SDK packages (npm/pip) for developers to integrate.
-
-**Fix:**
-- Generate a `vishleshan-js` npm package with typed methods
-- Generate a `vishleshan-python` pip package
-- Auto-generate from your API routes
-
----
 
 ### 4. Global Frontend Improvements
 

@@ -79,8 +79,48 @@ function Home() {
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [showLocSuggestions, setShowLocSuggestions] = useState(false);
 
-  const featured = jobs.slice(0, 4);
-  const topCompanies = companies.slice(0, 6);
+  const [realJobs, setRealJobs] = useState([]);
+  const [realCompanies, setRealCompanies] = useState([]);
+
+  useEffect(() => {
+    Promise.all([
+      publicAPI.listJobs({ per_page: 4 }).catch(() => null),
+      publicAPI.listCompanies().catch(() => null)
+    ]).then(([jobsRes, compsRes]) => {
+      if (jobsRes && (jobsRes.jobs || Array.isArray(jobsRes))) {
+        const rawList = jobsRes.jobs || jobsRes;
+        const normalized = rawList.map(j => ({
+          id: j.id,
+          title: j.job_title,
+          company: j.company_name,
+          company_logo_path: j.company_logo_path,
+          location: j.location || "Remote",
+          posted: j.created_at ? new Date(j.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) : "Recently",
+          description: j.job_description ? (j.job_description.substring(0, 100) + "...") : "",
+          salary: j.salary_range || "Competitive",
+          remote: j.location || "Remote",
+          type: j.employment_type || "Full-time"
+        }));
+        if (normalized.length) setRealJobs(normalized);
+      }
+      if (compsRes && Array.isArray(compsRes)) {
+        const normalized = compsRes.map(c => ({
+          id: c.id,
+          name: c.name,
+          logo_path: c.logo_path,
+          industry: c.industry || "Technology",
+          location: c.location || "San Francisco",
+          openings: c.openings || 2,
+          rating: c.rating || "4.8",
+          size: c.size || "50-100"
+        }));
+        if (normalized.length) setRealCompanies(normalized);
+      }
+    });
+  }, []);
+
+  const featured = realJobs.length ? realJobs : jobs.slice(0, 4);
+  const topCompanies = realCompanies.length ? realCompanies : companies.slice(0, 6);
 
   const [isMounted, setIsMounted] = useState(false);
   const [wordIndex, setWordIndex] = useState(0);
@@ -448,7 +488,7 @@ function Home() {
                 className="group w-full rounded-2xl border border-border bg-card p-4 transition hover:google-shadow"
               >
                 <div className="flex items-start gap-3">
-                  <CompanyLogo name={j.company} color={j.logoColor} size={40} />
+                  <CompanyLogo name={j.company} logoPath={j.company_logo_path} color={j.logoColor} size={40} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <span className="font-medium text-foreground">{j.company}</span>
@@ -549,7 +589,7 @@ function Home() {
                 className="group w-full rounded-2xl border border-border bg-card p-4 transition hover:google-shadow"
               >
                 <div className="flex items-center gap-3">
-                  <CompanyLogo name={c.name} color={c.logoColor} size={44} />
+                  <CompanyLogo name={c.name} logoPath={c.logo_path} color={c.logoColor} size={44} />
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate font-display text-sm font-semibold tracking-tight">{c.name}</h3>
                     <p className="truncate text-[11px] text-muted-foreground">{c.industry} · {c.location}</p>
