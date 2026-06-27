@@ -70,7 +70,7 @@ export default function AiRecruiterPage() {
         <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 320px)', minHeight: '400px' }}>
           <div className="h-full flex">
             <div className="flex-1 h-full">
-              <ChatPanel sessionId={selectedSession.id} />
+              <ChatPanel sessionId={selectedSession.id} fullWidth={true} />
             </div>
           </div>
         </div>

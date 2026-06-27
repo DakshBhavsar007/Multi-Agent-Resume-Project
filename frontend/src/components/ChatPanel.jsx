@@ -7,7 +7,7 @@ import { useCandidateStore } from '../stores/candidateStore';
 import { chatAPI } from '../lib/api';
 import { AIInputWithLoading } from './ui/ai-input-with-loading';
 
-export default function ChatPanel({ sessionId }) {
+export default function ChatPanel({ sessionId, fullWidth = false }) {
   const { isOpen, toggleChat, history, addMessage, setHistory, clearHistory } = useChatStore();
   const { setHighlightedIdsWithTimeout } = useCandidateStore();
   
@@ -87,7 +87,7 @@ export default function ChatPanel({ sessionId }) {
     }
   };
 
-  if (!isOpen) {
+  if (!isOpen && !fullWidth) {
     return (
       <div 
         onClick={toggleChat}
@@ -107,7 +107,7 @@ export default function ChatPanel({ sessionId }) {
   }
 
   return (
-    <div className="w-[320px] h-full bg-white border-l border-gray-200 shadow-[-4px_0_12px_rgba(0,0,0,0.06)] flex flex-col flex-shrink-0 transition-all duration-300">
+    <div className={`${fullWidth ? 'w-full' : 'w-[320px] border-l border-gray-200 shadow-[-4px_0_12px_rgba(0,0,0,0.06)]'} h-full bg-white flex flex-col flex-shrink-0 transition-all duration-300`}>
       
       {/* HEADER */}
       <div className="p-4 bg-[#111111] flex justify-between items-center z-10 shrink-0">
@@ -119,9 +119,11 @@ export default function ChatPanel({ sessionId }) {
           <button onClick={clearChat} className="p-1.5 text-white/70 hover:text-white hover:bg-white/20 rounded-md transition-colors" title="Clear History">
             <Trash2 size={16} />
           </button>
-          <button onClick={toggleChat} className="p-1.5 text-white/70 hover:text-white hover:bg-white/20 rounded-md transition-colors" title="Collapse">
-            <ChevronRight size={20} />
-          </button>
+          {!fullWidth && (
+            <button onClick={toggleChat} className="p-1.5 text-white/70 hover:text-white hover:bg-white/20 rounded-md transition-colors" title="Collapse">
+              <ChevronRight size={20} />
+            </button>
+          )}
         </div>
       </div>
 
