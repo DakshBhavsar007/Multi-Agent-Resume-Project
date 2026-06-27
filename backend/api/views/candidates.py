@@ -248,6 +248,10 @@ def candidate_action(request, session_id, cand_id):
 
         is_multipart = request.content_type.startswith('multipart/form-data') if hasattr(request, 'content_type') else request.META.get('CONTENT_TYPE', '').startswith('multipart/form-data')
         if is_multipart:
+            if request.method == "PATCH":
+                request.method = "POST"
+                request._load_post_and_files()
+                request.method = "PATCH"
             action = request.POST.get("action")
         else:
             data = json.loads(request.body)
@@ -279,6 +283,8 @@ def candidate_action(request, session_id, cand_id):
             # Save uploaded offer letter if present
             offer_file = request.FILES.get("offer_letter") or request.FILES.get("file")
             if offer_file:
+                if offer_file.size > 10 * 1024 * 1024:
+                    return JsonResponse(error_response("Offer letter file size must be under 10MB"), status=400)
                 allowed_ext = (".pdf", ".docx", ".doc", ".txt", ".png", ".jpg", ".jpeg")
                 if not offer_file.name.lower().endswith(allowed_ext):
                     return JsonResponse(error_response("Only PDF, DOCX, DOC, TXT, PNG, JPG, or JPEG offer letters are accepted"), status=400)

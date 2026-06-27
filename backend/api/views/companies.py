@@ -208,9 +208,9 @@ def public_market_trends(request):
 
         # 2. Main Seeker landing stats
         stats = {
-            "open_roles": 12480 + active_sessions_count,
-            "companies": 3200 + active_companies_count,
-            "hired_this_month": 1940 + hired_count,
+            "open_roles": active_sessions_count if active_sessions_count > 0 else 12480,
+            "companies": active_companies_count if active_companies_count > 0 else 3200,
+            "hired_this_month": hired_count if hired_count > 0 else 1940,
             "avg_response_hours": avg_hrs
         }
 
@@ -238,7 +238,7 @@ def public_market_trends(request):
                 Q(job_description__icontains=r) |
                 Q(job_title__icontains=r)
             ).count()
-            val = base_counts[r] + count
+            val = (count if active_sessions_count > 0 else base_counts[r] + count)
             region_distribution.append({
                 "name": r,
                 "value": val,
@@ -255,7 +255,7 @@ def public_market_trends(request):
         velocity = min(9.8, round(8.4 + (hired_count * 0.1), 1))
         days_faster = min(6.0, round(3.2 + (hired_count * 0.05), 1))
 
-        active_jds = 2450 + active_sessions_count
+        active_jds = active_sessions_count if active_sessions_count > 0 else 2450
 
         salary_timeline = [
             { "year": "2023", "salary": 112 },

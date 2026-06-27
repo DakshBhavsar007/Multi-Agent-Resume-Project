@@ -746,14 +746,24 @@ function OfferLetterUploadZone({ onSubmit, onCancel }) {
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
+      const selectedFile = e.dataTransfer.files[0];
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        toast.error("Offer letter file size must be less than 10MB");
+        return;
+      }
+      setFile(selectedFile);
     }
   };
 
   const handleChange = (e) => {
     e.preventDefault();
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        toast.error("Offer letter file size must be less than 10MB");
+        return;
+      }
+      setFile(selectedFile);
     }
   };
 
@@ -792,7 +802,7 @@ function OfferLetterUploadZone({ onSubmit, onCancel }) {
           <div className="text-sm text-gray-600">
             <span className="font-bold text-[#2563EB]">Click to upload</span> or drag and drop
             <span className="block text-[10px] text-gray-400 mt-1">
-              Supports PDF, DOCX, DOC, TXT, PNG, JPG (Max 5MB)
+              Supports PDF, DOCX, DOC, TXT, PNG, JPG (Max 10MB)
             </span>
           </div>
         )}

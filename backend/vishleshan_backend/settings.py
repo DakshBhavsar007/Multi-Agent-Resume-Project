@@ -82,3 +82,7 @@ CORS_ALLOW_HEADERS = [
 # Custom directory configs for uploading/photos
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 PHOTO_DIR = os.getenv("PHOTO_DIR", "photos")
+
+# File upload limit configs (10MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
