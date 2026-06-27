@@ -35,5 +35,6 @@
 - [x] Redesign `DeveloperPortalLayout.jsx` sidebar to match recruiter dashboard header bar layout, using standard gray borders, circular menu hamburger toggle button, and inline SVG logo
 - [x] Create a premium hover-activated dropdown for the "Product" header nav link in `Navbar.jsx` with direct jump links to product features
 - [x] Restyle the `[ NEW ]` tag inside `HeroHeader.jsx` badge using high-contrast solid royal blue background to make the "NEW" text completely visible
+- [x] Fix UnboundLocalError for `ResumeDraft` in `manage_drafts` view inside `seeker_resume_builder.py` by removing the redundant local import statement
 - [x] Verify build compiles successfully (`npm run build`)
 - [x] Stage and commit all changes locally (DO NOT push)

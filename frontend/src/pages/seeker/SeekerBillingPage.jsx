@@ -56,7 +56,7 @@ const TRUST_ITEMS = [
   { icon: Clock, text: 'Instant activation' },
 ];
 
-function PlanCard({ plan, isActive, onUpgrade, loading }) {
+function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) {
   const isFree = plan.id === 'free';
   const isCurrentPlan = isActive;
   const isLoading = loading === plan.id;
@@ -219,6 +219,39 @@ function PlanCard({ plan, isActive, onUpgrade, loading }) {
             <><CreditCard size={15} /> {plan.cta} <ArrowRight size={13} /></>
           )}
         </motion.button>
+
+        {plan.id === 'premium' && isCurrentPlan && (
+          <button
+            onClick={() => onCancelSubscription()}
+            style={{
+              width: '100%',
+              padding: '12px 20px',
+              borderRadius: 12,
+              border: '1.5px dashed rgba(255,255,255,0.25)',
+              background: 'transparent',
+              color: '#f87171',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: 'pointer',
+              marginTop: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              transition: 'all 0.2s ease',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+              e.currentTarget.style.borderColor = '#ef4444';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)';
+            }}
+          >
+            Cancel Subscription
+          </button>
+        )}
       </div>
     </motion.div>
   );
@@ -308,6 +341,24 @@ export default function SeekerBillingPage() {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    if (!window.confirm("Are you sure you want to cancel your Premium subscription? You will lose access to premium AI templates, unlimited resume drafts, and priority job visibility immediately.")) {
+      return;
+    }
+    setLoading('premium');
+    try {
+      await seekerAPI.billingCancel();
+      setCurrentPlan('free');
+      localStorage.setItem('seeker_tier', 'free');
+      updateSeeker({ tier: 'free' });
+      toast.success('Your subscription has been cancelled successfully.');
+    } catch (e) {
+      toast.error(e.message || 'Failed to cancel subscription. Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Header />
@@ -388,6 +439,7 @@ export default function SeekerBillingPage() {
                 plan={plan}
                 isActive={currentPlan === plan.id}
                 onUpgrade={handleUpgrade}
+                onCancelSubscription={handleCancelSubscription}
                 loading={loading}
               />
             ))}
