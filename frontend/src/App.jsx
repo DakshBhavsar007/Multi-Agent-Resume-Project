@@ -21,6 +21,12 @@ import SettingsPage from './pages/SettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import FraudDetectionPage from './pages/FraudDetectionPage';
 
+// Public pages
+import AboutPage from './pages/public/AboutPage';
+import ContactPage from './pages/public/ContactPage';
+import TermsPage from './pages/public/TermsPage';
+import RefundPolicyPage from './pages/public/RefundPolicyPage';
+
 import UserHome from './pages/user/UserHome';
 import UserJobs from './pages/user/UserJobs';
 import UserJobDetail from './pages/user/UserJobDetail';
@@ -169,6 +175,10 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/auth/verify" element={<AuthVerifyPage />} />
           <Route path="/auth/github/callback" element={<GitHubCallbackPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
 
           {/* Job Seeker Routes */}
           <Route path="/jobs" element={<UserHome />} />

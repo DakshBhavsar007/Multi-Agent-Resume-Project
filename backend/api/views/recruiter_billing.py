@@ -222,3 +222,23 @@ def current_subscription(request):
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+@csrf_exempt
+@require_recruiter_jwt
+def cancel_subscription(request):
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    company = request.company
+    try:
+        company.tier = "free"
+        company.save(update_fields=['tier'])
+        
+        sub = CompanyBillingSubscription.objects.filter(company_id=company.id).first()
+        if sub:
+            sub.plan = "free"
+            sub.status = "cancelled"
+            sub.save()
+            
+        return JsonResponse(success_response({"message": "Subscription cancelled successfully"}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

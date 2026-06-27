@@ -184,7 +184,8 @@ export const billingAPI = {
   plans: () => req("GET", "/billing/plans"),
   subscribe: (plan) => req("POST", "/billing/subscribe", { plan }),
   verifyPayment: (b) => req("POST", "/billing/verify-payment", b),
-  current: () => req("GET", "/billing/current")
+  current: () => req("GET", "/billing/current"),
+  cancel: () => req("POST", "/billing/cancel")
 }
 
 // PUBLIC JOBS (Job Seeker Portal API)
@@ -357,6 +358,7 @@ export const seekerAPI = {
   getBillingCurrent: () => seekerReq('GET', '/api/v1/seeker/billing/current'),
   billingSubscribe: (plan) => seekerReq('POST', '/api/v1/seeker/billing/subscribe', { plan }),
   billingVerify: (b) => seekerReq('POST', '/api/v1/seeker/billing/verify-payment', b),
+  billingCancel: () => seekerReq('POST', '/api/v1/seeker/billing/cancel'),
 };
 
 // ── PUBLIC API (no auth required) ──────────────────────────────────────────────

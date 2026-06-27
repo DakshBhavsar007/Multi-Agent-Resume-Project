@@ -147,17 +147,6 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
 
       <div className="hero-actions">
         <motion.button 
-          ref={btnSecondaryRef}
-          className="btn btn-secondary" 
-          whileHover={{ y: -2 }}
-          onClick={() => {
-            document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-          }}
-        >
-          For Enterprise 
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px' }}><path d="m9 18 6-6-6-6"/></svg>
-        </motion.button>
-        <motion.button 
           ref={btnDeveloperRef}
           className="btn btn-secondary" 
           whileHover={{ y: -2 }}

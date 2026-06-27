@@ -140,6 +140,7 @@ urlpatterns = [
     path('api/developer/billing/verify-payment', dev_billing.verify_payment, name='dev-billing-verify'),
     path('api/developer/billing/subscription', dev_billing.current_subscription, name='dev-billing-subscription'),
     path('api/developer/billing/current', dev_billing.current_subscription, name='dev-billing-current'),
+    path('api/developer/billing/cancel', dev_billing.cancel_subscription, name='dev-billing-cancel'),
 
     # ── Recruiter Billing ──────────────────────────────────────────────────────
     path('api/v1/billing/plans', recruiter_billing.get_plans, name='recruiter-billing-plans'),
@@ -147,6 +148,7 @@ urlpatterns = [
     path('api/v1/billing/verify-payment', recruiter_billing.verify_payment, name='recruiter-billing-verify'),
     path('api/v1/billing/subscription', recruiter_billing.current_subscription, name='recruiter-billing-subscription'),
     path('api/v1/billing/current', recruiter_billing.current_subscription, name='recruiter-billing-current'),
+    path('api/v1/billing/cancel', recruiter_billing.cancel_subscription, name='recruiter-billing-cancel'),
 
 
     # ── Developer Portal — Webhooks ────────────────────────────────────────────
@@ -230,5 +232,6 @@ urlpatterns = [
     path('api/v1/seeker/billing/subscribe', seeker_billing.subscribe, name='seeker-billing-subscribe'),
     path('api/v1/seeker/billing/verify-payment', seeker_billing.verify_payment, name='seeker-billing-verify'),
     path('api/v1/seeker/billing/current', seeker_billing.current_subscription, name='seeker-billing-current'),
+    path('api/v1/seeker/billing/cancel', seeker_billing.cancel_subscription, name='seeker-billing-cancel'),
 ]
 

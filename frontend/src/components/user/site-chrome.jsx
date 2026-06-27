@@ -285,15 +285,37 @@ export function Footer() {
 
         <div className="flex flex-1 flex-wrap gap-x-12 gap-y-8 justify-between md:justify-end md:gap-x-16 md:mr-[300px] lg:mr-[360px] xl:mr-[400px]">
           {[
-            { t: "Product", i: ["Browse jobs", "Companies", "Resume", "Salary guide"] },
-            { t: "Company", i: ["About", "Careers", "Press", "Contact"] },
-            { t: "Resources", i: ["Help center", "Privacy", "Terms", "Cookies"] },
+            { 
+              t: "Product", 
+              items: [
+                { label: "Browse jobs", to: "/jobs/search" },
+                { label: "Companies", to: "/jobs/companies" },
+                { label: "Resume", to: "/jobs/resume" },
+                { label: "Billing Plans", to: "/jobs/billing" }
+              ] 
+            },
+            { 
+              t: "Company", 
+              items: [
+                { label: "About Us", to: "/about" },
+                { label: "Contact Us", to: "/contact" }
+              ] 
+            },
+            { 
+              t: "Resources", 
+              items: [
+                { label: "Terms & Privacy", to: "/terms" },
+                { label: "Refund Policy", to: "/refund-policy" }
+              ] 
+            },
           ].map((c) => (
             <div key={c.t} className="min-w-[100px]">
-              <div className="text-sm font-semibold text-foreground">{c.t}</div>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                {c.i.map((x) => (
-                  <li key={x} className="hover:text-foreground cursor-pointer transition-colors">{x}</li>
+              <div className="text-sm font-semibold text-foreground mb-3">{c.t}</div>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {c.items.map((x) => (
+                  <li key={x.label}>
+                    <Link to={x.to} className="hover:text-foreground transition-colors">{x.label}</Link>
+                  </li>
                 ))}
               </ul>
             </div>

@@ -154,10 +154,18 @@ export default function SettingsPage() {
   };
 
   const handleCancel = async () => {
-     try {
-       toast.error("Plan cancelled. You will be downgraded to Free at the end of the period.");
-       setCancelModal(false);
-     } catch(e) {}
+    try {
+      await billingAPI.cancel();
+      toast.success("Subscription cancelled. Downgraded to Starter Plan.");
+      setCancelModal(false);
+      
+      const updatedCompany = { ...company, tier: "free", jwt_token: localStorage.getItem("vish_jwt") };
+      setAuth(updatedCompany);
+      refetchSub();
+      window.location.reload();
+    } catch (e) {
+      toast.error(e.message || "Failed to cancel subscription");
+    }
   };
 
   const activePlan = currentSub?.plan || company?.tier || tier || "free";

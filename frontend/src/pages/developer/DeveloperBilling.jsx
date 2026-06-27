@@ -104,10 +104,17 @@ export default function DeveloperBilling() {
   };
 
   const handleCancel = async () => {
-     try {
-       toast.error("Plan cancelled. You will be downgraded to Free at the end of the period.");
-       setCancelModal(false);
-     } catch(e) {}
+    try {
+      await portalBilling.cancel();
+      toast.success("Subscription cancelled. Downgraded to Free plan.");
+      setCancelModal(false);
+      
+      const currentDev = usePortalAuthStore.getState().developer;
+      setAuth({ ...currentDev, tier: "free" });
+      window.location.reload();
+    } catch (e) {
+      toast.error(e.message || "Failed to cancel subscription");
+    }
   };
 
   const activePlan = current?.plan || tier || "free";

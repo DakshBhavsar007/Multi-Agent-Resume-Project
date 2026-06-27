@@ -211,3 +211,23 @@ def current_subscription(request):
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+@csrf_exempt
+@require_seeker_jwt
+def cancel_subscription(request):
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    seeker = request.seeker
+    try:
+        seeker.tier = "free"
+        seeker.save(update_fields=['tier'])
+        
+        sub = SeekerBillingSubscription.objects.filter(seeker_id=seeker.id).first()
+        if sub:
+            sub.plan = "free"
+            sub.status = "cancelled"
+            sub.save()
+            
+        return JsonResponse(success_response({"message": "Subscription cancelled successfully"}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
