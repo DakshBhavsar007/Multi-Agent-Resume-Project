@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles } from "lucide-react";
+import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, Info } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import logoWhite from "../../assets/logo_white.png";
 import logoBlack from "../../assets/logo_black.png";
@@ -9,16 +9,16 @@ import { OnboardingTour, useTour } from "../OnboardingTour";
 const SEEKER_TOUR_STEPS = [
   {
     id: 'welcome',
-    title: 'Welcome to Between! 🚀',
-    content: 'A calmer, AI-powered job search experience. Let\'s take a 1-minute tour to help you get started!',
-    icon: '✨',
+    title: 'Welcome to Between',
+    content: 'A calmer, AI-powered job search experience. Take a quick tour to get started and make the most of every feature.',
+    icon: Sparkles,
     target: null,
   },
   {
     id: 'dashboard',
     title: 'Your Dashboard',
     content: 'View your applications, active ATS scores, and top improvements in one clean layout.',
-    icon: '📊',
+    icon: LayoutDashboard,
     target: '[data-tour="seeker-nav-dashboard"]',
     placement: 'bottom',
   },
@@ -26,7 +26,7 @@ const SEEKER_TOUR_STEPS = [
     id: 'jobs',
     title: 'Search Jobs',
     content: 'Browse hand-picked positions, check match scores, and apply directly to matching roles.',
-    icon: '🔍',
+    icon: Search,
     target: '[data-tour="seeker-nav-jobs"]',
     placement: 'bottom',
   },
@@ -34,7 +34,7 @@ const SEEKER_TOUR_STEPS = [
     id: 'resume',
     title: 'AI Resume Builder',
     content: 'Create ATS-friendly resumes, import profile details, and optimize drafts against job descriptions.',
-    icon: '📝',
+    icon: FileText,
     target: '[data-tour="seeker-nav-resume-builder"]',
     placement: 'bottom',
   },
@@ -42,23 +42,23 @@ const SEEKER_TOUR_STEPS = [
     id: 'safety',
     title: 'Hiring Safety',
     content: 'Scan company profiles and job descriptions to flag potential scams and hiring red flags.',
-    icon: '🛡️',
+    icon: Shield,
     target: '[data-tour="seeker-nav-hiring-safety"]',
     placement: 'bottom',
   },
   {
     id: 'billing',
     title: 'Pricing & Plans',
-    content: 'Upgrade to our Premium plan for just ₹199/month to get unlimited applications and full AI diagnostics.',
-    icon: '💳',
+    content: 'Upgrade to Premium for Rs 199/month — unlock unlimited applications and full AI diagnostics.',
+    icon: Sparkles,
     target: '[data-tour="seeker-nav-premium-plans"]',
     placement: 'bottom',
   },
   {
     id: 'help',
-    title: 'Need help anytime?',
-    content: 'Click the ❓ button in the navbar to replay this onboarding tour whenever you want!',
-    icon: '💡',
+    title: 'Help, anytime',
+    content: 'Click the help button in the navbar to replay this tour whenever you need a refresher.',
+    icon: HelpCircle,
     target: '[data-tour="seeker-help-btn"]',
     placement: 'bottom',
   },

@@ -15,7 +15,9 @@ import {
   Bell,
   X,
   LogOut,
-  Home
+  Home,
+  Users,
+  BarChart2
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { authAPI } from '../lib/api';
@@ -25,16 +27,16 @@ import { OnboardingTour, useTour } from '../components/OnboardingTour';
 const RECRUITER_TOUR_STEPS = [
   {
     id: 'welcome',
-    title: 'Welcome to Between! 🎉',
-    content: 'Your AI-powered recruitment platform. Let\'s take a quick tour to help you get started hiring smarter.',
-    icon: '🚀',
+    title: 'Welcome to Between',
+    content: 'Your AI-powered recruitment platform. Take a quick tour to get started hiring smarter and faster.',
+    icon: LayoutDashboard,
     target: null,
   },
   {
     id: 'dashboard',
     title: 'Dashboard Overview',
     content: 'Your central hub shows key metrics, recent sessions, and quick actions at a glance.',
-    icon: '📊',
+    icon: BarChart2,
     target: '[data-tour="dashboard-home"]',
     placement: 'bottom',
   },
@@ -42,7 +44,7 @@ const RECRUITER_TOUR_STEPS = [
     id: 'sessions',
     title: 'Recruitment Sessions',
     content: 'Create sessions for each job opening. Upload resumes and let AI rank and score candidates automatically.',
-    icon: '📁',
+    icon: Layers,
     target: '[data-tour="nav-sessions"]',
     placement: 'right',
   },
@@ -50,7 +52,7 @@ const RECRUITER_TOUR_STEPS = [
     id: 'smart-analyzer',
     title: 'Smart Analyzer',
     content: 'Deep-dive into candidate profiles with AI insights, skill matching, and cultural fit scores.',
-    icon: '✨',
+    icon: Sparkles,
     target: '[data-tour="nav-smart-analyzer"]',
     placement: 'right',
   },
@@ -58,7 +60,7 @@ const RECRUITER_TOUR_STEPS = [
     id: 'protection',
     title: 'Fraud Protection',
     content: 'Detect fake resumes, plagiarism, and fraudulent applications powered by our AI fraud engine.',
-    icon: '🛡️',
+    icon: Shield,
     target: '[data-tour="nav-protection"]',
     placement: 'right',
   },
@@ -66,15 +68,15 @@ const RECRUITER_TOUR_STEPS = [
     id: 'settings',
     title: 'Settings & Billing',
     content: 'Manage your company profile, API keys, and upgrade your plan for more sessions and resumes.',
-    icon: '⚙️',
+    icon: SettingsIcon,
     target: '[data-tour="nav-settings"]',
     placement: 'right',
   },
   {
     id: 'help',
-    title: 'Need help anytime?',
-    content: 'Click the ❓ button in the top bar whenever you want to replay this tour.',
-    icon: '💡',
+    title: 'Help, anytime',
+    content: 'Click the help button in the top bar to replay this tour whenever you need a refresher.',
+    icon: HelpCircle,
     target: '[data-tour="help-btn"]',
     placement: 'bottom',
   },
