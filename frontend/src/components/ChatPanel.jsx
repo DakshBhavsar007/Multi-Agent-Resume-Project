@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { SendHorizontal, Trash2, ChevronRight, ChevronLeft, MessageSquareText, Bot } from 'lucide-react';
+import { Trash2, ChevronRight, MessageSquareText, Bot } from 'lucide-react';
 import { useChatStore } from '../stores/chatStore';
 import { useCandidateStore } from '../stores/candidateStore';
 import { chatAPI } from '../lib/api';
+import { AIInputWithLoading } from './ui/ai-input-with-loading';
 
 export default function ChatPanel({ sessionId }) {
   const { isOpen, toggleChat, history, addMessage, setHistory, clearHistory } = useChatStore();
   const { setHighlightedIdsWithTimeout } = useCandidateStore();
   
-  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -35,12 +35,10 @@ export default function ChatPanel({ sessionId }) {
     }
   }, [history, loading, isOpen]);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const handleSend = async (msgText) => {
+    if (!msgText || !msgText.trim() || loading) return;
     
-    const msg = input.trim();
-    setInput("");
-    
+    const msg = msgText.trim();
     addMessage({ role: "user", content: msg, referenced: [] });
     setLoading(true);
     
@@ -61,13 +59,6 @@ export default function ChatPanel({ sessionId }) {
       addMessage({ role: "assistant", content: "Sorry, I had trouble processing that. Try again.", referenced: [] });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
     }
   };
 
@@ -151,7 +142,7 @@ export default function ChatPanel({ sessionId }) {
               ].map((suggestion, i) => (
                 <button 
                   key={i}
-                  onClick={() => { setInput(suggestion); }}
+                  onClick={() => { handleSend(suggestion); }}
                   className="bg-white border-2 border-gray-200 hover:border-[#111111] text-[11px] font-bold text-[#111111] py-2 px-2.5 rounded-xl transition-all shadow-sm text-left leading-tight hover:shadow-md"
                 >
                   {suggestion}
@@ -195,28 +186,14 @@ export default function ChatPanel({ sessionId }) {
         )}
       </div>
 
-      <div className="p-3 bg-white border-t border-gray-200 shrink-0">
-        <div className="relative flex items-end">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value.slice(0, 500))}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about candidates..."
-            className="flex-1 max-h-[120px] h-[40px] border border-gray-200 rounded-lg p-2.5 pr-12 text-sm resize-none focus:outline-none focus:border-[#111111] font-medium text-[#2A2A2A] custom-scrollbar shadow-sm"
-          />
-          <button 
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-            className="absolute right-1 bottom-1 w-[32px] h-[32px] rounded-md bg-[#111111] hover:bg-gray-800 text-white flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <SendHorizontal size={16} className="relative -left-[1px]" />
-          </button>
-        </div>
-        <div className="text-right mt-1.5 mr-1">
-          <span className="text-[12px] font-bold text-gray-400">
-            {input.length} / 500
-          </span>
-        </div>
+      <div className="p-2 bg-white border-t border-gray-200 shrink-0">
+        <AIInputWithLoading 
+          onSubmit={handleSend}
+          placeholder="Ask about candidates..."
+          minHeight={40}
+          maxHeight={120}
+          loadingDuration={500}
+        />
       </div>
     </div>
   );
