@@ -7,6 +7,7 @@ import { publicAPI, seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { Slider } from "../../components/user/ui/slider";
 import toast from "react-hot-toast";
+import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
 
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
 const workplaces = ["Remote", "Hybrid", "On-site"];
@@ -371,13 +372,9 @@ export default function UserJobs() {
                       >
                         {j.job_title}
                       </Link>
-                      <button
-                        onClick={() => handleSave(j.id, j.is_saved)}
-                        aria-label="Save"
-                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full hover:bg-muted sm:hidden ${j.is_saved ? 'text-primary' : 'text-muted-foreground'}`}
-                      >
-                        <Bookmark className={`h-3.5 w-3.5 ${j.is_saved ? 'fill-primary' : ''}`} />
-                      </button>
+                      <div className="sm:hidden">
+                        <BookmarkIconButton isSaved={j.is_saved} onClick={() => handleSave(j.id, j.is_saved)} />
+                      </div>
                     </div>
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-muted-foreground">
                       <span className="font-medium text-foreground">{j.company_name}</span>
@@ -395,13 +392,7 @@ export default function UserJobs() {
                     </div>
                   </div>
                   <div className="hidden flex-col items-end gap-1.5 sm:flex">
-                    <button
-                      onClick={() => handleSave(j.id, j.is_saved)}
-                      aria-label="Save"
-                      className={`grid h-7 w-7 place-items-center rounded-full border border-border hover:bg-muted ${j.is_saved ? 'text-primary border-primary' : 'text-muted-foreground'}`}
-                    >
-                      <Bookmark className={`h-3.5 w-3.5 ${j.is_saved ? 'fill-primary' : ''}`} />
-                    </button>
+                    <BookmarkIconButton isSaved={j.is_saved} onClick={() => handleSave(j.id, j.is_saved)} />
                     <Link
                       to={`/jobs/${j.id}`}
                       className="pill inline-flex items-center gap-1 bg-primary px-4 py-1.5 text-[11px] font-medium text-primary-foreground hover:opacity-90"

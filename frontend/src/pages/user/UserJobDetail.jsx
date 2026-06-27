@@ -6,6 +6,7 @@ import { seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { ArrowLeft, Bookmark, Share2, MapPin, Clock, Briefcase, DollarSign, CheckCircle2, Star } from "lucide-react";
 import toast from "react-hot-toast";
+import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
 
 export default function UserJobDetail() {
   const { jobId } = useParams();
@@ -196,13 +197,7 @@ export default function UserJobDetail() {
                 Apply now
               </Link>
             )}
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`pill inline-flex items-center gap-2 border border-border bg-background px-4 py-3 text-sm font-medium hover:bg-muted ${job.isSaved ? 'text-primary border-primary' : ''}`}
-            >
-              <Bookmark className={`h-4 w-4 ${job.isSaved ? 'fill-primary' : ''}`} /> {job.isSaved ? 'Saved' : 'Save'}
-            </button>
+            <BookmarkIconButton isSaved={job.isSaved} onClick={handleSave} />
             <button className="pill inline-flex items-center gap-2 border border-border bg-background px-4 py-3 text-sm font-medium hover:bg-muted">
               <Share2 className="h-4 w-4" /> Share
             </button>
