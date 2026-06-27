@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { SendHorizontal, Trash2, ChevronRight, MessageSquareText, Bot } from 'lucide-react';
+import { SendHorizontal, Trash2, ChevronRight, ChevronLeft, MessageSquareText, Bot } from 'lucide-react';
 import { useChatStore } from '../stores/chatStore';
 import { useCandidateStore } from '../stores/candidateStore';
 import { chatAPI } from '../lib/api';
@@ -102,7 +102,7 @@ export default function ChatPanel({ sessionId }) {
         onClick={toggleChat}
         className="w-12 h-full bg-white border-l border-gray-200 shadow-[-4px_0_12px_rgba(0,0,0,0.02)] flex flex-col items-center py-6 cursor-pointer hover:bg-gray-50 flex-shrink-0 transition-colors group"
       >
-        <div className="w-8 h-8 rounded-full bg-blue-50 text-[#2563EB] flex items-center justify-center mb-6 group-hover:bg-[#2563EB] group-hover:text-white transition-colors">
+        <div className="w-8 h-8 rounded-full bg-gray-100 text-[#111111] flex items-center justify-center mb-6 group-hover:bg-[#111111] group-hover:text-white transition-colors">
           <MessageSquareText size={16} />
         </div>
         <div className="flex-1 relative w-full flex justify-center">
@@ -110,7 +110,7 @@ export default function ChatPanel({ sessionId }) {
             Ask AI
           </div>
         </div>
-        <div className="w-1 h-12 bg-[#2563EB] rounded-full mt-auto opacity-50"></div>
+        <div className="w-1 h-12 bg-[#111111] rounded-full mt-auto opacity-50"></div>
       </div>
     );
   }
@@ -119,7 +119,7 @@ export default function ChatPanel({ sessionId }) {
     <div className="w-[320px] h-full bg-white border-l border-gray-200 shadow-[-4px_0_12px_rgba(0,0,0,0.06)] flex flex-col flex-shrink-0 transition-all duration-300">
       
       {/* HEADER */}
-      <div className="p-4 bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] flex justify-between items-center z-10 shrink-0">
+      <div className="p-4 bg-[#111111] flex justify-between items-center z-10 shrink-0">
         <div className="flex items-center gap-2 text-white">
           <Bot size={18} className="shrink-0" />
           <span className="font-bold tracking-wide text-[15px]">AI Recruiter</span>
@@ -138,7 +138,7 @@ export default function ChatPanel({ sessionId }) {
         {history.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Bot size={48} className="text-gray-300 mb-4" />
-            <h3 className="font-black text-[#2A2A2A] mb-2 text-lg">Ask me about candidates</h3>
+            <h3 className="font-black text-[#111111] mb-2 text-lg">Ask me about candidates</h3>
             
             <div className="grid grid-cols-2 gap-2 w-full mt-6">
               {[
@@ -152,7 +152,7 @@ export default function ChatPanel({ sessionId }) {
                 <button 
                   key={i}
                   onClick={() => { setInput(suggestion); }}
-                  className="bg-white border-2 border-blue-100 hover:border-[#2563EB] text-[11px] font-bold text-[#2563EB] py-2 px-2.5 rounded-xl transition-all shadow-sm text-left leading-tight hover:shadow-orange-500/10"
+                  className="bg-white border-2 border-gray-200 hover:border-[#111111] text-[11px] font-bold text-[#111111] py-2 px-2.5 rounded-xl transition-all shadow-sm text-left leading-tight hover:shadow-md"
                 >
                   {suggestion}
                 </button>
@@ -165,7 +165,7 @@ export default function ChatPanel({ sessionId }) {
               <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`max-w-[90%] text-[14px] leading-relaxed font-medium ${
                   msg.role === 'user' 
-                    ? 'bg-[#2563EB] text-white p-2.5 px-3.5 rounded-[12px] rounded-tr-none max-w-[80%] ml-auto' 
+                    ? 'bg-[#111111] text-white p-2.5 px-3.5 rounded-[12px] rounded-tr-none max-w-[80%] ml-auto' 
                     : 'bg-white border border-gray-200 text-[#2A2A2A] p-2.5 px-3.5 rounded-[12px] rounded-tl-none shadow-[0_2px_4px_rgba(0,0,0,0.02)]'
                 }`}>
                   {formatMessageText(msg.content)}
@@ -173,7 +173,7 @@ export default function ChatPanel({ sessionId }) {
                 {msg.role === 'assistant' && msg.referenced?.length > 0 && (
                   <button 
                     onClick={() => setHighlightedIdsWithTimeout(msg.referenced, 5000)}
-                    className="mt-1.5 ml-2 text-[12px] font-bold text-[#2563EB] hover:underline flex items-center gap-1"
+                    className="mt-1.5 ml-2 text-[12px] font-bold text-[#111111] hover:underline flex items-center gap-1"
                   >
                     &uarr; Highlighting {msg.referenced.length} candidates
                   </button>
@@ -184,9 +184,9 @@ export default function ChatPanel({ sessionId }) {
             {loading && (
               <div className="flex items-start">
                 <div className="bg-white border border-gray-100 p-3 px-4 rounded-[12px] rounded-tl-none shadow-sm flex items-center gap-1.5 h-[40px]">
-                  <div className="w-[6px] h-[6px] rounded-full bg-[#2563EB]" style={{animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite", animationDelay: "0ms"}}></div>
-                  <div className="w-[6px] h-[6px] rounded-full bg-[#2563EB]" style={{animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite", animationDelay: "150ms"}}></div>
-                  <div className="w-[6px] h-[6px] rounded-full bg-[#2563EB]" style={{animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite", animationDelay: "300ms"}}></div>
+                  <div className="w-[6px] h-[6px] rounded-full bg-[#111111]" style={{animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite", animationDelay: "0ms"}}></div>
+                  <div className="w-[6px] h-[6px] rounded-full bg-[#111111]" style={{animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite", animationDelay: "150ms"}}></div>
+                  <div className="w-[6px] h-[6px] rounded-full bg-[#111111]" style={{animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite", animationDelay: "300ms"}}></div>
                 </div>
               </div>
             )}
@@ -202,12 +202,12 @@ export default function ChatPanel({ sessionId }) {
             onChange={(e) => setInput(e.target.value.slice(0, 500))}
             onKeyDown={handleKeyDown}
             placeholder="Ask about candidates..."
-            className="flex-1 max-h-[120px] h-[40px] border border-gray-200 rounded-lg p-2.5 pr-12 text-sm resize-none focus:outline-none focus:border-[#2563EB] font-medium text-[#2A2A2A] custom-scrollbar shadow-sm"
+            className="flex-1 max-h-[120px] h-[40px] border border-gray-200 rounded-lg p-2.5 pr-12 text-sm resize-none focus:outline-none focus:border-[#111111] font-medium text-[#2A2A2A] custom-scrollbar shadow-sm"
           />
           <button 
             onClick={handleSend}
             disabled={!input.trim() || loading}
-            className="absolute right-1 bottom-1 w-[32px] h-[32px] rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="absolute right-1 bottom-1 w-[32px] h-[32px] rounded-md bg-[#111111] hover:bg-gray-800 text-white flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <SendHorizontal size={16} className="relative -left-[1px]" />
           </button>

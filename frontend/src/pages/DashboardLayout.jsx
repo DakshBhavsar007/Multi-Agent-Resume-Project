@@ -17,7 +17,8 @@ import {
   LogOut,
   Home,
   Users,
-  BarChart2
+  BarChart2,
+  Bot
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { authAPI } from '../lib/api';
@@ -150,6 +151,7 @@ export default function DashboardLayout() {
   const navItems = [
     { to: "/", label: "Home Page", icon: Home, exact: true },
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true, tourAttr: 'dashboard-home' },
+    { to: "/dashboard/ai-recruiter", label: "AI Recruiter", icon: Bot, tourAttr: 'nav-ai-recruiter' },
     { to: "/dashboard/smart-analyzer", label: "Smart Analyzer", icon: Sparkles, tourAttr: 'nav-smart-analyzer' },
     { to: "/dashboard/protection", label: "Protection", icon: Shield, tourAttr: 'nav-protection' },
     { to: "/dashboard/sessions", label: "Sessions", icon: Layers, tourAttr: 'nav-sessions' },

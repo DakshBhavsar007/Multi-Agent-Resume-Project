@@ -10,7 +10,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, 
 import { sessionsAPI, ingestAPI, candidatesAPI, exportAPI } from '../lib/api';
 import { useIngestStore } from '../stores/ingestStore';
 import { useCandidateStore } from '../stores/candidateStore';
-import ChatPanel from '../components/ChatPanel';
+
 import CandidateCard from '../components/CandidateCard';
 import PremiumBadge from '../components/PremiumBadge';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -1106,7 +1106,7 @@ export default function SessionWorkspacePage() {
         </div>
       )}
 
-      <ChatPanel sessionId={id} />
+
     </div>
   );
 }

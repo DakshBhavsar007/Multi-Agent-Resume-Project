@@ -28,14 +28,14 @@ export default function PremiumBadge({ tooltip = 'Available on Enterprise plan',
         gap: '6px',
       }}>
         <div style={{
-          background: 'linear-gradient(135deg, #4f46e5, #3730a3)',
+          background: '#111111',
           color: '#fff',
           borderRadius: '20px',
           padding: '5px 16px',
           fontSize: '12px',
           fontWeight: 700,
           letterSpacing: '0.5px',
-          boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+          boxShadow: '0 4px 12px rgba(17, 17, 17, 0.25)',
         }}>
           Enterprise
         </div>

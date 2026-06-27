@@ -18,6 +18,7 @@ import NewSessionPage from './pages/NewSessionPage';
 import SessionWorkspacePage from './pages/SessionWorkspacePage';
 import SmartAnalyzerPage from './pages/SmartAnalyzerPage';
 import SettingsPage from './pages/SettingsPage';
+import AiRecruiterPage from './pages/AiRecruiterPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import FraudDetectionPage from './pages/FraudDetectionPage';
 
@@ -233,6 +234,7 @@ export default function App() {
             <Route path="sessions/new" element={<NewSessionPage />} />
             <Route path="sessions/:id" element={<SessionWorkspacePage />} />
             <Route path="smart-analyzer" element={<SmartAnalyzerPage />} />
+            <Route path="ai-recruiter" element={<AiRecruiterPage />} />
             <Route path="protection" element={<FraudDetectionPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
