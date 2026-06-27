@@ -1,9 +1,11 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import './FinalCTA.css';
 
 const FinalCTA = ({ onStart, isLoggedIn }) => {
+  const navigate = useNavigate();
   return (
     <section className="final-cta-section">
       <motion.div 
@@ -54,6 +56,7 @@ const FinalCTA = ({ onStart, isLoggedIn }) => {
           <motion.button 
             className="btn-cta-secondary"
             whileHover={{ background: "rgba(255,255,255,0.05)" }}
+            onClick={() => navigate('/contact')}
           >
             Contact Sales
           </motion.button>
