@@ -4,6 +4,7 @@ import { Search, MapPin, Star, ArrowRight } from "lucide-react";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI } from "../../lib/api";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 import toast from "react-hot-toast";
 
 export default function UserCompanies() {
@@ -98,8 +99,26 @@ export default function UserCompanies() {
 
       <section className="mx-auto max-w-7xl px-6 py-10">
         {loading ? (
-          <div className="flex justify-center p-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-3xl border border-border bg-card p-6 flex flex-col justify-between space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex gap-3">
+                    <LoadingSkeleton width="48px" height="48px" borderRadius="10px" />
+                    <div className="space-y-2">
+                      <LoadingSkeleton width="120px" height="18px" />
+                      <LoadingSkeleton width="80px" height="12px" />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <LoadingSkeleton width="70px" height="12px" />
+                    <LoadingSkeleton width="20px" height="12px" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center p-12 border border-dashed border-border rounded-2xl bg-card text-muted-foreground">

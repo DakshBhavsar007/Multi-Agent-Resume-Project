@@ -5,6 +5,7 @@ import { CompanyLogo } from "../../components/user/company-logo";
 import { seekerAPI } from "../../lib/api";
 import { Bookmark, Briefcase, CheckCircle2, Clock, TrendingUp, Sparkles, AlertCircle, Edit, Plus, Check, FileText } from "lucide-react";
 import toast from "react-hot-toast";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 
 const statuses = ["Applied", "Interview", "Offer", "Saved"];
 
@@ -148,8 +149,54 @@ export default function UserDashboard() {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-between">
         <Header />
-        <div className="flex-1 flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex-1 mx-auto max-w-7xl w-full px-6 pt-10 pb-16">
+          {/* Welcome skeleton */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-10">
+            <div className="space-y-3 w-full max-w-md">
+              <LoadingSkeleton width="80px" height="14px" />
+              <LoadingSkeleton width="70%" height="40px" />
+              <LoadingSkeleton width="100%" height="20px" />
+            </div>
+            <LoadingSkeleton width="130px" height="40px" className="pill shrink-0" />
+          </div>
+
+          {/* Stats grid skeleton */}
+          <div className="grid gap-3 sm:grid-cols-4 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-3xl border border-border bg-card p-5 space-y-4">
+                <div className="flex justify-between items-center">
+                  <LoadingSkeleton width="40px" height="40px" borderRadius="12px" />
+                  <LoadingSkeleton width="16px" height="16px" />
+                </div>
+                <div className="space-y-2">
+                  <LoadingSkeleton width="40px" height="12px" />
+                  <LoadingSkeleton width="60px" height="32px" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Detailed block skeleton */}
+          <div className="rounded-3xl border border-border bg-card p-6 md:p-8 space-y-6">
+            <div className="flex justify-between items-center border-b border-border pb-6">
+              <div className="space-y-2 w-full max-w-sm">
+                <LoadingSkeleton width="100px" height="12px" />
+                <LoadingSkeleton width="60%" height="24px" />
+              </div>
+              <LoadingSkeleton width="140px" height="36px" className="pill" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+              <div className="lg:col-span-1 flex flex-col items-center justify-center p-6 border border-border rounded-2xl">
+                <LoadingSkeleton width="120px" height="120px" borderRadius="50%" className="mb-4" />
+                <LoadingSkeleton width="100px" height="24px" />
+              </div>
+              <div className="lg:col-span-2 space-y-4">
+                <LoadingSkeleton width="100%" height="60px" borderRadius="16px" />
+                <LoadingSkeleton width="100%" height="60px" borderRadius="16px" />
+                <LoadingSkeleton width="100%" height="60px" borderRadius="16px" />
+              </div>
+            </div>
+          </div>
         </div>
         <Footer />
       </div>

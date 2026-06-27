@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { seekerAPI } from "../../lib/api";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { ArrowLeft, CheckCircle2, FileText, Upload, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -93,8 +94,23 @@ export default function UserApply() {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-between">
         <Header />
-        <div className="flex-1 flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex-1 mx-auto max-w-2xl w-full px-6 py-10 space-y-6">
+          <LoadingSkeleton width="100px" height="20px" />
+          <div className="rounded-3xl border border-border bg-card p-6 md:p-8 space-y-6">
+            <div className="flex items-center gap-4">
+              <LoadingSkeleton width="48px" height="48px" borderRadius="10px" />
+              <div className="space-y-2">
+                <LoadingSkeleton width="160px" height="20px" />
+                <LoadingSkeleton width="100px" height="12px" />
+              </div>
+            </div>
+            <div className="space-y-4 pt-6 border-t border-border">
+              <LoadingSkeleton width="120px" height="16px" />
+              <LoadingSkeleton width="100%" height="45px" borderRadius="12px" />
+              <LoadingSkeleton width="100%" height="45px" borderRadius="12px" />
+              <LoadingSkeleton width="100%" height="45px" borderRadius="12px" />
+            </div>
+          </div>
         </div>
         <Footer />
       </div>

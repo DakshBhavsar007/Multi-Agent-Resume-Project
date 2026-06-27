@@ -4,6 +4,7 @@ import { Search, MapPin, SlidersHorizontal, Bookmark, ArrowRight, X } from "luci
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI, seekerAPI } from "../../lib/api";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { Slider } from "../../components/user/ui/slider";
 import toast from "react-hot-toast";
 
@@ -335,8 +336,20 @@ export default function UserJobs() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center p-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="grid gap-2.5">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 rounded-2xl border border-border bg-card p-4">
+                  <LoadingSkeleton width="42px" height="42px" borderRadius="10px" />
+                  <div className="space-y-2">
+                    <LoadingSkeleton width="200px" height="18px" />
+                    <div className="flex gap-2">
+                      <LoadingSkeleton width="80px" height="12px" />
+                      <LoadingSkeleton width="60px" height="12px" />
+                    </div>
+                  </div>
+                  <LoadingSkeleton width="24px" height="24px" className="pill" />
+                </div>
+              ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center p-12 border border-dashed border-border rounded-2xl bg-card text-muted-foreground">

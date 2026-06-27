@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { seekerAPI } from "../../lib/api";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { 
   Calendar, 
   MapPin, 
@@ -181,8 +182,22 @@ export default function UserApplications() {
 
       <section className="mx-auto max-w-7xl px-6 py-10">
         {loading ? (
-          <div className="flex justify-center p-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-3xl border border-border bg-card p-6 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <LoadingSkeleton width="48px" height="48px" borderRadius="10px" />
+                  <div className="space-y-2 flex-1 max-w-sm">
+                    <LoadingSkeleton width="180px" height="18px" />
+                    <div className="flex gap-2">
+                      <LoadingSkeleton width="100px" height="12px" />
+                      <LoadingSkeleton width="80px" height="12px" />
+                    </div>
+                  </div>
+                </div>
+                <LoadingSkeleton width="100px" height="28px" className="pill" />
+              </div>
+            ))}
           </div>
         ) : filteredApps.length === 0 ? (
           <div className="text-center p-12 border border-dashed border-border rounded-3xl bg-card text-muted-foreground">

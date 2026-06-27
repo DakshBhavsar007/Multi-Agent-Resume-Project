@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { seekerAPI } from "../../lib/api";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { ArrowLeft, Bookmark, Share2, MapPin, Clock, Briefcase, DollarSign, CheckCircle2, Star } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -92,8 +93,45 @@ export default function UserJobDetail() {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-between">
         <Header />
-        <div className="flex-1 flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex-1 mx-auto max-w-7xl w-full px-6 py-10 space-y-8">
+          <LoadingSkeleton width="100px" height="20px" />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="rounded-3xl border border-border bg-card p-6 md:p-8 space-y-6">
+                <div className="flex items-center gap-4">
+                  <LoadingSkeleton width="64px" height="64px" borderRadius="16px" />
+                  <div className="space-y-2">
+                    <LoadingSkeleton width="220px" height="28px" />
+                    <LoadingSkeleton width="140px" height="16px" />
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-4 pt-4 border-t border-border">
+                  {[1, 2, 3, 4].map(i => (
+                    <LoadingSkeleton key={i} width="100px" height="32px" className="pill" />
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-border bg-card p-6 md:p-8 space-y-4">
+                <LoadingSkeleton width="150px" height="24px" />
+                <div className="space-y-2">
+                  <LoadingSkeleton width="100%" height="16px" />
+                  <LoadingSkeleton width="100%" height="16px" />
+                  <LoadingSkeleton width="90%" height="16px" />
+                  <LoadingSkeleton width="60%" height="16px" />
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-1 space-y-6">
+              <div className="rounded-3xl border border-border bg-card p-6 space-y-4">
+                <LoadingSkeleton width="100%" height="40px" className="pill" />
+                <LoadingSkeleton width="100%" height="40px" className="pill" />
+              </div>
+            </div>
+          </div>
         </div>
         <Footer />
       </div>
