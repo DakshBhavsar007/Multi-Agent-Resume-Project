@@ -7,6 +7,7 @@ import logoBlack from "../../assets/logo_black.png";
 import { OnboardingTour, useTour } from "../OnboardingTour";
 import { SocialTooltip } from "../ui/social-media";
 import ThemeToggle from "../ThemeToggle";
+import { seekerAPI } from "../../lib/api";
 
 const SEEKER_TOUR_STEPS = [
   {
@@ -75,10 +76,26 @@ const links = [
   { to: "/jobs/trends", label: "Market Trends", icon: TrendingUp },
   { to: "/jobs/applications", label: "Applications", icon: Briefcase },
   { to: "/jobs/billing", label: "Premium Plans", icon: Sparkles },
-  { to: "/jobs/profile", label: "Profile", icon: User },
 ];
 
 export function Header() {
+  const getSeekerInitial = (name) => {
+    if (!name) return "D";
+    const parts = name.trim().split(" ").filter(Boolean);
+    const dakshPart = parts.find(p => p.toUpperCase() === "DAKSH");
+    if (dakshPart) return "D";
+    
+    if (parts.length > 0) {
+      const firstUpper = parts[0].toUpperCase();
+      const lastNames = ["BHAVSAR", "PATEL", "SHAH", "MEHTA", "JOSHI", "TRIVEDI"];
+      if (lastNames.includes(firstUpper) && parts.length >= 2) {
+        return parts[1][0].toUpperCase();
+      }
+      return parts[0][0].toUpperCase();
+    }
+    return "D";
+  };
+
   const { pathname } = useLocation();
   const [seekerData, setSeekerData] = useState(() => {
     const token = localStorage.getItem('vish_seeker_token');
@@ -104,6 +121,17 @@ export function Header() {
   }, []);
 
   const isLoggedIn = !!seekerData;
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      seekerAPI.getMe()
+        .then((profile) => {
+          setSeekerData(profile);
+          localStorage.setItem('vish_seeker_data', JSON.stringify(profile));
+        })
+        .catch((err) => console.error("Error syncing profile to navbar:", err));
+    }
+  }, [isLoggedIn]);
 
   const handleLogout = () => {
     localStorage.removeItem('vish_seeker_token');
@@ -172,20 +200,20 @@ export function Header() {
                 <NotificationBell />
                 <Link
                   to="/jobs/profile"
-                  className="flex items-center gap-2 pill bg-accent/10 px-3 py-2 text-sm font-medium text-accent hover:bg-accent/20"
+                  className="flex items-center justify-center h-10 w-10 rounded-full bg-accent/10 text-accent hover:bg-accent/20 transition shrink-0"
+                  aria-label="Profile"
                 >
                   {seekerData?.avatar_url ? (
                     <img
                       src={seekerData.avatar_url.startsWith('http') ? seekerData.avatar_url : `${import.meta.env.VITE_API_URL || ''}${seekerData.avatar_url}`}
                       alt={seekerData.full_name}
-                      className="h-6 w-6 rounded-full object-cover border border-accent/20 bg-muted"
+                      className="h-8 w-8 rounded-full object-cover border border-accent/20 bg-muted"
                     />
                   ) : (
-                    <div className="grid h-6 w-6 place-items-center rounded-full bg-accent text-[10px] font-bold text-white">
-                      {seekerData?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                    <div className="grid h-8 w-8 place-items-center rounded-full bg-accent text-xs font-bold text-white uppercase">
+                      {getSeekerInitial(seekerData?.full_name)}
                     </div>
                   )}
-                  <span className="hidden sm:inline">{seekerData?.full_name?.split(' ')[0] || 'Profile'}</span>
                 </Link>
                 <button
                   onClick={handleLogout}
