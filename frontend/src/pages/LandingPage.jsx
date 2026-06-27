@@ -11,8 +11,14 @@ import FinalCTA from '../components/FinalCTA'
 import Footer from '../components/Footer'
 
 import { useNavigate } from 'react-router-dom';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 export default function LandingPage() {
+  useDocumentTitle(
+    "AI Resume Parsing & Intelligent Recruiter Screening",
+    "Vishleshan is a next-generation resume intelligence platform that automates candidate matching, ATS scoring, and background verification."
+  );
+
   const navigate = useNavigate();
   const isLoggedIn = !!localStorage.getItem("vish_jwt");
 

@@ -9,8 +9,13 @@ import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import logoWhite from "../../assets/logo_white.png";
 import logoBlack from "../../assets/logo_black.png";
 import { SocialTooltip } from "../../components/ui/social-media";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function DeveloperLandingPage() {
+  useDocumentTitle(
+    "Developer Hub",
+    "Integrate ATS scoring, resume parser, and fraud protection APIs into your own candidate sourcing tools."
+  );
   const socialLinks = [
     { href: "#", ariaLabel: "LinkedIn", tooltip: "LinkedIn", color: "#0A66C2" },
     { href: "#", ariaLabel: "Twitter", tooltip: "Twitter", color: "#000000" },

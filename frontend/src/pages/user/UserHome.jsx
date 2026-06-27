@@ -15,6 +15,7 @@ import spotResume from "../../assets/spot-resume.png";
 import spotDashboard from "../../assets/spot-dashboard.png";
 import { ScrollingAnimation } from "../../components/user/ui/scrolling-animation";
 import heroBg from "../../assets/hero-bg.png";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const categories = [
   { i: Code2, t: "Engineering", n: "2,840", c: "var(--google-blue)" },
@@ -73,6 +74,11 @@ const slideInRightVariants = {
 };
 
 function Home() {
+  useDocumentTitle(
+    "Job Seeker Portal",
+    "Discover matching jobs, track your applications in real-time, and get AI resume feedback instantly."
+  );
+
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");

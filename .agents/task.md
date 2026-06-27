@@ -39,5 +39,9 @@
 - [x] Add a hover-styled "Cancel Subscription" button on the Premium plan card in `SeekerBillingPage.jsx` when it is the user's current active plan
 - [x] Replace `⚡` and other raw emojis in Seeker template selection and dashboard match score with high-contrast, premium styled Lucide SVG icons (`Zap`, `Sparkles`, `TrendingUp`, `AlertCircle`)
 - [x] Change Premium badges and Unlock buttons styling to match brand blue palette instead of orange/amber
+- [x] Install the React `Pagination` component under `/components/ui/pagination.jsx`
+- [x] Implement backend page/per_page pagination parameters in `list_public_jobs` (`jobs.py`) and `list_jobs` (`seeker_jobs.py`) endpoints
+- [x] Integrate pagination component into `/jobs` (`UserJobs.jsx`) page using dynamic API query triggers and total pages display
+- [x] Dynamically load real featured jobs and hiring companies inside Seeker Landing Home page (`UserHome.jsx`), falling back to mock files for offline support
 - [x] Verify build compiles successfully (`npm run build`)
 - [x] Stage and commit all changes locally (DO NOT push)

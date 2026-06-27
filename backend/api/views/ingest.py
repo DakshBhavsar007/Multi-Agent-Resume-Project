@@ -71,15 +71,15 @@ def upload_resumes(request):
         saved_paths = []
 
         for file in files:
-            if not file.name.lower().endswith((".pdf", ".docx", ".doc", ".txt")):
-                continue
+            ext = Path(file.name).suffix.lower()
+            if ext not in [".pdf", ".docx", ".doc", ".txt"]:
+                return JsonResponse(error_response(f"Unsupported file format: {file.name}. Only PDF, DOCX, DOC, and TXT are supported."), status=400)
+            
+            if file.size > 10 * 1024 * 1024:
+                return JsonResponse(error_response(f"File too large: {file.name}. Max size is 10MB."), status=400)
 
             fname = f"{uuid.uuid4()}_{file.name}"
             path = f"{save_dir}/{fname}"
-            
-            # Check file size (10 MB)
-            if file.size > 10 * 1024 * 1024:
-                continue
 
             with open(path, "wb+") as f:
                 for chunk in file.chunks():

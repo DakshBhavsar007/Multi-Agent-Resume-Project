@@ -14,6 +14,7 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "../../components/ui/pagination";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
 import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
 
@@ -73,6 +74,11 @@ function getWorkplaceType(job) {
 }
 
 export default function UserJobs() {
+  useDocumentTitle(
+    "Explore Jobs",
+    "Search and apply to thousands of active job opportunities matched to your skill profile."
+  );
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);

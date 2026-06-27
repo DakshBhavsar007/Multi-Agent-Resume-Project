@@ -64,6 +64,8 @@ import UserDashboard from './pages/user/UserDashboard';
 import UserUploadResume from './pages/user/UserUploadResume';
 import UserApply from './pages/user/UserApply';
 import UserApplications from './pages/user/UserApplications';
+import NotFoundPage from './pages/NotFoundPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function ScrollToTop() {
   const location = useLocation();
@@ -145,7 +147,8 @@ export default function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
       <Toaster 
         position="top-right"
         gutter={8}
@@ -242,9 +245,10 @@ export default function App() {
           </Route>
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

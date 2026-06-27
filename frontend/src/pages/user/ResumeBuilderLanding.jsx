@@ -36,8 +36,14 @@ const TEMPLATE_IMAGES = {
   compact: resumeCompact,
   ats: resumeAts
 };
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function ResumeBuilderLanding() {
+  useDocumentTitle(
+    "AI Resume Builder & ATS Optimizer",
+    "Build a professional resume optimized for applicant tracking systems using our premium templates."
+  );
+
   const navigate = useNavigate();
   const token = localStorage.getItem("vish_seeker_token");
 

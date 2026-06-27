@@ -7,6 +7,7 @@ Uses the SMTP config already in .env (MAIL_USERNAME, MAIL_PASSWORD, etc.)
 For development: emails are printed to console if EMAIL_BACKEND is not configured.
 """
 
+import os
 import logging
 from django.core.mail import send_mail
 from django.conf import settings
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Sender address — falls back to settings.DEFAULT_FROM_EMAIL
 FROM_EMAIL = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@vishleshan.ai")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://between.indevs.in")
 
 
 def send_application_received_to_company(
@@ -34,7 +36,7 @@ Hi {company_name},
 You have received a new application from {seeker_name} for the position of {job_title}.
 
 Log in to your Vishleshan dashboard to review the application:
-http://localhost:5173/dashboard/sessions/{session_id}
+{FRONTEND_URL}/dashboard/sessions/{session_id}
 
 — Vishleshan Platform
 """
@@ -57,7 +59,7 @@ Hi {seeker_name},
 Your application for {job_title} at {company_name} has been successfully submitted through Vishleshan.
 
 You can track the status of all your applications here:
-http://localhost:5173/jobs/dashboard/applications
+{FRONTEND_URL}/jobs/dashboard/applications
 
 Good luck!
 — Vishleshan Platform
@@ -97,7 +99,7 @@ Hi {seeker_name},
 {status_body}
 
 View your applications:
-http://localhost:5173/jobs/dashboard/applications
+{FRONTEND_URL}/jobs/dashboard/applications
 
 — Vishleshan Platform
 """
