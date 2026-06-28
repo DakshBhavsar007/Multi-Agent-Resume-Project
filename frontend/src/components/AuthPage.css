@@ -15,7 +15,7 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 460px; /* Slightly more compact */
+  max-width: 480px; /* Slightly more compact */
   margin: auto; /* Centering with top/bottom padding of parent */
   padding: 40px;
   background: rgba(255, 255, 255, 0.85);
@@ -26,7 +26,60 @@
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
+}
+
+/* Dark Mode Container Styles */
+.dark .auth-container {
+  background: rgba(19, 19, 22, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Tabs Switcher Styles */
+.auth-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 4px;
+  border-radius: 12px;
+  gap: 2px;
+}
+
+.dark .auth-tabs {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.auth-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab-btn:hover {
+  color: var(--text);
+}
+
+.auth-tab-btn.active {
+  background: white;
+  color: #111111;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.dark .auth-tab-btn.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f3f4f6;
+  box-shadow: none;
 }
 
 .auth-header {
@@ -70,9 +123,9 @@
 }
 
 .input-group label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -86,6 +139,7 @@
   font-size: 14px;
   transition: all 0.2s ease;
   outline: none;
+  color: #111111;
 }
 
 .input-group input:focus {
@@ -93,11 +147,23 @@
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
+/* Dark Mode Input Styles */
+.dark .input-group input {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text) !important;
+}
+
+.dark .input-group input:focus {
+  border-color: var(--text) !important;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05) !important;
+}
+
 /* Auth Buttons */
 .auth-submit-btn {
   height: 48px;
   background: var(--text);
-  color: white;
+  color: var(--bg);
   border: none;
   border-radius: 10px;
   font-weight: 600;
@@ -107,6 +173,12 @@
   justify-content: center;
   gap: 8px;
   margin-top: 8px;
+  transition: all 0.2s ease;
+}
+
+.dark .auth-submit-btn {
+  background: #f3f4f6 !important;
+  color: #0b0b0c !important;
 }
 
 .sso-divider {
@@ -124,6 +196,10 @@
   flex: 1;
   height: 1px;
   background: var(--border-light);
+}
+
+.dark .sso-line {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .sso-buttons {
@@ -144,6 +220,18 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  color: #111111;
+  transition: all 0.2s ease;
+}
+
+.dark .sso-btn {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text) !important;
+}
+
+.dark .sso-btn:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Bottom Actions */
@@ -154,7 +242,7 @@
 }
 
 .auth-toggle-link {
-  color: var(--accent);
+  color: var(--text);
   font-weight: 700;
   cursor: pointer;
   background: none;

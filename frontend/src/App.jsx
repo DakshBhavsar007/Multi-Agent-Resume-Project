@@ -218,15 +218,15 @@ export default function App() {
           <Route path="/resume-builder/edit/:resumeId" element={<ResumeEditor />} />
 
           {/* Job Seeker Portal — Auth */}
-          <Route path="/jobs/login"    element={<JobSeekerLoginPage />} />
-          <Route path="/jobs/register" element={<JobSeekerRegisterPage />} />
+          <Route path="/jobs/login"    element={<LoginPage />} />
+          <Route path="/jobs/register" element={<RegisterPage />} />
           <Route path="/seeker/reset-password" element={<ResetPasswordPage />} />
           <Route path="/seeker/forgot-password" element={<ResetPasswordPage />} />
 
           {/* Developer Portal Routes */}
           <Route path="/developer" element={<DeveloperLandingPage />} />
-          <Route path="/developer/login" element={<DeveloperLoginPage />} />
-          <Route path="/developer/register" element={<DeveloperRegisterPage />} />
+          <Route path="/developer/login" element={<LoginPage />} />
+          <Route path="/developer/register" element={<RegisterPage />} />
           <Route path="/developer/reset-password" element={<ResetPasswordPage />} />
           <Route path="/developer/forgot-password" element={<ResetPasswordPage />} />
           
