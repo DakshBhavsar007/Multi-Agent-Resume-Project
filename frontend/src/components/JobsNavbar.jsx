@@ -103,7 +103,7 @@ export default function JobsNavbar({ onUploadClick }) {
         </Link>
 
         {/* Links */}
-        <div className="hidden md:flex items-center space-x-2 xl:space-x-4 lg:space-x-3 overflow-x-auto hide-scrollbar">
+        <div className="hidden md:flex items-center space-x-2 xl:space-x-4 lg:space-x-3">
           <Link
             to="/"
             className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${

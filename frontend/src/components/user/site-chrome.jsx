@@ -171,7 +171,7 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className="ml-4 hidden flex-1 items-center gap-1.5 md:flex overflow-x-auto hide-scrollbar">
+        <nav className="ml-4 hidden flex-1 items-center gap-1.5 md:flex">
           {filteredPrimary.map((l) => {
             const active = pathname === l.to;
             const tourId = `seeker-nav-${l.label.toLowerCase().replace(/\s+/g, '-')}`;
