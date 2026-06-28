@@ -199,7 +199,36 @@ export default function UserJobDetail() {
               </Link>
             )}
             <BookmarkIconButton isSaved={job.isSaved} onClick={handleSave} />
-            <button className="pill inline-flex items-center gap-2 border border-border bg-background px-4 py-3 text-sm font-medium hover:bg-muted">
+            <button
+              onClick={() => {
+                const url = window.location.href;
+                if (navigator.share) {
+                  navigator.share({ title: job.title || 'Job', url }).catch(() => {});
+                } else if (navigator.clipboard) {
+                  navigator.clipboard.writeText(url)
+                    .then(() => alert('Job link copied to clipboard!'))
+                    .catch(() => {
+                      // fallback for insecure context
+                      const ta = document.createElement('textarea');
+                      ta.value = url;
+                      document.body.appendChild(ta);
+                      ta.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(ta);
+                      alert('Job link copied to clipboard!');
+                    });
+                } else {
+                  const ta = document.createElement('textarea');
+                  ta.value = url;
+                  document.body.appendChild(ta);
+                  ta.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(ta);
+                  alert('Job link copied to clipboard!');
+                }
+              }}
+              className="pill inline-flex items-center gap-2 border border-border bg-background px-4 py-3 text-sm font-medium hover:bg-muted"
+            >
               <Share2 className="h-4 w-4" /> Share
             </button>
           </div>

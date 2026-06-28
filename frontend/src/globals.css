@@ -190,3 +190,40 @@ body {
   border-color: rgba(243, 244, 246, 0.15) !important;
 }
 
+/* Dark mode: gray utility overrides */
+.dark .text-gray-500,
+.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.dark .text-charcoal {
+  color: #e5e7eb !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1a1a1e !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #131316 !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #1a1a1e !important;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: #131316 !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #222226 !important;
+}
+
+.dark .border-gray-100 {
+  border-color: #1a1a1e !important;
+}
+
+.dark .text-\[\#111111\] {
+  color: #f3f4f6 !important;
+}

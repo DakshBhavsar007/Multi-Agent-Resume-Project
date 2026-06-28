@@ -18,7 +18,8 @@ import {
   Home,
   Users,
   BarChart2,
-  Bot
+  Bot,
+  Building
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { authAPI, sessionsAPI, candidatesAPI } from '../lib/api';
@@ -256,14 +257,14 @@ export default function DashboardLayout() {
   const cleanPath = pathname.replace(/\/$/, "");
 
   return (
-    <div className="min-h-screen bg-white text-foreground font-sans recruiter-page">
+    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-foreground font-sans recruiter-page transition-colors duration-300">
       <RateLimitBanner />
 
       {/* Top App Bar — Google style */}
-      <header className="fixed top-0 inset-x-0 z-40 h-16 bg-white border-b border-gray-200 flex items-center px-2 sm:px-4 gap-1 sm:gap-2">
+      <header className="fixed top-0 inset-x-0 z-40 h-16 bg-white dark:bg-[#0b0b0c] border-b border-gray-200 dark:border-[#222226] flex items-center px-2 sm:px-4 gap-1 sm:gap-2 transition-colors duration-300">
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-12 h-12 shrink-0 rounded-full hover:bg-gray-100 flex items-center justify-center text-muted-foreground transition"
+          className="w-12 h-12 shrink-0 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-muted-foreground transition"
           aria-label="Toggle menu"
         >
           <Menu size={22} />
@@ -291,7 +292,7 @@ export default function DashboardLayout() {
 
         {/* Search — inline on sm+, icon-only sheet on xs */}
         <div className="flex-1 max-w-2xl mx-auto px-2 hidden sm:block relative">
-          <div className="group flex items-center h-11 md:h-12 bg-gray-100 rounded-full px-4 gap-3 focus-within:bg-white focus-within:shadow-sm transition">
+          <div className="group flex items-center h-11 md:h-12 bg-gray-100 dark:bg-zinc-800 rounded-full px-4 gap-3 focus-within:bg-white dark:focus-within:bg-zinc-900 focus-within:shadow-sm transition">
             <Search size={20} className="text-gray-500 shrink-0" />
             <input
               type="text"
@@ -304,7 +305,7 @@ export default function DashboardLayout() {
             />
           </div>
           {showGlobalSuggestions && (
-            <div className="absolute left-2 right-2 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-lg z-[100] max-h-96 overflow-y-auto py-2 px-1">
+            <div className="absolute left-2 right-2 mt-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-lg z-[100] max-h-96 overflow-y-auto py-2 px-1">
               {globalSearch ? (
                 <>
                   {isSearching ? (
@@ -412,7 +413,7 @@ export default function DashboardLayout() {
           <button
             onClick={() => setSearchOpen(true)}
             aria-label="Search"
-            className="sm:hidden w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition"
+            className="sm:hidden w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-gray-500 dark:text-zinc-400 transition"
           >
             <Search size={20} />
           </button>
@@ -420,7 +421,7 @@ export default function DashboardLayout() {
             data-tour="help-btn"
             aria-label="Help / Tour"
             onClick={startTour}
-            className="hidden sm:flex w-10 h-10 rounded-full hover:bg-gray-100 items-center justify-center text-gray-500 transition shrink-0"
+            className="hidden sm:flex w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 items-center justify-center text-gray-500 dark:text-zinc-400 transition shrink-0"
           >
             <HelpCircle size={20} />
           </button>
@@ -429,7 +430,7 @@ export default function DashboardLayout() {
           <div className="relative">
             <button
               onClick={() => setNotifOpen(!notifOpen)}
-              className="relative w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition shrink-0"
+              className="relative w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-gray-500 dark:text-zinc-400 transition shrink-0"
               aria-label="Notifications"
             >
               <Bell size={20} />
@@ -441,7 +442,7 @@ export default function DashboardLayout() {
             {notifOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                     <span className="font-display font-semibold text-sm text-charcoal">Notifications</span>
                     {unreadCount > 0 && (
@@ -502,7 +503,7 @@ export default function DashboardLayout() {
 
       {/* Mobile search overlay */}
       {searchOpen && (
-        <div className="fixed inset-0 z-50 bg-white sm:hidden">
+        <div className="fixed inset-0 z-50 bg-white dark:bg-[#0b0b0c] sm:hidden">
           <div className="h-16 flex items-center px-2 gap-2 border-b border-gray-200">
             <button
               onClick={() => setSearchOpen(false)}
@@ -535,7 +536,7 @@ export default function DashboardLayout() {
 
       {/* Side Nav — Material 3 drawer */}
       <aside
-        className={`fixed top-16 bottom-0 left-0 z-40 bg-white border-r border-gray-200 md:border-transparent transition-[width,transform] duration-200 ${
+        className={`fixed top-16 bottom-0 left-0 z-40 bg-white dark:bg-[#0b0b0c] border-r border-gray-200 dark:border-[#222226] md:border-transparent transition-[width,transform] duration-200 ${
           isDesktop
             ? open
               ? "w-[260px] translate-x-0"
@@ -588,7 +589,7 @@ export default function DashboardLayout() {
         </nav>
 
         {/* Bottom Details Panel with Logout & Usage limits */}
-        <div className="absolute bottom-0 inset-x-0 p-3 border-t border-gray-200 bg-white">
+        <div className="absolute bottom-0 inset-x-0 p-3 border-t border-gray-200 dark:border-[#222226] bg-white dark:bg-[#0b0b0c]">
           {(!isDesktop || open) ? (
             <div className="space-y-3">
               <div className="text-xs text-gray-500 px-2">

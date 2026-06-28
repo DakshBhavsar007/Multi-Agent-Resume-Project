@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import './Navbar.css';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar = ({ onSignIn, isLoggedIn }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -103,7 +104,8 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
         })}
       </div>
 
-      <div className="nav-right">
+      <div className="nav-right" style={{ gap: '8px' }}>
+        <ThemeToggle />
         <motion.button 
           className="sign-in-btn"
           whileHover={{ scale: 1.05 }}

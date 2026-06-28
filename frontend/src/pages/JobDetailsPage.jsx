@@ -277,13 +277,37 @@ export default function JobDetailsPage() {
   };
 
   const handleShareClick = () => {
-    navigator.clipboard.writeText(window.location.href)
-      .then(() => {
-        toast.success("Job link copied to clipboard!");
-      })
-      .catch(() => {
-        toast.error("Failed to copy link");
-      });
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: job?.title || 'Job', url }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url)
+        .then(() => {
+          toast.success("Job link copied to clipboard!");
+        })
+        .catch(() => {
+          // fallback for insecure context (HTTP)
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          toast.success("Job link copied to clipboard!");
+        });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast.success("Job link copied to clipboard!");
+    }
   };
 
   if (loading) {

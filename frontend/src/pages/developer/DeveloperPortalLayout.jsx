@@ -117,13 +117,13 @@ export default function DeveloperPortalLayout() {
   const cleanPath = pathname.replace(/\/$/, "");
 
   return (
-    <div className="min-h-screen bg-white text-foreground font-sans developer-portal-page">
+    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-foreground font-sans developer-portal-page transition-colors duration-300">
       
       {/* Top App Bar — Google / Recruiter style */}
-      <header className="fixed top-0 inset-x-0 z-40 h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-2">
+      <header className="fixed top-0 inset-x-0 z-40 h-16 bg-white dark:bg-[#0b0b0c] border-b border-gray-200 dark:border-[#222226] flex items-center px-4 gap-2 transition-colors duration-300">
         <button
           onClick={() => setSidebarCollapsed((v) => !v)}
-          className="w-12 h-12 shrink-0 rounded-full hover:bg-gray-100 flex items-center justify-center text-muted-foreground transition"
+          className="w-12 h-12 shrink-0 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-muted-foreground transition"
           aria-label="Toggle menu"
         >
           <Menu size={22} />
@@ -153,7 +153,7 @@ export default function DeveloperPortalLayout() {
       </header>
 
       {/* Sidebar */}
-      <aside className={`fixed top-16 bottom-0 left-0 z-40 bg-white border-r border-gray-200 transition-[width] duration-200 ${
+      <aside className={`fixed top-16 bottom-0 left-0 z-40 bg-white dark:bg-[#0b0b0c] border-r border-gray-200 dark:border-[#222226] transition-[width] duration-200 ${
         sidebarCollapsed ? "w-[72px]" : "w-[260px]"
       } flex flex-col`}>
         
@@ -259,7 +259,7 @@ export default function DeveloperPortalLayout() {
 
         {/* User Card - hide when collapsed */}
         {!sidebarCollapsed ? (
-          <div className="p-3 border-t border-gray-200 bg-gray-50/50">
+          <div className="p-3 border-t border-gray-200 dark:border-[#222226] bg-gray-50/50 dark:bg-zinc-900/50">
              <UsageProgress />
               <div className="flex items-center gap-2 pt-3 mt-2 border-t border-gray-200/60">
                 <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter shrink-0 cursor-default">
@@ -272,7 +272,7 @@ export default function DeveloperPortalLayout() {
               </div>
           </div>
         ) : (
-          <div className="p-3 border-t border-gray-200 bg-gray-50/50 flex justify-center">
+          <div className="p-3 border-t border-gray-200 dark:border-[#222226] bg-gray-50/50 dark:bg-zinc-900/50 flex justify-center">
             <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter cursor-default" title={company_name || "Developer"}>
               {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
             </div>
@@ -282,7 +282,7 @@ export default function DeveloperPortalLayout() {
 
       {/* Main Content */}
       <main 
-        className="pt-16 transition-[padding] duration-200 min-h-screen flex-1 bg-white overflow-y-auto"
+        className="pt-16 transition-[padding] duration-200 min-h-screen flex-1 bg-white dark:bg-[#0b0b0c] overflow-y-auto"
         style={{ paddingLeft: sidebarCollapsed ? 72 : 260 }}
       >
         <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto">

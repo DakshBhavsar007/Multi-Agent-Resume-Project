@@ -31,7 +31,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div style={{ padding: '0', backgroundColor: 'white', minHeight: '100vh' }}>
+    <div style={{ padding: '0', backgroundColor: 'var(--bg)', color: 'var(--text)', minHeight: '100vh', transition: 'background-color 0.3s, color 0.3s' }}>
       <Navbar onSignIn={handleAuth} isLoggedIn={isLoggedIn} />
       <main>
         <HeroHeader onStart={handleAuth} isLoggedIn={isLoggedIn} />
