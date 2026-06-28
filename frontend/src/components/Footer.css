@@ -1,6 +1,6 @@
 .footer {
-  background: var(--text);
-  color: var(--bg);
+  background: var(--sidebar);
+  color: #ffffff;
   padding: 100px 80px 40px;
   font-family: var(--sans);
 }
@@ -35,7 +35,7 @@
 .footer-column h4 {
   font-size: 14px;
   font-weight: 600;
-  color: var(--bg);
+  color: #ffffff;
   margin: 0 0 24px;
   text-transform: capitalize;
 }
@@ -57,7 +57,7 @@
 }
 
 .footer-list a:hover {
-  color: var(--bg);
+  color: #ffffff;
 }
 
 .footer-bottom {
@@ -76,7 +76,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--bg);
+  color: #ffffff;
   font-weight: 500;
 }
 
@@ -101,7 +101,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--bg);
+  color: #ffffff;
   transition: background 0.2s;
 }
 

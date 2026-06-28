@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import './Footer.css';
-import logoBlack from '../assets/logo_black.png';
+import logoWhite from '../assets/logo_white.png';
 import { SocialTooltip } from './ui/social-media';
 
 const Footer = () => {
@@ -56,7 +56,7 @@ const Footer = () => {
       >
         <motion.div className="footer-brand" variants={itemVariants}>
           <div className="footer-logo-wrapper relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
-            <img src={logoBlack} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+            <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
           </div>
           <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', maxWidth: '240px', lineHeight: '1.6' }}>
             The next generation of AI-driven recruitment screening.
