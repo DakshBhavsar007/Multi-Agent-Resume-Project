@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#fafafa] text-[#111111] font-sans">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-zinc-950 text-[#111111] dark:text-zinc-100 font-sans transition-colors duration-300">
       <Header />
       
       {/* Hero Section */}
@@ -14,7 +14,7 @@ export default function AboutPage() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-full px-4 py-1.5 mb-6 text-xs font-bold uppercase tracking-wider text-gray-600"
+          className="inline-flex items-center gap-2 bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-full px-4 py-1.5 mb-6 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400"
         >
           <Sparkles size={12} /> About Us
         </motion.div>
@@ -23,7 +23,7 @@ export default function AboutPage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="font-display text-4xl sm:text-6xl font-black tracking-tight leading-none mb-6"
+          className="font-display text-4xl sm:text-6xl font-black tracking-tight leading-none mb-6 text-gray-900 dark:text-white"
         >
           A calmer, human-centric job search.
         </motion.h1>
@@ -32,7 +32,7 @@ export default function AboutPage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed"
+          className="text-lg sm:text-xl text-gray-500 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed"
         >
           We are redesigning how recruitment works. No spam, no ghosting, no cold interfaces — just transparent matched opportunities powered by intelligent AI.
         </motion.p>
@@ -64,29 +64,29 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="rounded-3xl border border-gray-200 bg-white p-7 space-y-4 hover:shadow-lg transition duration-300 overflow-hidden"
+              className="rounded-3xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-7 space-y-4 hover:shadow-lg transition duration-300 overflow-hidden"
             >
-              <div className="w-10 h-10 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
+              <div className="w-10 h-10 rounded-2xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-gray-700 dark:text-zinc-300">
                 <item.icon size={20} strokeWidth={2} />
               </div>
-              <h3 className="font-display text-lg font-bold text-gray-900">{item.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+              <h3 className="font-display text-lg font-bold text-gray-900 dark:text-white">{item.title}</h3>
+              <p className="text-gray-500 dark:text-zinc-400 text-sm leading-relaxed">{item.desc}</p>
             </motion.div>
           ))}
         </div>
 
         {/* Detailed Story Section */}
-        <div className="mt-16 bg-white border border-gray-200 rounded-3xl p-8 sm:p-12">
+        <div className="mt-16 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl p-8 sm:p-12">
           <div className="max-w-3xl mx-auto space-y-6">
-            <h2 className="font-display text-2xl sm:text-3xl font-black text-gray-900">Why Between?</h2>
-            <p className="text-gray-500 leading-relaxed text-sm sm:text-base">
+            <h2 className="font-display text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">Why Between?</h2>
+            <p className="text-gray-500 dark:text-zinc-400 leading-relaxed text-sm sm:text-base">
               The modern recruitment space is broken. Candidates send hundreds of applications into the void, while recruiters get overwhelmed by spam and fraudulent resumes. 
             </p>
-            <p className="text-gray-500 leading-relaxed text-sm sm:text-base">
+            <p className="text-gray-500 dark:text-zinc-400 leading-relaxed text-sm sm:text-base">
               Between acts as the peaceful interface — the bridge where candidates receive accurate AI ATS evaluations and safety check ratings on listings, and recruiters get genuine, highly-relevant candidate profiles.
             </p>
             <div className="pt-4">
-              <Link to="/jobs/search" className="inline-flex items-center gap-2 py-3 px-6 bg-[#111111] hover:bg-gray-800 text-white font-bold rounded-xl text-sm transition-all shadow-md">
+              <Link to="/jobs/search" className="inline-flex items-center gap-2 py-3 px-6 bg-[#111111] dark:bg-zinc-100 hover:bg-gray-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-bold rounded-xl text-sm transition-all shadow-md">
                 Browse Active Jobs <ArrowRight size={15} />
               </Link>
             </div>
