@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, Info } from "lucide-react";
+import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, ChevronDown, Info } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { OnboardingTour, useTour } from "../OnboardingTour";
 import { SocialTooltip } from "../ui/social-media";
@@ -137,10 +137,18 @@ export function Header() {
     window.location.href = '/jobs';
   };
 
-  const filteredLinks = links.filter((l) => {
-    if (l.to === "/jobs/applications" || l.to === "/jobs/profile" || l.to === "/jobs/billing") {
-      return isLoggedIn;
-    }
+  const [toolsOpen, setToolsOpen] = useState(false);
+
+  const primaryLinks = links.filter(l => l.to === "/" || l.to === "/jobs/search" || l.to === "/jobs/applications");
+  const toolLinks = links.filter(l => l.to === "/resume-builder" || l.to === "/jobs/safety-checker" || l.to === "/jobs/trends" || l.to === "/jobs/companies");
+
+  const filteredPrimary = primaryLinks.filter((l) => {
+    if (l.to === "/jobs/applications") return isLoggedIn;
+    return true;
+  });
+
+  const filteredTools = toolLinks.filter((l) => {
+    if (l.to === "/jobs/companies") return true;
     return true;
   });
 
@@ -166,8 +174,8 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className="ml-4 hidden flex-1 items-center gap-1 md:flex overflow-x-auto hide-scrollbar">
-          {filteredLinks.map((l) => {
+        <nav className="ml-4 hidden flex-1 items-center gap-1.5 md:flex overflow-x-auto hide-scrollbar">
+          {filteredPrimary.map((l) => {
             const active = pathname === l.to;
             const tourId = `seeker-nav-${l.label.toLowerCase().replace(/\s+/g, '-')}`;
             return (
@@ -175,7 +183,7 @@ export function Header() {
                 key={l.to}
                 to={l.to}
                 data-tour={tourId}
-                className={`pill px-4 py-2 text-sm font-medium whitespace-nowrap transition ${
+                className={`pill px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition ${
                   active
                     ? "bg-muted text-foreground font-medium shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -185,6 +193,68 @@ export function Header() {
               </Link>
             );
           })}
+
+          {/* Tools Dropdown */}
+          {filteredTools.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setToolsOpen(!toolsOpen)}
+                className={`pill px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition flex items-center gap-1 ${
+                  filteredTools.some(l => pathname === l.to)
+                    ? "bg-muted text-foreground font-semibold"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <span>Career Tools</span>
+                <ChevronDown size={14} className={`transition-transform duration-200 ${toolsOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {toolsOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setToolsOpen(false)} />
+                  <div className="absolute left-0 mt-2 w-52 rounded-xl border border-border bg-background/95 backdrop-blur-md p-1.5 shadow-lg z-20 flex flex-col gap-0.5">
+                    {filteredTools.map((l) => {
+                      const Icon = l.icon;
+                      const active = pathname === l.to;
+                      const tourId = `seeker-nav-${l.label.toLowerCase().replace(/\s+/g, '-')}`;
+                      return (
+                        <Link
+                          key={l.to}
+                          to={l.to}
+                          data-tour={tourId}
+                          onClick={() => setToolsOpen(false)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            active
+                              ? "bg-muted text-foreground font-semibold"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                        >
+                          <Icon size={14} className="text-muted-foreground shrink-0" />
+                          <span>{l.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Premium plans featured pill */}
+          {isLoggedIn && (
+            <Link
+              to="/jobs/billing"
+              data-tour="seeker-nav-premium-plans"
+              className={`pill px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition flex items-center gap-1.5 ${
+                pathname === "/jobs/billing"
+                  ? "bg-amber-500/10 text-amber-500 font-semibold border border-amber-500/20"
+                  : "text-amber-500 hover:bg-amber-500/5"
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>Premium Plans</span>
+            </Link>
+          )}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">

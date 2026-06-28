@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, LogOut, Upload, Briefcase, TrendingUp, FolderGit, Home, Shield, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
+import { User, LogOut, Upload, Briefcase, TrendingUp, FolderGit, Home, Shield, Bell, Sparkles, LayoutDashboard, ChevronDown, Building2 } from 'lucide-react';
 import ResumeUploadModal from './ResumeUploadModal';
 
 export default function JobsNavbar({ onUploadClick }) {
@@ -9,6 +9,7 @@ export default function JobsNavbar({ onUploadClick }) {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const isSeekerLoggedIn = !!localStorage.getItem('vish_seeker_token');
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -143,20 +144,6 @@ export default function JobsNavbar({ onUploadClick }) {
 
           {isSeekerLoggedIn && (
             <Link
-              to="/jobs/resume"
-              className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                isActive('/jobs/resume')
-                  ? 'text-[#111111] bg-gray-100 font-semibold'
-                  : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
-              }`}
-            >
-              <Sparkles size={16} />
-              <span>AI Resume Enhancer</span>
-            </Link>
-          )}
-          
-          {isSeekerLoggedIn && (
-            <Link
               to="/jobs/applications"
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive('/jobs/applications')
@@ -183,29 +170,78 @@ export default function JobsNavbar({ onUploadClick }) {
             </Link>
           )}
 
-          <Link
-            to="/jobs/trends"
-            className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-              isActive('/jobs/trends')
-                ? 'text-[#111111] bg-gray-100 font-semibold'
-                : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
-            }`}
-          >
-            <TrendingUp size={16} />
-            <span>Market Trends</span>
-          </Link>
+          {/* Tools Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setToolsOpen(!toolsOpen)}
+              className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                isActive('/jobs/resume') || isActive('/jobs/companies') || isActive('/jobs/trends') || isActive('/jobs/safety-checker')
+                  ? 'text-[#111111] bg-gray-100 font-semibold'
+                  : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
+              }`}
+            >
+              <span>Career Tools</span>
+              <ChevronDown size={14} className={`transition-transform duration-200 ${toolsOpen ? "rotate-180" : ""}`} />
+            </button>
 
-          <Link
-            to="/jobs/safety-checker"
-            className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-              isActive('/jobs/safety-checker')
-                ? 'text-[#111111] bg-gray-100 font-semibold'
-                : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
-            }`}
-          >
-            <Shield size={16} />
-            <span>Hiring Safety</span>
-          </Link>
+            {toolsOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setToolsOpen(false)} />
+                <div className="absolute left-0 mt-2 w-52 rounded-xl border border-[#e6dfcd] bg-white p-1.5 shadow-lg z-20 flex flex-col gap-0.5 dark:bg-[#131316] dark:border-[#222226]">
+                  {isSeekerLoggedIn && (
+                    <Link
+                      to="/jobs/resume"
+                      onClick={() => setToolsOpen(false)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        isActive('/jobs/resume')
+                          ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
+                          : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                      }`}
+                    >
+                      <Sparkles size={14} className="text-gray-400 shrink-0" />
+                      <span>AI Resume Enhancer</span>
+                    </Link>
+                  )}
+                  <Link
+                    to="/jobs/companies"
+                    onClick={() => setToolsOpen(false)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      isActive('/jobs/companies')
+                        ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
+                        : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                    }`}
+                  >
+                    <Building2 size={14} className="text-gray-400 shrink-0" />
+                    <span>Companies</span>
+                  </Link>
+                  <Link
+                    to="/jobs/trends"
+                    onClick={() => setToolsOpen(false)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      isActive('/jobs/trends')
+                        ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
+                        : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                    }`}
+                  >
+                    <TrendingUp size={14} className="text-gray-400 shrink-0" />
+                    <span>Market Trends</span>
+                  </Link>
+                  <Link
+                    to="/jobs/safety-checker"
+                    onClick={() => setToolsOpen(false)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      isActive('/jobs/safety-checker')
+                        ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
+                        : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                    }`}
+                  >
+                    <Shield size={14} className="text-gray-400 shrink-0" />
+                    <span>Hiring Safety</span>
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
