@@ -9,7 +9,7 @@ export function CompanyLogo({ name, logoPath, color, size = 48, className = "" }
     if (path.startsWith("data:") || path.startsWith("http")) {
       return path.replace("logo.clearbit.com", "logos.hunter.io");
     }
-    const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
+    const apiBase = (import.meta.env?.VITE_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
     return `${apiBase}${path}`;
   };
 

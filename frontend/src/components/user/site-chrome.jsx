@@ -2,12 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, Info } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
-import logoWhite from "../../assets/logo_white.png";
-import logoBlack from "../../assets/logo_black.png";
 import { OnboardingTour, useTour } from "../OnboardingTour";
 import { SocialTooltip } from "../ui/social-media";
 import ThemeToggle from "../ThemeToggle";
-import { seekerAPI } from "../../lib/api";
+import { seekerAPI, API_HOST } from "../../lib/api";
 
 const SEEKER_TOUR_STEPS = [
   {
@@ -149,8 +147,23 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
-        <Link to="/jobs" className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden">
-          <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
+        <Link to="/jobs" className="flex items-center gap-2 pr-1 sm:pr-3 shrink-0 no-underline text-inherit">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-[#2A2A2A] p-1">
+            <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logo-grad-site-chrome" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="100%" stopColor="#2563eb" />
+                </linearGradient>
+              </defs>
+              <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-site-chrome)" strokeWidth="14" strokeLinecap="round" />
+              <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+              <circle cx="68" cy="32" r="24" fill="#2563eb" />
+            </svg>
+          </div>
+          <span className="font-display text-[22px] text-foreground tracking-tight font-semibold">
+            Between
+          </span>
         </Link>
 
         <nav className="ml-4 hidden flex-1 items-center gap-1 md:flex overflow-x-auto hide-scrollbar">
@@ -205,7 +218,7 @@ export function Header() {
                 >
                   {seekerData?.avatar_url ? (
                     <img
-                      src={seekerData.avatar_url.startsWith('http') ? seekerData.avatar_url : `${import.meta.env.VITE_API_URL || ''}${seekerData.avatar_url}`}
+                      src={seekerData.avatar_url.startsWith('http') ? seekerData.avatar_url : `${API_HOST}${seekerData.avatar_url}`}
                       alt={seekerData.full_name}
                       className="h-8 w-8 rounded-full object-cover border border-accent/20 bg-muted"
                     />

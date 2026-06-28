@@ -109,16 +109,17 @@ function Home() {
         }));
         if (normalized.length) setRealJobs(normalized);
       }
-      if (compsRes && Array.isArray(compsRes)) {
-        const normalized = compsRes.map(c => ({
+      if (compsRes && (compsRes.companies || Array.isArray(compsRes))) {
+        const rawList = compsRes.companies || compsRes;
+        const normalized = rawList.map(c => ({
           id: c.id,
           name: c.name,
           logo_path: c.logo_path,
           industry: c.industry || "Technology",
-          location: c.location || "San Francisco",
-          openings: c.openings || 2,
-          rating: c.rating || "4.8",
-          size: c.size || "50-100"
+          location: c.hq_location || c.location || "San Francisco",
+          openings: c.openings || 0,
+          rating: c.rating || "4.5",
+          size: c.company_size || c.size || "50-100"
         }));
         if (normalized.length) setRealCompanies(normalized);
       }
@@ -389,7 +390,7 @@ function Home() {
                 {statsLoading ? (
                   <LoadingSkeleton width="70px" height="12px" />
                 ) : (
-                  `Avg response ${stats?.avg_response_hours || 48}h`
+                  `Avg response ${stats?.avg_response_hours ?? 48}h`
                 )}
               </span>
               <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 fill-[var(--google-yellow)] text-[var(--google-yellow)]" /> 4.8 from 12k seekers</span>
@@ -408,10 +409,10 @@ function Home() {
       >
         <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-4 sm:grid-cols-4 sm:p-5">
           {[
-            { k: "Open roles", v: statsLoading ? null : Number(stats?.open_roles || 12480).toLocaleString(), c: "var(--google-blue)" },
-            { k: "Companies", v: statsLoading ? null : `${Number(stats?.companies || 3200).toLocaleString()}+`, c: "var(--google-green)" },
-            { k: "Hired this month", v: statsLoading ? null : Number(stats?.hired_this_month || 1940).toLocaleString(), c: "var(--google-yellow)" },
-            { k: "Avg. response", v: statsLoading ? null : `${stats?.avg_response_hours || 48} hrs`, c: "var(--google-red)" },
+            { k: "Open roles", v: statsLoading ? null : Number(stats?.open_roles ?? 12480).toLocaleString(), c: "var(--google-blue)" },
+            { k: "Companies", v: statsLoading ? null : `${Number(stats?.companies ?? 3200).toLocaleString()}+`, c: "var(--google-green)" },
+            { k: "Hired this month", v: statsLoading ? null : Number(stats?.hired_this_month ?? 1940).toLocaleString(), c: "var(--google-yellow)" },
+            { k: "Avg. response", v: statsLoading ? null : `${stats?.avg_response_hours ?? 48} hrs`, c: "var(--google-red)" },
           ].map((s) => (
             <div key={s.k} className="px-2">
               <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{s.k}</div>
@@ -449,7 +450,7 @@ function Home() {
           {categories.map((c) => (
             <motion.div key={c.t} variants={staggerItemVariants} className="w-full flex">
               <Link
-                to="/jobs/search"
+                to={`/jobs/search?q=${encodeURIComponent(c.t)}`}
                 className="group flex flex-1 items-center gap-3 rounded-2xl border border-border bg-card p-4 transition hover:google-shadow"
               >
                 <span
@@ -460,7 +461,9 @@ function Home() {
                 </span>
                 <div className="min-w-0">
                   <div className="truncate font-display text-sm font-semibold tracking-tight group-hover:text-primary">{c.t}</div>
-                  <div className="text-[11px] text-muted-foreground">{c.n} open</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {(stats?.category_counts?.[c.t] !== undefined) ? stats.category_counts[c.t] : c.n} open
+                  </div>
                 </div>
               </Link>
             </motion.div>
@@ -631,9 +634,9 @@ function Home() {
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {[
-                { k: "Demand growth", v: "+18%", sub: "YoY tech roles", c: "var(--google-green)" },
-                { k: "Median salary", v: "$142k", sub: "Senior engineer", c: "var(--google-blue)" },
-                { k: "Time to offer", v: "21d", sub: "Across platform", c: "var(--google-yellow)" },
+                { k: "Demand growth", v: stats?.demand_growth ?? "+18%", sub: "YoY tech roles", c: "var(--google-green)" },
+                { k: "Median salary", v: stats?.median_salary ?? "$142k", sub: "Senior engineer", c: "var(--google-blue)" },
+                { k: "Time to offer", v: stats?.time_to_offer ?? "21d", sub: "Across platform", c: "var(--google-yellow)" },
               ].map((s) => (
                 <div key={s.k} className="rounded-2xl border border-border bg-card p-4">
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.k}</div>

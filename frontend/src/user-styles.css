@@ -304,3 +304,26 @@ h5 {
   --color-accent-foreground: #ffffff !important;
 }
 
+/* ── Dark Mode Overrides ──────────────────────────────────────────────────── */
+.dark {
+  --background: oklch(0.14 0.018 250);
+  --foreground: oklch(0.985 0.003 247);
+  --card: oklch(0.16 0.015 250);
+  --card-foreground: oklch(0.985 0.003 247);
+  --popover: oklch(0.14 0.018 250);
+  --popover-foreground: oklch(0.985 0.003 247);
+  --primary: #f3f4f6;
+  --primary-foreground: oklch(0.14 0.018 250);
+  --secondary: oklch(0.2 0.015 250);
+  --secondary-foreground: oklch(0.985 0.003 247);
+  --muted: oklch(0.2 0.015 250);
+  --muted-foreground: #a0a0a0;
+  --accent: oklch(0.2 0.015 250);
+  --accent-foreground: oklch(0.985 0.003 247);
+  --border: oklch(0.25 0.015 250);
+  --input: oklch(0.23 0.015 250);
+  --ring: #f3f4f6;
+
+  --google-blue: #f3f4f6;
+}
+

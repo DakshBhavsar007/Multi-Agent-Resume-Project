@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
-import { seekerAPI } from "../../lib/api";
+import { seekerAPI, API_HOST } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { 
   Mail, MapPin, Pencil, Briefcase, GraduationCap, 
@@ -456,7 +456,7 @@ export default function UserProfile() {
                 <label htmlFor="avatar-upload" className="cursor-pointer block relative">
                   {seeker?.avatar_url ? (
                     <img
-                      src={seeker.avatar_url.startsWith('http') ? seeker.avatar_url : `${import.meta.env.VITE_API_URL || ''}${seeker.avatar_url}`}
+                      src={seeker.avatar_url.startsWith('http') ? seeker.avatar_url : `${API_HOST}${seeker.avatar_url}`}
                       alt={seeker.full_name}
                       className="h-20 w-20 shrink-0 object-cover rounded-3xl border border-border bg-muted shadow-sm transition group-hover:opacity-85"
                     />

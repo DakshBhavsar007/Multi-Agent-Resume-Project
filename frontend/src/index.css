@@ -67,3 +67,34 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
+/* ── Dark Mode Overrides ──────────────────────────────────────────────────── */
+.dark {
+  --text: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --bg: #0b0b0c;
+  --border: #222226;
+  --border-light: #222226;
+  --accent: #f3f4f6;
+  --accent-light: #131316;
+}
+
+.dark [class*="bg-[#2563EB]"],
+.dark [class*="bg-[#1D4ED8]"],
+.dark [class*="bg-[#3B82F6]"] {
+  background-color: #f3f4f6 !important;
+  color: #0b0b0c !important;
+}
+.dark [class*="hover:bg-[#2563EB]"]:hover,
+.dark [class*="hover:bg-[#1D4ED8]"]:hover,
+.dark [class*="hover:bg-[#3B82F6]"]:hover {
+  background-color: #e5e7eb !important;
+}
+.dark [class*="text-[#2563EB]"],
+.dark [class*="text-[#1D4ED8]"],
+.dark [class*="text-[#3B82F6]"] {
+  color: #f3f4f6 !important;
+}
+.dark [class*="border-[#2563EB]"] {
+  border-color: #222226 !important;
+}
+

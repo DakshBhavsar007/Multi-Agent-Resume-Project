@@ -130,3 +130,63 @@ body {
 /* bg-accent/10 active state tokens used in sidebar */
 [class*="bg-accent\/10"] { color: #111111 !important; }
 
+/* ── Dark Mode Overrides ──────────────────────────────────────────────────── */
+.dark {
+  --bg: #0b0b0c;
+  --accent: #f3f4f6;
+  --accent-dark: #e5e7eb;
+  --text: #f3f4f6;
+  --card: #131316;
+  --muted: #9ca3af;
+  --sidebar: #131316;
+  --border: #222226;
+}
+
+.dark body {
+  background-color: #0b0b0c !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .text-accent,
+.dark .text-accent-dark,
+.dark .hover\:text-accent:hover,
+.dark .hover\:text-accent-dark:hover {
+  color: #f3f4f6 !important;
+}
+
+.dark .bg-accent {
+  background-color: #f3f4f6 !important;
+  color: #0b0b0c !important;
+}
+
+.dark .hover\:bg-accent:hover,
+.dark .hover\:bg-accent-dark:hover {
+  background-color: #e5e7eb !important;
+}
+
+.dark .bg-accent-dark {
+  background-color: #e5e7eb !important;
+}
+
+.dark .border-accent,
+.dark .hover\:border-accent:hover {
+  border-color: #222226 !important;
+}
+
+.dark [class*="bg-accent\/10"] {
+  background-color: rgba(243, 244, 246, 0.1) !important;
+  color: #f3f4f6 !important;
+}
+
+.dark [class*="bg-accent\/20"] {
+  background-color: rgba(243, 244, 246, 0.2) !important;
+}
+
+.dark [class*="bg-accent\/5"] {
+  background-color: rgba(243, 244, 246, 0.05) !important;
+}
+
+.dark [class*="border-accent\/"] {
+  border-color: rgba(243, 244, 246, 0.15) !important;
+}
+

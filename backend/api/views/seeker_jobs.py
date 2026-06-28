@@ -57,6 +57,36 @@ def _parse_job_description_meta(description: str) -> dict:
     return meta
 
 
+def _get_salary_range(session) -> str:
+    criteria = session.criteria or {}
+    salary_min = criteria.get("salary_min")
+    salary_max = criteria.get("salary_max")
+    salary_currency = criteria.get("salary_currency", "USD")
+    
+    currency_symbols = {
+        "USD": "$",
+        "INR": "₹",
+        "EUR": "€",
+        "GBP": "£",
+    }
+    symbol = currency_symbols.get(salary_currency, salary_currency + " ")
+    
+    if salary_min is not None and salary_max is not None:
+        try:
+            return f"{symbol}{int(salary_min):,} - {symbol}{int(salary_max):,}"
+        except (ValueError, TypeError):
+            pass
+    elif salary_min is not None:
+        try:
+            return f"{symbol}{int(salary_min):,}+"
+        except (ValueError, TypeError):
+            pass
+            
+    # Fallback to description parsing
+    meta = _parse_job_description_meta(session.job_description)
+    return meta["salary_range"]
+
+
 def _session_to_job(session: Session, match_score=None, applied=False, is_saved=False) -> dict:
     """Serialize a Session as a public job listing."""
     meta = _parse_job_description_meta(session.job_description)
@@ -75,7 +105,7 @@ def _session_to_job(session: Session, match_score=None, applied=False, is_saved=
         "applied": applied,
         "is_saved": is_saved,
         "applicant_count": session.applicant_count if hasattr(session, "applicant_count") else session.seeker_applications.count(),
-        "salary_range": meta["salary_range"],
+        "salary_range": _get_salary_range(session),
         "location": meta["location"],
         "employment_type": meta["employment_type"],
     }
@@ -198,6 +228,13 @@ def job_detail(request, session_id):
     """GET /api/v1/seeker/jobs/<session_id> — single job detail with skill alignment."""
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
+
+    import uuid
+    try:
+        uuid.UUID(str(session_id))
+    except ValueError:
+        return JsonResponse(error_response("Invalid job ID format"), status=400)
+
     try:
         seeker = request.seeker
         session = Session.objects.filter(id=session_id, status="active").first()
@@ -245,6 +282,13 @@ def apply_job(request, session_id):
     """
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)
+
+    import uuid
+    try:
+        uuid.UUID(str(session_id))
+    except ValueError:
+        return JsonResponse(error_response("Invalid job ID format"), status=400)
+
     try:
         seeker = request.seeker
 
@@ -682,6 +726,12 @@ def save_job(request, session_id):
     if request.method not in ["POST", "DELETE"]:
         return JsonResponse(error_response("Method not allowed"), status=405)
         
+    import uuid
+    try:
+        uuid.UUID(str(session_id))
+    except ValueError:
+        return JsonResponse(error_response("Invalid job ID format"), status=400)
+
     try:
         seeker = request.seeker
         try:

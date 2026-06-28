@@ -271,7 +271,10 @@ def set_criteria(request, session_id):
             "preferred_locations": data.get("preferred_locations", []),
             "min_experience": data.get("min_experience", 0),
             "min_match_score": data.get("min_match_score", 0),
-            "weights": weights
+            "weights": weights,
+            "salary_min": data.get("salary_min"),
+            "salary_max": data.get("salary_max"),
+            "salary_currency": data.get("salary_currency", "USD"),
         }
         session.criteria = criteria
         session.updated_at = timezone.now()

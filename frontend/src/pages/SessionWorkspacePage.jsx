@@ -96,6 +96,9 @@ export default function SessionWorkspacePage() {
   const [editPreferredLocations, setEditPreferredLocations] = useState([]);
   const [editMinExperience, setEditMinExperience] = useState(0);
   const [editMinMatchScore, setEditMinMatchScore] = useState(60);
+  const [editSalaryMin, setEditSalaryMin] = useState("");
+  const [editSalaryMax, setEditSalaryMax] = useState("");
+  const [editSalaryCurrency, setEditSalaryCurrency] = useState("USD");
   const [editRounds, setEditRounds] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
@@ -112,6 +115,9 @@ export default function SessionWorkspacePage() {
       setEditPreferredLocations(criteria.preferred_locations || []);
       setEditMinExperience(criteria.min_experience || 0);
       setEditMinMatchScore(criteria.min_match_score || 60);
+      setEditSalaryMin(criteria.salary_min !== undefined && criteria.salary_min !== null ? criteria.salary_min : "");
+      setEditSalaryMax(criteria.salary_max !== undefined && criteria.salary_max !== null ? criteria.salary_max : "");
+      setEditSalaryCurrency(criteria.salary_currency || "USD");
       setEditRounds(session.rounds || []);
     }
   }, [session, isEditModalOpen]);
@@ -140,6 +146,9 @@ export default function SessionWorkspacePage() {
         preferred_locations: editPreferredLocations,
         min_experience: Number(editMinExperience),
         min_match_score: Number(editMinMatchScore),
+        salary_min: editSalaryMin !== "" ? Number(editSalaryMin) : null,
+        salary_max: editSalaryMax !== "" ? Number(editSalaryMax) : null,
+        salary_currency: editSalaryCurrency,
         weights
       });
 
@@ -1044,6 +1053,43 @@ export default function SessionWorkspacePage() {
                     className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none transition-colors"
                     min="0"
                     max="100"
+                  />
+                </div>
+              </div>
+
+              {/* Salary Fields */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Currency</label>
+                  <select
+                    value={editSalaryCurrency}
+                    onChange={e => setEditSalaryCurrency(e.target.value)}
+                    className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none bg-white transition-colors"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Min Salary</label>
+                  <input
+                    type="number"
+                    value={editSalaryMin}
+                    onChange={e => setEditSalaryMin(e.target.value)}
+                    className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                    placeholder="e.g. 80000"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Max Salary</label>
+                  <input
+                    type="number"
+                    value={editSalaryMax}
+                    onChange={e => setEditSalaryMax(e.target.value)}
+                    className="w-full text-sm p-2.5 border-[1.5px] border-gray-200 rounded-lg focus:border-accent focus:outline-none transition-colors"
+                    placeholder="e.g. 120000"
                   />
                 </div>
               </div>

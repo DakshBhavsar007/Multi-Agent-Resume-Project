@@ -97,6 +97,7 @@ export default function NewSessionPage() {
     required_skills: [], nice_to_have: [],
     preferred_locations: [], min_experience: 0,
     min_match_score: 60,
+    salary_min: "", salary_max: "", salary_currency: "USD",
     weights: { skills: 0.5, experience: 0.3, location: 0.2 },
     rounds: [
       { id: 1, name: "Screening Round", interviewer: "", order: 1 },
@@ -307,7 +308,10 @@ export default function NewSessionPage() {
         preferred_locations: formData.preferred_locations,
         min_experience: formData.min_experience,
         min_match_score: formData.min_match_score,
-        weights: formData.weights
+        weights: formData.weights,
+        salary_min: formData.salary_min !== "" ? Number(formData.salary_min) : null,
+        salary_max: formData.salary_max !== "" ? Number(formData.salary_max) : null,
+        salary_currency: formData.salary_currency
       });
       
       toast.success("Session created! Upload resumes to start.");
@@ -374,6 +378,42 @@ export default function NewSessionPage() {
                   placeholder="e.g., Senior Full Stack Engineer"
                   className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
                 />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1.5">Currency</label>
+                  <select
+                    value={formData.salary_currency}
+                    onChange={e => setFormData({...formData, salary_currency: e.target.value})}
+                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none bg-white"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1.5">Min Salary</label>
+                  <input
+                    type="number"
+                    value={formData.salary_min}
+                    onChange={e => setFormData({...formData, salary_min: e.target.value})}
+                    placeholder="e.g. 80000"
+                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1.5">Max Salary</label>
+                  <input
+                    type="number"
+                    value={formData.salary_max}
+                    onChange={e => setFormData({...formData, salary_max: e.target.value})}
+                    placeholder="e.g. 120000"
+                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div>

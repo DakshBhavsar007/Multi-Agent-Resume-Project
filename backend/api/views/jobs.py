@@ -10,7 +10,7 @@ from api.models import Session, Candidate, Company, FraudScanLog
 from workers.celery_worker import _parse_resume_sync, _normalize_skills_sync
 from models.schemas import success_response, error_response
 from agents.fraud_agent import FraudDetectionAgent
-from api.views.seeker_jobs import _parse_job_description_meta
+from api.views.seeker_jobs import _parse_job_description_meta, _get_salary_range
 
 def _calculate_match_score(candidate, session):
     """Calculates and updates candidate match score synchronously against session criteria."""
@@ -128,7 +128,7 @@ def list_public_jobs(request):
                 "preferred_locations": preferred_locations,
                 "min_experience": criteria.get("min_experience", 0),
                 "created_at": s.created_at.isoformat() if s.created_at else None,
-                "salary_range": meta["salary_range"],
+                "salary_range": _get_salary_range(s),
                 "location": meta["location"],
                 "employment_type": meta["employment_type"]
             })
@@ -181,7 +181,7 @@ def get_public_job(request, session_id):
             "preferred_locations": criteria.get("preferred_locations", []),
             "min_experience": criteria.get("min_experience", 0),
             "created_at": s.created_at.isoformat() if s.created_at else None,
-            "salary_range": meta["salary_range"],
+            "salary_range": _get_salary_range(s),
             "location": meta["location"],
             "employment_type": meta["employment_type"]
         }))

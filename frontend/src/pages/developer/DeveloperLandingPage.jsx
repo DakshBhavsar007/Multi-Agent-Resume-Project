@@ -6,8 +6,6 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { portalBilling, portalAuth } from "../../lib/portalApi";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
-import logoWhite from "../../assets/logo_white.png";
-import logoBlack from "../../assets/logo_black.png";
 import { SocialTooltip } from "../../components/ui/social-media";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
@@ -128,11 +126,24 @@ const response = await fetch(
       {/* NAVBAR */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-1" : "bg-white/90 backdrop-blur-md py-2"}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="relative flex shrink-0 items-center w-44 h-16 overflow-hidden cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
-              <img src={logoWhite} alt="Between Logo" className="absolute left-[-76px] top-1/2 -translate-y-1/2 h-[220px] w-auto max-w-none object-contain pointer-events-none" />
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-[#2A2A2A] p-1">
+              <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="logo-grad-dev-landing" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#2563eb" />
+                  </linearGradient>
+                </defs>
+                <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-dev-landing)" strokeWidth="14" strokeLinecap="round" />
+                <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+                <circle cx="68" cy="32" r="24" fill="#2563eb" />
+              </svg>
             </div>
-            <span className="text-[13px] text-gray-500 font-medium">for Developers</span>
+            <span className="font-display text-[22px] text-foreground tracking-tight font-semibold">
+              Between
+            </span>
+            <span className="text-[13px] text-gray-500 font-medium ml-1">for Developers</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
             <Link to="/" className="hover:text-accent transition-colors">Home</Link>
