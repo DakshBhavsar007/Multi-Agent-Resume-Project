@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { Building, Search, Plus, MoreVertical, Archive, Trash2, FolderOpen, ArrowUpDown } from 'lucide-react';
@@ -9,8 +9,17 @@ import LoadingSkeleton from '../components/LoadingSkeleton';
 
 export default function SessionsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    if (q !== null && q !== undefined) {
+      setSearchTerm(q);
+    }
+  }, [location.search]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortFilter, setSortFilter] = useState("Newest");

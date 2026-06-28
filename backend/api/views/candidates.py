@@ -109,7 +109,8 @@ def _serialize_candidate_summary(c):
         "raw_resume_data": parsed,
         "status": c.status,
         "source": c.source,
-        "created_at": c.created_at.isoformat() if c.created_at else None
+        "created_at": c.created_at.isoformat() if c.created_at else None,
+        "session_id": str(c.session_id)
     }
 
 @csrf_exempt

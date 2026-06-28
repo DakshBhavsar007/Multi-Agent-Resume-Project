@@ -21,7 +21,7 @@ import {
   Bot
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
-import { authAPI } from '../lib/api';
+import { authAPI, sessionsAPI, candidatesAPI } from '../lib/api';
 import RateLimitBanner from '../components/RateLimitBanner';
 import { OnboardingTour, useTour } from '../components/OnboardingTour';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
@@ -111,6 +111,39 @@ export default function DashboardLayout() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [showGlobalSuggestions, setShowGlobalSuggestions] = useState(false);
+  const [matchingSessions, setMatchingSessions] = useState([]);
+  const [matchingCandidates, setMatchingCandidates] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!globalSearch.trim()) {
+      setMatchingSessions([]);
+      setMatchingCandidates([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const allSessions = await sessionsAPI.list();
+        const query = globalSearch.toLowerCase();
+        const filteredSessions = (allSessions || []).filter(s =>
+          (s.name || "").toLowerCase().includes(query) ||
+          (s.job_title || "").toLowerCase().includes(query)
+        );
+        setMatchingSessions(filteredSessions.slice(0, 5));
+
+        const candidatesRes = await candidatesAPI.listAll(`?search=${encodeURIComponent(globalSearch)}&per_page=5`);
+        setMatchingCandidates(candidatesRes.candidates || []);
+      } catch (err) {
+        console.error("Global search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [globalSearch]);
 
   // Global keyboard shortcuts
   useKeyboardShortcuts({
@@ -271,16 +304,87 @@ export default function DashboardLayout() {
             />
           </div>
           {showGlobalSuggestions && (
-            <div className="absolute left-2 right-2 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-lg z-[100] max-h-64 overflow-y-auto py-2 px-1">
+            <div className="absolute left-2 right-2 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-lg z-[100] max-h-96 overflow-y-auto py-2 px-1">
               {globalSearch ? (
                 <>
-                  <div className="text-[10px] font-bold text-gray-400 px-3 py-1 uppercase tracking-wider">Search Actions</div>
-                  <button onClick={() => { navigate(`/dashboard/sessions?q=${encodeURIComponent(globalSearch)}`); setGlobalSearch(""); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-accent flex items-center gap-2 rounded-lg">
-                    <Search className="w-3.5 h-3.5 text-accent" /> Search sessions for "{globalSearch}"
-                  </button>
-                  <button onClick={() => { navigate(`/dashboard/sessions`); setGlobalSearch(""); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
-                    <Users className="w-3.5 h-3.5 text-gray-500" /> Find candidates matching "{globalSearch}"
-                  </button>
+                  {isSearching ? (
+                    <div className="flex items-center justify-center py-4 text-xs text-gray-400 font-semibold gap-2">
+                      <span className="animate-spin inline-block w-4 h-4 border-2 border-accent border-t-transparent rounded-full" />
+                      Searching...
+                    </div>
+                  ) : (
+                    <>
+                      {matchingSessions.length > 0 && (
+                        <div className="mb-2">
+                          <div className="text-[10px] font-bold text-gray-400 px-3 py-1 uppercase tracking-wider">Sessions</div>
+                          {matchingSessions.map(session => (
+                            <button
+                              key={session.id}
+                              onClick={() => {
+                                navigate(`/dashboard/sessions/${session.id}`);
+                                setGlobalSearch("");
+                                setShowGlobalSuggestions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg"
+                            >
+                              <Building className="w-3.5 h-3.5 text-gray-400" />
+                              <div className="truncate">
+                                <span className="font-bold text-charcoal">{session.job_title || "Untitled Role"}</span>
+                                <span className="text-gray-400 ml-1.5">• {session.name}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {matchingCandidates.length > 0 && (
+                        <div className="mb-2">
+                          <div className="text-[10px] font-bold text-gray-400 px-3 py-1 uppercase tracking-wider">Candidates</div>
+                          {matchingCandidates.map(candidate => (
+                            <button
+                              key={candidate.id}
+                              onClick={() => {
+                                navigate(`/dashboard/sessions/${candidate.session_id}?tab=candidates&cand_name=${encodeURIComponent(candidate.name)}&round=${candidate.current_round_index || candidate.round_index || 0}`);
+                                setGlobalSearch("");
+                                setShowGlobalSuggestions(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg"
+                            >
+                              <Users className="w-3.5 h-3.5 text-gray-400" />
+                              <div className="truncate">
+                                <span className="font-bold text-charcoal">{candidate.name}</span>
+                                <span className="text-gray-400 ml-1.5">• {candidate.email}</span>
+                                {candidate.match_score && (
+                                  <span className="ml-1.5 bg-green-50 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-black">
+                                    {candidate.match_score}% Match
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {matchingSessions.length === 0 && matchingCandidates.length === 0 && (
+                        <div className="px-3 py-4 text-center text-xs text-gray-400 font-semibold">
+                          No matching sessions or candidates found
+                        </div>
+                      )}
+
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className="text-[10px] font-bold text-gray-400 px-3 py-1 uppercase tracking-wider">More Actions</div>
+                      <button
+                        onClick={() => {
+                          navigate(`/dashboard/sessions?q=${encodeURIComponent(globalSearch)}`);
+                          setGlobalSearch("");
+                          setShowGlobalSuggestions(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-accent flex items-center gap-2 rounded-lg"
+                      >
+                        <Search className="w-3.5 h-3.5 text-accent" /> Search all sessions for "{globalSearch}"
+                      </button>
+                    </>
+                  )}
                 </>
               ) : (
                 <>

@@ -159,6 +159,8 @@ export const ingestAPI = {
 export const candidatesAPI = {
   list: (sessionId,qs="") =>
     req("GET",`/sessions/${sessionId}/candidates${qs}`),
+  listAll: (qs="") =>
+    req("GET",`/candidates${qs}`),
   get: (sessionId,candId) =>
     req("GET",
       `/sessions/${sessionId}/candidates/${candId}`),

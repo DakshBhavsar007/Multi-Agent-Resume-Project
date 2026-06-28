@@ -208,10 +208,10 @@ urlpatterns = [
     # ── Job Seeker Jobs & Applications ─────────────────────────────────────────
     path('api/v1/seeker/jobs', seeker_jobs.list_jobs, name='seeker-jobs-list'),
     path('api/v1/seeker/jobs/saved', seeker_jobs.get_saved_jobs, name='seeker-jobs-saved'),
+    path('api/v1/seeker/jobs/generate-cover-letter', seeker_jobs.generate_cover_letter, name='seeker-generate-cover-letter'),
     path('api/v1/seeker/jobs/<str:session_id>', seeker_jobs.job_detail, name='seeker-jobs-detail'),
     path('api/v1/seeker/jobs/<str:session_id>/save', seeker_jobs.save_job, name='seeker-jobs-save'),
     path('api/v1/seeker/jobs/<str:session_id>/apply', seeker_jobs.apply_job, name='seeker-jobs-apply'),
-    path('api/v1/seeker/jobs/generate-cover-letter', seeker_jobs.generate_cover_letter, name='seeker-generate-cover-letter'),
     path('api/v1/seeker/applications', seeker_jobs.my_applications, name='seeker-applications'),
     path('api/v1/seeker/applications/<str:app_id>/accept', seeker_jobs.accept_offer, name='seeker-applications-accept'),
 

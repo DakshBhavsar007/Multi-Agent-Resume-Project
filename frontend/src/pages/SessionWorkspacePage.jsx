@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2 } from 'lucide-react';
@@ -68,6 +68,7 @@ const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
 export default function SessionWorkspacePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { jobs, addJob, updateJob, removeJob } = useIngestStore();
   const { highlightedIds } = useCandidateStore();
@@ -164,12 +165,37 @@ export default function SessionWorkspacePage() {
     }
   };
 
-  // Sync activeRound with session data once loaded
+  // Sync activeRound with session data once loaded, prioritizing URL query parameter
   useEffect(() => {
     if (session && session.rounds?.length > 0 && activeRound === null) {
+      const params = new URLSearchParams(location.search);
+      const roundParam = params.get("round");
+      if (roundParam) {
+        const parsedRound = parseInt(roundParam);
+        if (!isNaN(parsedRound)) {
+          setActiveRound(parsedRound);
+          return;
+        } else if (roundParam === "hired" || roundParam === "rejected") {
+          setActiveRound(roundParam);
+          return;
+        }
+      }
       setActiveRound(session.rounds[0].order);
     }
-  }, [session, activeRound]);
+  }, [session, activeRound, location.search]);
+
+  // Sync tab and search filters from URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get("tab");
+    const candNameParam = params.get("cand_name");
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+    if (candNameParam) {
+      setFilters(prev => ({ ...prev, search: decodeURIComponent(candNameParam) }));
+    }
+  }, [location.search]);
 
   const buildQS = () => {
     const params = new URLSearchParams();

@@ -299,7 +299,6 @@ def apply_job(request, session_id):
         if seeker.tier != "premium":
             from django.utils import timezone
             from datetime import timedelta
-            from api.models import JobApplication
             thirty_days_ago = timezone.now() - timedelta(days=30)
             app_count = JobApplication.objects.filter(seeker=seeker, applied_at__gte=thirty_days_ago).count()
             if app_count >= 3:
