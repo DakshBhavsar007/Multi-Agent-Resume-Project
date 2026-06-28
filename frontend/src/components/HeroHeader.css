@@ -95,7 +95,7 @@
 
 .btn-primary {
   background: var(--text);
-  color: white;
+  color: var(--bg);
   border: 1px solid var(--text);
 }
 

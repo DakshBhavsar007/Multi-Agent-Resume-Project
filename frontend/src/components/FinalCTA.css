@@ -1,7 +1,7 @@
 .final-cta-section {
   padding: 160px 24px 80px;
-  background: var(--text);
-  color: white;
+  background: var(--accent-light);
+  color: var(--text);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -39,7 +39,7 @@
 
 .cta-subtitle {
   font-size: 20px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-secondary);
   margin-bottom: 48px;
   max-width: 500px;
   margin-left: auto;
@@ -56,7 +56,7 @@
 .btn-cta-primary {
   padding: 18px 40px;
   background: var(--accent);
-  color: black;
+  color: var(--bg);
   border: none;
   border-radius: 12px;
   font-size: 16px;
@@ -68,8 +68,8 @@
 .btn-cta-secondary {
   padding: 18px 40px;
   background: transparent;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  border: 1px solid var(--border);
   border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
@@ -114,7 +114,7 @@
 }
 
 .footer-link:hover {
-  color: white;
+  color: var(--text);
 }
 
 .footer-socials {
@@ -124,7 +124,7 @@
 }
 
 .social-icon:hover {
-  color: white;
+  color: var(--text);
   cursor: pointer;
 }
 

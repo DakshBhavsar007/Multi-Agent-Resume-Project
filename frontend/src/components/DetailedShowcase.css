@@ -1,7 +1,7 @@
 .showcase-horizontal-wrapper {
   height: 400vh; /* Track for horizontal scroll */
   position: relative;
-  background: white;
+  background: var(--bg);
 }
 
 .sticky-container {
@@ -103,10 +103,10 @@
 .visual-card {
   position: relative;
   z-index: 1;
-  background: white;
+  background: var(--card);
   border-radius: 40px;
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
   width: 100%;
   aspect-ratio: 16 / 10;
   overflow: hidden;
@@ -140,8 +140,8 @@
 .dash-search {
   height: 32px;
   width: 200px;
-  background: white;
-  border: 1px solid var(--border-light);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
@@ -156,8 +156,8 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: white;
-  border: 1px solid var(--border-light);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
