@@ -139,18 +139,15 @@ export function Header() {
 
   const [toolsOpen, setToolsOpen] = useState(false);
 
-  const primaryLinks = links.filter(l => l.to === "/" || l.to === "/jobs/search" || l.to === "/jobs/applications");
-  const toolLinks = links.filter(l => l.to === "/resume-builder" || l.to === "/jobs/safety-checker" || l.to === "/jobs/trends" || l.to === "/jobs/companies");
-
-  const filteredPrimary = primaryLinks.filter((l) => {
-    if (l.to === "/jobs/applications") return isLoggedIn;
+  const filteredLinks = links.filter((l) => {
+    if (l.to === "/jobs/applications" || l.to === "/jobs/profile" || l.to === "/jobs/billing") {
+      return isLoggedIn;
+    }
     return true;
   });
 
-  const filteredTools = toolLinks.filter((l) => {
-    if (l.to === "/jobs/companies") return true;
-    return true;
-  });
+  const filteredPrimary = filteredLinks.filter(l => l.to === "/" || l.to === "/jobs/search" || l.to === "/jobs/applications");
+  const filteredTools = filteredLinks.filter(l => l.to === "/resume-builder" || l.to === "/jobs/safety-checker" || l.to === "/jobs/trends" || l.to === "/jobs/companies");
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
