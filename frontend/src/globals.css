@@ -238,3 +238,23 @@ body {
   background-color: rgba(255, 255, 255, 0.06) !important;
 }
 
+.dark .bg-blue-50,
+.dark .bg-blue-100,
+.dark .bg-blue-200,
+.dark .bg-blue-50\/10,
+.dark .bg-blue-50\/30 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .bg-\[\#FAFAFA\],
+.dark .bg-\[\#FAFAFA\]\/50,
+.dark .bg-\[\#FAFAFA\]\/80 {
+  background-color: var(--bg) !important;
+}
+
+.dark .border-blue-100,
+.dark .border-blue-100\/50 {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+

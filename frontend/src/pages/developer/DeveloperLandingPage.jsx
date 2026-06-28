@@ -153,9 +153,9 @@ const response = await fetch(
           </div>
           <div className="hidden md:flex items-center gap-4">
             {isDevLoggedIn ? (
-              <Link to="/developer/portal" className="px-5 py-2 rounded-lg text-accent border border-accent font-semibold hover:bg-accent-light transition-colors">Dashboard</Link>
+              <Link to="/developer/portal" className="px-5 py-2 rounded-lg text-accent border border-accent font-semibold hover:bg-gray-100 transition-colors">Dashboard</Link>
             ) : (
-              <Link to="/developer/login" className="px-5 py-2 rounded-lg text-accent border border-accent font-semibold hover:bg-accent-light transition-colors">Sign In</Link>
+              <Link to="/developer/login" className="px-5 py-2 rounded-lg text-accent border border-accent font-semibold hover:bg-gray-100 transition-colors">Sign In</Link>
             )}
             <Link to="/developer/register" className="px-5 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-dark transition-colors shadow-sm">Get API Key</Link>
           </div>
