@@ -564,9 +564,9 @@ export default function JobSeekerSafetyPage() {
               </div>
             </div>
 
-            <div className="bg-[#F0F6FF] dark:bg-blue-950/20 border border-[#BFDBFE] dark:border-blue-900/30 p-4 rounded-2xl text-[11px] text-[#2563EB] dark:text-blue-300 font-medium leading-relaxed">
-              <h5 className="font-bold flex items-center gap-1.5 mb-1 text-sm text-[#2563EB] dark:text-blue-300">
-                <Shield className="w-4 h-4" />
+            <div className="bg-accent/10 border border-border/60 p-4 rounded-2xl text-[11px] text-foreground font-medium leading-relaxed">
+              <h5 className="font-bold flex items-center gap-1.5 mb-1 text-sm text-foreground">
+                <Shield className="w-4 h-4 text-[#2563eb]" />
                 <span>Your Data is Protected</span>
               </h5>
               We scan descriptions anonymously. We never store or share the pasted contents with recruiters or external tracker engines.

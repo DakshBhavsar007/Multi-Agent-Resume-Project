@@ -72,8 +72,8 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
         maxWidth: 400,
         position: 'relative',
         borderRadius: 20,
-        border: plan.featured ? '2px solid #111111' : '1.5px solid #e5e7eb',
-        background: plan.featured ? '#111111' : '#ffffff',
+        border: plan.featured ? '2px solid var(--accent, #111111)' : '1.5px solid var(--border)',
+        background: plan.featured ? '#111111' : 'var(--card)',
         boxShadow: plan.featured
           ? '0 20px 48px rgba(0,0,0,0.18)'
           : '0 2px 16px rgba(0,0,0,0.05)',
@@ -91,8 +91,8 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
             top: -14,
             left: '50%',
             transform: 'translateX(-50%)',
-            background: '#ffffff',
-            color: '#111111',
+            background: 'var(--bg)',
+            color: 'var(--text)',
             borderRadius: 20,
             padding: '4px 16px',
             fontSize: 11,
@@ -100,7 +100,7 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
-            border: '1.5px solid #111111',
+            border: '1.5px solid var(--accent, #111111)',
           }}
         >
           {plan.label}
@@ -112,19 +112,19 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
         <div style={{ marginBottom: 20 }}>
           <div style={{
             fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.1em', color: plan.featured ? 'rgba(255,255,255,0.5)' : '#9ca3af',
+            letterSpacing: '0.1em', color: plan.featured ? 'rgba(255,255,255,0.5)' : 'var(--text-secondary)',
             marginBottom: 6,
           }}>
             Plan
           </div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: plan.featured ? '#ffffff' : '#111111', lineHeight: 1 }}>
+          <div style={{ fontSize: 24, fontWeight: 900, color: plan.featured ? '#ffffff' : 'var(--text)', lineHeight: 1 }}>
             {plan.name}
           </div>
         </div>
 
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 8 }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: plan.featured ? 'rgba(255,255,255,0.6)' : '#6b7280', paddingBottom: 8 }}>
+          <span style={{ fontSize: 15, fontWeight: 600, color: plan.featured ? 'rgba(255,255,255,0.6)' : 'var(--text-secondary)', paddingBottom: 8 }}>
             Rs
           </span>
           <AnimatePresence mode="wait">
@@ -133,24 +133,24 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              style={{ fontSize: 52, fontWeight: 900, color: plan.featured ? '#ffffff' : '#111111', lineHeight: 1 }}
+              style={{ fontSize: 52, fontWeight: 900, color: plan.featured ? '#ffffff' : 'var(--text)', lineHeight: 1 }}
             >
               {plan.price}
             </motion.span>
           </AnimatePresence>
-          <span style={{ fontSize: 14, color: plan.featured ? 'rgba(255,255,255,0.5)' : '#9ca3af', paddingBottom: 10, marginLeft: 4 }}>
+          <span style={{ fontSize: 14, color: plan.featured ? 'rgba(255,255,255,0.5)' : 'var(--text-secondary)', paddingBottom: 10, marginLeft: 4 }}>
             / {plan.period}
           </span>
         </div>
 
         <p style={{
-          fontSize: 13.5, color: plan.featured ? 'rgba(255,255,255,0.65)' : '#6b7280',
+          fontSize: 13.5, color: plan.featured ? 'rgba(255,255,255,0.65)' : 'var(--text-secondary)',
           lineHeight: 1.55, marginBottom: 24,
         }}>
           {plan.description}
         </p>
 
-        <hr style={{ border: 'none', borderTop: plan.featured ? '1px solid rgba(255,255,255,0.12)' : '1px solid #f3f4f6', marginBottom: 22 }} />
+        <hr style={{ border: 'none', borderTop: plan.featured ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border)', marginBottom: 22 }} />
 
         {/* Features */}
         <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
@@ -164,12 +164,12 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
             >
               <div style={{
                 width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                background: plan.featured ? 'rgba(255,255,255,0.15)' : '#f3f4f6',
+                background: plan.featured ? 'rgba(255,255,255,0.15)' : 'var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Check size={11} strokeWidth={3} color={plan.featured ? '#ffffff' : '#111111'} />
+                <Check size={11} strokeWidth={3} color={plan.featured ? '#ffffff' : 'var(--accent, #111111)'} />
               </div>
-              <span style={{ color: plan.featured ? 'rgba(255,255,255,0.85)' : '#374151' }}>{f.text}</span>
+              <span style={{ color: plan.featured ? 'rgba(255,255,255,0.85)' : 'var(--text)' }}>{f.text}</span>
             </motion.li>
           ))}
         </ul>
@@ -186,16 +186,16 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
             borderRadius: 12,
             border: plan.featured
               ? 'none'
-              : isCurrentPlan ? '1.5px solid #e5e7eb' : '1.5px solid #111111',
+              : isCurrentPlan ? '1.5px solid var(--border)' : '1.5px solid var(--accent, #111111)',
             fontWeight: 700,
             fontSize: 14,
             cursor: (isFree || isCurrentPlan) ? 'default' : 'pointer',
             background: plan.featured
               ? isCurrentPlan ? 'rgba(255,255,255,0.12)' : '#ffffff'
-              : isCurrentPlan ? '#f3f4f6' : '#111111',
+              : isCurrentPlan ? 'var(--border)' : 'var(--accent, #111111)',
             color: plan.featured
               ? isCurrentPlan ? 'rgba(255,255,255,0.5)' : '#111111'
-              : isCurrentPlan ? '#9ca3af' : '#ffffff',
+              : isCurrentPlan ? 'var(--text-secondary)' : 'var(--bg)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             transition: 'all 0.18s ease',
           }}
@@ -357,10 +357,8 @@ export default function SeekerBillingPage() {
     } finally {
       setLoading(null);
     }
-  };
-
-  return (
-    <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: "'Inter', system-ui, sans-serif" }}>
+  };  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Header />
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -373,13 +371,13 @@ export default function SeekerBillingPage() {
           animate={{ opacity: 1, y: 0 }}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: '#f3f4f6', borderRadius: 20,
+            background: 'var(--card)', borderRadius: 20,
             padding: '5px 14px', marginBottom: 20,
-            border: '1px solid #e5e7eb',
+            border: '1px solid var(--border)',
           }}
         >
-          <Sparkles size={13} color="#111111" />
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#111111', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+          <Sparkles size={13} color="var(--accent, #111111)" />
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
             Job Seeker Plans
           </span>
         </motion.div>
@@ -391,7 +389,7 @@ export default function SeekerBillingPage() {
           style={{
             fontSize: 'clamp(30px, 5vw, 48px)',
             fontWeight: 900, lineHeight: 1.1,
-            color: '#111111', marginBottom: 16,
+            color: 'var(--text)', marginBottom: 16,
             fontFamily: "'Space Grotesk', system-ui, sans-serif",
             letterSpacing: '-0.02em',
           }}
@@ -404,7 +402,7 @@ export default function SeekerBillingPage() {
               height="6" viewBox="0 0 120 6" fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="M2 4C30 1 90 1 118 4" stroke="#111111" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M2 4C30 1 90 1 118 4" stroke="var(--accent, #111111)" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
           </span>
         </motion.h1>
@@ -413,7 +411,7 @@ export default function SeekerBillingPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.14 }}
-          style={{ fontSize: 16, color: '#6b7280', lineHeight: 1.65 }}
+          style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.65 }}
         >
           Unlock AI-powered resume tools, unlimited applications, and priority visibility — all for just Rs 199/month.
         </motion.p>
@@ -426,7 +424,7 @@ export default function SeekerBillingPage() {
             {[0, 1].map(i => (
               <div key={i} style={{
                 flex: 1, minWidth: 280, maxWidth: 400, height: 520,
-                borderRadius: 20, background: '#f3f4f6',
+                borderRadius: 20, background: 'var(--card)',
                 animation: 'pulse 1.5s ease-in-out infinite',
               }} />
             ))}
@@ -451,8 +449,8 @@ export default function SeekerBillingPage() {
       <section style={{ padding: '0 24px 80px', textAlign: 'center' }}>
         <div style={{
           maxWidth: 700, margin: '0 auto',
-          background: '#ffffff', borderRadius: 16,
-          border: '1.5px solid #e5e7eb',
+          background: 'var(--card)', borderRadius: 16,
+          border: '1.5px solid var(--border)',
           padding: '24px 32px',
           display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap',
         }}>
@@ -463,9 +461,9 @@ export default function SeekerBillingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.07 }}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#6b7280', fontWeight: 600 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}
             >
-              <Icon size={15} color="#111111" strokeWidth={2} />
+              <Icon size={15} color="var(--accent, #111111)" strokeWidth={2} />
               {text}
             </motion.div>
           ))}
@@ -480,13 +478,13 @@ export default function SeekerBillingPage() {
           style={{
             display: 'flex', alignItems: 'flex-start', gap: 8,
             maxWidth: 420, margin: '20px auto 0',
-            background: '#f9fafb', borderRadius: 10,
+            background: 'var(--card)', borderRadius: 10,
             padding: '12px 16px',
-            border: '1px solid #e5e7eb',
+            border: '1px solid var(--border)',
           }}
         >
-          <AlertCircle size={14} color="#9ca3af" style={{ flexShrink: 0, marginTop: 1 }} />
-          <p style={{ fontSize: 12.5, color: '#9ca3af', lineHeight: 1.55, margin: 0, textAlign: 'left' }}>
+          <AlertCircle size={14} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0, textAlign: 'left' }}>
             All payments are processed securely via Razorpay. Your subscription can be cancelled at any time from your profile settings.
           </p>
         </motion.div>
