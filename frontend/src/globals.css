@@ -137,7 +137,8 @@ body {
   --accent-dark: #e5e7eb;
   --text: #f3f4f6;
   --card: #131316;
-  --muted: #9ca3af;
+  --muted: #1c1c22;
+  --muted-foreground: #9ca3af;
   --sidebar: #131316;
   --border: #222226;
 }

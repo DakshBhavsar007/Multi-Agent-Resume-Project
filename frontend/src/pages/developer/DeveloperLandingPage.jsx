@@ -143,13 +143,13 @@ const response = await fetch(
             <span className="font-display text-[22px] text-foreground tracking-tight font-semibold">
               Between
             </span>
-            <span className="text-[13px] text-gray-500 font-medium ml-1">for Developers</span>
+            <span className="text-[13px] text-gray-500 dark:text-gray-400 font-medium ml-1">for Developers</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-            <Link to="/" className="hover:text-accent transition-colors">Home</Link>
-            <a href="#features" className="hover:text-accent transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-accent transition-colors">Pricing</a>
-            <a href="#docs" className="hover:text-accent transition-colors">Docs</a>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-300">
+            <Link to="/" className="hover:text-accent dark:hover:text-white transition-colors">Home</Link>
+            <a href="#features" className="hover:text-accent dark:hover:text-white transition-colors">Features</a>
+            <a href="#pricing" className="hover:text-accent dark:hover:text-white transition-colors">Pricing</a>
+            <a href="#docs" className="hover:text-accent dark:hover:text-white transition-colors">Docs</a>
           </div>
           <div className="hidden md:flex items-center gap-4">
             {isDevLoggedIn ? (
@@ -235,7 +235,7 @@ const response = await fetch(
       </header>
 
       {/* STATS BAR */}
-      <section className="w-full bg-accent py-8">
+      <section className="w-full bg-[#111111] dark:bg-[#131316] py-8">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-white/20">
            <div className="flex flex-col px-4 text-white">
              <span className="text-2xl font-bold">500+</span>
