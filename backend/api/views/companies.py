@@ -322,6 +322,43 @@ def public_market_trends(request):
             { "year": "2026 (Est)", "salary": int(138 + (base_salary / 10000)) }
         ]
 
+        # Dynamic high growth domains from active jobs
+        from collections import Counter
+        all_skills = []
+        for sess in Session.objects.filter(status="active"):
+            skills_req = sess.criteria.get("skills", []) if isinstance(sess.criteria, dict) else []
+            for s in skills_req:
+                all_skills.append(s.strip())
+        
+        top_skills = Counter(all_skills).most_common(3)
+        
+        default_skills = [
+            ("Prompt Engineering", 48, 185000, "Highest request growth this quarter"),
+            ("Design Systems", 14, 140000, "Steady enterprise adoption indices"),
+            ("Rust / Go Backend", 22, 165000, "High throughput performance demand")
+        ]
+        
+        high_growth_domains = []
+        for i, (name, pct, pay, desc) in enumerate(default_skills):
+            if i < len(top_skills):
+                skill_name = top_skills[i][0]
+                skill_pct = min(99, 12 + top_skills[i][1] * 4)
+                skill_pay = 120000 + (top_skills[i][1] * 5000)
+                skill_desc = f"Requested in {top_skills[i][1]} active job listings."
+                high_growth_domains.append({
+                    "name": skill_name,
+                    "growth": f"+{skill_pct}%",
+                    "pay": f"${int(skill_pay / 1000)}k",
+                    "description": skill_desc
+                })
+            else:
+                high_growth_domains.append({
+                    "name": name,
+                    "growth": f"+{pct}%",
+                    "pay": f"${int(pay / 1000)}k",
+                    "description": f"{desc} (+{pct}%)."
+                })
+
         trends = {
             "average_tech_base": base_salary,
             "average_tech_base_change": salary_change,
@@ -331,7 +368,8 @@ def public_market_trends(request):
             "top_remote_hub_percentage": top_hub_pct,
             "active_jds_tracked": active_jds,
             "salary_timeline": salary_timeline,
-            "region_distribution": region_distribution
+            "region_distribution": region_distribution,
+            "high_growth_domains": high_growth_domains
         }
 
         return JsonResponse(success_response({

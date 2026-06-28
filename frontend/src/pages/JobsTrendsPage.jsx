@@ -41,24 +41,24 @@ export default function JobsTrendsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-[#2A2A2A] font-sans flex flex-col">
+    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
       <Header />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8 space-y-8">
         
         {/* Header */}
         <div className="space-y-2">
-          <span className="text-xs font-bold text-[#2563EB] uppercase tracking-wider">Market Intelligence</span>
-          <h1 className="text-3xl font-extrabold text-[#2A2A2A]">Market Trends & Insights</h1>
-          <p className="text-sm text-[#5c5c5c] max-w-2xl">
+          <span className="text-xs font-bold text-[#2563eb] dark:text-blue-400 uppercase tracking-wider">Market Intelligence</span>
+          <h1 className="text-3xl font-extrabold text-foreground">Market Trends & Insights</h1>
+          <p className="text-sm text-muted-foreground max-w-2xl">
             Analyze wage trajectories, regional volumes, and domain demands processed across the Between ingestion engine.
           </p>
         </div>
 
         {/* High-level widgets grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm space-y-2 min-h-[120px] flex flex-col justify-between">
-            <div className="text-xs text-[#5c5c5c] font-medium uppercase tracking-wider">Average Tech Base</div>
+          <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-2 min-h-[120px] flex flex-col justify-between">
+            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Average Tech Base</div>
             {loading ? (
               <>
                 <LoadingSkeleton width="120px" height="28px" />
@@ -66,14 +66,14 @@ export default function JobsTrendsPage() {
               </>
             ) : (
               <>
-                <div className="text-3xl font-black text-[#2A2A2A]">${trends?.average_tech_base?.toLocaleString()}</div>
+                <div className="text-3xl font-black text-foreground">${trends?.average_tech_base?.toLocaleString()}</div>
                 <div className="text-xs text-green-500 font-semibold flex items-center">&uarr; +{trends?.average_tech_base_change}% vs last year</div>
               </>
             )}
           </div>
           
-          <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm space-y-2 min-h-[120px] flex flex-col justify-between">
-            <div className="text-xs text-[#5c5c5c] font-medium uppercase tracking-wider">Hiring Velocity Index</div>
+          <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-2 min-h-[120px] flex flex-col justify-between">
+            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Hiring Velocity Index</div>
             {loading ? (
               <>
                 <LoadingSkeleton width="120px" height="28px" />
@@ -81,14 +81,14 @@ export default function JobsTrendsPage() {
               </>
             ) : (
               <>
-                <div className="text-3xl font-black text-[#2A2A2A]">{trends?.hiring_velocity} / 10</div>
+                <div className="text-3xl font-black text-foreground">{trends?.hiring_velocity} / 10</div>
                 <div className="text-xs text-green-500 font-semibold flex items-center">&uarr; {trends?.hiring_velocity_days} days faster closures</div>
               </>
             )}
           </div>
 
-          <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm space-y-2 min-h-[120px] flex flex-col justify-between">
-            <div className="text-xs text-[#5c5c5c] font-medium uppercase tracking-wider">Top Remote Hub</div>
+          <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-2 min-h-[120px] flex flex-col justify-between">
+            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Top Remote Hub</div>
             {loading ? (
               <>
                 <LoadingSkeleton width="120px" height="28px" />
@@ -96,14 +96,14 @@ export default function JobsTrendsPage() {
               </>
             ) : (
               <>
-                <div className="text-3xl font-black text-[#2563EB]">{trends?.top_remote_hub}</div>
-                <div className="text-xs text-[#5c5c5c] font-medium">{trends?.top_remote_hub_percentage}% of all remote uploads</div>
+                <div className="text-3xl font-black text-[#2563eb] dark:text-blue-400">{trends?.top_remote_hub}</div>
+                <div className="text-xs text-muted-foreground font-medium">{trends?.top_remote_hub_percentage}% of all remote uploads</div>
               </>
             )}
           </div>
 
-          <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm space-y-2 min-h-[120px] flex flex-col justify-between">
-            <div className="text-xs text-[#5c5c5c] font-medium uppercase tracking-wider">Active JDs Tracked</div>
+          <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-2 min-h-[120px] flex flex-col justify-between">
+            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Active JDs Tracked</div>
             {loading ? (
               <>
                 <LoadingSkeleton width="120px" height="28px" />
@@ -122,10 +122,10 @@ export default function JobsTrendsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* Chart 1: Salary Growthtimeline */}
-          <div className="bg-white border border-[#e6dfcd] p-6 rounded-3xl shadow-sm space-y-4">
+          <div className="bg-card border border-border p-6 rounded-3xl shadow-sm space-y-4">
             <div className="space-y-1">
-              <h3 className="font-extrabold text-base text-[#2A2A2A]">Annual Wage Trajectory</h3>
-              <p className="text-xs text-[#5c5c5c]">Median base salaries for senior software engineers (in thousands).</p>
+              <h3 className="font-extrabold text-base text-foreground">Annual Wage Trajectory</h3>
+              <p className="text-xs text-muted-foreground">Median base salaries for senior software engineers (in thousands).</p>
             </div>
             
             <div className="w-full h-64">
@@ -165,10 +165,10 @@ export default function JobsTrendsPage() {
           </div>
 
           {/* Chart 2: Regional hiring volume distribution */}
-          <div className="bg-white border border-[#e6dfcd] p-6 rounded-3xl shadow-sm space-y-4">
+          <div className="bg-card border border-border p-6 rounded-3xl shadow-sm space-y-4">
             <div className="space-y-1">
-              <h3 className="font-extrabold text-base text-[#2A2A2A]">Regional Posting Share</h3>
-              <p className="text-xs text-[#5c5c5c]">Distribution of active requisitions across geographic networks.</p>
+              <h3 className="font-extrabold text-base text-foreground">Regional Posting Share</h3>
+              <p className="text-xs text-muted-foreground">Distribution of active requisitions across geographic networks.</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-6">
@@ -212,9 +212,9 @@ export default function JobsTrendsPage() {
                       <div key={idx} className="flex items-center justify-between text-xs font-semibold">
                         <div className="flex items-center space-x-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: region.color }} />
-                          <span className="text-[#5c5c5c]">{region.name}</span>
+                          <span className="text-muted-foreground">{region.name}</span>
                         </div>
-                        <span className="text-[#2A2A2A]">{region.value} openings</span>
+                        <span className="text-foreground">{region.value} openings</span>
                       </div>
                     ))}
                   </div>
@@ -226,40 +226,32 @@ export default function JobsTrendsPage() {
 
         {/* Top Growing Skills matching bottom of inspiratio_ui2.jpeg */}
         <section className="space-y-4">
-          <h3 className="font-extrabold text-lg text-[#2A2A2A]">High-Growth Domains</h3>
+          <h3 className="font-extrabold text-lg text-foreground">High-Growth Domains</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm flex items-start space-x-4">
-              <div className="bg-[#22C55E]/10 p-3 rounded-xl text-[#22C55E] shrink-0">
-                <Sparkles size={20} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-bold text-sm text-[#2A2A2A]">Prompt Engineering</h4>
-                <p className="text-xs text-[#5c5c5c]">Highest request growth this quarter (+48%).</p>
-                <div className="text-xs font-bold text-[#22C55E] pt-1">Avg Pay: $185k</div>
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm flex items-start space-x-4">
-              <div className="bg-[#0F56B3]/10 p-3 rounded-xl text-[#0F56B3] shrink-0">
-                <Award size={20} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-bold text-sm text-[#2A2A2A]">Design Systems</h4>
-                <p className="text-xs text-[#5c5c5c]">Steady enterprise adoption indices (+14%).</p>
-                <div className="text-xs font-bold text-[#0F56B3] pt-1">Avg Pay: $140k</div>
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm flex items-start space-x-4">
-              <div className="bg-[#2563EB]/10 p-3 rounded-xl text-[#2563EB] shrink-0">
-                <TrendingUp size={20} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-bold text-sm text-[#2A2A2A]">Rust / Go Backend</h4>
-                <p className="text-xs text-[#5c5c5c]">High throughput performance demand (+22%).</p>
-                <div className="text-xs font-bold text-[#2563EB] pt-1">Avg Pay: $165k</div>
-              </div>
-            </div>
+            {(trends?.high_growth_domains || [
+              { name: "Prompt Engineering", growth: "+48%", pay: "$185k", description: "Highest request growth this quarter (+48%)." },
+              { name: "Design Systems", growth: "+14%", pay: "$140k", description: "Steady enterprise adoption indices (+14%)." },
+              { name: "Rust / Go Backend", growth: "+22%", pay: "$165k", description: "High throughput performance demand (+22%)." }
+            ]).map((domain, idx) => {
+              // Map icons and colors dynamically
+              const Icon = idx === 0 ? Sparkles : idx === 1 ? Award : TrendingUp;
+              const colorHex = idx === 0 ? "#22C55E" : idx === 1 ? "#0F56B3" : "#2563EB";
+              const bgClass = idx === 0 ? "bg-[#22C55E]/10 text-[#22C55E] dark:text-[#22C55E]" : idx === 1 ? "bg-[#0F56B3]/10 text-[#0F56B3] dark:text-blue-400" : "bg-[#2563EB]/10 text-[#2563EB] dark:text-blue-400";
+              const textCol = idx === 0 ? colorHex : undefined;
+              
+              return (
+                <div key={idx} className="bg-card border border-border p-6 rounded-2xl shadow-sm flex items-start space-x-4">
+                  <div className={`${bgClass} p-3 rounded-xl shrink-0`}>
+                    <Icon size={20} />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm text-foreground">{domain.name}</h4>
+                    <p className="text-xs text-muted-foreground">{domain.description}</p>
+                    <div className="text-xs font-bold pt-1" style={{ color: textCol || "var(--accent)" }}>Avg Pay: {domain.pay}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       </main>

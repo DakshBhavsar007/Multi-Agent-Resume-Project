@@ -51,11 +51,11 @@ export function ScrollingAnimation() {
               }`}
             >
               <div className="w-[400px] h-[400px] rounded-full bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 dark:from-purple-600 dark:via-pink-600 dark:to-red-600 p-0.5 flex items-center justify-center relative">
-                <div className="w-full h-full rounded-full bg-white dark:bg-zinc-950 flex items-center justify-center relative">
+                <div className="w-full h-full rounded-full bg-card flex items-center justify-center relative">
                   
                   {/* Profile 1 */}
                   <div
-                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
+                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
                     style={{
                       transform: `translate(${expandRadius * Math.cos(0)}px, ${expandRadius * Math.sin(0)}px)`,
                     }}
@@ -69,7 +69,7 @@ export function ScrollingAnimation() {
 
                   {/* Profile 2 */}
                   <div
-                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
+                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
                     style={{
                       transform: `translate(${expandRadius * Math.cos(Math.PI / 4)}px, ${expandRadius * Math.sin(Math.PI / 4)}px)`,
                     }}
@@ -83,7 +83,7 @@ export function ScrollingAnimation() {
 
                   {/* Profile 3 */}
                   <div
-                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
+                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
                     style={{
                       transform: `translate(${expandRadius * Math.cos(Math.PI / 2)}px, ${expandRadius * Math.sin(Math.PI / 2)}px)`,
                     }}
@@ -97,7 +97,7 @@ export function ScrollingAnimation() {
 
                   {/* Profile 4 */}
                   <div
-                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
+                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
                     style={{
                       transform: `translate(${expandRadius * Math.cos((3 * Math.PI) / 4)}px, ${expandRadius * Math.sin((3 * Math.PI) / 4)}px)`,
                     }}
@@ -111,7 +111,7 @@ export function ScrollingAnimation() {
 
                   {/* Profile 5 */}
                   <div
-                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
+                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
                     style={{
                       transform: `translate(${expandRadius * Math.cos(Math.PI)}px, ${expandRadius * Math.sin(Math.PI)}px)`,
                     }}
@@ -125,7 +125,7 @@ export function ScrollingAnimation() {
 
                   {/* Profile 6 (repeat img 1) */}
                   <div
-                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
+                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
                     style={{
                       transform: `translate(${expandRadius * Math.cos((5 * Math.PI) / 4)}px, ${expandRadius * Math.sin((5 * Math.PI) / 4)}px)`,
                     }}
@@ -139,7 +139,7 @@ export function ScrollingAnimation() {
 
                   {/* Profile 7 (repeat img 2) */}
                   <div
-                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
+                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
                     style={{
                       transform: `translate(${expandRadius * Math.cos((3 * Math.PI) / 2)}px, ${expandRadius * Math.sin((3 * Math.PI) / 2)}px)`,
                     }}
@@ -153,7 +153,7 @@ export function ScrollingAnimation() {
 
                   {/* Profile 8 (repeat img 3) */}
                   <div
-                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
+                    className="absolute w-24 h-24 rounded-2xl overflow-hidden border-4 border-card shadow-lg transition-transform duration-300 ease-out z-0 bg-muted"
                     style={{
                       transform: `translate(${expandRadius * Math.cos((7 * Math.PI) / 4)}px, ${expandRadius * Math.sin((7 * Math.PI) / 4)}px)`,
                     }}

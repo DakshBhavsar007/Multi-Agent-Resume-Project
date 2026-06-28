@@ -334,7 +334,7 @@ export function Footer() {
   ];
 
   return (
-    <footer className="mt-24 border-t border-border/60 bg-white relative overflow-hidden">
+    <footer className="mt-24 border-t border-border/60 bg-background relative overflow-hidden">
       <div className="mx-auto flex flex-col md:flex-row justify-between items-start max-w-7xl w-full px-6 py-12 gap-10 relative z-10">
         <div className="max-w-xs w-full space-y-4">
           <Link 
@@ -343,7 +343,7 @@ export function Footer() {
             onMouseEnter={() => setLogoHovered(true)}
             onMouseLeave={() => setLogoHovered(false)}
           >
-            <div className={`w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center shrink-0 p-1.5 transition-all duration-300 ${logoHovered ? 'scale-105 shadow-sm border-gray-300' : 'border-gray-200'} border`}>
+            <div className={`w-9 h-9 rounded-full bg-card flex items-center justify-center shrink-0 p-1.5 transition-all duration-300 ${logoHovered ? 'scale-105 shadow-sm border-gray-300' : 'border-gray-200'} border`}>
               <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="logo-grad-footer" x1="0%" y1="100%" x2="100%" y2="0%">
@@ -373,7 +373,7 @@ export function Footer() {
             <span className={`font-display text-2xl font-bold tracking-tight transition-all duration-300 ${
               logoHovered 
                 ? "text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600" 
-                : "text-charcoal"
+                : "text-foreground"
             }`}>
               Between
             </span>
@@ -425,7 +425,7 @@ export function Footer() {
           ))}
         </div>
       </div>
-      <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground relative z-10 bg-white/80 backdrop-blur-sm">
+      <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground relative z-10 bg-background/80 backdrop-blur-sm">
         © 2026 Between · Designed with care
       </div>
     </footer>

@@ -202,7 +202,7 @@ export default function JobSeekerSafetyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-[#2A2A2A] font-sans flex flex-col">
+    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
       <Header />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 space-y-12">
@@ -210,15 +210,15 @@ export default function JobSeekerSafetyPage() {
         {/* Upper header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-[#2A2A2A] flex items-center gap-2.5">
+            <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
               <ShieldCheck className="text-[#2563EB] w-8 h-8" />
               <span>Hiring Safety Audit Suite</span>
             </h1>
-            <p className="text-sm text-[#5c5c5c] mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Verify company legitimacy, detect ghost job listings, and protect your personal information from recruiting fraud.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs font-bold bg-white text-[#2563EB] px-3.5 py-2 rounded-xl border border-[#e6dfcd] shadow-sm shrink-0">
+          <div className="flex items-center gap-2 text-xs font-bold bg-card text-[#2563EB] dark:text-blue-400 px-3.5 py-2 rounded-xl border border-border shadow-sm shrink-0">
             <Sparkles size={14} />
             <span>AI Powered Legitimacy Scoring</span>
           </div>
@@ -228,13 +228,13 @@ export default function JobSeekerSafetyPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Left: Checker Form (7 columns) */}
-          <div className="lg:col-span-7 bg-white border border-[#e6dfcd] p-6 md:p-8 rounded-3xl shadow-sm space-y-6">
-            <div className="pb-4 border-b border-[#f5f4ef]">
-              <h3 className="font-extrabold text-base text-[#2A2A2A] flex items-center gap-2">
+          <div className="lg:col-span-7 bg-card border border-border p-6 md:p-8 rounded-3xl shadow-sm space-y-6">
+            <div className="pb-4 border-b border-border">
+              <h3 className="font-extrabold text-base text-foreground flex items-center gap-2">
                 <Terminal size={18} className="text-[#2563EB]" />
                 <span>Arbitrary Job Audit</span>
               </h3>
-              <p className="text-xs text-[#5c5c5c] mt-0.5">Paste any external job details to inspect them for legitimacy and safety flags.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Paste any external job details to inspect them for legitimacy and safety flags.</p>
             </div>
 
             <AnimatePresence mode="wait">
@@ -254,7 +254,7 @@ export default function JobSeekerSafetyPage() {
                       value={jobUrl}
                       onChange={(e) => setJobUrl(e.target.value)}
                       placeholder="Enter LinkedIn Job Post URL (automatically extracts title & description)..."
-                      className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-10 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner"
+                      className="w-full text-sm border border-border rounded-xl p-3 pl-10 focus:outline-none focus:border-[#2563EB] bg-background text-foreground font-medium shadow-inner"
                     />
                   </div>
 
@@ -262,7 +262,7 @@ export default function JobSeekerSafetyPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Company Name</label>
+                      <label className="block text-[10px] font-extrabold text-foreground uppercase tracking-wider mb-1">Company Name</label>
                       <div className="relative" onClick={(e) => e.stopPropagation()}>
                         <Building className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
                         <input
@@ -272,18 +272,18 @@ export default function JobSeekerSafetyPage() {
                           onChange={(e) => handleCompanyChange(e.target.value)}
                           onFocus={() => setShowSuggestions(true)}
                           placeholder={jobUrl.trim() ? "Locked: URL provided" : "e.g. Acme Corporation (Optional)"}
-                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 pl-9 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
+                          className="w-full text-sm border border-border rounded-xl p-3 pl-9 focus:outline-none focus:border-[#2563EB] bg-background text-foreground font-medium shadow-inner disabled:opacity-50"
                         />
                         {showSuggestions && suggestions.length > 0 && (
-                          <div className="absolute left-0 right-0 top-[110%] bg-white border border-[#e6dfcd] rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-60 overflow-y-auto text-left">
+                          <div className="absolute left-0 right-0 top-[110%] bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-60 overflow-y-auto text-left">
                             {suggestions.map((job, idx) => (
                               <div
                                 key={idx}
                                 onMouseDown={() => handleSelectSuggestion(job)}
-                                className="px-4 py-2 hover:bg-[#f5f4ef] cursor-pointer transition-colors border-b border-gray-100 last:border-0"
+                                className="px-4 py-2 hover:bg-accent/10 cursor-pointer transition-colors border-b border-border last:border-0"
                               >
-                                <p className="text-xs font-bold text-[#2A2A2A]">{job.company_name}</p>
-                                <p className="text-[10px] text-gray-400 mt-0.5">{job.job_title} • {job.preferred_locations?.join(', ') || 'Remote'}</p>
+                                <p className="text-xs font-bold text-foreground">{job.company_name}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">{job.job_title} • {job.preferred_locations?.join(', ') || 'Remote'}</p>
                               </div>
                             ))}
                           </div>
@@ -291,27 +291,27 @@ export default function JobSeekerSafetyPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Job Title</label>
+                      <label className="block text-[10px] font-extrabold text-foreground uppercase tracking-wider mb-1">Job Title</label>
                       <input
                         type="text"
                         disabled={!!jobUrl.trim()}
                         value={jobUrl.trim() ? "" : jobTitle}
                         onChange={(e) => setJobTitle(e.target.value)}
                         placeholder={jobUrl.trim() ? "Locked: URL provided" : "e.g. Remote Data Entry Assistant"}
-                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
+                        className="w-full text-sm border border-border rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-background text-foreground font-medium shadow-inner disabled:opacity-50"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Job Description Requirements</label>
+                    <label className="block text-[10px] font-extrabold text-foreground uppercase tracking-wider mb-1">Job Description Requirements</label>
                     <textarea
                       disabled={!!jobUrl.trim()}
                       value={jobUrl.trim() ? "" : jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
                       placeholder={jobUrl.trim() ? "Locked: URL provided" : "Paste the requirements, responsibilities, or contact paragraphs here..."}
                       rows={6}
-                      className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none disabled:opacity-50"
+                      className="w-full text-sm border border-border rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-background text-foreground font-medium shadow-inner resize-none disabled:opacity-50"
                     />
                   </div>
 
@@ -438,19 +438,19 @@ export default function JobSeekerSafetyPage() {
 
                   {/* Audit Statistics */}
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">Legitimacy Score</p>
+                    <div className="bg-accent/5 border border-border p-4 rounded-xl text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold">Legitimacy Score</p>
                       <h4 className={`text-2xl font-black mt-1 ${
-                        scannedResult.originality_score >= 80 ? "text-emerald-600" : scannedResult.originality_score >= 60 ? "text-amber-500" : "text-rose-500"
+                        scannedResult.originality_score >= 80 ? "text-emerald-500" : scannedResult.originality_score >= 60 ? "text-amber-500" : "text-rose-500"
                       }`}>{scannedResult.originality_score}%</h4>
                     </div>
-                    <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">AI Probability</p>
-                      <h4 className="text-2xl font-black text-[#2A2A2A] mt-1">{scannedResult.ai_probability}%</h4>
+                    <div className="bg-accent/5 border border-border p-4 rounded-xl text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold">AI Probability</p>
+                      <h4 className="text-2xl font-black text-foreground mt-1">{scannedResult.ai_probability}%</h4>
                     </div>
-                    <div className="bg-[#f5f4ef]/30 border border-[#e6dfcd] p-4 rounded-xl text-center">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wider font-extrabold">Plagiarism</p>
-                      <h4 className="text-2xl font-black text-[#2A2A2A] mt-1">{scannedResult.plagiarism_score}%</h4>
+                    <div className="bg-accent/5 border border-border p-4 rounded-xl text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold">Plagiarism</p>
+                      <h4 className="text-2xl font-black text-foreground mt-1">{scannedResult.plagiarism_score}%</h4>
                     </div>
                   </div>
 
@@ -492,16 +492,16 @@ export default function JobSeekerSafetyPage() {
                         }
                         
                         return (
-                          <div key={item.key} className={`p-4 border rounded-2xl bg-white shadow-sm flex items-start gap-3 ${borderClass}`}>
+                          <div key={item.key} className={`p-4 border rounded-2xl bg-card shadow-sm flex items-start gap-3 ${borderClass}`}>
                             <CheckCircle className={`w-5 h-5 shrink-0 mt-0.5 ${iconColor}`} />
                             <div className="space-y-1.5 flex-1">
                               <div className="flex justify-between items-start gap-2">
-                                <h6 className="text-[11px] font-extrabold text-[#2A2A2A] leading-tight">{item.question}</h6>
+                                <h6 className="text-[11px] font-extrabold text-foreground leading-tight">{item.question}</h6>
                                 <span className={`text-[9px] font-bold px-2 py-0.5 border rounded-full shrink-0 ${badgeClass}`}>
                                   {checkVal.status}
                                 </span>
                               </div>
-                              <p className="text-[10px] text-gray-400 leading-relaxed font-medium">
+                              <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">
                                 {checkVal.details}
                               </p>
                             </div>
@@ -511,8 +511,8 @@ export default function JobSeekerSafetyPage() {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                    <p className="text-xs font-semibold text-[#5c5c5c] leading-relaxed">
+                  <div className="p-4 bg-accent/10 rounded-xl border border-border">
+                    <p className="text-xs font-semibold text-muted-foreground leading-relaxed">
                       <strong>Audit Verdict Summary:</strong> {scannedResult.summary || "Listing safety scan completed."}
                     </p>
                   </div>
@@ -535,7 +535,7 @@ export default function JobSeekerSafetyPage() {
                     <button onClick={resetScanner} className="flex-1 bg-[#2A2A2A] hover:bg-black text-white font-bold text-xs py-3.5 rounded-xl transition-all">
                       Audit Another Listing
                     </button>
-                    <button onClick={resetScanner} className="flex-1 bg-white border border-[#e6dfcd] hover:bg-[#f5f4ef] text-[#2A2A2A] font-bold text-xs py-3.5 rounded-xl transition-all">
+                    <button onClick={resetScanner} className="flex-1 bg-background border border-border hover:bg-accent/10 text-foreground font-bold text-xs py-3.5 rounded-xl transition-all">
                       Clear Audit View
                     </button>
                   </div>
@@ -545,15 +545,15 @@ export default function JobSeekerSafetyPage() {
           </div>
 
           {/* Right: Red Flags educational board (5 columns) */}
-          <div className="lg:col-span-5 bg-white border border-[#e6dfcd] p-6 rounded-3xl shadow-sm flex flex-col justify-between space-y-6">
+          <div className="lg:col-span-5 bg-card border border-border p-6 rounded-3xl shadow-sm flex flex-col justify-between space-y-6">
             <div className="space-y-4">
-              <h3 className="font-bold text-base text-[#2A2A2A] pb-2 border-b border-[#f5f4ef]">
+              <h3 className="font-bold text-base text-foreground pb-2 border-b border-border">
                 Hiring Scam Red Flags
               </h3>
               
               <div className="space-y-4">
                 {redFlags.map((flag, idx) => (
-                  <div key={idx} className={`p-4 border rounded-2xl flex gap-3.5 ${flag.color}`}>
+                  <div key={idx} className={`p-4 border rounded-2xl flex gap-3.5 ${flag.color} dark:bg-opacity-10`}>
                     <flag.icon size={18} className="shrink-0 mt-0.5" />
                     <div>
                       <h4 className="font-extrabold text-xs leading-none">{flag.title}</h4>
@@ -564,8 +564,8 @@ export default function JobSeekerSafetyPage() {
               </div>
             </div>
 
-            <div className="bg-[#F0F6FF] border border-[#BFDBFE] p-4 rounded-2xl text-[11px] text-[#2563EB] font-medium leading-relaxed">
-              <h5 className="font-bold flex items-center gap-1.5 mb-1 text-sm">
+            <div className="bg-[#F0F6FF] dark:bg-blue-950/20 border border-[#BFDBFE] dark:border-blue-900/30 p-4 rounded-2xl text-[11px] text-[#2563EB] dark:text-blue-300 font-medium leading-relaxed">
+              <h5 className="font-bold flex items-center gap-1.5 mb-1 text-sm text-[#2563EB] dark:text-blue-300">
                 <Shield className="w-4 h-4" />
                 <span>Your Data is Protected</span>
               </h5>
