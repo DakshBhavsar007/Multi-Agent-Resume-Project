@@ -2,7 +2,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import './Footer.css';
-import logoWhite from '../assets/logo_white.png';
 import { SocialTooltip } from './ui/social-media';
 
 const Footer = () => {
@@ -55,8 +54,23 @@ const Footer = () => {
         viewport={{ once: true }}
       >
         <motion.div className="footer-brand" variants={itemVariants}>
-          <div className="footer-logo-wrapper relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
-            <img src={logoWhite} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-[#2A2A2A] p-1 border border-white/10">
+              <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="logo-grad-footer" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#2563eb" />
+                  </linearGradient>
+                </defs>
+                <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-footer)" strokeWidth="14" strokeLinecap="round" />
+                <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+                <circle cx="68" cy="32" r="24" fill="#2563eb" />
+              </svg>
+            </div>
+            <span className="font-display text-[22px] text-white tracking-tight font-semibold">
+              Between
+            </span>
           </div>
           <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', maxWidth: '240px', lineHeight: '1.6' }}>
             The next generation of AI-driven recruitment screening.

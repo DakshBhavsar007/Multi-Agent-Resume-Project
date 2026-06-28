@@ -55,7 +55,7 @@
 
 .btn-cta-primary {
   padding: 18px 40px;
-  background: var(--accent);
+  background: var(--text);
   color: var(--bg);
   border: none;
   border-radius: 12px;
