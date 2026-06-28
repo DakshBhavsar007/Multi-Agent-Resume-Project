@@ -261,6 +261,18 @@ def get_candidate(request, session_id, cand_id):
             # Re-read match_details in case it was updated
             match_details = candidate.match_details or {}
 
+            # Get other_skills
+            other_skills = []
+            if isinstance(candidate.normalized_skills, list):
+                matched_s = match_details.get("matched_skills", [])
+                missing_s = match_details.get("missing_skills", [])
+                matched_names = {s.get("canonical_skill") or s.get("skill") or str(s) if isinstance(s, dict) else str(s) for s in matched_s}
+                missing_names = {s.get("canonical_skill") or s.get("skill") or str(s) if isinstance(s, dict) else str(s) for s in missing_s}
+                for s in candidate.normalized_skills:
+                    s_name = _get_skill_name(s)
+                    if s_name and s_name not in matched_names and s_name not in missing_names:
+                        other_skills.append(s)
+
             return JsonResponse(success_response({
                 "id": str(candidate.id),
                 "name": candidate.name,
@@ -270,6 +282,12 @@ def get_candidate(request, session_id, cand_id):
                 "photo_url": candidate.resume_photo_path,
                 "match_score": candidate.match_score,
                 "match_details": match_details,
+                "skill_score": match_details.get("skill_score"),
+                "experience_score": match_details.get("experience_score"),
+                "location_score": match_details.get("location_score"),
+                "matched_skills": match_details.get("matched_skills", []),
+                "missing_skills": match_details.get("missing_skills", []),
+                "other_skills": other_skills[:10],
                 "recommendation": candidate.recommendation,
                 "total_experience_years": candidate.total_experience_years,
                 "normalized_skills": candidate.normalized_skills,

@@ -149,15 +149,19 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
     }
   };
 
-  const matchedSkills = activeCandidate?.matched_skills || [];
-  const missingSkills = activeCandidate?.missing_skills || [];
-  const otherSkills = activeCandidate?.other_skills || [];
+  const matchedSkills = activeCandidate?.matched_skills || activeCandidate?.match_details?.matched_skills || [];
+  const missingSkills = activeCandidate?.missing_skills || activeCandidate?.match_details?.missing_skills || [];
+  const otherSkills = activeCandidate?.other_skills || activeCandidate?.match_details?.other_skills || [];
   const normalizedSkills = activeCandidate?.normalized_skills || [];
   const allSkills = matchedSkills.length > 0 || missingSkills.length > 0 ? [...matchedSkills, ...missingSkills] : normalizedSkills;
   const hasSkills = allSkills.length > 0 || otherSkills.length > 0;
   const experience = activeCandidate?.experience || [];
   const education = activeCandidate?.education || [];
   const expYears = activeCandidate?.experience_years ?? activeCandidate?.total_experience_years ?? 0;
+
+  const skillScore = activeCandidate?.skill_score ?? activeCandidate?.match_details?.skill_score ?? 0;
+  const experienceScore = activeCandidate?.experience_score ?? activeCandidate?.match_details?.experience_score ?? 0;
+  const locationScore = activeCandidate?.location_score ?? activeCandidate?.match_details?.location_score ?? 0;
 
   // New deeply extracted fields
   const rawData = activeCandidate?.raw_resume_data || {};
@@ -533,28 +537,28 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                     <div>
                       <div className="flex justify-between text-xs font-bold text-gray-600 mb-1.5">
                         <span>Skills Match</span>
-                        <span className="text-[#2563EB]">{activeCandidate?.skill_score || 0}%</span>
+                        <span className="text-[#2563EB]">{skillScore}%</span>
                       </div>
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#2563EB]" style={{width: `${activeCandidate?.skill_score||0}%`}}></div>
+                        <div className="h-full bg-[#2563EB]" style={{width: `${skillScore}%`}}></div>
                       </div>
                     </div>
                     <div>
                       <div className="flex justify-between text-xs font-bold text-gray-600 mb-1.5">
                         <span>Experience Match</span>
-                        <span className="text-[#2563EB]">{activeCandidate?.experience_score || 0}%</span>
+                        <span className="text-[#2563EB]">{experienceScore}%</span>
                       </div>
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#2563EB]" style={{width: `${activeCandidate?.experience_score||0}%`}}></div>
+                        <div className="h-full bg-[#2563EB]" style={{width: `${experienceScore}%`}}></div>
                       </div>
                     </div>
                     <div>
                       <div className="flex justify-between text-xs font-bold text-gray-600 mb-1.5">
                         <span>Location Match</span>
-                        <span className="text-[#2563EB]">{activeCandidate?.location_score || 0}%</span>
+                        <span className="text-[#2563EB]">{locationScore}%</span>
                       </div>
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#2563EB]" style={{width: `${activeCandidate?.location_score||0}%`}}></div>
+                        <div className="h-full bg-[#2563EB]" style={{width: `${locationScore}%`}}></div>
                       </div>
                     </div>
                   </div>
