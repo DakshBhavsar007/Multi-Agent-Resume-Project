@@ -411,10 +411,32 @@ const response = await fetch(
       <footer className="bg-charcoal text-white/70 py-16">
          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex flex-col items-center md:items-start gap-2">
-               <div className="relative flex shrink-0 items-center w-64 h-16 overflow-hidden">
-                  <img src={logoBlack} alt="Between Logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[260px] w-auto max-w-none object-contain pointer-events-none" />
-               </div>
-               <p className="text-sm mt-1">Built for smarter hiring.</p>
+              <div className="flex items-center gap-2 text-white">
+                <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+                  <svg className="w-7 h-7" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="10" cy="16" r="6" stroke="url(#dev-logo-grad-1)" strokeWidth="2.5" />
+                    <circle cx="22" cy="16" r="6" stroke="url(#dev-logo-grad-2)" strokeWidth="2.5" />
+                    <line x1="10" y1="16" x2="22" y2="16" stroke="url(#dev-logo-grad-line)" strokeWidth="2.5" />
+                    <defs>
+                      <linearGradient id="dev-logo-grad-1" x1="4" y1="10" x2="16" y2="22" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#2563EB" />
+                        <stop offset="1" stopColor="#3B82F6" />
+                      </linearGradient>
+                      <linearGradient id="dev-logo-grad-2" x1="16" y1="10" x2="28" y2="22" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#EF4444" />
+                        <stop offset="1" stopColor="#F87171" />
+                      </linearGradient>
+                      <linearGradient id="dev-logo-grad-line" x1="10" y1="16" x2="22" y2="16" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#2563EB" />
+                        <stop offset="0.5" stopColor="#8B5CF6" />
+                        <stop offset="1" stopColor="#EF4444" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <span className="font-display text-lg font-black tracking-tight text-white">Between</span>
+              </div>
+              <p className="text-sm mt-1">Built for smarter hiring.</p>
             </div>
             
              <div className="flex flex-wrap justify-center gap-8 text-sm font-medium">
