@@ -142,8 +142,19 @@
   text-align: left;
 }
 
-.product-dropdown-container:hover .product-dropdown-menu {
-  display: flex;
+.product-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -15px; /* Bridges the translateY(10px) gap */
+  left: 0;
+  width: 100%;
+  height: 15px;
+  background: transparent;
+}
+
+.product-dropdown-container:hover .product-dropdown-menu,
+.product-dropdown-menu.open {
+  display: flex !important;
 }
 
 .product-dropdown-item {
