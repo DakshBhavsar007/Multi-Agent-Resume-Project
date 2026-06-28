@@ -197,23 +197,52 @@ body {
   background-color: var(--card) !important;
 }
 
-.dark .bg-gray-50 {
+.dark .bg-cream {
   background-color: var(--bg) !important;
 }
 
-.dark .bg-gray-100 {
+.dark .bg-gray-50,
+.dark [class*="bg-gray-50"] {
+  background-color: var(--bg) !important;
+}
+
+.dark .bg-gray-100,
+.dark [class*="bg-gray-100"] {
   background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+.dark .bg-blue-50,
+.dark .bg-blue-100,
+.dark .bg-blue-200,
+.dark [class*="bg-blue-50"],
+.dark [class*="bg-blue-100"] {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .bg-\[\#FAFAFA\],
+.dark .bg-\[\#FAFAFA\]\/50,
+.dark .bg-\[\#FAFAFA\]\/80 {
+  background-color: var(--bg) !important;
 }
 
 .dark .border-gray-200,
 .dark .border-gray-100,
 .dark .border-slate-200,
-.dark .border-slate-100 {
+.dark .border-slate-100,
+.dark .border-\[\#e6dfcd\],
+.dark .border-\[\#f5f4ef\] {
   border-color: var(--border) !important;
+}
+
+.dark .border-blue-100,
+.dark .border-blue-100\/50 {
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 .dark .text-charcoal,
 .dark .text-\[\#111111\],
+.dark .text-\[\#2A2A2A\],
+.dark .text-\[\#5c5c5c\],
 .dark .text-slate-900,
 .dark .text-slate-800,
 .dark .text-slate-700,
@@ -238,23 +267,10 @@ body {
   background-color: rgba(255, 255, 255, 0.06) !important;
 }
 
-.dark .bg-blue-50,
-.dark .bg-blue-100,
-.dark .bg-blue-200,
-.dark .bg-blue-50\/10,
-.dark .bg-blue-50\/30 {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+.dark textarea,
+.dark input {
+  color: var(--foreground) !important;
 }
 
-.dark .bg-\[\#FAFAFA\],
-.dark .bg-\[\#FAFAFA\]\/50,
-.dark .bg-\[\#FAFAFA\]\/80 {
-  background-color: var(--bg) !important;
-}
-
-.dark .border-blue-100,
-.dark .border-blue-100\/50 {
-  border-color: rgba(255, 255, 255, 0.15) !important;
-}
 
 
