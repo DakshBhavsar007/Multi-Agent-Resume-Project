@@ -3,10 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import './HowItWorks.css';
 
-const step1Img = '/assets/step1.png';
-const step2Img = '/assets/step2.png';
-const step3Img = '/assets/step3.png';
-const step4Img = '/assets/step4.png';
+const step1Img = '/assets/step1.webp';
+const step2Img = '/assets/step2.webp';
+const step3Img = '/assets/step3.webp';
+const step4Img = '/assets/step4.webp';
 
 const words = ["STARTUPS", "RECRUITERS", "HR TEAMS", "DEVELOPERS"];
 
@@ -57,6 +57,7 @@ const FeatureCard = ({ step, index }) => {
           src={step.image} 
           alt={step.title} 
           className="process-image" 
+          loading="lazy"
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.4 }}
         />

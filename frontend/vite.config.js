@@ -15,6 +15,32 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('framer-motion')) {
+                return 'vendor-framer-motion';
+              }
+              if (id.includes('gsap')) {
+                return 'vendor-gsap';
+              }
+              if (id.includes('lucide-react')) {
+                return 'vendor-lucide';
+              }
+              if (id.includes('recharts')) {
+                return 'vendor-recharts';
+              }
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor-react-core';
+              }
+              return 'vendor-libs';
+            }
+          }
+        }
+      }
+    },
     envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
     define: {
       'process.env.NEXT_PUBLIC_API_URL': (env.NEXT_PUBLIC_API_URL || env.VITE_API_URL)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
@@ -7,66 +7,71 @@ import { useSeekerAuthStore } from './stores/seekerAuthStore';
 import { usePortalAuthStore } from './stores/portalAuthStore';
 
 import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import AuthVerifyPage from './pages/AuthVerifyPage';
-import GitHubCallbackPage from './pages/GitHubCallbackPage';
-import DashboardLayout from './pages/DashboardLayout';
-import DashboardHome from './pages/DashboardHome';
-import SessionsPage from './pages/SessionsPage';
-import NewSessionPage from './pages/NewSessionPage';
-import SessionWorkspacePage from './pages/SessionWorkspacePage';
-import SmartAnalyzerPage from './pages/SmartAnalyzerPage';
-import SettingsPage from './pages/SettingsPage';
-import AiRecruiterPage from './pages/AiRecruiterPage';
-import GoogleCallbackPage from './pages/GoogleCallbackPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import FraudDetectionPage from './pages/FraudDetectionPage';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy load pages for performance optimization
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const AuthVerifyPage = lazy(() => import('./pages/AuthVerifyPage'));
+const GitHubCallbackPage = lazy(() => import('./pages/GitHubCallbackPage'));
+const DashboardLayout = lazy(() => import('./pages/DashboardLayout'));
+const DashboardHome = lazy(() => import('./pages/DashboardHome'));
+const SessionsPage = lazy(() => import('./pages/SessionsPage'));
+const NewSessionPage = lazy(() => import('./pages/NewSessionPage'));
+const SessionWorkspacePage = lazy(() => import('./pages/SessionWorkspacePage'));
+const SmartAnalyzerPage = lazy(() => import('./pages/SmartAnalyzerPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const AiRecruiterPage = lazy(() => import('./pages/AiRecruiterPage'));
+const GoogleCallbackPage = lazy(() => import('./pages/GoogleCallbackPage'));
+const FraudDetectionPage = lazy(() => import('./pages/FraudDetectionPage'));
 
 // Public pages
-import AboutPage from './pages/public/AboutPage';
-import ContactPage from './pages/public/ContactPage';
-import TermsPage from './pages/public/TermsPage';
-import RefundPolicyPage from './pages/public/RefundPolicyPage';
+const AboutPage = lazy(() => import('./pages/public/AboutPage'));
+const ContactPage = lazy(() => import('./pages/public/ContactPage'));
+const TermsPage = lazy(() => import('./pages/public/TermsPage'));
+const RefundPolicyPage = lazy(() => import('./pages/public/RefundPolicyPage'));
 
-import UserHome from './pages/user/UserHome';
-import UserJobs from './pages/user/UserJobs';
-import UserJobDetail from './pages/user/UserJobDetail';
-import JobsTrendsPage from './pages/JobsTrendsPage';
-import JobSeekerSafetyPage from './pages/JobSeekerSafetyPage';
-import ResumeBuilderLanding from './pages/user/ResumeBuilderLanding';
-import ResumeEditor from './pages/user/ResumeEditor';
+// Seeker Pages
+const UserHome = lazy(() => import('./pages/user/UserHome'));
+const UserJobs = lazy(() => import('./pages/user/UserJobs'));
+const UserJobDetail = lazy(() => import('./pages/user/UserJobDetail'));
+const JobsTrendsPage = lazy(() => import('./pages/JobsTrendsPage'));
+const JobSeekerSafetyPage = lazy(() => import('./pages/JobSeekerSafetyPage'));
+const ResumeBuilderLanding = lazy(() => import('./pages/user/ResumeBuilderLanding'));
+const ResumeEditor = lazy(() => import('./pages/user/ResumeEditor'));
 
 // Developer Portal imports
-import DeveloperLandingPage from './pages/developer/DeveloperLandingPage';
-import DeveloperLoginPage from './pages/developer/DeveloperLoginPage';
-import DeveloperRegisterPage from './pages/developer/DeveloperRegisterPage';
-import DeveloperPortalLayout from './pages/developer/DeveloperPortalLayout';
-import DeveloperDashboard from './pages/developer/DeveloperDashboard';
-import DeveloperKeys from './pages/developer/DeveloperKeys';
-import DeveloperUsage from './pages/developer/DeveloperUsage';
-import DeveloperBilling from './pages/developer/DeveloperBilling';
-import DeveloperWebhooks from './pages/developer/DeveloperWebhooks';
-import DeveloperEmbed from './pages/developer/DeveloperEmbed';
-import DeveloperDocs from './pages/developer/DeveloperDocs';
-import DeveloperSettings from './pages/developer/DeveloperSettings';
+const DeveloperLandingPage = lazy(() => import('./pages/developer/DeveloperLandingPage'));
+const DeveloperLoginPage = lazy(() => import('./pages/developer/DeveloperLoginPage'));
+const DeveloperRegisterPage = lazy(() => import('./pages/developer/DeveloperRegisterPage'));
+const DeveloperPortalLayout = lazy(() => import('./pages/developer/DeveloperPortalLayout'));
+const DeveloperDashboard = lazy(() => import('./pages/developer/DeveloperDashboard'));
+const DeveloperKeys = lazy(() => import('./pages/developer/DeveloperKeys'));
+const DeveloperUsage = lazy(() => import('./pages/developer/DeveloperUsage'));
+const DeveloperBilling = lazy(() => import('./pages/developer/DeveloperBilling'));
+const DeveloperWebhooks = lazy(() => import('./pages/developer/DeveloperWebhooks'));
+const DeveloperEmbed = lazy(() => import('./pages/developer/DeveloperEmbed'));
+const DeveloperDocs = lazy(() => import('./pages/developer/DeveloperDocs'));
+const DeveloperSettings = lazy(() => import('./pages/developer/DeveloperSettings'));
 
-import JobSeekerLoginPage from './pages/seeker/JobSeekerLoginPage';
-import JobSeekerRegisterPage from './pages/seeker/JobSeekerRegisterPage';
-import MyResumePage from './pages/seeker/MyResumePage';
-import MyApplicationsPage from './pages/seeker/MyApplicationsPage';
-import NotificationsPage from './pages/seeker/NotificationsPage';
-import SeekerBillingPage from './pages/seeker/SeekerBillingPage';
-import UserCompanies from './pages/user/UserCompanies';
-import UserCompanyDetail from './pages/user/UserCompanyDetail';
-import UserProfile from './pages/user/UserProfile';
-import UserDashboard from './pages/user/UserDashboard';
-import UserUploadResume from './pages/user/UserUploadResume';
-import UserApply from './pages/user/UserApply';
-import UserApplications from './pages/user/UserApplications';
-import NotFoundPage from './pages/NotFoundPage';
-import ErrorBoundary from './components/ErrorBoundary';
-import ResetPasswordPage from './pages/ResetPasswordPage';
+// Seeker specific sub-pages
+const JobSeekerLoginPage = lazy(() => import('./pages/seeker/JobSeekerLoginPage'));
+const JobSeekerRegisterPage = lazy(() => import('./pages/seeker/JobSeekerRegisterPage'));
+const MyResumePage = lazy(() => import('./pages/seeker/MyResumePage'));
+const MyApplicationsPage = lazy(() => import('./pages/seeker/MyApplicationsPage'));
+const NotificationsPage = lazy(() => import('./pages/seeker/NotificationsPage'));
+const SeekerBillingPage = lazy(() => import('./pages/seeker/SeekerBillingPage'));
+const UserCompanies = lazy(() => import('./pages/user/UserCompanies'));
+const UserCompanyDetail = lazy(() => import('./pages/user/UserCompanyDetail'));
+const UserProfile = lazy(() => import('./pages/user/UserProfile'));
+const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
+const UserUploadResume = lazy(() => import('./pages/user/UserUploadResume'));
+const UserApply = lazy(() => import('./pages/user/UserApply'));
+const UserApplications = lazy(() => import('./pages/user/UserApplications'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+
 
 function ScrollToTop() {
   const location = useLocation();
@@ -183,7 +188,15 @@ export default function App() {
       />
       <Router>
         <ScrollToTop />
-        <Routes>
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen bg-[#09090b]">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-10 h-10 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+              <p className="text-zinc-400 text-sm font-medium">Loading Between...</p>
+            </div>
+          </div>
+        }>
+          <Routes>
            {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -263,6 +276,7 @@ export default function App() {
           {/* Fallback */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </Suspense>
       </Router>
     </QueryClientProvider>
     </ErrorBoundary>

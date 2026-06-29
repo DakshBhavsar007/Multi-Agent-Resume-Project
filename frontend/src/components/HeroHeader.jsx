@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import './HeroHeader.css';
 
-const heroImg = '/assets/hero-image.png';
+const heroImg = '/assets/hero-image.webp';
 
 const HeroHeader = ({ onStart, isLoggedIn }) => {
   const navigate = useNavigate();
@@ -168,7 +168,7 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
       </div>
 
       <motion.div className="hero-image-container" style={{ scale, rotateX }}>
-        <img src={heroImg} alt="Dashboard" className="hero-image" />
+        <img src={heroImg} alt="Dashboard" className="hero-image" fetchpriority="high" />
         <div className="hero-image-vignette" />
       </motion.div>
     </motion.section>

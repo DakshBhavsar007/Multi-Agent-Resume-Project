@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, PlayCircle, Code, Users, Search, Target } from 'lucide-react';
 import './DetailedShowcase.css';
 
-const apiImg = '/assets/developer-api.png';
+const apiImg = '/assets/developer-api.webp';
 
 const SimulatedDashboard = () => {
   const candidates = [
@@ -139,7 +139,7 @@ const DetailedShowcase = () => {
                   whileHover={{ scale: 1.02, rotate: 1 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <img src={apiImg} alt="API Documentation" className="api-frame" />
+                  <img src={apiImg} alt="API Documentation" className="api-frame" loading="lazy" />
                 </motion.div>
               </div>
             </motion.div>
