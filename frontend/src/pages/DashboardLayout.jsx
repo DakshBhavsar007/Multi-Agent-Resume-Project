@@ -22,7 +22,8 @@ import {
   Building
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
-import { authAPI, sessionsAPI, candidatesAPI } from '../lib/api';
+import { authAPI, sessionsAPI, candidatesAPI, billingAPI } from '../lib/api';
+import { useQuery } from '@tanstack/react-query';
 import RateLimitBanner from '../components/RateLimitBanner';
 import { OnboardingTour, useTour } from '../components/OnboardingTour';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
@@ -269,9 +270,28 @@ export default function DashboardLayout() {
   ];
 
   // Parses usage configuration
-  const parsesUsed = 247;
-  const parsesTotal = 1000;
-  const parsePercent = (parsesUsed / parsesTotal) * 100;
+  const { data: sessionsData } = useQuery({
+    queryKey: ['sessions-all'],
+    queryFn: () => sessionsAPI.list(),
+    retry: false
+  });
+
+  const { data: currentSub } = useQuery({
+    queryKey: ["recruiter-billing-current"],
+    queryFn: async () => {
+      try {
+        return await billingAPI.current();
+      } catch (e) {
+        return { plan: company?.tier || "free", status: "active", limits: { resumes: 100 } };
+      }
+    },
+    retry: false
+  });
+
+  const parsesUsed = sessionsData ? sessionsData.reduce((acc, s) => acc + (s.total_candidates || 0), 0) : 0;
+  const parsesTotal = currentSub?.limits?.resumes || 100;
+  const isUnlimited = parsesTotal === -1;
+  const parsePercent = isUnlimited ? 0 : Math.min(100, (parsesUsed / parsesTotal) * 100);
 
   const sideWidth = isDesktop ? (open ? 260 : 72) : 0;
 
@@ -651,11 +671,13 @@ export default function DashboardLayout() {
                 className="text-xs text-gray-500 px-2 cursor-pointer hover:opacity-80 transition group"
               >
                 <div className="flex justify-between items-center mb-1">
-                  <span className="group-hover:text-accent font-semibold transition-colors">Usage: {parsesUsed}/{parsesTotal} parses</span>
+                  <span className="group-hover:text-accent font-semibold transition-colors">Usage: {parsesUsed} / {isUnlimited ? 'Unlimited' : parsesTotal} parses</span>
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-zinc-800 h-1 rounded-full overflow-hidden">
-                  <div className="bg-[#111111] dark:bg-white h-full rounded-full animate-pulse" style={{ width: `${parsePercent}%`, animationDuration: '3s' }}></div>
-                </div>
+                {!isUnlimited && (
+                  <div className="w-full bg-gray-100 dark:bg-zinc-800 h-1 rounded-full overflow-hidden">
+                    <div className="bg-[#111111] dark:bg-white h-full rounded-full animate-pulse" style={{ width: `${parsePercent}%`, animationDuration: '3s' }}></div>
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleLogout}
