@@ -87,16 +87,16 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
                     <path d="m6 9 6 6 6-6"/>
                   </svg>
                 </button>
-                <div className={`product-dropdown-menu ${productDropdownOpen ? 'open' : ''}`}>
-                  <a href="/#how-it-works" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item">
+                <div className={`product-dropdown-menu skeuo-dropdown-panel ${productDropdownOpen ? 'open' : ''}`}>
+                  <a href="/#how-it-works" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item skeuo-dropdown-item">
                     <span className="product-dropdown-item-title">AI Recruiter</span>
                     <span className="product-dropdown-item-desc">Automated resume ranking & matching</span>
                   </a>
-                  <a href="/#features" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item">
+                  <a href="/#features" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item skeuo-dropdown-item">
                     <span className="product-dropdown-item-title">Smart Analyzer</span>
                     <span className="product-dropdown-item-desc">Deep-dive candidate profiles</span>
                   </a>
-                  <a href="/#detailed-showcase" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item">
+                  <a href="/#detailed-showcase" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item skeuo-dropdown-item">
                     <span className="product-dropdown-item-title">Fraud Protection</span>
                     <span className="product-dropdown-item-desc">Detect fake resumes & plagiarisms</span>
                   </a>
