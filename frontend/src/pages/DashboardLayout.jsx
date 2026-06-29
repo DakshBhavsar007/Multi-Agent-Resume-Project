@@ -241,6 +241,27 @@ export default function DashboardLayout() {
     setSearchOpen(false);
   }, [pathname, isDesktop]);
 
+  // Parses usage configuration
+  const { data: sessionsData } = useQuery({
+    queryKey: ['sessions-all'],
+    queryFn: () => sessionsAPI.list(),
+    enabled: initDone,
+    retry: false
+  });
+
+  const { data: currentSub } = useQuery({
+    queryKey: ["recruiter-billing-current"],
+    queryFn: async () => {
+      try {
+        return await billingAPI.current();
+      } catch (e) {
+        return { plan: company?.tier || "free", status: "active", limits: { resumes: 100 } };
+      }
+    },
+    enabled: initDone,
+    retry: false
+  });
+
   if (!initDone) return null; // Wait for hydrate
 
   const handleLogout = () => {
@@ -268,25 +289,6 @@ export default function DashboardLayout() {
     { to: "/dashboard/sessions", label: "Sessions", icon: Layers, tourAttr: 'nav-sessions' },
     { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, tourAttr: 'nav-settings' },
   ];
-
-  // Parses usage configuration
-  const { data: sessionsData } = useQuery({
-    queryKey: ['sessions-all'],
-    queryFn: () => sessionsAPI.list(),
-    retry: false
-  });
-
-  const { data: currentSub } = useQuery({
-    queryKey: ["recruiter-billing-current"],
-    queryFn: async () => {
-      try {
-        return await billingAPI.current();
-      } catch (e) {
-        return { plan: company?.tier || "free", status: "active", limits: { resumes: 100 } };
-      }
-    },
-    retry: false
-  });
 
   const parsesUsed = sessionsData ? sessionsData.reduce((acc, s) => acc + (s.total_candidates || 0), 0) : 0;
   const parsesTotal = currentSub?.limits?.resumes || 100;
