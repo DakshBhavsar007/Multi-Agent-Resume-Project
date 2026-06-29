@@ -218,7 +218,7 @@ export function Header() {
               </button>
 
               {toolsOpen && (
-                <div className="absolute left-0 mt-2 w-52 rounded-xl border border-border bg-background/95 backdrop-blur-md p-1.5 shadow-lg z-20 flex flex-col gap-0.5">
+                <div className="absolute left-0 mt-2 w-52 rounded-xl p-1.5 z-20 flex flex-col gap-0.5 skeuo-dropdown-panel">
                   {filteredTools.map((l) => {
                     const Icon = l.icon;
                     const active = pathname === l.to;
@@ -229,14 +229,14 @@ export function Header() {
                         to={l.to}
                         data-tour={tourId}
                         onClick={() => setToolsOpen(false)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item ${
                           active
-                            ? "bg-muted text-foreground font-semibold"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            ? "bg-[#faf9f6] dark:bg-[#212126] text-foreground font-semibold"
+                            : "text-muted-foreground"
                         }`}
                       >
-                        <Icon size={14} className="text-muted-foreground shrink-0" />
-                        <span>{l.label}</span>
+                        <Icon size={14} className="text-muted-foreground shrink-0 transition-colors" />
+                        <span className="transition-colors">{l.label}</span>
                       </Link>
                     );
                   })}

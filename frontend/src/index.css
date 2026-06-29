@@ -97,3 +97,72 @@ body {
   border-color: #222226 !important;
 }
 
+/* ── Skeuomorphic Dropdown & Items ───────────────────────────────────────── */
+
+/* Skeuomorphic dropdown panel */
+.skeuo-dropdown-panel {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  border: 1px solid #d1c9b7 !important;
+  box-shadow: 
+    0 10px 25px -5px rgba(0,0,0,0.08),
+    0 8px 10px -6px rgba(0,0,0,0.08),
+    inset 0 1.5px 0px rgba(255,255,255,1.0) !important;
+}
+
+.dark .skeuo-dropdown-panel {
+  background-color: #161619 !important;
+  border-color: #2a2a30 !important;
+  box-shadow: 
+    0 10px 25px -5px rgba(0,0,0,0.25),
+    0 8px 10px -6px rgba(0,0,0,0.25),
+    inset 0 1.5px 0px rgba(255,255,255,0.04) !important;
+}
+
+/* Skeuomorphic dropdown item */
+.skeuo-dropdown-item {
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid transparent !important;
+  background-color: transparent !important;
+}
+
+.skeuo-dropdown-item:hover {
+  transform: translateY(-2px) !important;
+  background-color: #faf9f6 !important;
+  border-color: #d1c9b7 !important;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.08), 
+    0 2px 4px -1px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255,255,255,1.0) !important;
+}
+
+.dark .skeuo-dropdown-item:hover {
+  background-color: #212126 !important;
+  border-color: #383840 !important;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.2), 
+    0 2px 4px -1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+
+.skeuo-dropdown-item:active {
+  transform: translateY(1px) !important;
+  background-color: #f1ebd9 !important;
+  border-color: #bfae95 !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .skeuo-dropdown-item:active {
+  background-color: #101012 !important;
+  border-color: #1c1c20 !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Force the text/icon to turn blue on active */
+.skeuo-dropdown-item:active,
+.skeuo-dropdown-item:active * {
+  color: #2563eb !important;
+}
+
+

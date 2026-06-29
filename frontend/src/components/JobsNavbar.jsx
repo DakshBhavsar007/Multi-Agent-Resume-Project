@@ -201,56 +201,56 @@ export default function JobsNavbar({ onUploadClick }) {
             </button>
 
             {toolsOpen && (
-              <div className="absolute left-0 mt-2 w-52 rounded-xl border border-[#e6dfcd] bg-white p-1.5 shadow-lg z-20 flex flex-col gap-0.5 dark:bg-[#131316] dark:border-[#222226]">
+              <div className="absolute left-0 mt-2 w-52 rounded-xl p-1.5 z-20 flex flex-col gap-0.5 skeuo-dropdown-panel">
                 {isSeekerLoggedIn && (
                   <Link
                     to="/jobs/resume"
                     onClick={() => setToolsOpen(false)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item ${
                       isActive('/jobs/resume')
-                        ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
-                        : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                        ? 'bg-[#faf9f6] dark:bg-[#212126] text-[#111111] font-semibold dark:text-[#f3f4f6]'
+                        : 'text-[#5c5c5c]'
                     }`}
                   >
-                    <Sparkles size={14} className="text-gray-400 shrink-0" />
-                    <span>AI Resume Enhancer</span>
+                    <Sparkles size={14} className="text-gray-400 shrink-0 transition-colors" />
+                    <span className="transition-colors">AI Resume Enhancer</span>
                   </Link>
                 )}
                 <Link
                   to="/jobs/companies"
                   onClick={() => setToolsOpen(false)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item ${
                     isActive('/jobs/companies')
-                      ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
-                      : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                      ? 'bg-[#faf9f6] dark:bg-[#212126] text-[#111111] font-semibold dark:text-[#f3f4f6]'
+                      : 'text-[#5c5c5c]'
                   }`}
                 >
-                  <Building2 size={14} className="text-gray-400 shrink-0" />
-                  <span>Companies</span>
+                  <Building2 size={14} className="text-gray-400 shrink-0 transition-colors" />
+                  <span className="transition-colors">Companies</span>
                 </Link>
                 <Link
                   to="/jobs/trends"
                   onClick={() => setToolsOpen(false)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item ${
                     isActive('/jobs/trends')
-                      ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
-                      : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                      ? 'bg-[#faf9f6] dark:bg-[#212126] text-[#111111] font-semibold dark:text-[#f3f4f6]'
+                      : 'text-[#5c5c5c]'
                   }`}
                 >
-                  <TrendingUp size={14} className="text-gray-400 shrink-0" />
-                  <span>Market Trends</span>
+                  <TrendingUp size={14} className="text-gray-400 shrink-0 transition-colors" />
+                  <span className="transition-colors">Market Trends</span>
                 </Link>
                 <Link
                   to="/jobs/safety-checker"
                   onClick={() => setToolsOpen(false)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item ${
                     isActive('/jobs/safety-checker')
-                      ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
-                      : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                      ? 'bg-[#faf9f6] dark:bg-[#212126] text-[#111111] font-semibold dark:text-[#f3f4f6]'
+                      : 'text-[#5c5c5c]'
                   }`}
                 >
-                  <Shield size={14} className="text-gray-400 shrink-0" />
-                  <span>Hiring Safety</span>
+                  <Shield size={14} className="text-gray-400 shrink-0 transition-colors" />
+                  <span className="transition-colors">Hiring Safety</span>
                 </Link>
               </div>
             )}
