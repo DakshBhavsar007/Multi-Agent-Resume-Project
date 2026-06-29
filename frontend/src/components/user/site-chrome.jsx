@@ -174,10 +174,12 @@ export function Header() {
     <div className="sticky top-0 z-40 w-full transition-all duration-300 p-0 pointer-events-none">
       <header className={`mx-auto transition-all duration-300 pointer-events-auto backdrop-blur-xl ${
         isScrolled
-          ? "max-w-5xl mt-3 rounded-full border border-border bg-background/80 shadow-lg"
+          ? "max-w-7xl mt-3 rounded-full border border-border bg-background/80 shadow-lg"
           : "w-full border-b border-border/60 bg-background/80"
       }`}>
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+      <div className={`mx-auto flex max-w-7xl items-center gap-4 py-3 transition-all duration-300 ${
+        isScrolled ? "px-8" : "px-4 sm:px-6"
+      }`}>
         <Link to="/jobs" className="flex items-center gap-2 pr-1 sm:pr-3 shrink-0 no-underline text-inherit">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-[#2A2A2A] p-1">
             <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
