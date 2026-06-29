@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, ChevronDown, Info } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
@@ -138,6 +138,17 @@ export function Header() {
   };
 
   const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(event.target)) {
+        setToolsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const filteredLinks = links.filter((l) => {
     if (l.to === "/jobs/applications" || l.to === "/jobs/profile" || l.to === "/jobs/billing") {
@@ -193,7 +204,7 @@ export function Header() {
 
           {/* Tools Dropdown */}
           {filteredTools.length > 0 && (
-            <div className="relative">
+            <div className="relative" ref={toolsDropdownRef}>
               <button
                 onClick={() => setToolsOpen(!toolsOpen)}
                 className={`pill px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition flex items-center gap-1 ${
@@ -207,32 +218,29 @@ export function Header() {
               </button>
 
               {toolsOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setToolsOpen(false)} />
-                  <div className="absolute left-0 mt-2 w-52 rounded-xl border border-border bg-background/95 backdrop-blur-md p-1.5 shadow-lg z-20 flex flex-col gap-0.5">
-                    {filteredTools.map((l) => {
-                      const Icon = l.icon;
-                      const active = pathname === l.to;
-                      const tourId = `seeker-nav-${l.label.toLowerCase().replace(/\s+/g, '-')}`;
-                      return (
-                        <Link
-                          key={l.to}
-                          to={l.to}
-                          data-tour={tourId}
-                          onClick={() => setToolsOpen(false)}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                            active
-                              ? "bg-muted text-foreground font-semibold"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                          }`}
-                        >
-                          <Icon size={14} className="text-muted-foreground shrink-0" />
-                          <span>{l.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </>
+                <div className="absolute left-0 mt-2 w-52 rounded-xl border border-border bg-background/95 backdrop-blur-md p-1.5 shadow-lg z-20 flex flex-col gap-0.5">
+                  {filteredTools.map((l) => {
+                    const Icon = l.icon;
+                    const active = pathname === l.to;
+                    const tourId = `seeker-nav-${l.label.toLowerCase().replace(/\s+/g, '-')}`;
+                    return (
+                      <Link
+                        key={l.to}
+                        to={l.to}
+                        data-tour={tourId}
+                        onClick={() => setToolsOpen(false)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          active
+                            ? "bg-muted text-foreground font-semibold"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                      >
+                        <Icon size={14} className="text-muted-foreground shrink-0" />
+                        <span>{l.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}

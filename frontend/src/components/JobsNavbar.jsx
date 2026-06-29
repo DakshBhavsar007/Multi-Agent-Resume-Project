@@ -10,6 +10,22 @@ export default function JobsNavbar({ onUploadClick }) {
   const [profile, setProfile] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const toolsDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(event.target)) {
+        setToolsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const isSeekerLoggedIn = !!localStorage.getItem('vish_seeker_token');
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -171,7 +187,7 @@ export default function JobsNavbar({ onUploadClick }) {
           )}
 
           {/* Tools Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={toolsDropdownRef}>
             <button
               onClick={() => setToolsOpen(!toolsOpen)}
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
@@ -185,61 +201,58 @@ export default function JobsNavbar({ onUploadClick }) {
             </button>
 
             {toolsOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setToolsOpen(false)} />
-                <div className="absolute left-0 mt-2 w-52 rounded-xl border border-[#e6dfcd] bg-white p-1.5 shadow-lg z-20 flex flex-col gap-0.5 dark:bg-[#131316] dark:border-[#222226]">
-                  {isSeekerLoggedIn && (
-                    <Link
-                      to="/jobs/resume"
-                      onClick={() => setToolsOpen(false)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                        isActive('/jobs/resume')
-                          ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
-                          : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
-                      }`}
-                    >
-                      <Sparkles size={14} className="text-gray-400 shrink-0" />
-                      <span>AI Resume Enhancer</span>
-                    </Link>
-                  )}
+              <div className="absolute left-0 mt-2 w-52 rounded-xl border border-[#e6dfcd] bg-white p-1.5 shadow-lg z-20 flex flex-col gap-0.5 dark:bg-[#131316] dark:border-[#222226]">
+                {isSeekerLoggedIn && (
                   <Link
-                    to="/jobs/companies"
+                    to="/jobs/resume"
                     onClick={() => setToolsOpen(false)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      isActive('/jobs/companies')
+                      isActive('/jobs/resume')
                         ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
                         : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
                     }`}
                   >
-                    <Building2 size={14} className="text-gray-400 shrink-0" />
-                    <span>Companies</span>
+                    <Sparkles size={14} className="text-gray-400 shrink-0" />
+                    <span>AI Resume Enhancer</span>
                   </Link>
-                  <Link
-                    to="/jobs/trends"
-                    onClick={() => setToolsOpen(false)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      isActive('/jobs/trends')
-                        ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
-                        : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
-                    }`}
-                  >
-                    <TrendingUp size={14} className="text-gray-400 shrink-0" />
-                    <span>Market Trends</span>
-                  </Link>
-                  <Link
-                    to="/jobs/safety-checker"
-                    onClick={() => setToolsOpen(false)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      isActive('/jobs/safety-checker')
-                        ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
-                        : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
-                    }`}
-                  >
-                    <Shield size={14} className="text-gray-400 shrink-0" />
-                    <span>Hiring Safety</span>
-                  </Link>
-                </div>
-              </>
+                )}
+                <Link
+                  to="/jobs/companies"
+                  onClick={() => setToolsOpen(false)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    isActive('/jobs/companies')
+                      ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
+                      : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                  }`}
+                >
+                  <Building2 size={14} className="text-gray-400 shrink-0" />
+                  <span>Companies</span>
+                </Link>
+                <Link
+                  to="/jobs/trends"
+                  onClick={() => setToolsOpen(false)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    isActive('/jobs/trends')
+                      ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
+                      : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                  }`}
+                >
+                  <TrendingUp size={14} className="text-gray-400 shrink-0" />
+                  <span>Market Trends</span>
+                </Link>
+                <Link
+                  to="/jobs/safety-checker"
+                  onClick={() => setToolsOpen(false)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    isActive('/jobs/safety-checker')
+                      ? 'bg-gray-100 text-[#111111] font-semibold dark:bg-[#1c1c22] dark:text-[#f3f4f6]'
+                      : 'text-[#5c5c5c] hover:bg-gray-50 hover:text-[#2A2A2A] dark:text-gray-400 dark:hover:bg-[#1c1c22]/50 dark:hover:text-white'
+                  }`}
+                >
+                  <Shield size={14} className="text-gray-400 shrink-0" />
+                  <span>Hiring Safety</span>
+                </Link>
+              </div>
             )}
           </div>
         </div>
@@ -248,7 +261,7 @@ export default function JobsNavbar({ onUploadClick }) {
       {/* Action buttons */}
       <div className="flex items-center space-x-4">
         {profile ? (
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center space-x-2 border border-[#e6dfcd] hover:border-gray-400 rounded-full px-4 py-2 text-sm font-medium text-[#2A2A2A] transition-colors"
@@ -264,42 +277,39 @@ export default function JobsNavbar({ onUploadClick }) {
             {/* Dropdown Menu */}
             <AnimatePresence>
               {dropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-2 w-56 bg-white border border-[#e6dfcd] rounded-xl shadow-lg z-20 overflow-hidden"
-                  >
-                    <div className="p-3 border-b border-[#e6dfcd] bg-[#f5f4ef]/50">
-                      <div className="text-sm font-bold text-[#2A2A2A] truncate">{profile.name}</div>
-                      <div className="text-xs text-[#5c5c5c] truncate">{profile.email || 'No email associated'}</div>
-                      <div className="mt-1 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded inline-block font-semibold">
-                        {profile.skills?.length || 0} Skills Extracted
-                      </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute right-0 mt-2 w-56 bg-white border border-[#e6dfcd] rounded-xl shadow-lg z-20 overflow-hidden"
+                >
+                  <div className="p-3 border-b border-[#e6dfcd] bg-[#f5f4ef]/50">
+                    <div className="text-sm font-bold text-[#2A2A2A] truncate">{profile.name}</div>
+                    <div className="text-xs text-[#5c5c5c] truncate">{profile.email || 'No email associated'}</div>
+                    <div className="mt-1 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded inline-block font-semibold">
+                      {profile.skills?.length || 0} Skills Extracted
                     </div>
-                    <div className="p-1">
-                      <button
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          fileInputRef.current?.click();
-                        }}
-                        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-[#2A2A2A] hover:bg-[#f5f4ef] rounded-lg text-left transition-colors"
-                      >
-                        <Upload size={14} />
-                        <span>Update Resume</span>
-                      </button>
-                      <button
-                        onClick={handleClearProfile}
-                        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-red-50 rounded-lg text-left transition-colors"
-                      >
-                        <LogOut size={14} />
-                        <span>{isSeekerLoggedIn ? 'Log Out' : 'Clear AI Profile'}</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                </>
+                  </div>
+                  <div className="p-1">
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        fileInputRef.current?.click();
+                      }}
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-[#2A2A2A] hover:bg-[#f5f4ef] rounded-lg text-left transition-colors"
+                    >
+                      <Upload size={14} />
+                      <span>Update Resume</span>
+                    </button>
+                    <button
+                      onClick={handleClearProfile}
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-red-50 rounded-lg text-left transition-colors"
+                    >
+                      <LogOut size={14} />
+                      <span>{isSeekerLoggedIn ? 'Log Out' : 'Clear AI Profile'}</span>
+                    </button>
+                  </div>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
