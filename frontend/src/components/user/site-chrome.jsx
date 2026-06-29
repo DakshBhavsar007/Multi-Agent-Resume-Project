@@ -172,10 +172,10 @@ export function Header() {
 
   return (
     <div className="sticky top-0 z-40 w-full transition-all duration-300 p-0 pointer-events-none">
-      <header className={`mx-auto transition-all duration-300 pointer-events-auto ${
+      <header className={`mx-auto transition-all duration-300 pointer-events-auto backdrop-blur-xl ${
         isScrolled
-          ? "max-w-5xl mt-3 rounded-full border border-border bg-background/95 shadow-lg"
-          : "w-full border-b border-border/60 bg-background/80 backdrop-blur-xl"
+          ? "max-w-5xl mt-3 rounded-full border border-border bg-background/80 shadow-lg"
+          : "w-full border-b border-border/60 bg-background/80"
       }`}>
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <Link to="/jobs" className="flex items-center gap-2 pr-1 sm:pr-3 shrink-0 no-underline text-inherit">
