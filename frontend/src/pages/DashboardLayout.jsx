@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
 import { CompanyLogo } from '../components/user/company-logo';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -115,6 +115,27 @@ export default function DashboardLayout() {
   const [matchingSessions, setMatchingSessions] = useState([]);
   const [matchingCandidates, setMatchingCandidates] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [appsOpen, setAppsOpen] = useState(false);
+
+  const searchRef = useRef(null);
+  const appsDropdownRef = useRef(null);
+  const notifDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowGlobalSuggestions(false);
+      }
+      if (appsDropdownRef.current && !appsDropdownRef.current.contains(event.target)) {
+        setAppsOpen(false);
+      }
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!globalSearch.trim()) {
@@ -291,7 +312,7 @@ export default function DashboardLayout() {
         </Link>
 
         {/* Search — inline on sm+, icon-only sheet on xs */}
-        <div className="flex-1 max-w-2xl mx-auto px-2 hidden sm:block relative">
+        <div className="flex-1 max-w-2xl mx-auto px-2 hidden sm:block relative" ref={searchRef}>
           <div className="group flex items-center h-11 md:h-12 bg-gray-100 dark:bg-zinc-800 rounded-full px-4 gap-3 focus-within:bg-white dark:focus-within:bg-zinc-900 focus-within:shadow-sm transition">
             <Search size={20} className="text-gray-500 shrink-0" />
             <input
@@ -300,7 +321,6 @@ export default function DashboardLayout() {
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
               onFocus={() => setShowGlobalSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowGlobalSuggestions(false), 200)}
               className="flex-1 min-w-0 bg-transparent outline-none text-[15px] text-charcoal placeholder:text-gray-500"
             />
           </div>
@@ -427,7 +447,7 @@ export default function DashboardLayout() {
           </button>
           <ThemeToggle />
           {/* Notifications Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={notifDropdownRef}>
             <button
               onClick={() => setNotifOpen(!notifOpen)}
               className="relative w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-gray-500 dark:text-zinc-400 transition shrink-0"
@@ -440,49 +460,83 @@ export default function DashboardLayout() {
             </button>
 
             {notifOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-                    <span className="font-display font-semibold text-sm text-charcoal">Notifications</span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={handleMarkAllRead}
-                        className="text-xs text-accent hover:underline font-medium animate-fade-in"
-                      >
-                        Mark all read
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="px-4 py-8 text-center text-xs text-gray-400">
-                        No notifications yet
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          onClick={() => handleMarkRead(n.id, n.link)}
-                          className={`px-4 py-3 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${
-                            !n.is_read ? "bg-blue-50/20 font-medium" : ""
-                          }`}
-                        >
-                          <div className="text-xs text-charcoal">{n.title}</div>
-                          <div className="text-[11px] text-gray-500 mt-0.5">{n.message}</div>
-                          <div className="text-[9px] text-gray-400 mt-1">
-                            {n.created_at ? new Date(n.created_at).toLocaleDateString() : ""}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+                  <span className="font-display font-semibold text-sm text-charcoal">Notifications</span>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-xs text-accent hover:underline font-medium animate-fade-in"
+                    >
+                      Mark all read
+                    </button>
+                  )}
                 </div>
-              </>
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-xs text-gray-400">
+                      No notifications yet
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => handleMarkRead(n.id, n.link)}
+                        className={`px-4 py-3 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0 ${
+                          !n.is_read ? "bg-blue-50/20 font-medium" : ""
+                        }`}
+                      >
+                        <div className="text-xs text-charcoal">{n.title}</div>
+                        <div className="text-[11px] text-gray-500 mt-0.5">{n.message}</div>
+                        <div className="text-[9px] text-gray-400 mt-1">
+                          {n.created_at ? new Date(n.created_at).toLocaleDateString() : ""}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
-          <IconBtn label="Apps" hideOn="sm"><Grid3x3 size={20} /></IconBtn>
+          {/* Apps Dropdown */}
+          <div className="relative" ref={appsDropdownRef}>
+            <button
+              onClick={() => setAppsOpen(!appsOpen)}
+              aria-label="Apps"
+              className="hidden sm:flex w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 items-center justify-center text-gray-500 dark:text-zinc-400 transition shrink-0"
+            >
+              <Grid3x3 size={20} />
+            </button>
+            {appsOpen && (
+              <div className="absolute right-0 mt-2 w-52 rounded-xl p-1.5 z-50 flex flex-col gap-0.5 skeuo-dropdown-panel">
+                <a
+                  href="/dashboard"
+                  onClick={() => setAppsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item font-semibold text-foreground"
+                >
+                  <LayoutDashboard size={14} className="text-muted-foreground shrink-0 transition-colors" />
+                  <span className="transition-colors">Between Recruiter</span>
+                </a>
+                <a
+                  href="/jobs"
+                  onClick={() => setAppsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item text-muted-foreground"
+                >
+                  <Home size={14} className="text-muted-foreground shrink-0 transition-colors" />
+                  <span className="transition-colors">Between Jobs</span>
+                </a>
+                <a
+                  href="/developer"
+                  onClick={() => setAppsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item text-muted-foreground"
+                >
+                  <Bot size={14} className="text-muted-foreground shrink-0 transition-colors" />
+                  <span className="transition-colors">Between Developer</span>
+                </a>
+              </div>
+            )}
+          </div>
           
           {/* User profile identifier */}
           <div className="ml-1 flex items-center gap-2">
@@ -592,12 +646,15 @@ export default function DashboardLayout() {
         <div className="absolute bottom-0 inset-x-0 p-3 border-t border-gray-200 dark:border-[#222226] bg-white dark:bg-[#0b0b0c]">
           {(!isDesktop || open) ? (
             <div className="space-y-3">
-              <div className="text-xs text-gray-500 px-2">
+              <div 
+                onClick={() => navigate('/dashboard/settings?tab=billing')}
+                className="text-xs text-gray-500 px-2 cursor-pointer hover:opacity-80 transition group"
+              >
                 <div className="flex justify-between items-center mb-1">
-                  <span>Usage: {parsesUsed}/{parsesTotal} parses</span>
+                  <span className="group-hover:text-accent font-semibold transition-colors">Usage: {parsesUsed}/{parsesTotal} parses</span>
                 </div>
-                <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
-                  <div className="bg-[#111111] h-full rounded-full animate-pulse" style={{ width: `${parsePercent}%`, animationDuration: '3s' }}></div>
+                <div className="w-full bg-gray-100 dark:bg-zinc-800 h-1 rounded-full overflow-hidden">
+                  <div className="bg-[#111111] dark:bg-white h-full rounded-full animate-pulse" style={{ width: `${parsePercent}%`, animationDuration: '3s' }}></div>
                 </div>
               </div>
               <button
