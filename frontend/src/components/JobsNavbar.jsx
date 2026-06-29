@@ -28,6 +28,16 @@ export default function JobsNavbar({ onUploadClick }) {
 
   const isSeekerLoggedIn = !!localStorage.getItem('vish_seeker_token');
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [preselectedFile, setPreselectedFile] = useState(null);
   const fileInputRef = useRef(null);
@@ -96,7 +106,12 @@ export default function JobsNavbar({ onUploadClick }) {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="w-full bg-[#FFFFFF] border-b border-[#e6dfcd] sticky top-0 z-40 px-6 py-4 flex items-center justify-between shadow-sm">
+    <div className="sticky top-0 z-40 w-full transition-all duration-300 p-0 pointer-events-none">
+      <nav className={`mx-auto transition-all duration-300 flex items-center justify-between pointer-events-auto ${
+        isScrolled
+          ? "max-w-5xl mt-3 rounded-full border border-[#e6dfcd] bg-white/95 px-8 py-3 shadow-lg dark:bg-[#131316] dark:border-[#222226]"
+          : "w-full bg-[#FFFFFF] border-b border-[#e6dfcd] px-6 py-4 shadow-sm dark:bg-[#0b0b0c] dark:border-[#222226]"
+      }`}>
       {/* Brand logo */}
       <div className="flex items-center space-x-8">
         <Link to="/jobs" className="flex items-center gap-2 pr-1 sm:pr-3 shrink-0 no-underline text-inherit">
@@ -343,5 +358,6 @@ export default function JobsNavbar({ onUploadClick }) {
 
       </div>
     </nav>
-  );
+  </div>
+);
 }

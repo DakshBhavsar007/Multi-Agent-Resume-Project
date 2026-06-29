@@ -150,6 +150,16 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const filteredLinks = links.filter((l) => {
     if (l.to === "/jobs/applications" || l.to === "/jobs/profile" || l.to === "/jobs/billing") {
       return isLoggedIn;
@@ -161,7 +171,12 @@ export function Header() {
   const filteredTools = filteredLinks.filter(l => l.to === "/resume-builder" || l.to === "/jobs/safety-checker" || l.to === "/jobs/trends" || l.to === "/jobs/companies");
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+    <div className="sticky top-0 z-40 w-full transition-all duration-300 p-0 pointer-events-none">
+      <header className={`mx-auto transition-all duration-300 pointer-events-auto ${
+        isScrolled
+          ? "max-w-5xl mt-3 rounded-full border border-border bg-background/95 shadow-lg"
+          : "w-full border-b border-border/60 bg-background/80 backdrop-blur-xl"
+      }`}>
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <Link to="/jobs" className="flex items-center gap-2 pr-1 sm:pr-3 shrink-0 no-underline text-inherit">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-[#2A2A2A] p-1">
@@ -362,7 +377,8 @@ export function Header() {
           onClose={closeTour}
         />
       )}
-    </header>
+      </header>
+    </div>
   );
 }
 
