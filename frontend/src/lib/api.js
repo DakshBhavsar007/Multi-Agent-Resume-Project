@@ -74,7 +74,9 @@ export const authAPI = {
     return d
   },
   logout: () => {
-    localStorage.clear()
+    localStorage.removeItem("vish_jwt")
+    localStorage.removeItem("vish_api_key")
+    localStorage.removeItem("vish_company")
     window.location.href="/login"
   },
   generateKey: (b) => req("POST","/auth/api-keys/generate",b),

@@ -170,19 +170,33 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
     roleRef.current = role;
   }, [role]);
 
-  const [existingSession, setExistingSession] = useState(null);
+  const [existingSessions, setExistingSessions] = useState([]);
 
   useEffect(() => {
-    const sessions = [];
+    const sessionsMap = {};
     
+    const addSession = (srcRole, email, token) => {
+      if (srcRole === role) return;
+      const lowerEmail = email.toLowerCase().trim();
+      if (!sessionsMap[lowerEmail]) {
+        sessionsMap[lowerEmail] = {
+          email: email,
+          roles: [srcRole],
+          token: token
+        };
+      } else {
+        sessionsMap[lowerEmail].roles.push(srcRole);
+      }
+    };
+
     // Check recruiter session
     const rToken = localStorage.getItem("vish_jwt");
     const rData = localStorage.getItem("vish_company");
-    if (rToken && rData && role !== 'recruiter') {
+    if (rToken && rData) {
       try {
         const parsed = JSON.parse(rData);
         if (parsed?.email) {
-          sessions.push({ role: 'recruiter', email: parsed.email, token: rToken });
+          addSession('recruiter', parsed.email, rToken);
         }
       } catch (e) {}
     }
@@ -190,11 +204,11 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
     // Check developer session
     const dToken = localStorage.getItem("portal_jwt");
     const dData = localStorage.getItem("portal_dev");
-    if (dToken && dData && role !== 'developer') {
+    if (dToken && dData) {
       try {
         const parsed = JSON.parse(dData);
         if (parsed?.email) {
-          sessions.push({ role: 'developer', email: parsed.email, token: dToken });
+          addSession('developer', parsed.email, dToken);
         }
       } catch (e) {}
     }
@@ -202,27 +216,23 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
     // Check seeker session
     const sToken = localStorage.getItem("vish_seeker_token");
     const sData = localStorage.getItem("vish_seeker_data");
-    if (sToken && sData && role !== 'seeker') {
+    if (sToken && sData) {
       try {
         const parsed = JSON.parse(sData);
         if (parsed?.email) {
-          sessions.push({ role: 'seeker', email: parsed.email, token: sToken });
+          addSession('seeker', parsed.email, sToken);
         }
       } catch (e) {}
     }
 
-    if (sessions.length > 0) {
-      setExistingSession(sessions[0]);
-    } else {
-      setExistingSession(null);
-    }
+    setExistingSessions(Object.values(sessionsMap));
   }, [role]);
 
-  const handleCrossLogin = async () => {
-    if (!existingSession) return;
+  const handleCrossLogin = async (token) => {
+    if (!token) return;
     setLoading(true);
     try {
-      const data = await authAPI.crossLogin(existingSession.token, role);
+      const data = await authAPI.crossLogin(token, role);
       if (role === 'recruiter') {
         recruiterAuth.setAuth(data);
         toast.success("Signed in successfully as Recruiter!");
@@ -561,20 +571,27 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         {/* STEP 1 FORMS */}
         {step === 1 && (
           <form className="auth-form" onSubmit={handleAuthSubmit} style={{ transform: "translateZ(30px)" }}>
-            {existingSession && (
-              <motion.button
-                type="button"
-                onClick={handleCrossLogin}
-                className="existing-account-btn"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-              >
-                <User size={16} />
-                <span>
-                  Continue with {existingSession.email} ({existingSession.role === 'recruiter' ? 'Recruiter Account' : existingSession.role === 'developer' ? 'Developer Account' : 'Job Seeker Account'})
-                </span>
-              </motion.button>
-            )}
+            {existingSessions.map((session, idx) => {
+              const roleLabels = session.roles.map(r => 
+                r === 'recruiter' ? 'Recruiter' : r === 'developer' ? 'Developer' : 'Job Seeker'
+              ).join(' & ');
+
+              return (
+                <motion.button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleCrossLogin(session.token)}
+                  className="existing-account-btn"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <User size={16} />
+                  <span>
+                    Continue with {session.email} ({roleLabels} Account)
+                  </span>
+                </motion.button>
+              );
+            })}
             {/* Signup Only Fields */}
             {!isLogin && (
               <>
