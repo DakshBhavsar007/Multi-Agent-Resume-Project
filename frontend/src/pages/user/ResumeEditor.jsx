@@ -165,6 +165,14 @@ export default function ResumeEditor() {
           content: content
         });
         setAutoSaveStatus("Saved");
+
+        // Background auto-backup snapshot
+        const formattedTime = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        await seekerAPI.createVersion(resumeId, { title: `Auto-Save Backup - ${formattedTime}` });
+        
+        if (showVersionsPanel) {
+          loadVersions();
+        }
       } catch (err) {
         console.error("Auto-save failed:", err);
         setAutoSaveStatus("Error saving");
@@ -370,18 +378,29 @@ export default function ResumeEditor() {
       return;
     }
     setOptimizing(true);
+    const startTime = Date.now();
+    const toastId = toast.loading("Initiating Quick Polish (AI Patches)...");
+    
+    const interval = setInterval(() => {
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      toast.loading(`Thinking for ${elapsed}s... (AI Patches)`, { id: toastId });
+    }, 1000);
+
     try {
       const payload = {
         content,
         targetJobDescription: targetJobDescription || ""
       };
       const data = await seekerAPI.optimizeDraft(payload);
+      clearInterval(interval);
+      const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
       setOptimizations(data.optimizations || []);
       setShowOptimizeModal(true);
-      toast.success("AI Optimizations generated successfully!");
+      toast.success(`AI Optimizations generated successfully! (Took ${elapsedSeconds} seconds)`, { id: toastId });
     } catch (err) {
+      clearInterval(interval);
       console.error("AI Tailor Error:", err);
-      toast.error(err.message || "Failed to generate AI Optimizations");
+      toast.error(err.message || "Failed to generate AI Optimizations", { id: toastId });
     } finally {
       setOptimizing(false);
     }
@@ -409,6 +428,14 @@ export default function ResumeEditor() {
       return;
     }
     setEnhancing(true);
+    const startTime = Date.now();
+    const toastId = toast.loading("Initiating Full AI Enhancement...");
+    
+    const interval = setInterval(() => {
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      toast.loading(`Thinking for ${elapsed}s... (AI Enhancement)`, { id: toastId });
+    }, 1000);
+
     try {
       const payload = {
         resumeDraftId: resumeId,
@@ -417,12 +444,15 @@ export default function ResumeEditor() {
         liveAtsScore: atsReport?.overallScore || null   // send live score as anchor
       };
       const response = await seekerAPI.enhanceDraft(payload);
+      clearInterval(interval);
+      const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
       setEnhancementReport(response);
       setShowEnhanceModal(true);
-      toast.success("AI Enhancement analysis completed!");
+      toast.success(`AI Enhancement analysis completed! (Took ${elapsedSeconds} seconds)`, { id: toastId });
     } catch (err) {
+      clearInterval(interval);
       console.error("AI Enhance Error:", err);
-      toast.error(err.message || "Failed to generate AI Enhancement");
+      toast.error(err.message || "Failed to generate AI Enhancement", { id: toastId });
     } finally {
       setEnhancing(false);
     }
