@@ -153,6 +153,37 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   const [phone, setPhone] = useState('');
   const [skills, setSkills] = useState('');
 
+  const [showPassRules, setShowPassRules] = useState(false);
+
+  // Password rules validation logic
+  const passLength = password.length >= 8;
+  const passUpper = /[A-Z]/.test(password);
+  const passLower = /[a-z]/.test(password);
+  const passNumber = /[0-9]/.test(password);
+  const passSpecial = /[^A-Za-z0-9]/.test(password);
+  const allRulesMet = passLength && passUpper && passLower && passNumber && passSpecial;
+
+  const getPasswordClass = () => {
+    if (!password) return '';
+    if (allRulesMet) return 'password-input-valid';
+    
+    let metCount = 0;
+    if (passLength) metCount++;
+    if (passUpper) metCount++;
+    if (passLower) metCount++;
+    if (passNumber) metCount++;
+    if (passSpecial) metCount++;
+    
+    if (metCount <= 2) return 'password-input-invalid';
+    return 'password-input-warning';
+  };
+
+  const getConfirmPasswordClass = () => {
+    if (!confirmPassword) return '';
+    if (password === confirmPassword) return 'password-input-valid';
+    return 'password-input-invalid';
+  };
+
   // Flows State
   const [step, setStep] = useState(1);
   const [plans, setPlans] = useState([]);
@@ -809,6 +840,9 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                   placeholder="••••••••" 
                   value={password} 
                   onChange={e => setPassword(e.target.value)} 
+                  onFocus={() => setShowPassRules(true)}
+                  onBlur={() => setTimeout(() => setShowPassRules(false), 200)}
+                  className={getPasswordClass()}
                   required 
                   style={{ width: '100%', paddingRight: '44px' }}
                 />
@@ -831,6 +865,7 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                   placeholder="••••••••" 
                   value={confirmPassword} 
                   onChange={e => setConfirmPassword(e.target.value)} 
+                  className={getConfirmPasswordClass()}
                   required 
                 />
               </div>
@@ -1139,6 +1174,45 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
           <ArrowLeft size={14} />
           Return to home
         </button>
+
+        {/* Password Rules Panel */}
+        <AnimatePresence>
+          {showPassRules && (
+            <motion.div
+              className="password-rules-panel"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest pb-1 border-b border-gray-100 flex items-center gap-1.5 dark:text-gray-400 dark:border-gray-800">
+                <Sparkles size={12} className="text-accent" /> Password Rules
+              </h4>
+              <ul className="space-y-2 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                <li className={`flex items-center gap-2 transition-colors ${passLength ? 'text-green-500' : 'text-gray-400'}`}>
+                  {passLength ? <Check size={14} className="text-green-500" /> : <X size={14} className="text-gray-400" />}
+                  At least 8 characters
+                </li>
+                <li className={`flex items-center gap-2 transition-colors ${passUpper ? 'text-green-500' : 'text-gray-400'}`}>
+                  {passUpper ? <Check size={14} className="text-green-500" /> : <X size={14} className="text-gray-400" />}
+                  At least 1 uppercase letter (A-Z)
+                </li>
+                <li className={`flex items-center gap-2 transition-colors ${passLower ? 'text-green-500' : 'text-gray-400'}`}>
+                  {passLower ? <Check size={14} className="text-green-500" /> : <X size={14} className="text-gray-400" />}
+                  At least 1 lowercase letter (a-z)
+                </li>
+                <li className={`flex items-center gap-2 transition-colors ${passNumber ? 'text-green-500' : 'text-gray-400'}`}>
+                  {passNumber ? <Check size={14} className="text-green-500" /> : <X size={14} className="text-gray-400" />}
+                  At least 1 number (0-9)
+                </li>
+                <li className={`flex items-center gap-2 transition-colors ${passSpecial ? 'text-green-500' : 'text-gray-400'}`}>
+                  {passSpecial ? <Check size={14} className="text-green-500" /> : <X size={14} className="text-gray-400" />}
+                  At least 1 special char (e.g. @, #, $)
+                </li>
+              </ul>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );

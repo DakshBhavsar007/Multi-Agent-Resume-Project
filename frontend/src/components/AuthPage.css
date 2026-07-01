@@ -298,3 +298,59 @@
   border-color: rgba(59, 130, 246, 0.3);
 }
 
+/* Password Rules Panel */
+.password-rules-panel {
+  position: absolute;
+  left: 104%;
+  top: 15%;
+  width: 250px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none; /* Let clicks pass through to avoid focus steal */
+}
+
+.dark .password-rules-panel {
+  background: rgba(20, 20, 23, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 900px) {
+  .password-rules-panel {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    margin-top: 8px;
+    box-shadow: none;
+  }
+}
+
+/* Dynamic Input Border Colors */
+.password-input-valid {
+  border-color: #10B981 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.password-input-warning {
+  border-color: #F59E0B !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1) !important;
+}
+
+.password-input-invalid {
+  border-color: #EF4444 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
