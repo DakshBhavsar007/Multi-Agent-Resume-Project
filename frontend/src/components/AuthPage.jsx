@@ -10,6 +10,7 @@ import {
   Code2, 
   GraduationCap, 
   Check, 
+  X,
   Copy, 
   ArrowLeft, 
   Loader2, 
