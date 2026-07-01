@@ -384,6 +384,7 @@ export const seekerAPI = {
   },
   getCompany: (id) => seekerReq('GET', `/api/v1/seeker/companies/${id}`),
   followCompany: (id, follow = true) => seekerReq(follow ? 'POST' : 'DELETE', `/api/v1/seeker/companies/${id}/follow`),
+  getFollowedCompanies: () => seekerReq('GET', '/api/v1/seeker/companies/following'),
 
   // Applications
   getApplications: () => seekerReq('GET', '/api/v1/seeker/applications'),

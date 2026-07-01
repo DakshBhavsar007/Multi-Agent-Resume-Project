@@ -4,7 +4,7 @@ import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
-import { ArrowLeft, Bookmark, Share2, MapPin, Clock, Briefcase, DollarSign, CheckCircle2, Star } from "lucide-react";
+import { ArrowLeft, Bookmark, Share2, MapPin, Clock, Briefcase, DollarSign, CheckCircle2, Star, BookOpen, TrendingUp, Award } from "lucide-react";
 import toast from "react-hot-toast";
 import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
 
@@ -316,6 +316,7 @@ export default function UserJobDetail() {
                   {job.skillAlignment.matched?.length > 0 && (
                     <div>
                       <div className="font-semibold text-[10px] text-emerald-600 mb-2 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3 w-3" />
                         <span>Skills you have</span>
                         <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] font-bold">
                           {job.skillAlignment.matched.length}
@@ -323,8 +324,8 @@ export default function UserJobDetail() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {job.skillAlignment.matched.slice(0, 8).map((skill) => (
-                          <span key={skill} className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-medium border border-emerald-100">
-                            ✅ {skill}
+                          <span key={skill} className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-medium border border-emerald-100 inline-flex items-center gap-1">
+                            <CheckCircle2 className="h-2.5 w-2.5 shrink-0" /> {skill}
                           </span>
                         ))}
                       </div>
@@ -335,6 +336,7 @@ export default function UserJobDetail() {
                   {job.skillAlignment.missing?.length > 0 && (
                     <div>
                       <div className="font-semibold text-[10px] text-amber-600 mb-2 flex items-center gap-1.5">
+                        <BookOpen className="h-3 w-3" />
                         <span>Skills to learn</span>
                         <span className="px-1.5 py-0.5 rounded-full bg-amber-50 text-[9px] font-bold">
                           {job.skillAlignment.missing.length}
@@ -342,8 +344,8 @@ export default function UserJobDetail() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {job.skillAlignment.missing.slice(0, 8).map((skill) => (
-                          <span key={skill} className="px-2 py-1 bg-amber-50/50 text-amber-700 rounded-lg text-[10px] font-medium border border-amber-100">
-                            📚 {skill}
+                          <span key={skill} className="px-2 py-1 bg-amber-50/50 text-amber-700 rounded-lg text-[10px] font-medium border border-amber-100 inline-flex items-center gap-1">
+                            <BookOpen className="h-2.5 w-2.5 shrink-0" /> {skill}
                           </span>
                         ))}
                       </div>

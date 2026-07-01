@@ -4,7 +4,7 @@ import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI, seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
-import { ArrowLeft, MapPin, Users, Calendar, Star, Globe } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Users2, Calendar, Star, Globe, Bell, UserCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function UserCompanyDetail() {
@@ -33,6 +33,7 @@ export default function UserCompanyDetail() {
           openings: data.openings || 0,
           openJobs: data.open_jobs || [],
           isFollowing: data.is_following || false,
+          followersCount: data.followers_count || 0,
         };
         setCompany(mappedCompany);
       })
@@ -48,12 +49,28 @@ export default function UserCompanyDetail() {
   const handleFollow = async () => {
     if (!company || following) return;
     setFollowing(true);
+    const isCurrentlyFollowing = company.isFollowing;
+    // Optimistic update
+    setCompany(prev => ({ 
+      ...prev, 
+      isFollowing: !isCurrentlyFollowing,
+      followersCount: isCurrentlyFollowing ? Math.max(0, (prev.followersCount || 0) - 1) : (prev.followersCount || 0) + 1
+    }));
     try {
-      const isCurrentlyFollowing = company.isFollowing;
       await seekerAPI.followCompany(company.id, !isCurrentlyFollowing);
-      setCompany({ ...company, isFollowing: !isCurrentlyFollowing });
-      toast.success(isCurrentlyFollowing ? "Unfollowed company" : "Following company!");
+      toast.success(
+        isCurrentlyFollowing 
+          ? "Unfollowed company" 
+          : "Following! You'll get notified of new job postings.",
+        { duration: 3000 }
+      );
     } catch (err) {
+      // Revert on failure
+      setCompany(prev => ({ 
+        ...prev, 
+        isFollowing: isCurrentlyFollowing,
+        followersCount: isCurrentlyFollowing ? (prev.followersCount || 0) + 1 : Math.max(0, (prev.followersCount || 0) - 1)
+      }));
       toast.error(err.message || "Failed to follow company");
     } finally {
       setFollowing(false);
@@ -148,13 +165,19 @@ export default function UserCompanyDetail() {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-2">
+          <div className="mt-8 flex flex-wrap gap-2 items-center">
             <button
               onClick={handleFollow}
               disabled={following}
-              className={`pill px-5 py-2.5 text-sm font-medium transition-colors ${company.isFollowing ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground hover:opacity-90'}`}
+              className={`pill px-5 py-2.5 text-sm font-medium transition-colors inline-flex items-center gap-2 ${
+                company.isFollowing 
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200' 
+                  : 'bg-primary text-primary-foreground hover:opacity-90'
+              }`}
             >
-              {company.isFollowing ? 'Following' : 'Follow'}
+              {company.isFollowing 
+                ? <><UserCheck className="h-4 w-4" /> Following</> 
+                : <><Bell className="h-4 w-4" /> Follow & Get Notified</>}
             </button>
             {company.website && company.website !== "#" && (
               <a
@@ -166,6 +189,12 @@ export default function UserCompanyDetail() {
                 <Globe className="mr-1.5 h-4 w-4" />Website
               </a>
             )}
+            {/* Public follower count */}
+            <div className="ml-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Users2 className="h-4 w-4" />
+              <span className="font-semibold text-foreground">{company.followersCount ?? 0}</span>
+              <span>followers</span>
+            </div>
           </div>
         </div>
 

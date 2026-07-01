@@ -64,6 +64,7 @@ const NotificationsPage = lazy(() => import('./pages/seeker/NotificationsPage'))
 const SeekerBillingPage = lazy(() => import('./pages/seeker/SeekerBillingPage'));
 const UserCompanies = lazy(() => import('./pages/user/UserCompanies'));
 const UserCompanyDetail = lazy(() => import('./pages/user/UserCompanyDetail'));
+const UserFollowedCompanies = lazy(() => import('./pages/user/UserFollowedCompanies'));
 const UserProfile = lazy(() => import('./pages/user/UserProfile'));
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
 const UserUploadResume = lazy(() => import('./pages/user/UserUploadResume'));
@@ -218,6 +219,7 @@ export default function App() {
           <Route path="/jobs/trends" element={<JobsTrendsPage />} />
           <Route path="/jobs/companies" element={<UserCompanies />} />
           <Route path="/jobs/companies/:companyId" element={<UserCompanyDetail />} />
+          <Route path="/jobs/following" element={<UserFollowedCompanies />} />
           <Route path="/jobs/profile" element={<UserProfile />} />
           <Route path="/jobs/dashboard" element={<UserDashboard />} />
           <Route path="/jobs/upload-resume" element={<UserUploadResume />} />

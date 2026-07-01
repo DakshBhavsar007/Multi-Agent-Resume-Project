@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, MapPin, SlidersHorizontal, Bookmark, ArrowRight, X } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, Bookmark, ArrowRight, X, ChevronDown } from "lucide-react";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI, seekerAPI } from "../../lib/api";
@@ -17,6 +17,37 @@ import {
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
 import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
+
+// Currency configurations
+const CURRENCIES = [
+  { code: "INR", symbol: "₹", label: "INR (LPA)", min: 2, max: 100, step: 2, defaultVal: 12,
+    formatMin: (v) => `₹${v}L`, formatMax: (v) => `₹${v}L+`, formatCurrent: (v) => `₹${v} LPA+`,
+    filterFn: (salary, minVal) => {
+      if (!salary) return true;
+      const num = parseFloat(salary.replace(/[^0-9.]/g, ""));
+      if (isNaN(num)) return true;
+      return num >= minVal;
+    }
+  },
+  { code: "USD", symbol: "$", label: "USD ($)", min: 20, max: 500, step: 10, defaultVal: 80,
+    formatMin: (v) => `$${v}k`, formatMax: (v) => `$${v}k+`, formatCurrent: (v) => `$${v}k+`,
+    filterFn: (salary, minVal) => {
+      if (!salary) return true;
+      const num = parseFloat(salary.replace(/[^0-9.]/g, ""));
+      if (isNaN(num)) return true;
+      if (salary.toLowerCase().includes("lpa") || salary.includes("₹")) return num * 1.2 >= minVal;
+      return num >= minVal;
+    }
+  },
+  { code: "GBP", symbol: "£", label: "GBP (£)", min: 15, max: 400, step: 5, defaultVal: 50,
+    formatMin: (v) => `£${v}k`, formatMax: (v) => `£${v}k+`, formatCurrent: (v) => `£${v}k+`,
+    filterFn: (salary, minVal) => true,
+  },
+  { code: "EUR", symbol: "€", label: "EUR (€)", min: 15, max: 400, step: 5, defaultVal: 50,
+    formatMin: (v) => `€${v}k`, formatMax: (v) => `€${v}k+`, formatCurrent: (v) => `€${v}k+`,
+    filterFn: (salary, minVal) => true,
+  },
+];
 
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
 const workplaces = ["Remote", "Hybrid", "On-site"];
@@ -89,6 +120,8 @@ export default function UserJobs() {
   const [activeWorkplaces, setActiveWorkplaces] = useState([]);
   const [activeExp, setActiveExp] = useState("");
   const [salary, setSalary] = useState([80]);
+  const [currency, setCurrency] = useState(CURRENCIES[1]); // Default USD
+  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [showLocSuggestions, setShowLocSuggestions] = useState(false);
 
@@ -320,12 +353,37 @@ export default function UserJobs() {
             </FilterGroup>
 
             <FilterGroup title="Salary Range">
-              <div className="px-1 pt-2">
-                <Slider value={salary} onValueChange={setSalary} max={300} step={10} />
+              <div className="px-1 pt-1">
+                {/* Currency Selector */}
+                <div className="relative mb-3">
+                  <button
+                    onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
+                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl border border-border bg-background text-xs font-semibold hover:bg-muted transition-colors"
+                  >
+                    <span>{currency.label}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${showCurrencyDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showCurrencyDropdown && (
+                    <div className="absolute left-0 right-0 mt-1 bg-background border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+                      {CURRENCIES.map((c) => (
+                        <button
+                          key={c.code}
+                          onMouseDown={(e) => { e.preventDefault(); setCurrency(c); setSalary([c.defaultVal]); setShowCurrencyDropdown(false); }}
+                          className={`w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors ${
+                            c.code === currency.code ? 'font-bold text-primary bg-primary/5' : 'text-foreground'
+                          }`}
+                        >
+                          <span className="font-semibold mr-1.5">{c.symbol}</span> {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Slider value={salary} onValueChange={setSalary} max={currency.max} min={currency.min} step={currency.step} />
                 <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>$50k</span>
-                  <span className="font-medium text-foreground">${salary[0]}k+</span>
-                  <span>$300k+</span>
+                  <span>{currency.formatMin(currency.min)}</span>
+                  <span className="font-medium text-foreground">{currency.formatCurrent(salary[0])}</span>
+                  <span>{currency.formatMax(currency.max)}</span>
                 </div>
               </div>
             </FilterGroup>
