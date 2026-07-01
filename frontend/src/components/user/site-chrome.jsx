@@ -32,19 +32,11 @@ const SEEKER_TOUR_STEPS = [
     placement: 'bottom',
   },
   {
-    id: 'resume',
-    title: 'AI Resume Builder',
-    content: 'Create ATS-friendly resumes, import profile details, and optimize drafts against job descriptions.',
-    icon: FileText,
-    target: '[data-tour="seeker-nav-resume-builder"]',
-    placement: 'bottom',
-  },
-  {
-    id: 'safety',
-    title: 'Hiring Safety',
-    content: 'Scan company profiles and job descriptions to flag potential scams and hiring red flags.',
-    icon: Shield,
-    target: '[data-tour="seeker-nav-hiring-safety"]',
+    id: 'career-tools',
+    title: 'Career Tools',
+    content: 'Access powerful career utilities like the AI Resume Builder, Hiring Safety Checker, Market Trends, and Companies list from this menu.',
+    icon: Sparkles,
+    target: '[data-tour="seeker-nav-career-tools"]',
     placement: 'bottom',
   },
   {
@@ -224,6 +216,7 @@ export function Header() {
             <div className="relative" ref={toolsDropdownRef}>
               <button
                 onClick={() => setToolsOpen(!toolsOpen)}
+                data-tour="seeker-nav-career-tools"
                 className={`pill px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition flex items-center gap-1 ${
                   filteredTools.some(l => pathname === l.to)
                     ? "bg-muted text-foreground font-semibold"
