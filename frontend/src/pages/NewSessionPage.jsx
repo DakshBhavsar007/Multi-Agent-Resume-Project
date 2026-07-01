@@ -272,6 +272,7 @@ export default function NewSessionPage() {
 
   const handleCreate = async () => {
     // Validate that all rounds have a name and a result declaration date
+    const now = new Date();
     for (let i = 0; i < formData.rounds.length; i++) {
       const r = formData.rounds[i];
       if (!r.name.trim()) {
@@ -280,6 +281,11 @@ export default function NewSessionPage() {
       }
       if (!r.result_announcement_date) {
         toast.error(`Result declaration date & time is compulsory for round: ${r.name}`);
+        return;
+      }
+      const announcementDate = new Date(r.result_announcement_date);
+      if (announcementDate < now) {
+        toast.error(`Result declaration date & time for round "${r.name}" cannot be in the past`);
         return;
       }
     }
@@ -660,6 +666,10 @@ export default function NewSessionPage() {
                       <input
                         type="datetime-local"
                         value={round.result_announcement_date || ""}
+                        min={(() => {
+                          const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+                          return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+                        })()}
                         onChange={(e) => {
                           const newRounds = [...formData.rounds];
                           newRounds[idx].result_announcement_date = e.target.value;

@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count
@@ -10,6 +11,27 @@ from api.decorators import require_api_key, check_rate_limit
 from models.schemas import success_response, error_response
 from agents.inference_agent import SkillInferenceAgent
 from workers.celery_worker import match_all_candidates
+
+def validate_announcement_dates(rounds):
+    now_naive = datetime.now()
+    for r in rounds:
+        ann_date_str = r.get("result_announcement_date")
+        if ann_date_str:
+            try:
+                clean_str = ann_date_str.split('+')[0]
+                if clean_str.endswith('Z'):
+                    clean_str = clean_str[:-1]
+                
+                dt = datetime.fromisoformat(clean_str)
+                if dt.tzinfo is not None:
+                    if dt < timezone.now():
+                        return f"Result announcement date {ann_date_str} for round '{r.get('name')}' cannot be in the past"
+                else:
+                    if dt < now_naive:
+                        return f"Result announcement date {ann_date_str} for round '{r.get('name')}' cannot be in the past"
+            except ValueError:
+                return f"Invalid date format for round '{r.get('name')}': {ann_date_str}"
+    return None
 
 def _verify_session_ownership(session, company):
     if str(session.company_id) != str(company.id):
@@ -29,6 +51,9 @@ def session_root(request):
                 return JsonResponse(error_response("name, job_title, job_description are required"), status=400)
 
             rounds_req = data.get("rounds") or []
+            validation_err = validate_announcement_dates(rounds_req)
+            if validation_err:
+                return JsonResponse(error_response(validation_err), status=400)
             rounds_data = []
             for r in rounds_req:
                 ann_date = r.get("result_announcement_date")
@@ -184,6 +209,9 @@ def session_detail(request, session_id):
             if "job_description" in data and data["job_description"] is not None:
                 session.job_description = data["job_description"]
             if "rounds" in data and data["rounds"] is not None:
+                validation_err = validate_announcement_dates(data["rounds"])
+                if validation_err:
+                    return JsonResponse(error_response(validation_err), status=400)
                 rounds_data = []
                 for r in data["rounds"]:
                     ann_date = r.get("result_announcement_date")
