@@ -59,7 +59,7 @@ const SEEKER_TOUR_STEPS = [
 
 const links = [
   { to: "/", label: "Home", icon: LayoutDashboard },
-  { to: "/jobs/search", label: "Jobs", icon: Search },
+  { to: "/jobs/search", label: "Find Jobs", icon: Search },
   { to: "/jobs/companies", label: "Companies", icon: Building2 },
   { to: "/resume-builder", label: "Resume Builder", icon: FileText },
   { to: "/jobs/safety-checker", label: "Hiring Safety", icon: Shield },
