@@ -381,6 +381,17 @@ export default function ResumeEditor() {
     const startTime = Date.now();
     const toastId = toast.loading("Initiating Quick Polish (AI Patches)...");
     
+    // Create instant backup snapshot before AI modifies draft content
+    try {
+      const formattedTime = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      await seekerAPI.createVersion(resumeId, { title: `Pre-AI Polish Backup - ${formattedTime}` });
+      if (showVersionsPanel) {
+        loadVersions();
+      }
+    } catch (backupErr) {
+      console.error("Instant pre-AI Polish backup failed:", backupErr);
+    }
+
     const interval = setInterval(() => {
       const elapsed = Math.round((Date.now() - startTime) / 1000);
       toast.loading(`Thinking for ${elapsed}s... (AI Patches)`, { id: toastId });
@@ -431,6 +442,17 @@ export default function ResumeEditor() {
     const startTime = Date.now();
     const toastId = toast.loading("Initiating Full AI Enhancement...");
     
+    // Create instant backup snapshot before AI modifies draft content
+    try {
+      const formattedTime = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      await seekerAPI.createVersion(resumeId, { title: `Pre-AI Enhance Backup - ${formattedTime}` });
+      if (showVersionsPanel) {
+        loadVersions();
+      }
+    } catch (backupErr) {
+      console.error("Instant pre-AI Enhance backup failed:", backupErr);
+    }
+
     const interval = setInterval(() => {
       const elapsed = Math.round((Date.now() - startTime) / 1000);
       toast.loading(`Thinking for ${elapsed}s... (AI Enhancement)`, { id: toastId });
