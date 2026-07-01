@@ -170,6 +170,85 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
     roleRef.current = role;
   }, [role]);
 
+  const [existingSession, setExistingSession] = useState(null);
+
+  useEffect(() => {
+    const sessions = [];
+    
+    // Check recruiter session
+    const rToken = localStorage.getItem("vish_jwt");
+    const rData = localStorage.getItem("vish_company");
+    if (rToken && rData && role !== 'recruiter') {
+      try {
+        const parsed = JSON.parse(rData);
+        if (parsed?.email) {
+          sessions.push({ role: 'recruiter', email: parsed.email, token: rToken });
+        }
+      } catch (e) {}
+    }
+
+    // Check developer session
+    const dToken = localStorage.getItem("portal_jwt");
+    const dData = localStorage.getItem("portal_dev");
+    if (dToken && dData && role !== 'developer') {
+      try {
+        const parsed = JSON.parse(dData);
+        if (parsed?.email) {
+          sessions.push({ role: 'developer', email: parsed.email, token: dToken });
+        }
+      } catch (e) {}
+    }
+
+    // Check seeker session
+    const sToken = localStorage.getItem("vish_seeker_token");
+    const sData = localStorage.getItem("vish_seeker_data");
+    if (sToken && sData && role !== 'seeker') {
+      try {
+        const parsed = JSON.parse(sData);
+        if (parsed?.email) {
+          sessions.push({ role: 'seeker', email: parsed.email, token: sToken });
+        }
+      } catch (e) {}
+    }
+
+    if (sessions.length > 0) {
+      setExistingSession(sessions[0]);
+    } else {
+      setExistingSession(null);
+    }
+  }, [role]);
+
+  const handleCrossLogin = async () => {
+    if (!existingSession) return;
+    setLoading(true);
+    try {
+      const data = await authAPI.crossLogin(existingSession.token, role);
+      if (role === 'recruiter') {
+        recruiterAuth.setAuth(data);
+        toast.success("Signed in successfully as Recruiter!");
+        navigate('/dashboard');
+      } else if (role === 'developer') {
+        developerAuth.setAuth(data);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("portal_jwt", data.jwt_token);
+          localStorage.setItem("portal_dev", JSON.stringify(data));
+        }
+        toast.success("Welcome back! Signed in as Developer.");
+        navigate("/developer/portal/dashboard");
+      } else if (role === 'seeker') {
+        seekerAuth.setAuth(data);
+        localStorage.setItem('vish_seeker_token', data.seeker_token);
+        localStorage.setItem('vish_seeker_data', JSON.stringify(data.seeker));
+        toast.success(`Welcome back, ${data.seeker.full_name}!`);
+        navigate('/jobs/dashboard');
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to switch account session");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Pre-select Role based on URL path
   useEffect(() => {
     const path = location.pathname;
@@ -482,6 +561,20 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         {/* STEP 1 FORMS */}
         {step === 1 && (
           <form className="auth-form" onSubmit={handleAuthSubmit} style={{ transform: "translateZ(30px)" }}>
+            {existingSession && (
+              <motion.button
+                type="button"
+                onClick={handleCrossLogin}
+                className="existing-account-btn"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <User size={16} />
+                <span>
+                  Continue with {existingSession.email} ({existingSession.role === 'recruiter' ? 'Recruiter Account' : existingSession.role === 'developer' ? 'Developer Account' : 'Job Seeker Account'})
+                </span>
+              </motion.button>
+            )}
             {/* Signup Only Fields */}
             {!isLogin && (
               <>

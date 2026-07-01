@@ -44,6 +44,7 @@ urlpatterns = [
     path('api/v1/auth/login', recruiter_auth.login, name='auth-login'),
     path('api/v1/auth/login-google', google_auth.recruiter_auth_google, name='auth-login-google'),
     path('api/v1/auth/login-github', github_auth.recruiter_auth_github, name='auth-login-github'),
+    path('api/v1/auth/cross-login', recruiter_auth.cross_portal_login, name='auth-cross-login'),
     path('api/v1/auth/me', recruiter_auth.me, name='auth-me'),
     path('api/v1/auth/logout', recruiter_auth.logout, name='auth-logout'),
     path('api/v1/auth/change-password', recruiter_auth.change_password, name='auth-change-password'),

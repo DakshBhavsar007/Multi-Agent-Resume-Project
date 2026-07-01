@@ -103,7 +103,10 @@ export const authAPI = {
   },
   getNotifications: () => req("GET", "/auth/notifications"),
   markAllNotificationsRead: () => req("POST", "/auth/notifications/read-all"),
-  markNotificationRead: (id) => req("POST", `/auth/notifications/${id}/read`)
+  markNotificationRead: (id) => req("POST", `/auth/notifications/${id}/read`),
+  crossLogin: async (token, targetRole) => {
+    return req("POST", "/auth/cross-login", { token, target_role: targetRole });
+  }
 }
 
 // SESSIONS
