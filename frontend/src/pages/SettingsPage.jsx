@@ -28,6 +28,24 @@ export default function SettingsPage() {
   const tabFromUrl = searchParams.get('tab');
   const { company, clearAuth, tier, setAuth } = useAuthStore();
   const [companyName, setCompanyName] = useState(company?.name || '');
+  const [industry, setIndustry] = useState(company?.industry || '');
+  const [hqLocation, setHqLocation] = useState(company?.hq_location || '');
+  const [about, setAbout] = useState(company?.about || '');
+  const [companySize, setCompanySize] = useState(company?.company_size || '');
+  const [foundedYear, setFoundedYear] = useState(company?.founded_year || '');
+  const [websiteUrl, setWebsiteUrl] = useState(company?.website_url || '');
+
+  useEffect(() => {
+    if (company) {
+      if (company.name) setCompanyName(company.name);
+      setIndustry(company.industry || '');
+      setHqLocation(company.hq_location || '');
+      setAbout(company.about || '');
+      setCompanySize(company.company_size || '');
+      setFoundedYear(company.founded_year || '');
+      setWebsiteUrl(company.website_url || '');
+    }
+  }, [company]);
 
   const getFullUrl = (path) => {
     if (!path) return "";
@@ -202,8 +220,18 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     try {
-      // 1. Update company name
-      const updatedProfile = await authAPI.updateProfile({ name: companyName });
+      const payload = {
+        name: companyName,
+        industry,
+        hq_location: hqLocation,
+        about,
+        company_size: companySize,
+        founded_year: foundedYear ? Number(foundedYear) : null,
+        website_url: websiteUrl
+      };
+
+      // 1. Update company profile details
+      await authAPI.updateProfile(payload);
       
       let updatedLogoPath = company?.logo_path;
 
@@ -214,14 +242,14 @@ export default function SettingsPage() {
         setLogoFile(null);
       } else if (!logo) {
         // If the logo was cleared/removed, update backend to empty string (which sets it to None in DB)
-        const clearedProfile = await authAPI.updateProfile({ name: companyName, logo_path: "" });
+        await authAPI.updateProfile({ ...payload, logo_path: "" });
         updatedLogoPath = null;
       }
 
       // 3. Update auth state in zustand store
       const updatedCompanyData = {
         ...company,
-        name: companyName,
+        ...payload,
         logo_path: updatedLogoPath
       };
       setAuth(updatedCompanyData);
@@ -363,6 +391,74 @@ export default function SettingsPage() {
                       <span className="text-[9px] text-gray-400 font-medium">PNG, JPG, JPEG, SVG or WEBP up to 5MB</span>
                     </div>
                   </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Industry</label>
+                  <input 
+                    type="text" 
+                    value={industry} 
+                    placeholder="e.g. Technology, Healthcare, Finance"
+                    onChange={(e) => setIndustry(e.target.value)} 
+                    className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">HQ / Location</label>
+                  <input 
+                    type="text" 
+                    value={hqLocation} 
+                    placeholder="e.g. Remote, San Francisco, CA"
+                    onChange={(e) => setHqLocation(e.target.value)} 
+                    className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Company Size</label>
+                    <select
+                      value={companySize}
+                      onChange={(e) => setCompanySize(e.target.value)}
+                      className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors appearance-none"
+                    >
+                      <option value="">Select size...</option>
+                      <option value="1-10">1-10 employees</option>
+                      <option value="11-50">11-50 employees</option>
+                      <option value="50-200">50-200 employees</option>
+                      <option value="201-500">201-500 employees</option>
+                      <option value="501-1000">501-1000 employees</option>
+                      <option value="1000+">1000+ employees</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Founded Year</label>
+                    <input 
+                      type="number" 
+                      value={foundedYear} 
+                      placeholder="e.g. 2020"
+                      onChange={(e) => setFoundedYear(e.target.value)} 
+                      className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Website URL</label>
+                  <input 
+                    type="url" 
+                    value={websiteUrl} 
+                    placeholder="https://example.com"
+                    onChange={(e) => setWebsiteUrl(e.target.value)} 
+                    className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">About / Overview</label>
+                  <textarea 
+                    value={about} 
+                    placeholder="Provide a brief overview of your company..."
+                    onChange={(e) => setAbout(e.target.value)} 
+                    rows={4}
+                    className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-medium text-charcoal focus:outline-none transition-colors resize-none" 
+                  />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Account Tier</label>

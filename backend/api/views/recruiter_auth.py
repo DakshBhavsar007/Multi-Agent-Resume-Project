@@ -214,6 +214,12 @@ def me(request):
         "email": request.company.email,
         "tier": request.company.tier,
         "logo_path": request.company.logo_path,
+        "industry": request.company.industry,
+        "hq_location": request.company.hq_location,
+        "about": request.company.about,
+        "company_size": request.company.company_size,
+        "founded_year": request.company.founded_year,
+        "website_url": request.company.website_url,
         "created_at": request.company.created_at.isoformat() if request.company.created_at else None
     }))
 
@@ -328,6 +334,23 @@ def update_profile(request):
             logo_val = data.get("logo_path")
             company.logo_path = logo_val if logo_val else None
 
+        if "industry" in data:
+            company.industry = data.get("industry")
+        if "hq_location" in data:
+            company.hq_location = data.get("hq_location")
+        if "about" in data:
+            company.about = data.get("about")
+        if "company_size" in data:
+            company.company_size = data.get("company_size")
+        if "founded_year" in data:
+            val = data.get("founded_year")
+            try:
+                company.founded_year = int(val) if val is not None and str(val).strip() != "" else None
+            except (ValueError, TypeError):
+                pass
+        if "website_url" in data:
+            company.website_url = data.get("website_url")
+
         company.save()
         return JsonResponse(success_response({
             "id": str(company.id),
@@ -335,6 +358,12 @@ def update_profile(request):
             "email": company.email,
             "tier": company.tier,
             "logo_path": company.logo_path,
+            "industry": company.industry,
+            "hq_location": company.hq_location,
+            "about": company.about,
+            "company_size": company.company_size,
+            "founded_year": company.founded_year,
+            "website_url": company.website_url,
             "created_at": company.created_at.isoformat() if company.created_at else None
         }))
     except Exception as e:
