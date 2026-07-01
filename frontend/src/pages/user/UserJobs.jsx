@@ -18,34 +18,103 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
 import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
 
+// Robust Salary Parsing & Conversion Helpers
+const parseSalary = (salaryStr) => {
+  if (!salaryStr || salaryStr.toLowerCase() === "competitive") {
+    return { min: null, max: null, currency: null };
+  }
+
+  // Detect currency
+  let currency = "USD";
+  if (salaryStr.includes("₹") || salaryStr.toLowerCase().includes("lpa") || salaryStr.toLowerCase().includes("inr")) {
+    currency = "INR";
+  } else if (salaryStr.includes("£") || salaryStr.toLowerCase().includes("gbp")) {
+    currency = "GBP";
+  } else if (salaryStr.includes("€") || salaryStr.toLowerCase().includes("eur")) {
+    currency = "EUR";
+  }
+
+  const cleanStr = salaryStr.replace(/,/g, "");
+  const pattern = /([0-9.]+)\s*([a-zA-Z\s]*)/g;
+  let match;
+  const values = [];
+
+  while ((match = pattern.exec(cleanStr)) !== null) {
+    const num = parseFloat(match[1]);
+    if (isNaN(num)) continue;
+    
+    const suffix = (match[2] || "").toLowerCase().trim();
+    let val = num;
+
+    if (currency === "INR") {
+      // Unit is Lakhs (LPA)
+      if (suffix.includes("k")) {
+        // e.g. 18k -> 18,000 rupees -> 0.18 Lakhs
+        val = (num * 1000) / 100000;
+      } else if (num >= 1000) {
+        // e.g. 150000 -> 1.5 Lakhs
+        val = num / 100000;
+      }
+    } else {
+      // Unit is Thousands (k) for USD, GBP, EUR
+      if (suffix.includes("k")) {
+        val = num;
+      } else if (num >= 1000) {
+        val = num / 1000;
+      }
+    }
+    values.push(val);
+  }
+
+  const min = values[0] || null;
+  const max = values[1] || min;
+
+  return { min, max, currency };
+};
+
+const convertSalaryToCurrency = (val, fromCurrency, toCurrency) => {
+  if (fromCurrency === toCurrency) return val;
+  
+  const toUSD = {
+    USD: 1.0,
+    INR: 1.2, 
+    GBP: 1.25, 
+    EUR: 1.1,  
+  };
+  
+  const valInUSD = val * (toUSD[fromCurrency] || 1.0);
+  return valInUSD / (toUSD[toCurrency] || 1.0);
+};
+
+const salaryFilterFn = (salaryRange, minVal, filterCurrencyCode) => {
+  if (!salaryRange || salaryRange.toLowerCase() === "competitive") return true;
+  
+  const parsed = parseSalary(salaryRange);
+  if (!parsed.min) return true;
+  
+  const jobCurrency = parsed.currency || "USD";
+  const convertedMax = convertSalaryToCurrency(parsed.max, jobCurrency, filterCurrencyCode);
+  
+  return convertedMax >= minVal;
+};
+
 // Currency configurations
 const CURRENCIES = [
   { code: "INR", symbol: "₹", label: "INR (LPA)", min: 2, max: 100, step: 2, defaultVal: 12,
     formatMin: (v) => `₹${v}L`, formatMax: (v) => `₹${v}L+`, formatCurrent: (v) => `₹${v} LPA+`,
-    filterFn: (salary, minVal) => {
-      if (!salary) return true;
-      const num = parseFloat(salary.replace(/[^0-9.]/g, ""));
-      if (isNaN(num)) return true;
-      return num >= minVal;
-    }
+    filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "INR")
   },
   { code: "USD", symbol: "$", label: "USD ($)", min: 20, max: 500, step: 10, defaultVal: 80,
     formatMin: (v) => `$${v}k`, formatMax: (v) => `$${v}k+`, formatCurrent: (v) => `$${v}k+`,
-    filterFn: (salary, minVal) => {
-      if (!salary) return true;
-      const num = parseFloat(salary.replace(/[^0-9.]/g, ""));
-      if (isNaN(num)) return true;
-      if (salary.toLowerCase().includes("lpa") || salary.includes("₹")) return num * 1.2 >= minVal;
-      return num >= minVal;
-    }
+    filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "USD")
   },
   { code: "GBP", symbol: "£", label: "GBP (£)", min: 15, max: 400, step: 5, defaultVal: 50,
     formatMin: (v) => `£${v}k`, formatMax: (v) => `£${v}k+`, formatCurrent: (v) => `£${v}k+`,
-    filterFn: (salary, minVal) => true,
+    filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "GBP")
   },
   { code: "EUR", symbol: "€", label: "EUR (€)", min: 15, max: 400, step: 5, defaultVal: 50,
     formatMin: (v) => `€${v}k`, formatMax: (v) => `€${v}k+`, formatCurrent: (v) => `€${v}k+`,
-    filterFn: (salary, minVal) => true,
+    filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "EUR")
   },
 ];
 
@@ -177,6 +246,12 @@ export default function UserJobs() {
   const filtered = jobs.filter((j) => {
     if (activeTypes.length && !activeTypes.includes(j.employment_type)) return false;
     if (activeWorkplaces.length && !activeWorkplaces.includes(getWorkplaceType(j))) return false;
+    
+    // Salary Filter
+    if (currency && currency.filterFn) {
+      if (!currency.filterFn(j.salary_range, salary[0])) return false;
+    }
+    
     return true;
   });
 
