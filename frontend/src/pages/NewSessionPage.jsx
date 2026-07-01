@@ -401,7 +401,7 @@ export default function NewSessionPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Min Salary</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Min Salary*</label>
                   <input
                     type="number"
                     value={formData.salary_min}
@@ -411,7 +411,7 @@ export default function NewSessionPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Max Salary</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Max Salary*</label>
                   <input
                     type="number"
                     value={formData.salary_max}
@@ -483,6 +483,20 @@ export default function NewSessionPage() {
                 onClick={() => {
                   if(!formData.name || !formData.job_title || !formData.job_description) {
                     toast.error("Please fill required fields (Name, Title, Description)");
+                    return;
+                  }
+                  if(!formData.salary_min || !formData.salary_max) {
+                    toast.error("Please specify both Min Salary and Max Salary");
+                    return;
+                  }
+                  const minSal = Number(formData.salary_min);
+                  const maxSal = Number(formData.salary_max);
+                  if(isNaN(minSal) || isNaN(maxSal) || minSal <= 0 || maxSal <= 0) {
+                    toast.error("Please enter valid positive numbers for salaries");
+                    return;
+                  }
+                  if(maxSal < minSal) {
+                    toast.error("Max Salary cannot be less than Min Salary");
                     return;
                   }
                   setStep(2);
