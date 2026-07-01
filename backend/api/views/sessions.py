@@ -11,6 +11,7 @@ from api.decorators import require_api_key, check_rate_limit
 from models.schemas import success_response, error_response
 from agents.inference_agent import SkillInferenceAgent
 from workers.celery_worker import match_all_candidates
+from api.services.notification_service import notify_followers_of_new_job
 
 def validate_announcement_dates(rounds):
     now_naive = datetime.now()
@@ -81,6 +82,9 @@ def session_root(request):
                 rounds=rounds_data,
                 status=status_val
             )
+
+            if new_session.status == "active":
+                notify_followers_of_new_job(new_session)
 
             return JsonResponse(success_response({
                 "id": str(new_session.id),
@@ -202,6 +206,7 @@ def session_detail(request, session_id):
 
         elif request.method == "PATCH":
             data = json.loads(request.body)
+            was_active = (session.status == "active")
             if "name" in data and data["name"] is not None:
                 session.name = data["name"]
             if "job_title" in data and data["job_title"] is not None:
@@ -234,6 +239,9 @@ def session_detail(request, session_id):
 
             session.updated_at = timezone.now()
             session.save()
+
+            if session.status == "active" and not was_active:
+                notify_followers_of_new_job(session)
 
             return JsonResponse(success_response({
                 "message": "Session updated",

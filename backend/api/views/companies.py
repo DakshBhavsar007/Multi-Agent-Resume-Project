@@ -2,7 +2,7 @@ import json
 import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from api.models import Company, Session, JobApplication
+from api.models import Company, Session, JobApplication, Notification, JobSeekerAccount
 from api.views.seeker_auth import require_seeker_jwt
 from models.schemas import success_response, error_response
 
@@ -23,6 +23,21 @@ def _serialize_company(company, is_following=False, active_sessions=None):
             "salary_range": "Competitive"
         })
         
+    cid_str = str(company.id)
+    try:
+        followers_count = JobSeekerAccount.objects.filter(
+            resume_data__followed_companies__contains=cid_str
+        ).count()
+    except Exception:
+        # Fallback to python count if the DB doesn't support json __contains properly
+        followers_count = 0
+        all_seekers = JobSeekerAccount.objects.all()
+        for s in all_seekers:
+            if s.resume_data and isinstance(s.resume_data, dict):
+                followed = s.resume_data.get("followed_companies", [])
+                if isinstance(followed, list) and cid_str in followed:
+                    followers_count += 1
+        
     return {
         "id": str(company.id),
         "name": company.name,
@@ -37,7 +52,8 @@ def _serialize_company(company, is_following=False, active_sessions=None):
         "logo_path": company.logo_path,
         "openings": len(open_jobs),
         "open_jobs": open_jobs,
-        "is_following": is_following
+        "is_following": is_following,
+        "followers_count": followers_count
     }
 
 # ── Public Endpoints ──────────────────────────────────────────────────────────
@@ -199,6 +215,25 @@ def seeker_follow_company(request, company_id):
                 followed.append(cid_str)
                 seeker.resume_data["followed_companies"] = followed
                 seeker.save(update_fields=["resume_data"])
+                
+                # Send notifications
+                try:
+                    Notification.objects.create(
+                        seeker=seeker,
+                        type="general",
+                        title=f"Following {company.name}",
+                        message=f"You started following {company.name}. You'll get notified of new job postings.",
+                        link=f"/jobs/companies/{company.id}"
+                    )
+                    Notification.objects.create(
+                        company=company,
+                        type="general",
+                        title="New Follower!",
+                        message=f"{seeker.full_name} is now following your company.",
+                        link=None
+                    )
+                except Exception as ne:
+                    print("Failed to create follow notifications:", ne)
             msg = "Followed successfully"
         else: # DELETE
             if cid_str in followed:
@@ -207,7 +242,58 @@ def seeker_follow_company(request, company_id):
                 seeker.save(update_fields=["resume_data"])
             msg = "Unfollowed successfully"
             
-        return JsonResponse(success_response({"message": msg, "is_following": request.method == "POST"}))
+        # Count followers
+        try:
+            followers_count = JobSeekerAccount.objects.filter(
+                resume_data__followed_companies__contains=cid_str
+            ).count()
+        except Exception:
+            followers_count = 0
+            all_seekers = JobSeekerAccount.objects.all()
+            for s in all_seekers:
+                if s.resume_data and isinstance(s.resume_data, dict):
+                    followed_list = s.resume_data.get("followed_companies", [])
+                    if isinstance(followed_list, list) and cid_str in followed_list:
+                        followers_count += 1
+            
+        return JsonResponse(success_response({
+            "message": msg,
+            "is_following": request.method == "POST",
+            "followers_count": followers_count
+        }))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {e}"), status=500)
+
+
+@csrf_exempt
+@require_seeker_jwt
+def seeker_following_companies(request):
+    """GET /api/v1/seeker/companies/following - lists all companies followed by the seeker."""
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        seeker = request.seeker
+        followed = seeker.resume_data.get("followed_companies", []) if seeker.resume_data else []
+        
+        # Filter active companies that are in the followed list
+        companies = Company.objects.filter(id__in=followed, is_active=True).order_by("name")
+        
+        # Bulk fetch active sessions to avoid N+1 query
+        company_ids = [c.id for c in companies]
+        active_sessions_qs = Session.objects.filter(company_id__in=company_ids, status="active")
+        
+        sessions_by_company = {}
+        for s in active_sessions_qs:
+            cid_str = str(s.company_id)
+            sessions_by_company.setdefault(cid_str, []).append(s)
+
+        serialized = [
+            _serialize_company(c, True, active_sessions=sessions_by_company.get(str(c.id), []))
+            for c in companies
+        ]
+        return JsonResponse(success_response({
+            "companies": serialized
+        }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
 

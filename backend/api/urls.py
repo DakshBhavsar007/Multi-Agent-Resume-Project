@@ -228,6 +228,7 @@ urlpatterns = [
 
     # ── Job Seeker Companies ──────────────────────────────────────────────────
     path('api/v1/seeker/companies', companies.seeker_list_companies, name='seeker-companies-list'),
+    path('api/v1/seeker/companies/following', companies.seeker_following_companies, name='seeker-companies-following'),
     path('api/v1/seeker/companies/<str:company_id>', companies.seeker_get_company, name='seeker-companies-detail'),
     path('api/v1/seeker/companies/<str:company_id>/follow', companies.seeker_follow_company, name='seeker-companies-follow'),
 

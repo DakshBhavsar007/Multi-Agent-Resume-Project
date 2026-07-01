@@ -124,6 +124,31 @@ def _send(to_email: str, subject: str, message: str) -> bool:
         return False
 
 
+def send_new_job_notification_to_follower(
+    seeker_email: str,
+    seeker_name: str,
+    company_name: str,
+    job_title: str,
+    session_id: str,
+) -> bool:
+    """
+    Notify a follower of a company that a new job has been posted.
+    """
+    subject = f"New Job Opening: {job_title} at {company_name}"
+    message = f"""
+Hi {seeker_name},
+
+{company_name}, a company you follow, has just posted a new job opening: {job_title}.
+
+Click here to view details and apply:
+{FRONTEND_URL}/jobs/{session_id}
+
+You are receiving this because you follow {company_name} on Between.
+— Between Platform
+"""
+    return _send(seeker_email, subject, message)
+
+
 def send_email(to_email: str, subject: str, html_body: str = "", text_body: str = "") -> bool:
     """
     Public helper — sends an email with optional HTML body.
