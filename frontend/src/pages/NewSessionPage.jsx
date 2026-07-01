@@ -27,14 +27,14 @@ const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
 
   const getPillColor = () => {
     switch(tagColor) {
-      case 'amber': return 'bg-amber-50 text-amber-800 border-amber-200';
-      case 'blue': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'gray': default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'amber': return 'bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-700';
+      case 'blue': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-700';
+      case 'gray': default: return 'bg-muted text-foreground border-border';
     }
   };
 
   return (
-    <div className="w-full flex flex-wrap items-center gap-2 p-2 border-[1.5px] border-gray-200 rounded-lg bg-white focus-within:border-[#2563EB] transition-colors">
+    <div className="w-full flex flex-wrap items-center gap-2 p-2 border-[1.5px] border-border rounded-lg bg-background focus-within:border-[#2563EB] transition-colors">
       {tags.map((tag, idx) => (
         <div key={idx} className={`flex items-center gap-1 px-2.5 py-1 rounded-md border text-sm font-medium ${getPillColor()}`}>
           {tag}
@@ -49,7 +49,7 @@ const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
         onChange={e => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={tags.length === 0 ? placeholder : "Add more..."}
-        className="flex-1 min-w-[120px] bg-transparent focus:outline-none text-sm text-charcoal py-1"
+        className="flex-1 min-w-[120px] bg-transparent focus:outline-none text-sm text-foreground py-1"
       />
     </div>
   );
@@ -147,7 +147,7 @@ export default function NewSessionPage() {
 
     return (
       <div className="flex items-center justify-center mb-12 max-w-lg mx-auto w-full relative pt-8">
-        <div className="absolute top-[50px] left-16 right-16 h-[2px] bg-gray-200 -z-0"></div>
+        <div className="absolute top-[50px] left-16 right-16 h-[2px] bg-border -z-0"></div>
         {steps.map((s, idx) => {
           const isActive = step === s.num;
           const isDone = step > s.num;
@@ -155,12 +155,12 @@ export default function NewSessionPage() {
           return (
             <div key={idx} className="flex flex-col items-center flex-1 relative z-10">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-2 transition-colors ${
-                isActive ? "bg-[#2563EB] text-white ring-4 ring-blue-50" :
-                isDone ? "bg-[#2A2A2A] text-white" : "bg-gray-200 text-gray-500"
+                isActive ? "bg-[#2563EB] text-white ring-4 ring-blue-50 dark:ring-blue-950" :
+                isDone ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
               }`}>
                 {isDone ? <Check size={16} /> : s.num}
               </div>
-              <span className={`text-xs font-semibold uppercase tracking-wider ${isActive ? "text-[#2563EB]" : isDone ? "text-charcoal" : "text-gray-400"}`}>
+              <span className={`text-xs font-semibold uppercase tracking-wider ${isActive ? "text-[#2563EB]" : isDone ? "text-foreground" : "text-muted-foreground"}`}>
                 {s.label}
               </span>
             </div>
@@ -364,35 +364,35 @@ export default function NewSessionPage() {
     switch (step) {
       case 1:
         return (
-          <div className="bg-white rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto">
-            <h2 className="text-2xl font-bold text-charcoal mb-6">Tell us about the role</h2>
+          <div className="bg-card border border-border rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Tell us about the role</h2>
             
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-charcoal mb-1.5">Session Name*</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Session Name*</label>
                 <input
                   type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
                   placeholder="e.g., Backend Engineers Q2 2025"
-                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
+                  className="w-full p-3 border-[1.5px] border-border rounded-lg text-sm text-foreground bg-background focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-charcoal mb-1.5">Job Title*</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Job Title*</label>
                 <input
                   type="text" value={formData.job_title} onChange={e => setFormData({...formData, job_title: e.target.value})}
                   placeholder="e.g., Senior Full Stack Engineer"
-                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
+                  className="w-full p-3 border-[1.5px] border-border rounded-lg text-sm text-foreground bg-background focus:border-[#2563EB] focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-charcoal mb-1.5">Currency</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Currency</label>
                   <select
                     value={formData.salary_currency}
                     onChange={e => setFormData({...formData, salary_currency: e.target.value})}
-                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none bg-white"
+                    className="w-full p-3 border-[1.5px] border-border rounded-lg text-sm text-foreground bg-background focus:border-[#2563EB] focus:outline-none"
                   >
                     <option value="USD">USD ($)</option>
                     <option value="INR">INR (₹)</option>
@@ -401,30 +401,30 @@ export default function NewSessionPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-charcoal mb-1.5">Min Salary</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Min Salary</label>
                   <input
                     type="number"
                     value={formData.salary_min}
                     onChange={e => setFormData({...formData, salary_min: e.target.value})}
                     placeholder="e.g. 80000"
-                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
+                    className="w-full p-3 border-[1.5px] border-border rounded-lg text-sm text-foreground bg-background focus:border-[#2563EB] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-charcoal mb-1.5">Max Salary</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Max Salary</label>
                   <input
                     type="number"
                     value={formData.salary_max}
                     onChange={e => setFormData({...formData, salary_max: e.target.value})}
                     placeholder="e.g. 120000"
-                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
+                    className="w-full p-3 border-[1.5px] border-border rounded-lg text-sm text-foreground bg-background focus:border-[#2563EB] focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-sm font-medium text-charcoal">Job Description*</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Job Description*</label>
                   <button
                     type="button"
                     onClick={handleGenerateJD}
@@ -439,7 +439,7 @@ export default function NewSessionPage() {
                   value={formData.job_description} onChange={e => setFormData({...formData, job_description: e.target.value})}
                   placeholder="Paste the complete job description or click 'Generate with AI' to write one automatically..."
                   rows={10}
-                  className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none resize-y"
+                  className="w-full p-3 border-[1.5px] border-border rounded-lg text-sm text-foreground bg-background focus:border-[#2563EB] focus:outline-none resize-y"
                 />
               </div>
 
@@ -452,24 +452,24 @@ export default function NewSessionPage() {
               </button>
 
               {inferredData && (
-                <div className="mt-4 border-[1.5px] border-green-200 bg-green-50 rounded-xl p-4">
-                  <div className="text-green-800 font-medium text-sm mb-3 flex items-center gap-1.5">
-                    <Check className="w-4 h-4 text-green-600 shrink-0" />
+                <div className="mt-4 border-[1.5px] border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 rounded-xl p-4">
+                  <div className="text-green-800 dark:text-green-300 font-medium text-sm mb-3 flex items-center gap-1.5">
+                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
                     <span>AI found requirements for: {formData.job_title}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.required_skills.map((s, i) => (
-                      <span key={i} className="text-[11px] bg-amber-50 text-amber-800 px-2 py-1 rounded font-semibold border border-amber-200">{s}</span>
+                      <span key={i} className="text-[11px] bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 px-2 py-1 rounded font-semibold border border-amber-200 dark:border-amber-700">{s}</span>
                     ))}
                     {formData.nice_to_have.map((s, i) => (
-                      <span key={i} className="text-[11px] bg-gray-200 text-gray-800 px-2 py-1 rounded font-semibold border border-gray-300">{s}</span>
+                      <span key={i} className="text-[11px] bg-muted text-foreground px-2 py-1 rounded font-semibold border border-border">{s}</span>
                     ))}
                     {formData.min_experience > 0 && (
-                      <span className="text-[11px] bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-200">Min {formData.min_experience} years</span>
+                      <span className="text-[11px] bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded font-semibold border border-blue-200 dark:border-blue-700">Min {formData.min_experience} years</span>
                     )}
                     {formData.preferred_locations.map((l, i) => (
-                      <span key={i} className="text-[11px] bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold border border-blue-200 flex items-center gap-1">
-                        <MapPin size={10} className="shrink-0 text-blue-800" />
+                      <span key={i} className="text-[11px] bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded font-semibold border border-blue-200 dark:border-blue-700 flex items-center gap-1">
+                        <MapPin size={10} className="shrink-0" />
                         <span>{l}</span>
                       </span>
                     ))}
@@ -497,12 +497,12 @@ export default function NewSessionPage() {
 
       case 2:
         return (
-          <div className="bg-white rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto">
-            <h2 className="text-2xl font-bold text-charcoal mb-6">Define your hiring criteria</h2>
+          <div className="bg-card border border-border rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Define your hiring criteria</h2>
             
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-charcoal mb-1.5">Required Skills</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Required Skills</label>
                 <TagInput 
                   tags={formData.required_skills} 
                   onChange={(t) => setFormData({...formData, required_skills: t})} 
@@ -512,7 +512,7 @@ export default function NewSessionPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-charcoal mb-1.5">Nice to Have</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Nice to Have</label>
                 <TagInput 
                   tags={formData.nice_to_have} 
                   onChange={(t) => setFormData({...formData, nice_to_have: t})} 
@@ -522,7 +522,7 @@ export default function NewSessionPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-charcoal mb-1.5">Preferred Locations</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Locations</label>
                 <TagInput 
                   tags={formData.preferred_locations} 
                   onChange={(t) => setFormData({...formData, preferred_locations: t})} 
@@ -532,25 +532,25 @@ export default function NewSessionPage() {
               </div>
 
               <div className="flex items-center gap-4">
-                <label className="block text-sm font-medium text-charcoal whitespace-nowrap">Minimum Experience</label>
+                <label className="block text-sm font-medium text-foreground whitespace-nowrap">Minimum Experience</label>
                 <input 
                   type="number" min="0" max="20"
                   value={formData.min_experience}
                   onChange={(e) => setFormData({...formData, min_experience: parseInt(e.target.value) || 0})}
-                  className="w-20 p-2 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
+                  className="w-20 p-2 border-[1.5px] border-border rounded-lg text-sm text-foreground bg-background focus:border-[#2563EB] focus:outline-none"
                 />
-                <span className="text-sm text-gray-500">years</span>
+                <span className="text-sm text-muted-foreground">years</span>
               </div>
 
-              <div className="pt-4 border-t border-gray-100">
-                <label className="block text-sm font-bold text-charcoal mb-1">Auto-reject below:</label>
-                <p className="text-xs text-gray-500 mb-4">Candidates scoring below this will be automatically rejected after parsing.</p>
+              <div className="pt-4 border-t border-border">
+                <label className="block text-sm font-bold text-foreground mb-1">Auto-reject below:</label>
+                <p className="text-xs text-muted-foreground mb-4">Candidates scoring below this will be automatically rejected after parsing.</p>
                 <div className="flex items-center gap-6">
                   <input
                     type="range" min="0" max="100" step="5"
                     value={formData.min_match_score}
                     onChange={handleSliderChange}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#2563EB]"
+                    className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-[#2563EB]"
                   />
                   <div className={`text-3xl font-bold w-20 text-right ${formData.min_match_score < 40 ? 'text-red-500' : formData.min_match_score <= 60 ? 'text-amber-500' : 'text-green-500'}`}>
                     {formData.min_match_score}%
@@ -558,34 +558,34 @@ export default function NewSessionPage() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-100">
-                <h3 className="text-sm font-bold text-charcoal mb-1">Matching Weights</h3>
-                <p className="text-xs text-gray-500 mb-4">How to weigh different factors (must sum to 1.0)</p>
+              <div className="pt-4 border-t border-border">
+                <h3 className="text-sm font-bold text-foreground mb-1">Matching Weights</h3>
+                <p className="text-xs text-muted-foreground mb-4">How to weigh different factors (must sum to 1.0)</p>
                 
                 <div className="space-y-4">
                   {['skills', 'experience', 'location'].map((key) => (
                     <div key={key} className="flex items-center gap-4">
-                      <div className="w-32 text-sm text-charcoal capitalize">{key} Weight:</div>
+                      <div className="w-32 text-sm text-foreground capitalize">{key} Weight:</div>
                       <input
                         type="range" min="0" max="1" step="0.05"
                         value={formData.weights[key]}
                         onChange={(e) => handleWeightChange(key, e.target.value)}
-                        className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#2563EB]"
+                        className="flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-[#2563EB]"
                       />
-                      <div className="w-12 text-sm text-right font-mono text-charcoal">{formData.weights[key].toFixed(2)}</div>
+                      <div className="w-12 text-sm text-right font-mono text-foreground">{formData.weights[key].toFixed(2)}</div>
                     </div>
                   ))}
                 </div>
                 
                 <div className="mt-4 flex justify-between items-center text-sm font-medium">
-                  <div className="text-charcoal bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200">Total: {weightsSum.toFixed(2)}</div>
+                  <div className="text-foreground bg-muted px-3 py-1.5 rounded-md border border-border">Total: {weightsSum.toFixed(2)}</div>
                   {Math.abs(weightsSum - 1.0) > 0.01 ? (
                     <span className="text-red-500 mb-0 flex items-center gap-1.5">
                       <AlertCircle size={14} className="shrink-0 text-red-500" />
                       <span>Must equal exactly 1.0</span>
                     </span>
                   ) : (
-                    <span className="text-green-600 mb-0">✓ Weights balanced</span>
+                    <span className="text-green-600 dark:text-green-400 mb-0">✓ Weights balanced</span>
                   )}
                 </div>
               </div>
@@ -594,7 +594,7 @@ export default function NewSessionPage() {
             <div className="flex justify-between mt-8">
               <button 
                 onClick={() => setStep(1)}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-charcoal hover:bg-gray-50 flex items-center gap-2"
+                className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted flex items-center gap-2"
               >
                 <ArrowLeft size={16} /> Back
               </button>
@@ -615,17 +615,17 @@ export default function NewSessionPage() {
 
       case 3:
         return (
-          <div className="bg-white rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto">
-            <h2 className="text-2xl font-bold text-charcoal mb-1">Define interview stages</h2>
-            <p className="text-xs text-gray-500 mb-6">The last round will have "Hire" option instead of "Forward".</p>
+          <div className="bg-card border border-border rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto">
+            <h2 className="text-2xl font-bold text-foreground mb-1">Define interview stages</h2>
+            <p className="text-xs text-muted-foreground mb-6">The last round will have "Hire" option instead of "Forward".</p>
             
             <div className="space-y-3 mb-6">
               {formData.rounds.map((round, idx) => {
                 const isLast = idx === formData.rounds.length - 1;
                 return (
-                  <div key={round.id} className={`flex flex-col gap-3 p-4 bg-white border ${isLast ? 'border-[#2563EB] shadow-sm' : 'border-gray-200'} rounded-xl relative transition-all`}>
+                  <div key={round.id} className={`flex flex-col gap-3 p-4 bg-card border ${isLast ? 'border-[#2563EB] shadow-sm' : 'border-border'} rounded-xl relative transition-all`}>
                     <div className="flex items-center gap-3">
-                      <div className="text-gray-400 cursor-move"><GripVertical size={18} /></div>
+                      <div className="text-muted-foreground cursor-move"><GripVertical size={18} /></div>
                       
                       <input 
                         type="text" value={round.name}
@@ -634,7 +634,7 @@ export default function NewSessionPage() {
                           newRounds[idx].name = e.target.value;
                           setFormData({...formData, rounds: newRounds});
                         }}
-                        className="flex-[2] p-2 bg-transparent border-b border-gray-200 focus:border-[#2563EB] focus:outline-none text-sm text-charcoal font-medium"
+                        className="flex-[2] p-2 bg-transparent border-b border-border focus:border-[#2563EB] focus:outline-none text-sm text-foreground font-medium"
                         placeholder="Round Name"
                       />
                       
@@ -645,7 +645,7 @@ export default function NewSessionPage() {
                           newRounds[idx].interviewer = e.target.value;
                           setFormData({...formData, rounds: newRounds});
                         }}
-                        className="flex-1 p-2 bg-transparent border-b border-gray-200 focus:border-[#2563EB] focus:outline-none text-sm text-gray-600"
+                        className="flex-1 p-2 bg-transparent border-b border-border focus:border-[#2563EB] focus:outline-none text-sm text-muted-foreground"
                         placeholder="Interviewer (optional)"
                       />
                       
@@ -654,7 +654,7 @@ export default function NewSessionPage() {
                           if (formData.rounds.length <= 1) return;
                           setFormData({...formData, rounds: formData.rounds.filter((_, i) => i !== idx)});
                         }}
-                        className="text-gray-400 hover:text-red-500 p-1 bg-white"
+                        className="text-muted-foreground hover:text-red-500 p-1 bg-transparent"
                         disabled={formData.rounds.length <= 1}
                       >
                         <X size={18} />
@@ -662,7 +662,7 @@ export default function NewSessionPage() {
                     </div>
 
                     <div className="flex items-center gap-2 pl-7">
-                      <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">Result Declaration Time*:</label>
+                      <label className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Result Declaration Time*:</label>
                       <input
                         type="datetime-local"
                         value={round.result_announcement_date || ""}
@@ -675,7 +675,7 @@ export default function NewSessionPage() {
                           newRounds[idx].result_announcement_date = e.target.value;
                           setFormData({...formData, rounds: newRounds});
                         }}
-                        className="p-1.5 border border-gray-200 rounded-lg text-xs text-charcoal focus:border-[#2563EB] focus:outline-none flex-1"
+                        className="p-1.5 border border-border rounded-lg text-xs text-foreground bg-background focus:border-[#2563EB] focus:outline-none flex-1"
                         required
                       />
                     </div>
@@ -696,13 +696,13 @@ export default function NewSessionPage() {
                   const newId = Math.max(...formData.rounds.map(r=>r.id), 0) + 1;
                   setFormData({...formData, rounds: [...formData.rounds, {id:newId, name:"", interviewer:"", order:newId, result_announcement_date:""}]});
                 }}
-                className="w-full py-3 border-2 border-dashed border-blue-300 bg-blue-50 text-[#2563EB] hover:bg-blue-100 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3 border-2 border-dashed border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] hover:bg-blue-100 dark:hover:bg-blue-950/40 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <Plus size={16} /> Add Round
               </button>
             )}
 
-            <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col gap-4 relative z-10">
+            <div className="mt-8 pt-8 border-t border-border flex flex-col gap-4 relative z-10">
               <button
                 onClick={handleCreate} disabled={creating}
                 className="w-full h-12 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg font-semibold transition-colors flex items-center justify-center disabled:opacity-75 shadow-sm text-lg"
@@ -712,7 +712,7 @@ export default function NewSessionPage() {
               
               <button 
                 onClick={() => setStep(2)}
-                className="text-gray-500 hover:text-charcoal text-sm font-medium transition-colors text-center w-full bg-white py-2"
+                className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors text-center w-full bg-transparent py-2"
               >
                 &larr; Back to Criteria
               </button>
@@ -723,7 +723,7 @@ export default function NewSessionPage() {
   };
 
   return (
-    <div className="min-h-screen pb-20 pt-4 bg-[#F5F0E8]">
+    <div className="min-h-screen pb-20 pt-4 bg-background">
       {renderStepIndicator()}
       {renderStep()}
     </div>

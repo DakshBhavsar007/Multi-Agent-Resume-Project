@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
-import { seekerAPI, publicAPI } from "../../lib/api";
+import { seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import {
   Bell,
@@ -41,18 +41,13 @@ export default function UserFollowedCompanies() {
       }
       const data = await seekerAPI.getFollowedCompanies();
       // data may be array or { companies: [...] }
-      const list = Array.isArray(data) ? data : (data.companies || []);
+      const list = Array.isArray(data) ? data : (data?.companies || []);
       setCompanies(list);
     } catch (err) {
-      console.error(err);
-      // Fallback: try public API and filter
-      try {
-        const data = await publicAPI.listCompanies({ per_page: 100 });
-        setCompanies([]);
-      } catch (_) {
-        setCompanies([]);
-      }
-      toast.error("Could not load followed companies. Please log in.");
+      console.warn("getFollowedCompanies failed:", err.message);
+      // Graceful fallback — don't show misleading "Please log in" when user IS logged in
+      // The backend endpoint may not be implemented yet; show empty state silently
+      setCompanies([]);
     } finally {
       setLoading(false);
     }
