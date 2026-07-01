@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { authAPI, billingAPI } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import PageTransition from '../components/PageTransition';
+import { LocationSelector } from '../components/ui/LocationSelector';
 import { 
   Building, 
   Key, 
@@ -404,12 +405,9 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">HQ / Location</label>
-                  <input 
-                    type="text" 
+                  <LocationSelector 
                     value={hqLocation} 
-                    placeholder="e.g. Remote, San Francisco, CA"
-                    onChange={(e) => setHqLocation(e.target.value)} 
-                    className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 
+                    onChange={setHqLocation} 
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">

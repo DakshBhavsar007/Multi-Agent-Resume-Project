@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { seekerAPI, API_HOST } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
+import { LocationSelector } from "../../components/ui/LocationSelector";
 import { 
   Mail, MapPin, Pencil, Briefcase, GraduationCap, 
   Award, FileText, Settings, Phone, CheckCircle2, 
@@ -491,13 +492,19 @@ export default function UserProfile() {
                 
                 <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                   {isEditing ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />
-                        <input type="text" name="location" value={editForm.location} onChange={handleEditChange} placeholder="City, Country" className="px-2 py-0.5 border rounded bg-white text-slate-700 text-xs w-28" />
-                      </span>
-                      <span className="flex items-center gap-1"><Phone className="h-3 w-3" />
-                        <input type="text" name="phone" value={editForm.phone} onChange={handleEditChange} placeholder="Phone" className="px-2 py-0.5 border rounded bg-white text-slate-700 text-xs w-28" />
-                      </span>
+                    <div className="flex flex-col gap-3 w-full max-w-md">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="flex items-center gap-1"><Phone className="h-3 w-3" />
+                          <input type="text" name="phone" value={editForm.phone} onChange={handleEditChange} placeholder="Phone" className="px-2 py-0.5 border border-border rounded bg-white text-slate-700 text-xs w-32 focus:outline-none" />
+                        </span>
+                      </div>
+                      <div className="w-full">
+                        <LocationSelector 
+                          value={editForm.location} 
+                          onChange={(loc) => setEditForm(prev => ({ ...prev, location: loc }))} 
+                          isLight={true} 
+                        />
+                      </div>
                     </div>
                   ) : (
                     <>

@@ -21,17 +21,66 @@ export default function UserUploadResume() {
   const handleUpload = async () => {
     if (!rawFile) return;
     setUploading(true);
-    const toastId = toast.loading("Uploading and parsing resume using AI...");
+    const toastId = toast.loading("Uploading resume file...");
     try {
-      await seekerAPI.uploadResume(rawFile);
-      toast.success("Resume parsed successfully!", { id: toastId });
-      setTimeout(() => {
-        navigate("/jobs/profile");
+      const result = await seekerAPI.uploadResume(rawFile);
+      
+      // If task completed synchronously
+      if (result.parsed || result.status === "success" || result.status === "failed") {
+        if (result.parsed || result.status === "success") {
+          toast.success("Resume uploaded and parsed successfully!", { id: toastId });
+          setTimeout(() => {
+            navigate("/jobs/profile");
+          }, 1500);
+        } else {
+          toast.error(result.error || "Failed to parse resume", { id: toastId });
+        }
+        setUploading(false);
+        return;
+      }
+      
+      // Asynchronous polling loop (Redis path)
+      toast.loading("Analyzing and parsing resume with AI in background...", { id: toastId });
+      
+      const interval = setInterval(async () => {
+        try {
+          const statusRes = await seekerAPI.getParseStatus();
+          const prog = statusRes.progress || 10;
+          
+          if (statusRes.status === "success") {
+            clearInterval(interval);
+            toast.success("Resume uploaded and parsed successfully!", { id: toastId });
+            setUploading(false);
+            setTimeout(() => {
+              navigate("/jobs/profile");
+            }, 1500);
+          } else if (statusRes.status === "failed") {
+            clearInterval(interval);
+            toast.error(statusRes.error || "AI parsing failed. Please edit details manually.", { id: toastId });
+            setUploading(false);
+          } else {
+            let statusText = "Parsing resume with AI...";
+            if (prog < 30) {
+              statusText = "Extracting resume text content...";
+            } else if (prog < 60) {
+              statusText = "Analyzing text with AI agent...";
+            } else if (prog < 85) {
+              statusText = "Normalizing skills & matching profiles...";
+            } else {
+              statusText = "Updating profile databases...";
+            }
+            toast.loading(`${statusText} (${prog}%)`, { id: toastId });
+          }
+        } catch (err) {
+          clearInterval(interval);
+          toast.error("Failed to track parsing progress.", { id: toastId });
+          setUploading(false);
+        }
       }, 1500);
+
     } catch (err) {
       console.error(err);
       toast.error(err.message || "Failed to upload and parse resume", { id: toastId });
-    } finally {
       setUploading(false);
     }
   };

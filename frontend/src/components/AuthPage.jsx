@@ -23,6 +23,7 @@ import {
 import { authAPI, seekerAPI } from '../lib/api';
 import { portalAuth, portalBilling } from '../lib/portalApi';
 import { useAuthStore } from '../stores/authStore';
+import { LocationSelector } from './ui/LocationSelector';
 import { usePortalAuthStore } from '../stores/portalAuthStore';
 import { useSeekerAuthStore } from '../stores/seekerAuthStore';
 import './AuthPage.css';
@@ -145,6 +146,12 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [locationField, setLocationField] = useState('');
   const [headline, setHeadline] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [companySize, setCompanySize] = useState('');
+  const [foundedYear, setFoundedYear] = useState('');
+  const [about, setAbout] = useState('');
+  const [phone, setPhone] = useState('');
+  const [skills, setSkills] = useState('');
 
   // Flows State
   const [step, setStep] = useState(1);
@@ -415,7 +422,17 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         }
 
         if (role === 'recruiter') {
-          const res = await authAPI.register({ name: companyName, email, password });
+          const res = await authAPI.register({ 
+            name: companyName, 
+            email, 
+            password,
+            industry,
+            hq_location: locationField,
+            company_size: companySize,
+            founded_year: foundedYear ? Number(foundedYear) : null,
+            website_url: websiteUrl,
+            about
+          });
           setApiKeys(res);
           setStep(2);
         } else if (role === 'developer') {
@@ -428,7 +445,9 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
             email,
             password,
             location: locationField,
-            headline
+            headline,
+            phone,
+            skills: skills ? skills.split(',').map(s => s.trim()) : []
           });
           seekerAuth.setAuth(data);
           localStorage.setItem('vish_seeker_token', data.seeker_token);
@@ -596,16 +615,86 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
             {!isLogin && (
               <>
                 {role === 'recruiter' && (
-                  <div className="input-group">
-                    <label>Company Name</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Acme Corp" 
-                      value={companyName} 
-                      onChange={e => setCompanyName(e.target.value)} 
-                      required 
-                    />
-                  </div>
+                  <>
+                    <div className="input-group">
+                      <label>Company Name</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Acme Corp" 
+                        value={companyName} 
+                        onChange={e => setCompanyName(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>Industry</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Technology, Healthcare, Finance" 
+                        value={industry} 
+                        onChange={e => setIndustry(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>HQ / Location</label>
+                      <LocationSelector 
+                        value={locationField} 
+                        onChange={setLocationField} 
+                        isLight={true} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="input-group">
+                        <label>Company Size</label>
+                        <select
+                          value={companySize}
+                          onChange={e => setCompanySize(e.target.value)}
+                          className="w-full p-[11px] bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors appearance-none"
+                          required
+                        >
+                          <option value="">Select size...</option>
+                          <option value="1-10">1-10 employees</option>
+                          <option value="11-50">11-50 employees</option>
+                          <option value="50-200">50-200 employees</option>
+                          <option value="201-500">201-500 employees</option>
+                          <option value="501-1000">501-1000 employees</option>
+                          <option value="1000+">1000+ employees</option>
+                        </select>
+                      </div>
+                      <div className="input-group">
+                        <label>Founded Year</label>
+                        <input 
+                          type="number" 
+                          placeholder="e.g. 2020" 
+                          value={foundedYear} 
+                          onChange={e => setFoundedYear(e.target.value)} 
+                          required 
+                        />
+                      </div>
+                    </div>
+                    <div className="input-group">
+                      <label>Website URL</label>
+                      <input 
+                        type="url" 
+                        placeholder="https://example.com" 
+                        value={websiteUrl} 
+                        onChange={e => setWebsiteUrl(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>About / Overview</label>
+                      <textarea 
+                        placeholder="Provide a brief overview of your company..." 
+                        value={about} 
+                        onChange={e => setAbout(e.target.value)} 
+                        rows={3}
+                        style={{ width: '100%', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '12px', fontSize: '14px', resize: 'none', outline: 'none' }}
+                        required 
+                      />
+                    </div>
+                  </>
                 )}
                 {role === 'developer' && (
                   <>
@@ -643,18 +732,14 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                       />
                     </div>
                     <div className="input-group">
-                      <label>Location</label>
-                      <div className="relative">
-                        <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                          type="text" 
-                          placeholder="e.g. Mumbai, India" 
-                          value={locationField} 
-                          onChange={e => setLocationField(e.target.value)} 
-                          style={{ paddingLeft: '38px' }}
-                          required 
-                        />
-                      </div>
+                      <label>Phone Number</label>
+                      <input 
+                        type="tel" 
+                        placeholder="e.g. +91 9876543210" 
+                        value={phone} 
+                        onChange={e => setPhone(e.target.value)} 
+                        required 
+                      />
                     </div>
                     <div className="input-group">
                       <label>Professional Headline</label>
@@ -669,6 +754,24 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                           required 
                         />
                       </div>
+                    </div>
+                    <div className="input-group">
+                      <label>Skills (comma separated)</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. React, Node.js, Python" 
+                        value={skills} 
+                        onChange={e => setSkills(e.target.value)} 
+                        required 
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>Location</label>
+                      <LocationSelector 
+                        value={locationField} 
+                        onChange={setLocationField} 
+                        isLight={true} 
+                      />
                     </div>
                   </>
                 )}

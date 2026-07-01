@@ -29,11 +29,32 @@ def register(request):
 
         company_name = data.get("name") or data.get("company_name") or "Unnamed Company"
         hashed_pwd = pwd_context.hash(password[:72])
+        
+        industry = data.get("industry")
+        hq_location = data.get("hq_location")
+        company_size = data.get("company_size")
+        founded_year = data.get("founded_year")
+        website_url = data.get("website_url")
+        about = data.get("about")
+        
+        parsed_founded = None
+        if founded_year:
+            try:
+                parsed_founded = int(founded_year)
+            except (ValueError, TypeError):
+                pass
+
         new_company = Company.objects.create(
             name=company_name,
             email=email,
             password_hash=hashed_pwd,
-            tier="free"
+            tier="free",
+            industry=industry,
+            hq_location=hq_location,
+            company_size=company_size,
+            founded_year=parsed_founded,
+            website_url=website_url,
+            about=about
         )
 
         secret = "vish_live_" + secrets.token_urlsafe(24)
@@ -62,6 +83,12 @@ def register(request):
             "email": new_company.email,
             "tier": new_company.tier,
             "logo_path": new_company.logo_path,
+            "industry": new_company.industry,
+            "hq_location": new_company.hq_location,
+            "company_size": new_company.company_size,
+            "founded_year": new_company.founded_year,
+            "website_url": new_company.website_url,
+            "about": new_company.about,
             "secret_key": secret,
             "api_key": public,
             "public_key": public,

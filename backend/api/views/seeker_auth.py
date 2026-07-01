@@ -152,6 +152,10 @@ def register(request):
         if JobSeekerAccount.objects.filter(email=email).exists():
             return JsonResponse(error_response("An account with this email already exists"), status=400)
 
+        skills = data.get("skills", [])
+        if not isinstance(skills, list):
+            skills = [s.strip() for s in str(skills).split(",") if s.strip()]
+
         seeker = JobSeekerAccount.objects.create(
             full_name=full_name,
             email=email,
@@ -159,6 +163,7 @@ def register(request):
             phone=data.get("phone", "").strip() or None,
             location=data.get("location", "").strip() or None,
             headline=data.get("headline", "").strip() or None,
+            skills=skills,
             tier="free",
         )
 
