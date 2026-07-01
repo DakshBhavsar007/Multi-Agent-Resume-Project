@@ -145,14 +145,31 @@ export default function ResumeBuilderLanding() {
     if (!file) return;
 
     setBtnLoading(true);
-    const toastId = toast.loading("Uploading and parsing resume with Advanced ATS Agent...");
+    const toastId = toast.loading("Uploading resume file...");
+    
+    let stepCount = 0;
+    const interval = setInterval(() => {
+      stepCount++;
+      if (stepCount === 1) {
+        toast.loading("Extracting resume text content...", { id: toastId });
+      } else if (stepCount === 2) {
+        toast.loading("Running Advanced ATS Agent analysis...", { id: toastId });
+      } else if (stepCount === 3) {
+        toast.loading("Structuring resume details & sections...", { id: toastId });
+      } else if (stepCount >= 4) {
+        toast.loading("Structuring resume details & sections... (Almost done)", { id: toastId });
+      }
+    }, 2000);
+
     try {
       const draft = await seekerAPI.importFileDraft(file);
+      clearInterval(interval);
       toast.success("Resume parsed and imported successfully!", { id: toastId });
       setTimeout(() => {
         navigate(`/resume-builder/edit/${draft.id}`);
       }, 1500);
     } catch (err) {
+      clearInterval(interval);
       console.error(err);
       toast.error(err.message || "Failed to parse and import resume file", { id: toastId });
     } finally {
