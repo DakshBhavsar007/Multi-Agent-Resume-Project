@@ -93,9 +93,9 @@ const salaryFilterFn = (salaryRange, minVal, filterCurrencyCode) => {
   if (!parsed.min) return true;
   
   const jobCurrency = parsed.currency || "USD";
-  const convertedMax = convertSalaryToCurrency(parsed.max, jobCurrency, filterCurrencyCode);
+  if (jobCurrency !== filterCurrencyCode) return false;
   
-  return convertedMax >= minVal;
+  return parsed.max >= minVal;
 };
 
 // Currency configurations
