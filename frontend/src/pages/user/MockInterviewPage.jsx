@@ -51,6 +51,7 @@ export default function MockInterviewPage() {
   const [codeContent, setCodeContent] = useState("");
   const [compiling, setCompiling] = useState(false);
   const [compileOutput, setCompileOutput] = useState("");
+  const [runStatus, setRunStatus] = useState({}); // track run/pass status per coding slug
   
   // View mode
   const [viewMode, setViewMode] = useState("dashboard"); // "dashboard" | "test" | "result"
@@ -118,6 +119,7 @@ export default function MockInterviewPage() {
       // Initialize states
       setActiveAttempt(res);
       setAnswers({});
+      setRunStatus({});
       setCurrentQIndex(0);
       setTranscript([]);
       setSpokenAnswer("");
@@ -227,28 +229,54 @@ export default function MockInterviewPage() {
     setCompiling(true);
     setCodingTab("output");
     setCompileOutput("Compiling and executing test cases...\n");
+
+    const currentSlug = activeAttempt.questions[currentQIndex].slug;
+    const startCode = activeAttempt.questions[currentQIndex]?.starter_code;
+    const codeText = typeof startCode === "object" ? (startCode?.python || startCode?.javascript || "") : (startCode || "");
+    
+    // Check if code has actually been modified from the starter template
+    const isCodeUnimplemented = codeContent.trim() === codeText.trim() || codeContent.includes("pass") || codeContent.trim().length < 30;
+
     setTimeout(() => {
-      // Mock coding compile run logic
       setCompiling(false);
-      setCompileOutput(
-        "✓ Compilation Successful\n" +
-        "✓ Testcase 1: Passed\n" +
-        "✓ Testcase 2: Passed\n" +
-        "✓ Testcase 3: Passed\n\n" +
-        "All testcases executed in 42ms."
-      );
+      if (isCodeUnimplemented) {
+        setCompileOutput(
+          "✗ Compilation Failed / Testcases Failed\n" +
+          "Error: Solution not implemented or contains 'pass'. Please modify the starter code.\n" +
+          "Testcase 1: Failed (Execution timed out or returned no output)\n" +
+          "Testcase 2: Failed\n" +
+          "Testcase 3: Failed"
+        );
+        setRunStatus(prev => ({ ...prev, [currentSlug]: false }));
+      } else {
+        setCompileOutput(
+          "✓ Compilation Successful\n" +
+          "✓ Testcase 1: Passed\n" +
+          "✓ Testcase 2: Passed\n" +
+          "✓ Testcase 3: Passed\n\n" +
+          "All testcases executed in 42ms."
+        );
+        setRunStatus(prev => ({ ...prev, [currentSlug]: true }));
+      }
     }, 1500);
   };
 
   const handleNextCodingQuestion = () => {
     const currentSlug = activeAttempt.questions[currentQIndex].slug;
+    const isPassed = runStatus[currentSlug] === true;
+
     const newAnswers = {
       ...answers,
       [currentSlug]: {
         code: codeContent,
-        all_passed: true,
+        all_passed: isPassed,
         results: [
-          { input: "Example input", expected: "Example output", actual: "Example output", passed: true }
+          { 
+            input: "Example input", 
+            expected: "Example output", 
+            actual: isPassed ? "Example output" : "Error: pass/unimplemented", 
+            passed: isPassed 
+          }
         ]
       }
     };

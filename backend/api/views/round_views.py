@@ -1511,7 +1511,7 @@ def create_mock_attempt(request):
             from api.models import MCQQuestion
             mcqs = MCQQuestion.objects.all().order_by("?")[:5]
             questions = [{
-                "id": q.id,
+                "id": str(q.id),
                 "question_text": q.question_text,
                 "options": q.options,
                 "category": q.category,
