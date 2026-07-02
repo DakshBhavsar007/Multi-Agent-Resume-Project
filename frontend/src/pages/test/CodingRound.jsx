@@ -220,6 +220,17 @@ export default function CodingRound() {
     );
   }
 
+  if (!problems || problems.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 p-5">
+        <div className="w-full max-w-sm rounded-xl border border-red-100 bg-white p-6 text-center shadow">
+          <h3 className="font-semibold text-gray-900 text-base">No Coding Problems</h3>
+          <p className="text-xs text-gray-500 mt-2">No coding problems are configured for this round. Please contact the administrator.</p>
+        </div>
+      </div>
+    );
+  }
+
   const p = problems[pIdx];
 
   return (

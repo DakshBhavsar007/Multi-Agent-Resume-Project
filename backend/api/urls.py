@@ -278,5 +278,12 @@ urlpatterns = [
     path('api/v1/test/proctoring-flag', round_views.save_proctoring_flag),
     path('api/v1/test/mock-submit', round_views.mock_submit),
     path('api/v1/test/mock-switch-round', round_views.mock_switch_round),
+
+    # Seeker Mock Practice Portal
+    path('api/v1/seeker/mock-interview/create', round_views.create_mock_attempt),
+    path('api/v1/seeker/mock-interview/list', round_views.list_mock_attempts),
+    path('api/v1/seeker/mock-interview/<str:attempt_id>', round_views.get_mock_attempt),
+    path('api/v1/seeker/mock-interview/<str:attempt_id>/submit', round_views.submit_mock_attempt),
+    path('api/v1/seeker/mock-interview/transcribe-audio', round_views.seeker_transcribe_audio),
 ]
 

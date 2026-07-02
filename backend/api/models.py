@@ -518,3 +518,19 @@ class ApplicantRoundAttempt(models.Model):
         unique_together = [('candidate', 'round')]
 
 
+class SeekerMockAttempt(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seeker = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, related_name="mock_attempts")
+    attempt_type = models.CharField(max_length=50) # "aptitude" | "coding" | "interview"
+    status = models.CharField(max_length=20, default="pending") # "pending" | "in_progress" | "submitted"
+    score = models.FloatField(null=True, blank=True)
+    questions = models.JSONField(default=list)
+    answers = models.JSONField(default=dict)
+    feedback = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "seeker_mock_attempts"
+
+

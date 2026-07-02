@@ -1228,7 +1228,7 @@ def finalize_interview(request):
 
     # Recruiter review decision required: skip auto progression for interview attempts.
     cand = attempt.candidate
-    rec = summary.get("recommendation", "").lower()
+    rec = (summary.get("recommendation") or "").lower()
     score = summary.get("overall_score", 0)
     if score == 0 and ("proceed" in rec or "hire" in rec):
         score = 70.0
@@ -1256,6 +1256,7 @@ def transcribe_audio(request):
         return JsonResponse(error_response("Groq API key not configured"), status=500)
 
     try:
+        import io
         client = OpenAI(
             api_key=groq_key,
             base_url="https://api.groq.com/openai/v1"
@@ -1267,7 +1268,7 @@ def transcribe_audio(request):
 
         # Call Groq Whisper API
         transcription = client.audio.transcriptions.create(
-            file=(file_name, file_bytes, "audio/webm"),
+            file=(file_name, io.BytesIO(file_bytes), "audio/webm"),
             model="whisper-large-v3-turbo",
             language="en"
         )
@@ -1479,3 +1480,333 @@ def mock_switch_round(request):
             attempt.save()
 
     return JsonResponse(success_response({"message": f"Successfully forced candidate to round {target_round_number}"}))
+
+
+@csrf_exempt
+def create_mock_attempt(request):
+    """
+    POST /api/v1/seeker/mock-interview/create
+    Body: { "attempt_type": "aptitude" | "coding" | "interview" }
+    """
+    from api.views.seeker_auth import require_seeker_jwt
+    @require_seeker_jwt
+    def _inner(request):
+        if request.method != "POST":
+            return JsonResponse(error_response("Method not allowed"), status=405)
+            
+        try:
+            data = json.loads(request.body)
+            attempt_type = data.get("attempt_type")
+        except Exception:
+            return JsonResponse(error_response("Invalid JSON"), status=400)
+            
+        if attempt_type not in ["aptitude", "coding", "interview"]:
+            return JsonResponse(error_response("Invalid attempt type"), status=400)
+            
+        seeker = request.seeker
+        
+        questions = []
+        if attempt_type == "aptitude":
+            # Get random MCQ questions (limit 5)
+            from api.models import MCQQuestion
+            mcqs = MCQQuestion.objects.all().order_by("?")[:5]
+            questions = [{
+                "id": q.id,
+                "question_text": q.question_text,
+                "options": q.options,
+                "category": q.category,
+                "correct_option": q.correct_option
+            } for q in mcqs]
+            if not questions:
+                questions = [
+                    {
+                        "id": 1,
+                        "question_text": "What is the time complexity of searching in a balanced Binary Search Tree?",
+                        "options": ["O(1)", "O(log n)", "O(n)", "O(n log n)"],
+                        "correct_option": 1,
+                        "category": "Aptitude"
+                    }
+                ]
+                
+        elif attempt_type == "coding":
+            # Get random Coding Problems (limit 2)
+            from api.models import CodingProblem
+            problems = CodingProblem.objects.all().order_by("?")[:2]
+            questions = [{
+                "slug": p.slug,
+                "title": p.title,
+                "difficulty": p.difficulty,
+                "description": p.description,
+                "examples": p.examples,
+                "constraints": p.constraints,
+                "starter_code": p.starter_code
+            } for p in problems]
+            
+        elif attempt_type == "interview":
+            # Check active resume
+            if not seeker.resume_data:
+                return JsonResponse(error_response("Please upload your resume before starting the AI Interview mock."), status=400)
+                
+            try:
+                agent = InterviewAgent()
+                ai_questions = agent.generate_questions(
+                    job_title="Software Engineer (Mock Practice)",
+                    job_description="Standard software engineering mock interview questions covering data structures, algorithms, system design, and soft skills.",
+                    candidate_resume=seeker.resume_data,
+                    manual_questions=[],
+                    total_questions=5
+                )
+                questions = [{
+                    "q": q.get("q"),
+                    "type": q.get("type"),
+                    "source": q.get("source"),
+                    "expected_keywords": q.get("expected_keywords", [])
+                } for q in ai_questions]
+            except Exception as e:
+                logger.error("Failed to generate mock interview questions: %s", e)
+                questions = [
+                    {
+                        "q": "Walk me through your most complex project and the biggest technical challenge you faced.",
+                        "type": "project_general",
+                        "source": "fallback",
+                        "expected_keywords": []
+                    },
+                    {
+                        "q": "How do you handle conflict or differing opinions within a software development team?",
+                        "type": "behavioral",
+                        "source": "fallback",
+                        "expected_keywords": []
+                    }
+                ]
+                
+        from api.models import SeekerMockAttempt
+        attempt = SeekerMockAttempt.objects.create(
+            seeker=seeker,
+            attempt_type=attempt_type,
+            status="in_progress",
+            questions=questions
+        )
+        
+        return JsonResponse(success_response({
+            "attempt_id": str(attempt.id),
+            "attempt_type": attempt.attempt_type,
+            "questions": attempt.questions,
+            "status": attempt.status
+        }))
+    return _inner(request)
+
+
+@csrf_exempt
+def list_mock_attempts(request):
+    """
+    GET /api/v1/seeker/mock-interview/list
+    """
+    from api.views.seeker_auth import require_seeker_jwt
+    @require_seeker_jwt
+    def _inner(request):
+        if request.method != "GET":
+            return JsonResponse(error_response("Method not allowed"), status=405)
+            
+        seeker = request.seeker
+        from api.models import SeekerMockAttempt
+        attempts = SeekerMockAttempt.objects.filter(seeker=seeker).order_by("-created_at")
+        
+        data = [{
+            "attempt_id": str(a.id),
+            "attempt_type": a.attempt_type,
+            "status": a.status,
+            "score": a.score,
+            "created_at": a.created_at.isoformat(),
+            "submitted_at": a.submitted_at.isoformat() if a.submitted_at else None
+        } for a in attempts]
+        
+        return JsonResponse(success_response({"attempts": data}))
+    return _inner(request)
+
+
+@csrf_exempt
+def get_mock_attempt(request, attempt_id):
+    """
+    GET /api/v1/seeker/mock-interview/<attempt_id>
+    """
+    from api.views.seeker_auth import require_seeker_jwt
+    @require_seeker_jwt
+    def _inner(request):
+        if request.method != "GET":
+            return JsonResponse(error_response("Method not allowed"), status=405)
+            
+        seeker = request.seeker
+        from api.models import SeekerMockAttempt
+        attempt = SeekerMockAttempt.objects.filter(id=attempt_id, seeker=seeker).first()
+        if not attempt:
+            return JsonResponse(error_response("Mock attempt not found"), status=404)
+            
+        return JsonResponse(success_response({
+            "attempt_id": str(attempt.id),
+            "attempt_type": attempt.attempt_type,
+            "status": attempt.status,
+            "score": attempt.score,
+            "questions": attempt.questions,
+            "answers": attempt.answers,
+            "feedback": attempt.feedback,
+            "created_at": attempt.created_at.isoformat(),
+            "submitted_at": attempt.submitted_at.isoformat() if attempt.submitted_at else None
+        }))
+    return _inner(request)
+
+
+@csrf_exempt
+def submit_mock_attempt(request, attempt_id):
+    """
+    POST /api/v1/seeker/mock-interview/<attempt_id>/submit
+    """
+    from api.views.seeker_auth import require_seeker_jwt
+    @require_seeker_jwt
+    def _inner(request):
+        if request.method != "POST":
+            return JsonResponse(error_response("Method not allowed"), status=405)
+            
+        seeker = request.seeker
+        from api.models import SeekerMockAttempt
+        attempt = SeekerMockAttempt.objects.filter(id=attempt_id, seeker=seeker).first()
+        if not attempt:
+            return JsonResponse(error_response("Mock attempt not found"), status=404)
+            
+        try:
+            data = json.loads(request.body)
+            answers = data.get("answers", {})
+            transcript = data.get("transcript", [])
+        except Exception:
+            return JsonResponse(error_response("Invalid JSON"), status=400)
+            
+        attempt.answers = answers
+        
+        # Calculate score based on type
+        score = 0.0
+        feedback = {}
+        
+        if attempt.attempt_type == "aptitude":
+            correct_count = 0
+            total_count = len(attempt.questions)
+            for i, q in enumerate(attempt.questions):
+                ans = answers.get(str(i))
+                correct_opt = q.get("correct_option")
+                
+                is_correct = False
+                if ans is not None:
+                    try:
+                        if int(ans) == int(correct_opt):
+                            correct_count += 1
+                            is_correct = True
+                    except (ValueError, TypeError):
+                        pass
+                feedback[str(i)] = {
+                    "correct": is_correct,
+                    "correct_option": correct_opt,
+                    "selected_option": ans
+                }
+            score = round((correct_count / total_count * 100) if total_count > 0 else 0.0, 2)
+            attempt.score = score
+            attempt.feedback = {
+                "correct_count": correct_count,
+                "total_count": total_count,
+                "question_feedback": feedback
+            }
+            
+        elif attempt.attempt_type == "coding":
+            passed_count = 0
+            total_count = len(attempt.questions)
+            for i, q in enumerate(attempt.questions):
+                slug = q.get("slug")
+                sub_res = answers.get(slug, {})
+                all_passed = sub_res.get("all_passed", False)
+                if all_passed:
+                    passed_count += 1
+                    
+                feedback[slug] = {
+                    "all_passed": all_passed,
+                    "results": sub_res.get("results", [])
+                }
+                
+            score = round((passed_count / total_count * 100) if total_count > 0 else 0.0, 2)
+            attempt.score = score
+            attempt.feedback = {
+                "passed_count": passed_count,
+                "total_count": total_count,
+                "problem_feedback": feedback
+            }
+            
+        elif attempt.attempt_type == "interview":
+            try:
+                agent = InterviewAgent()
+                summary = agent.generate_interview_summary(
+                    transcript=transcript,
+                    job_title="Software Engineer (Mock Practice)",
+                    candidate_name=seeker.full_name or "Candidate"
+                )
+                score = summary.get("overall_score", 0.0)
+                attempt.score = score
+                attempt.feedback = summary
+                attempt.answers = {"transcript": transcript}
+            except Exception as e:
+                logger.error("Failed to generate mock interview summary: %s", e)
+                attempt.score = 50.0
+                attempt.feedback = {
+                    "overall_score": 50.0,
+                    "strengths": ["Completed mock practice session."],
+                    "weaknesses": [],
+                    "recommendation": "Mock evaluation fallback.",
+                    "detailed_summary": "Interview completed."
+                }
+                
+        attempt.status = "submitted"
+        attempt.submitted_at = timezone.now()
+        attempt.save()
+        
+        return JsonResponse(success_response({
+            "attempt_id": str(attempt.id),
+            "status": attempt.status,
+            "score": attempt.score,
+            "feedback": attempt.feedback
+        }))
+    return _inner(request)
+
+
+@csrf_exempt
+def seeker_transcribe_audio(request):
+    """
+    POST /api/v1/seeker/mock-interview/transcribe-audio
+    Transcribes audio using Groq Whisper API for seeker mock interviews.
+    """
+    from api.views.seeker_auth import require_seeker_jwt
+    @require_seeker_jwt
+    def _inner(request):
+        if request.method != "POST":
+            return JsonResponse(error_response("Method not allowed"), status=405)
+
+        audio_file = request.FILES.get("audio")
+        if not audio_file:
+            return JsonResponse(error_response("No audio file found"), status=400)
+
+        groq_key = os.environ.get("GROQ_API_KEY")
+        if not groq_key:
+            return JsonResponse(error_response("Groq API key not configured"), status=500)
+
+        try:
+            import io
+            client = OpenAI(
+                api_key=groq_key,
+                base_url="https://api.groq.com/openai/v1"
+            )
+            file_bytes = audio_file.read()
+            file_name = audio_file.name or "audio.webm"
+            transcription = client.audio.transcriptions.create(
+                file=(file_name, io.BytesIO(file_bytes)),
+                model="whisper-large-v3",
+                response_format="text"
+            )
+            return JsonResponse(success_response({"text": transcription}))
+        except Exception as e:
+            logger.error("Audio transcription failed: %s", e)
+            return JsonResponse(error_response("Audio transcription failed. Please check network connectivity."), status=500)
+    return _inner(request)

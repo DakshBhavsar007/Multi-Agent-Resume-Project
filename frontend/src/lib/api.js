@@ -400,6 +400,17 @@ export const seekerAPI = {
   billingSubscribe: (plan) => seekerReq('POST', '/api/v1/seeker/billing/subscribe', { plan }),
   billingVerify: (b) => seekerReq('POST', '/api/v1/seeker/billing/verify-payment', b),
   billingCancel: () => seekerReq('POST', '/api/v1/seeker/billing/cancel'),
+
+  // Mock Practice Portal
+  createMockAttempt: (attemptType) => seekerReq('POST', '/api/v1/seeker/mock-interview/create', { attempt_type: attemptType }),
+  listMockAttempts: () => seekerReq('GET', '/api/v1/seeker/mock-interview/list'),
+  getMockAttempt: (id) => seekerReq('GET', `/api/v1/seeker/mock-interview/${id}`),
+  submitMockAttempt: (id, payload) => seekerReq('POST', `/api/v1/seeker/mock-interview/${id}/submit`, payload),
+  transcribeAudio: (audioBlob) => {
+    const fd = new FormData();
+    fd.append("audio", audioBlob, "audio.webm");
+    return seekerReq("POST", "/api/v1/seeker/mock-interview/transcribe-audio", fd, true);
+  },
 };
 
 // ── PUBLIC API (no auth required) ──────────────────────────────────────────────

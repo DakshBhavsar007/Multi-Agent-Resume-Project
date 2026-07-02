@@ -66,6 +66,7 @@ const links = [
   { to: "/jobs/safety-checker", label: "Hiring Safety", icon: Shield },
   { to: "/jobs/trends", label: "Market Trends", icon: TrendingUp },
   { to: "/jobs/applications", label: "Applications", icon: Briefcase },
+  { to: "/jobs/mock-interview", label: "Mock Interview", icon: Sparkles },
   { to: "/jobs/billing", label: "Premium Plans", icon: Sparkles },
 ];
 
@@ -161,7 +162,7 @@ export function Header() {
   });
 
   const filteredPrimary = filteredLinks.filter(l => l.to === "/" || l.to === "/jobs/search" || l.to === "/jobs/applications");
-  const filteredTools = filteredLinks.filter(l => l.to === "/resume-builder" || l.to === "/jobs/safety-checker" || l.to === "/jobs/trends" || l.to === "/jobs/companies" || l.to === "/jobs/following");
+  const filteredTools = filteredLinks.filter(l => l.to === "/resume-builder" || l.to === "/jobs/safety-checker" || l.to === "/jobs/trends" || l.to === "/jobs/companies" || l.to === "/jobs/following" || l.to === "/jobs/mock-interview");
 
   return (
     <div className="sticky top-0 z-40 w-full transition-all duration-300 p-0 pointer-events-none">

@@ -40,6 +40,8 @@ const JobsTrendsPage = lazy(() => import('./pages/JobsTrendsPage'));
 const JobSeekerSafetyPage = lazy(() => import('./pages/JobSeekerSafetyPage'));
 const ResumeBuilderLanding = lazy(() => import('./pages/user/ResumeBuilderLanding'));
 const ResumeEditor = lazy(() => import('./pages/user/ResumeEditor'));
+const MockInterviewPage = lazy(() => import('./pages/user/MockInterviewPage'));
+
 
 // Developer Portal imports
 const DeveloperLandingPage = lazy(() => import('./pages/developer/DeveloperLandingPage'));
@@ -234,6 +236,7 @@ export default function App() {
           <Route path="/jobs/resume" element={<MyResumePage />} />
           <Route path="/jobs/notifications" element={<NotificationsPage />} />
           <Route path="/jobs/billing" element={<SeekerBillingPage />} />
+          <Route path="/jobs/mock-interview" element={<MockInterviewPage />} />
           <Route path="/jobs/:jobId" element={<UserJobDetail />} />
           <Route path="/resume-builder" element={<ResumeBuilderLanding />} />
           <Route path="/resume-builder/edit/:resumeId" element={<ResumeEditor />} />
