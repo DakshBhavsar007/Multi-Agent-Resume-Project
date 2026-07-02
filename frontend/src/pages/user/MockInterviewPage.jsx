@@ -123,7 +123,9 @@ export default function MockInterviewPage() {
       setSpokenAnswer("");
       
       if (type === "coding") {
-        setCodeContent(res.questions[0]?.starter_code || "// Write your code here");
+        const startCode = res.questions[0]?.starter_code;
+        const codeText = typeof startCode === "object" ? (startCode?.python || startCode?.javascript || "") : (startCode || "");
+        setCodeContent(codeText || "// Write your code here");
       }
       
       setViewMode("test");
@@ -255,7 +257,9 @@ export default function MockInterviewPage() {
     if (currentQIndex + 1 < activeAttempt.questions.length) {
       const nextIdx = currentQIndex + 1;
       setCurrentQIndex(nextIdx);
-      setCodeContent(activeAttempt.questions[nextIdx].starter_code || "// Write your code here");
+      const startCode = activeAttempt.questions[nextIdx]?.starter_code;
+      const codeText = typeof startCode === "object" ? (startCode?.python || startCode?.javascript || "") : (startCode || "");
+      setCodeContent(codeText || "// Write your code here");
       setCodingTab("description");
       setCompileOutput("");
     } else {
