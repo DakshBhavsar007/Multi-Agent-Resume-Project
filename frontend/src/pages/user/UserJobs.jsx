@@ -261,6 +261,7 @@ export default function UserJobs() {
     ...activeTypes.map((t) => ({ k: "type", v: t })),
     ...activeWorkplaces.map((t) => ({ k: "workplace", v: t })),
     ...(activeExp ? [{ k: "exp", v: activeExp }] : []),
+    ...(salary[0] !== currency.min ? [{ k: "salary", v: `Min: ${currency.formatCurrent(salary[0])}` }] : []),
   ];
 
   const clearAll = () => {
@@ -429,7 +430,7 @@ export default function UserJobs() {
               })}
             </FilterGroup>
 
-            <FilterGroup title="Salary Range">
+            <FilterGroup title={`Salary Range (${currency.formatCurrent(salary[0])})`}>
               <div className="px-1 pt-1">
                 {/* Currency Selector */}
                 <div className="relative mb-3">
@@ -487,6 +488,7 @@ export default function UserJobs() {
                     if (f.k === "type") setActiveTypes(activeTypes.filter((x) => x !== f.v));
                     if (f.k === "workplace") setActiveWorkplaces(activeWorkplaces.filter((x) => x !== f.v));
                     if (f.k === "exp") setActiveExp("");
+                    if (f.k === "salary") setSalary([currency.min]);
                   }}
                   className="pill inline-flex items-center gap-1 border border-border bg-background px-2.5 py-1 text-xs"
                 >
