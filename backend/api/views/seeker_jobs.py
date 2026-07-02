@@ -71,20 +71,45 @@ def _get_salary_range(session) -> str:
     }
     symbol = currency_symbols.get(salary_currency, salary_currency + " ")
     
-    if salary_min is not None and salary_max is not None:
-        try:
-            return f"{symbol}{int(salary_min):,} - {symbol}{int(salary_max):,}"
-        except (ValueError, TypeError):
-            pass
-    elif salary_min is not None:
-        try:
-            return f"{symbol}{int(salary_min):,}+"
-        except (ValueError, TypeError):
-            pass
+    if salary_min is None:
+        # Fallback to description parsing
+        meta = _parse_job_description_meta(session.job_description)
+        return meta["salary_range"]
+        
+    try:
+        s_min = float(salary_min)
+        s_max = float(salary_max) if salary_max is not None else s_min
+        
+        if salary_currency == "INR":
+            # For INR: values are in LPA unit (e.g. 12 = 12 Lakhs, 0.18 = 18,000)
+            def format_inr(val):
+                if val >= 1.0:
+                    if val.is_integer():
+                        return f"{symbol}{int(val)} LPA"
+                    return f"{symbol}{val:.1f} LPA"
+                else:
+                    rupees = int(val * 100000)
+                    return f"{symbol}{rupees:,}"
             
-    # Fallback to description parsing
-    meta = _parse_job_description_meta(session.job_description)
-    return meta["salary_range"]
+            if s_min == s_max:
+                return format_inr(s_min)
+            return f"{format_inr(s_min)} - {format_inr(s_max)}"
+            
+        else:
+            # For USD, GBP, EUR: values are in thousands (e.g. 80 = $80,000) or absolute (e.g. 80000)
+            def format_other(val):
+                if val < 1000:
+                    val = val * 1000
+                return f"{symbol}{int(val):,}"
+                
+            if s_min == s_max:
+                return format_other(s_min)
+            return f"{format_other(s_min)} - {format_other(s_max)}"
+            
+    except (ValueError, TypeError):
+        # Fallback to description parsing
+        meta = _parse_job_description_meta(session.job_description)
+        return meta["salary_range"]
 
 
 def _session_to_job(session: Session, match_score=None, applied=False, is_saved=False) -> dict:
