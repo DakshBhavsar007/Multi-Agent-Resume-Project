@@ -101,7 +101,9 @@ const salaryFilterFn = (salaryRange, minVal, filterCurrencyCode) => {
 // Currency configurations
 const CURRENCIES = [
   { code: "INR", symbol: "₹", label: "INR (LPA)", min: 2, max: 100, step: 2, defaultVal: 12,
-    formatMin: (v) => `₹${v}`, formatMax: (v) => `₹${v}+`, formatCurrent: (v) => `₹${v}+`,
+    formatMin: (v) => v >= 100 ? `₹${v / 100} Cr` : `₹${v} Lakhs`,
+    formatMax: (v) => v >= 100 ? `₹${v / 100} Cr+` : `₹${v} Lakhs+`,
+    formatCurrent: (v) => v >= 100 ? `₹${v / 100} Cr+` : `₹${v} LPA+`,
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "INR")
   },
   { code: "USD", symbol: "$", label: "USD ($)", min: 20, max: 500, step: 10, defaultVal: 80,

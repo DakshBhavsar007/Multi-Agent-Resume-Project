@@ -81,10 +81,22 @@ def _get_salary_range(session) -> str:
         s_max = float(salary_max) if salary_max is not None else s_min
         
         def format_val(val):
-            # If the value has .0 decimals, print as int, else as raw float
-            if val.is_integer():
-                return f"{symbol}{int(val)}"
-            return f"{symbol}{val}"
+            if salary_currency == "INR":
+                # For INR: values are in LPA unit (e.g. 12 = 12 LPA, 100 = 1 Cr)
+                if val >= 100.0:
+                    cr = val / 100.0
+                    if cr.is_integer():
+                        return f"{symbol}{int(cr)} Cr"
+                    return f"{symbol}{cr:.2f} Cr"
+                else:
+                    if val.is_integer():
+                        return f"{symbol}{int(val)} LPA"
+                    return f"{symbol}{val:.1f} LPA"
+            else:
+                # USD, GBP, EUR: just show the raw numbers
+                if val.is_integer():
+                    return f"{symbol}{int(val)}"
+                return f"{symbol}{val}"
             
         if s_min == s_max:
             return format_val(s_min)
