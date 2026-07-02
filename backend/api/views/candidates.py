@@ -344,6 +344,25 @@ def candidate_action(request, session_id, cand_id):
             candidate.current_round_index += 1
             candidate.status = "forwarded"
 
+            # Pre-generate next round attempt proactively so they receive their test_link immediately
+            from api.models import SessionRound, ApplicantRoundAttempt
+            from django.utils import timezone
+            from datetime import timedelta
+            import secrets
+            
+            next_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first()
+            if next_sr:
+                token = secrets.token_urlsafe(32)
+                ApplicantRoundAttempt.objects.get_or_create(
+                    candidate=candidate,
+                    round=next_sr,
+                    defaults={
+                        "access_token": token,
+                        "token_expires_at": timezone.now() + timedelta(days=7),
+                        "status": "pending"
+                    }
+                )
+
         elif action == "reject":
             candidate.status = "rejected"
 

@@ -443,5 +443,65 @@ export const publicAPI = {
   },
 };
 
+export const roundsAPI = {
+  recommendRounds: (sessionId) => req("POST", `/sessions/${sessionId}/recommend-rounds`),
+  createSessionRounds: (sessionId, rounds) => req("POST", `/sessions/${sessionId}/rounds`, { rounds }),
+  getSessionRounds: (sessionId) => req("GET", `/sessions/${sessionId}/get-rounds`),
+  getApplicantResults: (sessionId) => req("GET", `/sessions/${sessionId}/applicant-results`),
+  generateInterviewQuestions: (sessionId, roundId, body) => req("POST", `/sessions/${sessionId}/rounds/${roundId}/generate-questions`, body),
+  generateTestLinks: (sessionId, body) => req("POST", `/sessions/${sessionId}/generate-test-links`, body),
+  uploadQuestionPaper: (file, sessionId, category, roundType = "mcq") => {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (sessionId) fd.append('session_id', sessionId);
+    if (category) fd.append('category', category);
+    if (roundType) fd.append('round_type', roundType);
+    return req('POST', '/sessions/upload-question-paper', fd, true);
+  },
+};
+
+const getTestHeaders = (isFile = false) => {
+  const token = localStorage.getItem("vish_test_token") || "";
+  const h = {};
+  if (!isFile) h["Content-Type"] = "application/json";
+  if (token) h["Authorization"] = `Bearer ${token}`;
+  return h;
+};
+
+async function testReq(method, path, body = null, isFile = false) {
+  const opts = {
+    method,
+    headers: getTestHeaders(isFile),
+    body: body ? (isFile ? body : JSON.stringify(body)) : undefined
+  };
+  const res = await fetch(`${API_HOST}/api/v1/test${path}`, opts);
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || "Request failed");
+  return data.data;
+}
+
+export const testAPI = {
+  validateToken: (token) => {
+    localStorage.setItem("vish_test_token", token);
+    return testReq("POST", "/validate-token", { token });
+  },
+  getMcqQuestions: () => testReq("GET", "/mcq-questions"),
+  submitMcq: (answers) => testReq("POST", "/submit-mcq", { answers }),
+  getCodingProblems: () => testReq("GET", "/coding-problems"),
+  runCode: (code, language, slug, customInput = "") => testReq("POST", "/run-code", { code, language, slug, custom_input: customInput }),
+  submitCoding: (submissions) => testReq("POST", "/submit-coding", { submissions }),
+  getInterviewQuestions: () => testReq("GET", "/interview-questions"),
+  submitInterviewAnswer: (qIdx, text) => testReq("POST", "/submit-interview-answer", { question_index: qIdx, answer_text: text }),
+  finalizeInterview: () => testReq("POST", "/finalize-interview"),
+  saveProctoringFlag: (type, screenshot) => testReq("POST", "/proctoring-flag", { type, screenshot_base64: screenshot }),
+  transcribeAudio: (audioBlob) => {
+    const fd = new FormData();
+    fd.append("audio", audioBlob, "audio.webm");
+    return testReq("POST", "/transcribe-audio", fd, true);
+  },
+  mockSubmit: (token, score) => testReq("POST", `/mock-submit?token=${token}`, { score }),
+  mockSwitchRound: (candidateId, roundNumber) => testReq("POST", "/mock-switch-round", { candidate_id: candidateId, round_number: roundNumber })
+};
+
 
 

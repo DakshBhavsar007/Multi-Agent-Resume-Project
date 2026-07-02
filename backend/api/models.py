@@ -416,3 +416,105 @@ class SeekerBillingSubscription(models.Model):
         return f"{self.seeker.full_name} - {self.plan} ({self.status})"
 
 
+class RoundType(models.TextChoices):
+    MCQ = 'mcq', 'Aptitude/MCQ Round'
+    CODING = 'coding', 'Coding Round'
+    INTERVIEW = 'interview', 'AI Interview Round'
+
+
+class SessionRound(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(
+        Session, on_delete=models.CASCADE, related_name='session_rounds', db_column="session_id"
+    )
+    round_type = models.CharField(max_length=20, choices=RoundType.choices)
+    round_number = models.IntegerField()
+    name = models.CharField(max_length=100)
+    time_limit_minutes = models.IntegerField(default=30)
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    result_announce_at = models.DateTimeField(null=True, blank=True)
+
+    mcq_question_count = models.IntegerField(default=30)
+    mcq_shuffle_seed = models.IntegerField(null=True, blank=True)
+    passing_score = models.IntegerField(default=50)
+
+    interview_questions = models.JSONField(default=list)
+
+    coding_problems = models.JSONField(default=list)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "session_rounds"
+        ordering = ['round_number']
+        unique_together = [('session', 'round_number')]
+
+
+class MCQQuestion(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    category = models.CharField(max_length=50)
+    question_text = models.TextField()
+    options = models.JSONField()
+    correct_option = models.CharField(max_length=1)
+    difficulty = models.CharField(max_length=10, default='medium')
+    tags = models.JSONField(default=list)
+
+    class Meta:
+        db_table = "mcq_questions"
+
+
+class CodingProblem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.CharField(max_length=100, unique=True)
+    title = models.CharField(max_length=200)
+    difficulty = models.CharField(max_length=10)
+    description = models.TextField()
+    examples = models.JSONField(default=list)
+    constraints = models.JSONField(default=list)
+    starter_code = models.JSONField(default=dict)
+    test_cases = models.JSONField(default=list)
+    tags = models.JSONField(default=list)
+
+    class Meta:
+        db_table = "coding_problems"
+
+
+class ApplicantRoundAttempt(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    candidate = models.ForeignKey(
+        Candidate, on_delete=models.CASCADE, related_name='round_attempts', db_column="candidate_id"
+    )
+    round = models.ForeignKey(
+        SessionRound, on_delete=models.CASCADE, related_name='attempts', db_column="round_id"
+    )
+
+    access_token = models.CharField(max_length=128, unique=True)
+    token_expires_at = models.DateTimeField()
+    started_at = models.DateTimeField(null=True, blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, default='pending')
+
+    mcq_questions_served = models.JSONField(default=list)
+    mcq_answers = models.JSONField(default=dict)
+    mcq_score = models.FloatField(null=True, blank=True)
+
+    coding_submissions = models.JSONField(default=list)
+    coding_score = models.FloatField(null=True, blank=True)
+
+    interview_transcript = models.JSONField(default=list)
+    interview_score = models.FloatField(null=True, blank=True)
+    interview_summary = models.TextField(blank=True)
+    interview_recommendation = models.CharField(max_length=50, blank=True)
+    interview_hiring_likelihood = models.CharField(max_length=10, blank=True)
+
+    proctoring_flags = models.JSONField(default=list)
+    proctoring_score = models.FloatField(null=True, blank=True)
+
+    overall_score = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        db_table = "applicant_round_attempts"
+        unique_together = [('candidate', 'round')]
+
+

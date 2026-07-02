@@ -1,13 +1,13 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
-import { sessionsAPI, ingestAPI, candidatesAPI, exportAPI } from '../lib/api';
+import { sessionsAPI, ingestAPI, candidatesAPI, exportAPI, roundsAPI } from '../lib/api';
 import { useIngestStore } from '../stores/ingestStore';
 import { useCandidateStore } from '../stores/candidateStore';
 
@@ -415,6 +415,12 @@ export default function SessionWorkspacePage() {
               <button onClick={handleMatchAll} className="bg-accent hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 shadow-sm">
                 <Zap size={16} fill="currentColor" /> Match All
               </button>
+              <Link
+                to={`/dashboard/sessions/${id}/results`}
+                className="border-[1.5px] border-green-600 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 bg-white shadow-sm"
+              >
+                View Assessment Results
+              </Link>
               <button 
                 onClick={() => setIsEditModalOpen(true)}
                 className="border-[1.5px] border-accent text-accent hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 bg-white shadow-sm"

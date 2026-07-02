@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X, GripVertical, Plus, ArrowRight, ArrowLeft, Loader2, Save, Sparkles, MapPin, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { sessionsAPI } from '../lib/api';
+import { sessionsAPI, roundsAPI } from '../lib/api';
 
 const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
   const [input, setInput] = useState("");
@@ -108,6 +108,86 @@ export default function NewSessionPage() {
 
   const [inferredData, setInferredData] = useState(null);
   const [lastAnalyzedJD, setLastAnalyzedJD] = useState("");
+  const [mcqEnabled, setMcqEnabled] = useState(false);
+  const [codingEnabled, setCodingEnabled] = useState(false);
+  const [interviewEnabled, setInterviewEnabled] = useState(true);
+  const [recommending, setRecommending] = useState(false);
+
+  const toggleRoundInList = (name, enabled) => {
+    setFormData(prev => {
+      let updatedRounds = [...prev.rounds];
+      if (enabled) {
+        if (!updatedRounds.some(r => r.name === name)) {
+          const nextId = Math.max(...updatedRounds.map(r => r.id), 0) + 1;
+          const nextOrder = updatedRounds.length + 1;
+          updatedRounds.push({
+            id: nextId,
+            name: name,
+            interviewer: "",
+            order: nextOrder,
+            result_announcement_date: "",
+            passing_score: 50
+          });
+        }
+      } else {
+        updatedRounds = updatedRounds.filter(r => r.name !== name);
+        updatedRounds = updatedRounds.map((r, i) => ({
+          ...r,
+          order: i + 1
+        }));
+      }
+      return { ...prev, rounds: updatedRounds };
+    });
+  };
+
+  useEffect(() => {
+    if (step === 3 && formData.job_title && formData.job_description) {
+      setRecommending(true);
+      roundsAPI.recommendRounds("new", {
+        job_title: formData.job_title,
+        job_description: formData.job_description
+      })
+        .then((res) => {
+          if (res && res.recommended_rounds) {
+            const types = res.recommended_rounds.map((r) => r.type);
+            const hasMcq = types.includes("mcq");
+            const hasCoding = types.includes("coding");
+            const hasInterview = types.includes("interview") || true;
+
+            setMcqEnabled(hasMcq);
+            setCodingEnabled(hasCoding);
+            setInterviewEnabled(hasInterview);
+
+            // Sync with rounds list below immediately
+            setFormData(prev => {
+              let updatedRounds = [...prev.rounds];
+              const roundsToAdd = [];
+              if (hasMcq) roundsToAdd.push("Aptitude Assessment Round");
+              if (hasCoding) roundsToAdd.push("Technical Coding Round");
+              if (hasInterview) roundsToAdd.push("AI Interview Round");
+
+              roundsToAdd.forEach(name => {
+                if (!updatedRounds.some(r => r.name === name)) {
+                  const nextId = Math.max(...updatedRounds.map(r => r.id), 0) + 1;
+                  const nextOrder = updatedRounds.length + 1;
+                  updatedRounds.push({
+                    id: nextId,
+                    name: name,
+                    interviewer: "",
+                    order: nextOrder,
+                    result_announcement_date: "",
+                    passing_score: 50
+                  });
+                }
+              });
+              return { ...prev, rounds: updatedRounds };
+            });
+          }
+        })
+        .catch(console.error)
+        .finally(() => setRecommending(false));
+    }
+  }, [step]);
   const [inferring, setInferring] = useState(false);
   const [creating, setCreating] = useState(false);
   const [generatingJD, setGeneratingJD] = useState(false);
@@ -319,6 +399,50 @@ export default function NewSessionPage() {
         salary_max: formData.salary_max !== "" ? Number(formData.salary_max) : null,
         salary_currency: formData.salary_currency
       });
+
+      // Save assessment rounds config dynamically from formData.rounds
+      const assessmentRounds = formData.rounds.map((round) => {
+        let type = "interview";
+        const nameLower = (round.name || "").toLowerCase();
+        if (nameLower.includes("aptitude") || nameLower.includes("mcq")) {
+          type = "mcq";
+        } else if (nameLower.includes("coding") || nameLower.includes("technical") || nameLower.includes("programming")) {
+          type = "coding";
+        }
+        
+        const rPayload = {
+          round_type: type,
+          name: round.name || (type === "mcq" ? "Aptitude Assessment Round" : type === "coding" ? "Technical Coding Round" : "AI Interview Round"),
+          time_limit_minutes: type === "mcq" ? 20 : (type === "coding" ? 45 : 25),
+          passing_score: round.passing_score !== undefined ? round.passing_score : 50,
+          result_announcement_date: round.result_announcement_date || null,
+          order: round.order
+        };
+        
+        if (type === "mcq") {
+          rPayload.mcq_question_count = 20;
+          if (round.custom_question_ids) {
+            rPayload.custom_question_ids = round.custom_question_ids;
+          }
+        } else if (type === "coding") {
+          if (round.custom_slugs) {
+            rPayload.custom_slugs = round.custom_slugs;
+          } else {
+            rPayload.coding_problems = [
+              { slug: "two-sum", difficulty: "easy" },
+              { slug: "valid-parentheses", difficulty: "easy" }
+            ];
+          }
+        } else if (type === "interview") {
+          rPayload.mcq_question_count = 5;
+        }
+        
+        return rPayload;
+      });
+
+      if (assessmentRounds.length > 0) {
+        await roundsAPI.createSessionRounds(currentSessionId, assessmentRounds);
+      }
       
       toast.success("Session created! Upload resumes to start.");
       navigate(`/dashboard/sessions/${currentSessionId}`);
@@ -629,9 +753,74 @@ export default function NewSessionPage() {
 
       case 3:
         return (
-          <div className="bg-card border border-border rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto">
+          <div className="bg-card border border-border rounded-2xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] w-full max-w-[640px] mx-auto animate-in fade-in-50 duration-200">
             <h2 className="text-2xl font-bold text-foreground mb-1">Define interview stages</h2>
             <p className="text-xs text-muted-foreground mb-6">The last round will have "Hire" option instead of "Forward".</p>
+            
+            {/* AI Smart recommendations UI toggles */}
+            <div className="mb-6 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 bg-blue-50/20 dark:bg-blue-950/10">
+              <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold text-sm mb-2">
+                <Sparkles size={16} />
+                <span>AI Smart Recommendations</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4 font-medium">Based on the Job Description, AI recommends these online assessment rounds:</p>
+              
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextVal = !mcqEnabled;
+                    setMcqEnabled(nextVal);
+                    toggleRoundInList("Aptitude Assessment Round", nextVal);
+                  }}
+                  className={`p-3 rounded-xl border text-left flex flex-col justify-between transition ${
+                    mcqEnabled ? "border-blue-500 bg-blue-50/40 dark:bg-blue-950/20" : "border-border bg-card"
+                  }`}
+                >
+                  <div className="flex justify-between items-center w-full">
+                    <span className="text-xs font-bold text-foreground">Aptitude (MCQ)</span>
+                    <input type="checkbox" checked={mcqEnabled} readOnly className="h-3.5 w-3.5 accent-[#2563EB]" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-2 font-medium">Logical reasoning & quantitative test</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextVal = !codingEnabled;
+                    setCodingEnabled(nextVal);
+                    toggleRoundInList("Technical Coding Round", nextVal);
+                  }}
+                  className={`p-3 rounded-xl border text-left flex flex-col justify-between transition ${
+                    codingEnabled ? "border-blue-500 bg-blue-50/40 dark:bg-blue-950/20" : "border-border bg-card"
+                  }`}
+                >
+                  <div className="flex justify-between items-center w-full">
+                    <span className="text-xs font-bold text-foreground">Coding Test</span>
+                    <input type="checkbox" checked={codingEnabled} readOnly className="h-3.5 w-3.5 accent-[#2563EB]" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-2 font-medium">DSA problem-solving test</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextVal = !interviewEnabled;
+                    setInterviewEnabled(nextVal);
+                    toggleRoundInList("AI Interview Round", nextVal);
+                  }}
+                  className={`p-3 rounded-xl border text-left flex flex-col justify-between transition ${
+                    interviewEnabled ? "border-blue-500 bg-blue-50/40 dark:bg-blue-950/20" : "border-border bg-card"
+                  }`}
+                >
+                  <div className="flex justify-between items-center w-full">
+                    <span className="text-xs font-bold text-foreground">AI Interview</span>
+                    <input type="checkbox" checked={interviewEnabled} readOnly className="h-3.5 w-3.5 accent-[#2563EB]" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-2 font-medium">Real-time voice behavioral & tech</span>
+                </button>
+              </div>
+            </div>
             
             <div className="space-y-3 mb-6">
               {formData.rounds.map((round, idx) => {
@@ -675,24 +864,108 @@ export default function NewSessionPage() {
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-2 pl-7">
-                      <label className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Result Declaration Time*:</label>
-                      <input
-                        type="datetime-local"
-                        value={round.result_announcement_date || ""}
-                        min={(() => {
-                          const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-                          return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
-                        })()}
-                        onChange={(e) => {
-                          const newRounds = [...formData.rounds];
-                          newRounds[idx].result_announcement_date = e.target.value;
-                          setFormData({...formData, rounds: newRounds});
-                        }}
-                        className="p-1.5 border border-border rounded-lg text-xs text-foreground bg-background focus:border-[#2563EB] focus:outline-none flex-1"
-                        required
-                      />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 pl-7 mt-1">
+                      <div className="flex items-center gap-2 flex-1">
+                        <label className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Result Declaration Time*:</label>
+                        <input
+                          type="datetime-local"
+                          value={round.result_announcement_date || ""}
+                          min={(() => {
+                            const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+                            return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+                          })()}
+                          onChange={(e) => {
+                            const newRounds = [...formData.rounds];
+                            newRounds[idx].result_announcement_date = e.target.value;
+                            setFormData({...formData, rounds: newRounds});
+                          }}
+                          className="p-1.5 border border-border rounded-lg text-xs text-foreground bg-background focus:border-[#2563EB] focus:outline-none w-full"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Min Passing Score (%):</label>
+                        <input
+                          type="number" min="0" max="100"
+                          value={round.passing_score !== undefined ? round.passing_score : 50}
+                          onChange={(e) => {
+                            const newRounds = [...formData.rounds];
+                            newRounds[idx].passing_score = parseInt(e.target.value) || 0;
+                            setFormData({...formData, rounds: newRounds});
+                          }}
+                          className="w-16 p-1.5 border border-border rounded-lg text-xs text-foreground bg-background focus:border-[#2563EB] focus:outline-none text-center"
+                        />
+                      </div>
                     </div>
+
+                    {/* Custom Question Upload - MCQ and Coding rounds */}
+                    {(() => {
+                      const nameLower = (round.name || "").toLowerCase();
+                      const isMcq = nameLower.includes('aptitude') || nameLower.includes('mcq');
+                      const isCoding = nameLower.includes('coding') || nameLower.includes('technical') || nameLower.includes('programming');
+                      
+                      if (!isMcq && !isCoding) return null;
+
+                      return (
+                        <div className="pl-7 mt-2">
+                          <div className="p-3 rounded-xl border border-dashed border-border bg-muted/20">
+                            <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                              Upload Custom {isCoding ? 'Coding Problems' : 'Question Paper'} (optional)
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="file"
+                                accept=".pdf,.docx,.txt"
+                                onChange={(e) => {
+                                  const newRounds = [...formData.rounds];
+                                  newRounds[idx].questionFile = e.target.files[0] || null;
+                                  setFormData({...formData, rounds: newRounds});
+                                }}
+                                className="text-xs text-muted-foreground file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-blue-950/30 file:text-blue-600 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/30 flex-1"
+                              />
+                              {round.questionFile && (
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    const rType = isCoding ? 'coding' : 'mcq';
+                                    const toastId = toast.loading(`Extracting ${rType === 'coding' ? 'problems' : 'questions'} from paper...`);
+                                    try {
+                                      const result = await roundsAPI.uploadQuestionPaper(round.questionFile, null, 'general', rType);
+                                      const newRounds = [...formData.rounds];
+                                      if (rType === 'coding') {
+                                        toast.success(`Extracted ${result.questions_extracted} coding problems!`, { id: toastId });
+                                        newRounds[idx].custom_slugs = result.slugs;
+                                      } else {
+                                        toast.success(`Extracted ${result.questions_extracted} questions! (${result.created_in_db} new)`, { id: toastId });
+                                        newRounds[idx].custom_question_ids = result.ids;
+                                      }
+                                      newRounds[idx].uploadResult = result;
+                                      setFormData({...formData, rounds: newRounds});
+                                    } catch (err) {
+                                      toast.error(err.message || 'Failed to parse file', { id: toastId });
+                                    }
+                                  }}
+                                  className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition whitespace-nowrap"
+                                >
+                                  Extract Questions
+                                </button>
+                              )}
+                            </div>
+                            {round.uploadResult ? (
+                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1.5">
+                                ✓ {round.uploadResult.questions_extracted} {isCoding ? 'problems' : 'questions'} extracted successfully.
+                              </p>
+                            ) : (
+                              <p className="text-[10px] text-muted-foreground/75 mt-1.5">
+                                No file uploaded — default {isCoding ? 'problem templates' : 'question bank'} will be used
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     
                     {isLast && (
                       <div className="absolute -top-2.5 right-4 bg-blue-100 text-[#2563EB] text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-amber-200">

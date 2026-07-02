@@ -25,6 +25,7 @@ from api.views import (
     recruiter_billing,
     seeker_billing,
     password_reset,
+    round_views,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -252,5 +253,30 @@ urlpatterns = [
     path('api/v1/seeker/billing/verify-payment', seeker_billing.verify_payment, name='seeker-billing-verify'),
     path('api/v1/seeker/billing/current', seeker_billing.current_subscription, name='seeker-billing-current'),
     path('api/v1/seeker/billing/cancel', seeker_billing.cancel_subscription, name='seeker-billing-cancel'),
+
+    # ── Assessment Rounds ──
+    # Company side
+    path('api/v1/sessions/<str:session_id>/recommend-rounds', round_views.recommend_rounds),
+    path('api/v1/sessions/<str:session_id>/rounds', round_views.create_session_rounds),
+    path('api/v1/sessions/<str:session_id>/get-rounds', round_views.get_session_rounds),
+    path('api/v1/sessions/<str:session_id>/applicant-results', round_views.get_applicant_results),
+    path('api/v1/sessions/<str:session_id>/rounds/<str:round_id>/generate-questions', round_views.generate_interview_questions),
+    path('api/v1/sessions/<str:session_id>/generate-test-links', round_views.generate_test_links),
+    path('api/v1/sessions/upload-question-paper', round_views.upload_question_paper),
+
+    # Candidate side
+    path('api/v1/test/validate-token', round_views.validate_test_token),
+    path('api/v1/test/mcq-questions', round_views.get_mcq_questions),
+    path('api/v1/test/submit-mcq', round_views.submit_mcq),
+    path('api/v1/test/coding-problems', round_views.get_coding_problems),
+    path('api/v1/test/run-code', round_views.run_code),
+    path('api/v1/test/submit-coding', round_views.submit_coding),
+    path('api/v1/test/interview-questions', round_views.get_interview_questions),
+    path('api/v1/test/submit-interview-answer', round_views.submit_interview_answer),
+    path('api/v1/test/finalize-interview', round_views.finalize_interview),
+    path('api/v1/test/transcribe-audio', round_views.transcribe_audio),
+    path('api/v1/test/proctoring-flag', round_views.save_proctoring_flag),
+    path('api/v1/test/mock-submit', round_views.mock_submit),
+    path('api/v1/test/mock-switch-round', round_views.mock_switch_round),
 ]
 

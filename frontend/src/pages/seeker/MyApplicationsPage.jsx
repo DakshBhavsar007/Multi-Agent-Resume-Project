@@ -71,6 +71,15 @@ export default function MyApplicationsPage() {
                   <div style={styles.appliedDate}>
                     <Calendar size={12} /> Applied {formatDate(app.applied_at)}
                   </div>
+                  {app.test_link && (
+                    <a
+                      href={app.test_link}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-blue-700 transition"
+                      style={{ textDecoration: 'none', display: 'inline-flex' }}
+                    >
+                      Start {app.test_round_name || "Assessment"} →
+                    </a>
+                  )}
                 </div>
               </div>
               <div style={styles.cardRight}>

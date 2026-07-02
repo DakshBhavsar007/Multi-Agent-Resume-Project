@@ -227,6 +227,64 @@ def session_detail(request, session_id):
                         "result_announcement_date": ann_date if ann_date else None
                     })
                 session.rounds = rounds_data
+
+                # Synchronize SessionRound database table to match updated rounds
+                from api.models import SessionRound, ApplicantRoundAttempt
+                import secrets
+                from django.utils import timezone
+                from datetime import timedelta
+
+                # Delete existing rounds
+                SessionRound.objects.filter(session=session).delete()
+
+                # Recreate rounds matching the updated JSONField payload
+                created_rounds = []
+                for idx, r in enumerate(rounds_data):
+                    name = r.get("name")
+                    name_lower = name.lower()
+                    
+                    rtype = "interview"
+                    if "aptitude" in name_lower or "mcq" in name_lower:
+                        rtype = "mcq"
+                    elif "coding" in name_lower or "technical" in name_lower or "programming" in name_lower:
+                        rtype = "coding"
+                    
+                    time_limit = 20 if rtype == "mcq" else (45 if rtype == "coding" else 25)
+                    coding_problems = []
+                    if rtype == "coding":
+                        coding_problems = [
+                            { "slug": "two-sum", "difficulty": "easy" },
+                            { "slug": "valid-parentheses", "difficulty": "easy" }
+                        ]
+                    
+                    round_num = int(r.get("order")) if r.get("order") is not None else (idx + 1)
+                    
+                    sr = SessionRound.objects.create(
+                        session=session,
+                        round_type=rtype,
+                        round_number=round_num,
+                        name=name,
+                        time_limit_minutes=time_limit,
+                        mcq_question_count=20 if rtype == "mcq" else 0,
+                        coding_problems=coding_problems,
+                        passing_score=r.get("passing_score", 50) if r.get("passing_score") is not None else 50
+                    )
+                    created_rounds.append(sr)
+                
+                # Regenerate attempts for existing candidates of this session
+                candidates = Candidate.objects.filter(session=session, deleted_at__isnull=True)
+                for candidate in candidates:
+                    for sr in created_rounds:
+                        token = secrets.token_urlsafe(32)
+                        ApplicantRoundAttempt.objects.get_or_create(
+                            candidate=candidate,
+                            round=sr,
+                            defaults={
+                                "access_token": token,
+                                "token_expires_at": timezone.now() + timedelta(days=7),
+                                "status": "pending"
+                            }
+                        )
             if "status" in data and data["status"] is not None:
                 if data["status"] == "active" and session.status != "active":
                     active_count = Session.objects.filter(company=request.company, status="active").count()

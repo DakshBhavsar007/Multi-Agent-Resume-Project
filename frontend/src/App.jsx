@@ -73,6 +73,12 @@ const UserApplications = lazy(() => import('./pages/user/UserApplications'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
+const ApplicantResultsPage = lazy(() => import('./pages/ApplicantResultsPage'));
+const TestEntry = lazy(() => import('./pages/test/TestEntry'));
+const MCQRound = lazy(() => import('./pages/test/MCQRound'));
+const CodingRound = lazy(() => import('./pages/test/CodingRound'));
+const InterviewRound = lazy(() => import('./pages/test/InterviewRound'));
+
 
 function ScrollToTop() {
   const location = useLocation();
@@ -269,11 +275,18 @@ export default function App() {
             <Route path="sessions" element={<SessionsPage />} />
             <Route path="sessions/new" element={<NewSessionPage />} />
             <Route path="sessions/:id" element={<SessionWorkspacePage />} />
+            <Route path="sessions/:id/results" element={<ApplicantResultsPage />} />
             <Route path="smart-analyzer" element={<SmartAnalyzerPage />} />
             <Route path="ai-recruiter" element={<AiRecruiterPage />} />
             <Route path="protection" element={<FraudDetectionPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
+
+          {/* Candidate Assessment Rounds */}
+          <Route path="/test/entry" element={<TestEntry />} />
+          <Route path="/test/mcq" element={<MCQRound />} />
+          <Route path="/test/coding" element={<CodingRound />} />
+          <Route path="/test/interview" element={<InterviewRound />} />
 
           {/* Fallback */}
           <Route path="*" element={<NotFoundPage />} />
