@@ -101,19 +101,19 @@ const salaryFilterFn = (salaryRange, minVal, filterCurrencyCode) => {
 // Currency configurations
 const CURRENCIES = [
   { code: "INR", symbol: "₹", label: "INR (LPA)", min: 2, max: 100, step: 2, defaultVal: 12,
-    formatMin: (v) => `₹${v} Lakhs`, formatMax: (v) => `₹${v} Lakhs+`, formatCurrent: (v) => `₹${v} Lakhs+`,
+    formatMin: (v) => `₹${v}`, formatMax: (v) => `₹${v}+`, formatCurrent: (v) => `₹${v}+`,
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "INR")
   },
   { code: "USD", symbol: "$", label: "USD ($)", min: 20, max: 500, step: 10, defaultVal: 80,
-    formatMin: (v) => `$${(v * 1000).toLocaleString()}`, formatMax: (v) => `$${(v * 1000).toLocaleString()}+`, formatCurrent: (v) => `$${(v * 1000).toLocaleString()}+`,
+    formatMin: (v) => `$${v}`, formatMax: (v) => `$${v}+`, formatCurrent: (v) => `$${v}+`,
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "USD")
   },
   { code: "GBP", symbol: "£", label: "GBP (£)", min: 15, max: 400, step: 5, defaultVal: 50,
-    formatMin: (v) => `£${(v * 1000).toLocaleString()}`, formatMax: (v) => `£${(v * 1000).toLocaleString()}+`, formatCurrent: (v) => `£${(v * 1000).toLocaleString()}+`,
+    formatMin: (v) => `£${v}`, formatMax: (v) => `£${v}+`, formatCurrent: (v) => `£${v}+`,
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "GBP")
   },
   { code: "EUR", symbol: "€", label: "EUR (€)", min: 15, max: 400, step: 5, defaultVal: 50,
-    formatMin: (v) => `€${(v * 1000).toLocaleString()}`, formatMax: (v) => `€${(v * 1000).toLocaleString()}+`, formatCurrent: (v) => `€${(v * 1000).toLocaleString()}+`,
+    formatMin: (v) => `€${v}`, formatMax: (v) => `€${v}+`, formatCurrent: (v) => `€${v}+`,
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "EUR")
   },
 ];

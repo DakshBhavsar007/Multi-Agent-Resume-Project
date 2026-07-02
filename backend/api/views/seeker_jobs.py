@@ -80,31 +80,15 @@ def _get_salary_range(session) -> str:
         s_min = float(salary_min)
         s_max = float(salary_max) if salary_max is not None else s_min
         
-        if salary_currency == "INR":
-            # For INR: values are in LPA unit (e.g. 12 = 12 Lakhs, 0.18 = 18,000)
-            def format_inr(val):
-                if val >= 1.0:
-                    if val.is_integer():
-                        return f"{symbol}{int(val)} LPA"
-                    return f"{symbol}{val:.1f} LPA"
-                else:
-                    rupees = int(val * 100000)
-                    return f"{symbol}{rupees:,}"
+        def format_val(val):
+            # If the value has .0 decimals, print as int, else as raw float
+            if val.is_integer():
+                return f"{symbol}{int(val)}"
+            return f"{symbol}{val}"
             
-            if s_min == s_max:
-                return format_inr(s_min)
-            return f"{format_inr(s_min)} - {format_inr(s_max)}"
-            
-        else:
-            # For USD, GBP, EUR: values are in thousands (e.g. 80 = $80,000) or absolute (e.g. 80000)
-            def format_other(val):
-                if val < 1000:
-                    val = val * 1000
-                return f"{symbol}{int(val):,}"
-                
-            if s_min == s_max:
-                return format_other(s_min)
-            return f"{format_other(s_min)} - {format_other(s_max)}"
+        if s_min == s_max:
+            return format_val(s_min)
+        return f"{format_val(s_min)} - {format_val(s_max)}"
             
     except (ValueError, TypeError):
         # Fallback to description parsing
