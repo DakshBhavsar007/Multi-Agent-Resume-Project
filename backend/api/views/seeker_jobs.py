@@ -603,6 +603,60 @@ def my_applications(request):
                     "result_announcement_date": r.get("result_announcement_date")
                 })
 
+            # Check for active proctored rounds
+            test_link = None
+            test_round_name = None
+            if candidate:
+                from api.models import SessionRound, ApplicantRoundAttempt
+                active_attempt = ApplicantRoundAttempt.objects.filter(
+                    candidate=candidate,
+                    round__round_number=candidate.current_round_index,
+                    status__in=["pending", "in_progress"]
+                ).select_related("round").first()
+                
+                if not active_attempt:
+                    sr = SessionRound.objects.filter(
+                        session=session,
+                        round_number=candidate.current_round_index
+                    ).first()
+                    if sr and sr.round_type in ["mcq", "coding", "interview"]:
+                        import secrets
+                        from datetime import timedelta
+                        token = secrets.token_urlsafe(32)
+                        active_attempt, created = ApplicantRoundAttempt.objects.get_or_create(
+                            candidate=candidate,
+                            round=sr,
+                            defaults={
+                                "access_token": token,
+                                "token_expires_at": timezone.now() + timedelta(days=7),
+                                "status": "pending"
+                            }
+                        )
+                
+                if active_attempt and active_attempt.status in ["pending", "in_progress"]:
+                    test_link = f"/test/entry?token={active_attempt.access_token}"
+                    test_round_name = active_attempt.round.name
+
+            # Calculate rejection reason if rejected
+            rejection_reason = None
+            if seeker_status == "rejected" and candidate:
+                from api.models import SessionRound, ApplicantRoundAttempt
+                failed_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first()
+                if failed_sr:
+                    attempt = ApplicantRoundAttempt.objects.filter(candidate=candidate, round=failed_sr).first()
+                    if attempt:
+                        passing_threshold = failed_sr.passing_score
+                        if failed_sr.round_type == "mcq" and attempt.mcq_score is not None:
+                            rejection_reason = f"Scored {attempt.mcq_score}% (Passing score: {passing_threshold}%)"
+                        elif failed_sr.round_type == "coding" and attempt.coding_score is not None:
+                            rejection_reason = f"Scored {attempt.coding_score}% (Passing score: {passing_threshold}%)"
+                        elif failed_sr.round_type == "interview" and attempt.interview_score is not None:
+                            rejection_reason = f"Interview Score: {attempt.interview_score}%"
+                            if attempt.interview_recommendation:
+                                rejection_reason += f" - {attempt.interview_recommendation}"
+                if not rejection_reason:
+                    rejection_reason = f"Resume match score ({match_score}%) did not meet recruiter criteria."
+
             # Compute offer letter URL relative path if present
             offer_letter_url = None
             if app.offer_letter_path:
@@ -629,6 +683,9 @@ def my_applications(request):
                 "visible_round_index": visible_round_index,
                 "agent_processing_status": "success",
                 "match_score": match_score,
+                "test_link": test_link,
+                "test_round_name": test_round_name,
+                "rejection_reason": rejection_reason,
             })
 
         return JsonResponse(success_response({

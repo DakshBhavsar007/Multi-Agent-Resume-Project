@@ -93,29 +93,68 @@ const salaryFilterFn = (salaryRange, minVal, filterCurrencyCode) => {
   if (!parsed.min) return true;
   
   const jobCurrency = parsed.currency || "USD";
-  if (jobCurrency !== filterCurrencyCode) return false;
+  const convertedMax = convertSalaryToCurrency(parsed.max, jobCurrency, filterCurrencyCode);
   
-  return parsed.max >= minVal;
+  return convertedMax >= minVal;
 };
 
 // Currency configurations
 const CURRENCIES = [
-  { code: "INR", symbol: "₹", label: "INR (LPA)", min: 2, max: 100, step: 2, defaultVal: 12,
-    formatMin: (v) => v >= 100 ? `₹${v / 100} Cr` : `₹${v} Lakhs`,
-    formatMax: (v) => v >= 100 ? `₹${v / 100} Cr+` : `₹${v} Lakhs+`,
-    formatCurrent: (v) => v >= 100 ? `₹${v / 100} Cr+` : `₹${v} LPA+`,
+  { code: "INR", symbol: "₹", label: "INR (LPA)", min: 0, max: 100, step: 2, defaultVal: 0,
+    options: [
+      { value: 0, label: "Any salary" },
+      { value: 3, label: "₹3 LPA+" },
+      { value: 6, label: "₹6 LPA+" },
+      { value: 10, label: "₹10 LPA+" },
+      { value: 15, label: "₹15 LPA+" },
+      { value: 20, label: "₹20 LPA+" },
+      { value: 30, label: "₹30 LPA+" },
+      { value: 50, label: "₹50 LPA+" },
+      { value: 100, label: "₹1 Cr+" },
+    ],
+    formatMin: (v) => `₹0`,
+    formatMax: (v) => `₹1 Cr+`,
+    formatCurrent: (v) => v === 0 ? "Any salary" : (v >= 100 ? `₹${v / 100} Cr+` : `₹${v} LPA+`),
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "INR")
   },
-  { code: "USD", symbol: "$", label: "USD ($)", min: 20, max: 500, step: 10, defaultVal: 80,
-    formatMin: (v) => `$${v}`, formatMax: (v) => `$${v}+`, formatCurrent: (v) => `$${v}+`,
+  { code: "USD", symbol: "$", label: "USD ($)", min: 0, max: 200, step: 10, defaultVal: 0,
+    options: [
+      { value: 0, label: "Any salary" },
+      { value: 40, label: "$40k+" },
+      { value: 60, label: "$60k+" },
+      { value: 80, label: "$80k+" },
+      { value: 100, label: "$100k+" },
+      { value: 120, label: "$120k+" },
+      { value: 150, label: "$150k+" },
+      { value: 200, label: "$200k+" },
+    ],
+    formatMin: (v) => `$0`, formatMax: (v) => `$200k+`, formatCurrent: (v) => v === 0 ? "Any salary" : `$${v}k+`,
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "USD")
   },
-  { code: "GBP", symbol: "£", label: "GBP (£)", min: 15, max: 400, step: 5, defaultVal: 50,
-    formatMin: (v) => `£${v}`, formatMax: (v) => `£${v}+`, formatCurrent: (v) => `£${v}+`,
+  { code: "GBP", symbol: "£", label: "GBP (£)", min: 0, max: 150, step: 5, defaultVal: 0,
+    options: [
+      { value: 0, label: "Any salary" },
+      { value: 30, label: "£30k+" },
+      { value: 45, label: "£45k+" },
+      { value: 60, label: "£60k+" },
+      { value: 80, label: "£80k+" },
+      { value: 100, label: "£100k+" },
+      { value: 150, label: "£150k+" },
+    ],
+    formatMin: (v) => `£0`, formatMax: (v) => `£150k+`, formatCurrent: (v) => v === 0 ? "Any salary" : `£${v}k+`,
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "GBP")
   },
-  { code: "EUR", symbol: "€", label: "EUR (€)", min: 15, max: 400, step: 5, defaultVal: 50,
-    formatMin: (v) => `€${v}`, formatMax: (v) => `€${v}+`, formatCurrent: (v) => `€${v}+`,
+  { code: "EUR", symbol: "€", label: "EUR (€)", min: 0, max: 150, step: 5, defaultVal: 0,
+    options: [
+      { value: 0, label: "Any salary" },
+      { value: 30, label: "€30k+" },
+      { value: 45, label: "€45k+" },
+      { value: 60, label: "€60k+" },
+      { value: 80, label: "€80k+" },
+      { value: 100, label: "€100k+" },
+      { value: 150, label: "€150k+" },
+    ],
+    formatMin: (v) => `€0`, formatMax: (v) => `€150k+`, formatCurrent: (v) => v === 0 ? "Any salary" : `€${v}k+`,
     filterFn: (salary, minVal) => salaryFilterFn(salary, minVal, "EUR")
   },
 ];
@@ -190,8 +229,8 @@ export default function UserJobs() {
   const [activeTypes, setActiveTypes] = useState([]);
   const [activeWorkplaces, setActiveWorkplaces] = useState([]);
   const [activeExp, setActiveExp] = useState("");
-  const [salary, setSalary] = useState([80]);
-  const [currency, setCurrency] = useState(CURRENCIES[1]); // Default USD
+  const [salary, setSalary] = useState([CURRENCIES[0].defaultVal]);
+  const [currency, setCurrency] = useState(CURRENCIES[0]); // Default INR
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [showLocSuggestions, setShowLocSuggestions] = useState(false);
@@ -268,6 +307,7 @@ export default function UserJobs() {
     setActiveTypes([]);
     setActiveWorkplaces([]);
     setActiveExp("");
+    setSalary([currency.defaultVal]);
   };
 
   const handleSave = async (jobId, isSaved) => {
@@ -430,15 +470,15 @@ export default function UserJobs() {
               })}
             </FilterGroup>
 
-            <FilterGroup title={`Salary Range (${currency.formatCurrent(salary[0])})`}>
-              <div className="px-1 pt-1">
+            <FilterGroup title="Minimum Salary">
+              <div className="px-1 pt-1 space-y-3">
                 {/* Currency Selector */}
-                <div className="relative mb-3">
+                <div className="relative">
                   <button
                     onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
                     className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl border border-border bg-background text-xs font-semibold hover:bg-muted transition-colors"
                   >
-                    <span>{currency.label}</span>
+                    <span>Currency: {currency.label}</span>
                     <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${showCurrencyDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   {showCurrencyDropdown && (
@@ -457,11 +497,23 @@ export default function UserJobs() {
                     </div>
                   )}
                 </div>
-                <Slider value={salary} onValueChange={setSalary} max={currency.max} min={currency.min} step={currency.step} />
-                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{currency.formatMin(currency.min)}</span>
-                  <span className="font-medium text-foreground">{currency.formatCurrent(salary[0])}</span>
-                  <span>{currency.formatMax(currency.max)}</span>
+
+                {/* Predefined Options List */}
+                <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+                  {currency.options.map((opt) => (
+                    <label key={opt.value} className="flex cursor-pointer items-center justify-between py-1 px-1 rounded-lg hover:bg-muted/50 transition">
+                      <span className="flex items-center gap-2 text-xs font-medium text-foreground">
+                        <input
+                          type="radio"
+                          name="salary_filter"
+                          checked={salary[0] === opt.value}
+                          onChange={() => setSalary([opt.value])}
+                          className="h-3.5 w-3.5 border-border accent-[var(--google-blue)] text-[var(--google-blue)]"
+                        />
+                        {opt.label}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
             </FilterGroup>
