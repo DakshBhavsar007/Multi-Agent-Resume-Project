@@ -85,6 +85,105 @@ CODING_PROBLEMS_SEED_DATA = [
             }
         ],
         "tags": ["string", "stack"]
+    },
+    {
+        "slug": "fizz-buzz",
+        "title": "Fizz Buzz",
+        "difficulty": "easy",
+        "description": "Given an integer n, return a string array answer (1-indexed) where:\n- answer[i] == \"FizzBuzz\" if i is divisible by 3 and 5.\n- answer[i] == \"Fizz\" if i is divisible by 3.\n- answer[i] == \"Buzz\" if i is divisible by 5.\n- answer[i] == str(i) if none of the above conditions are true.",
+        "examples": [
+            {
+                "input": "n = 3",
+                "output": "[\"1\",\"2\",\"Fizz\"]"
+            },
+            {
+                "input": "n = 5",
+                "output": "[\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\"]"
+            }
+        ],
+        "constraints": [
+            "1 <= n <= 10^4"
+        ],
+        "starter_code": {
+            "javascript": "function fizzBuzz(n) {\n    // Write your solution here\n    \n}",
+            "python": "def fizz_buzz(n):\n    # Write your solution here\n    pass"
+        },
+        "test_cases": [
+            {
+                "input": {"n": 3},
+                "expected_output": ["1", "2", "Fizz"]
+            },
+            {
+                "input": {"n": 5},
+                "expected_output": ["1", "2", "Fizz", "4", "Buzz"]
+            }
+        ],
+        "tags": ["math", "simulation"]
+    },
+    {
+        "slug": "reverse-string",
+        "title": "Reverse String",
+        "difficulty": "easy",
+        "description": "Write a function that reverses a string. The input string is given as an array of characters s.\n\nYou must do this by modifying the input array in-place with O(1) extra memory.",
+        "examples": [
+            {
+                "input": "s = [\"h\",\"e\",\"l\",\"l\",\"o\"]",
+                "output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]"
+            }
+        ],
+        "constraints": [
+            "1 <= s.length <= 10^5",
+            "s[i] is a printable ascii character."
+        ],
+        "starter_code": {
+            "javascript": "function reverseString(s) {\n    // Write your solution here\n    \n}",
+            "python": "def reverse_string(s):\n    # Write your solution here\n    pass"
+        },
+        "test_cases": [
+            {
+                "input": {"s": ["h", "e", "l", "l", "o"]},
+                "expected_output": ["o", "l", "l", "e", "h"]
+            }
+        ],
+        "tags": ["two-pointers", "string"]
+    },
+    {
+        "slug": "fibonacci-number",
+        "title": "Fibonacci Number",
+        "difficulty": "easy",
+        "description": "The Fibonacci numbers, commonly denoted F(n) form a sequence, called the Fibonacci sequence, such that each number is the sum of the two preceding ones, starting from 0 and 1. That is:\n\nF(0) = 0, F(1) = 1\nF(n) = F(n - 1) + F(n - 2), for n > 1.\n\nGiven n, calculate F(n).",
+        "examples": [
+            {
+                "input": "n = 2",
+                "output": "1"
+            },
+            {
+                "input": "n = 3",
+                "output": "2"
+            }
+        ],
+        "constraints": [
+            "0 <= n <= 30"
+        ],
+        "starter_code": {
+            "javascript": "function fib(n) {\n    // Write your solution here\n    \n}",
+            "python": "def fib(n):\n    # Write your solution here\n    pass"
+        },
+        "test_cases": [
+            {
+                "input": {"n": 2},
+                "expected_output": 1
+            },
+            {
+                "input": {"n": 3},
+                "expected_output": 2
+            },
+            {
+                "input": {"n": 4},
+                "expected_output": 3
+            }
+        ],
+        "tags": ["math", "dynamic-programming", "recursion"]
     }
 ]
 

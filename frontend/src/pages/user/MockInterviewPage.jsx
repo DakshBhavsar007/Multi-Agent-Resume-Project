@@ -523,284 +523,304 @@ export default function MockInterviewPage() {
               </div>
             </div>
 
-            {/* A. APTITUDE INTERFACE */}
-            {activeAttempt.attempt_type === "aptitude" && (
-              <div className="grid grid-cols-12 gap-6">
-                
-                {/* Questions side bar */}
-                <div className="col-span-12 md:col-span-3 space-y-4">
-                  <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                    <h4 className="font-bold text-xs uppercase text-muted-foreground tracking-wider mb-3">Problems list</h4>
-                    <div className="grid grid-cols-5 gap-2">
-                      {activeAttempt.questions.map((q, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentQIndex(idx)}
-                          className={`w-10 h-10 rounded-lg text-xs font-bold border transition flex items-center justify-center ${
-                            currentQIndex === idx
-                              ? "bg-blue-600 text-white border-blue-600"
-                              : answers[idx.toString()] !== undefined
-                              ? "bg-green-500/10 text-green-600 border-green-500/20"
-                              : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
-                          }`}
-                        >
-                          {idx + 1}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleSubmitMock()}
-                    disabled={submitting}
-                    className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow transition"
-                  >
-                    {submitting ? "Evaluating test..." : "Submit and Finalize"}
-                  </button>
-                </div>
-
-                {/* Active Question pane */}
-                <div className="col-span-12 md:col-span-9 bg-card p-6 rounded-2xl border border-border shadow-sm space-y-6">
-                  <div>
-                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">
-                      Question {currentQIndex + 1} of {activeAttempt.questions.length}
-                    </span>
-                    <h3 className="font-semibold text-lg text-foreground mt-2 leading-relaxed">
-                      {activeAttempt.questions[currentQIndex].question_text}
-                    </h3>
-                  </div>
-
-                  <div className="space-y-3 mt-6">
-                    {activeAttempt.questions[currentQIndex].options.map((opt, oIdx) => {
-                      const isSelected = answers[currentQIndex.toString()] === oIdx.toString();
-                      return (
-                        <button
-                          key={oIdx}
-                          onClick={() => setAnswers({ ...answers, [currentQIndex.toString()]: oIdx.toString() })}
-                          className={`w-full p-4 rounded-xl text-left border text-sm font-medium transition flex justify-between items-center ${
-                            isSelected
-                              ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-sky-400"
-                              : "border-border bg-muted/40 hover:bg-muted text-foreground"
-                          }`}
-                        >
-                          <span>{opt}</span>
-                          <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold ${
-                            isSelected ? "bg-blue-600 text-white border-blue-600" : "border-border bg-white text-zinc-400"
-                          }`}>
-                            {oIdx + 1}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Navigation controls */}
-                  <div className="flex justify-between items-center border-t border-border pt-5 mt-6">
-                    <button
-                      disabled={currentQIndex === 0}
-                      onClick={() => setCurrentQIndex(prev => prev - 1)}
-                      className="px-4 py-2 border border-border bg-muted hover:bg-muted/80 rounded-lg text-xs font-semibold disabled:opacity-40 transition"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      disabled={currentQIndex === activeAttempt.questions.length - 1}
-                      onClick={() => setCurrentQIndex(prev => prev + 1)}
-                      className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border rounded-lg text-xs font-semibold disabled:opacity-40 transition"
-                    >
-                      Next Question
-                    </button>
-                  </div>
-                </div>
-
+            {(!activeAttempt.questions || activeAttempt.questions.length === 0) ? (
+              <div className="bg-card rounded-2xl border border-border p-8 text-center space-y-4 max-w-md mx-auto shadow-sm my-12">
+                <AlertCircle size={40} className="mx-auto text-amber-500 animate-bounce" />
+                <h3 className="font-bold text-lg text-foreground">No Questions Found</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  We couldn't retrieve questions for this practice mock test from the database. Please verify backend database seeding or try again.
+                </p>
+                <button
+                  onClick={() => {
+                    setViewMode("dashboard");
+                    fetchDashboardData();
+                  }}
+                  className="py-2 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
+                >
+                  Return to Dashboard
+                </button>
               </div>
-            )}
-
-            {/* B. CODING INTERFACE */}
-            {activeAttempt.attempt_type === "coding" && (
-              <div className="grid grid-cols-12 gap-6">
-                
-                {/* Left panel problem detail */}
-                <div className="col-span-12 lg:col-span-5 bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col h-[600px]">
-                  <div className="flex border-b border-border bg-muted/40 p-2 gap-1.5 shrink-0">
-                    <button
-                      onClick={() => setCodingTab("description")}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
-                        codingTab === "description" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:bg-muted"
-                      }`}
-                    >
-                      Description
-                    </button>
-                    <button
-                      onClick={() => setCodingTab("output")}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
-                        codingTab === "output" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:bg-muted"
-                      }`}
-                    >
-                      Terminal Output
-                    </button>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto p-5 space-y-6">
-                    {codingTab === "description" ? (
-                      <div className="space-y-4">
-                        <div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded">
-                            {activeAttempt.questions[currentQIndex].difficulty}
-                          </span>
-                          <h3 className="font-bold text-lg mt-2">{activeAttempt.questions[currentQIndex].title}</h3>
+            ) : (
+              <>
+                {/* A. APTITUDE INTERFACE */}
+                {activeAttempt.attempt_type === "aptitude" && (
+                  <div className="grid grid-cols-12 gap-6">
+                    
+                    {/* Questions side bar */}
+                    <div className="col-span-12 md:col-span-3 space-y-4">
+                      <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
+                        <h4 className="font-bold text-xs uppercase text-muted-foreground tracking-wider mb-3">Problems list</h4>
+                        <div className="grid grid-cols-5 gap-2">
+                          {activeAttempt.questions.map((q, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setCurrentQIndex(idx)}
+                              className={`w-10 h-10 rounded-lg text-xs font-bold border transition flex items-center justify-center ${
+                                currentQIndex === idx
+                                  ? "bg-blue-600 text-white border-blue-600"
+                                  : answers[idx.toString()] !== undefined
+                                  ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                  : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                              }`}
+                            >
+                              {idx + 1}
+                            </button>
+                          ))}
                         </div>
-                        <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap">
-                          {activeAttempt.questions[currentQIndex].description}
-                        </p>
-                        
-                        {activeAttempt.questions[currentQIndex].examples && activeAttempt.questions[currentQIndex].examples.length > 0 && (
-                          <div className="space-y-3 border-t border-border pt-4">
-                            <h4 className="font-bold text-xs uppercase text-muted-foreground">Examples</h4>
-                            {activeAttempt.questions[currentQIndex].examples.map((ex, idx) => (
-                              <div key={idx} className="bg-muted/50 p-3 rounded-lg border border-border font-mono text-[11px] space-y-1">
-                                <div><strong className="text-muted-foreground">Input:</strong> {ex.input}</div>
-                                <div><strong className="text-muted-foreground">Output:</strong> {ex.output}</div>
-                                {ex.explanation && <div><strong className="text-muted-foreground">Explanation:</strong> {ex.explanation}</div>}
+                      </div>
+                      <button
+                        onClick={() => handleSubmitMock()}
+                        disabled={submitting}
+                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow transition"
+                      >
+                        {submitting ? "Evaluating test..." : "Submit and Finalize"}
+                      </button>
+                    </div>
+
+                    {/* Active Question pane */}
+                    <div className="col-span-12 md:col-span-9 bg-card p-6 rounded-2xl border border-border shadow-sm space-y-6">
+                      <div>
+                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">
+                          Question {currentQIndex + 1} of {activeAttempt.questions.length}
+                        </span>
+                        <h3 className="font-semibold text-lg text-foreground mt-2 leading-relaxed">
+                          {activeAttempt.questions[currentQIndex].question_text}
+                        </h3>
+                      </div>
+
+                      <div className="space-y-3 mt-6">
+                        {activeAttempt.questions[currentQIndex].options.map((opt, oIdx) => {
+                          const isSelected = answers[currentQIndex.toString()] === oIdx.toString();
+                          return (
+                            <button
+                              key={oIdx}
+                              onClick={() => setAnswers({ ...answers, [currentQIndex.toString()]: oIdx.toString() })}
+                              className={`w-full p-4 rounded-xl text-left border text-sm font-medium transition flex justify-between items-center ${
+                                isSelected
+                                  ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-sky-400"
+                                  : "border-border bg-muted/40 hover:bg-muted text-foreground"
+                              }`}
+                            >
+                              <span>{opt}</span>
+                              <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold ${
+                                isSelected ? "bg-blue-600 text-white border-blue-600" : "border-border bg-white text-zinc-400"
+                              }`}>
+                                {oIdx + 1}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Navigation controls */}
+                      <div className="flex justify-between items-center border-t border-border pt-5 mt-6">
+                        <button
+                          disabled={currentQIndex === 0}
+                          onClick={() => setCurrentQIndex(prev => prev - 1)}
+                          className="px-4 py-2 border border-border bg-muted hover:bg-muted/80 rounded-lg text-xs font-semibold disabled:opacity-40 transition"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          disabled={currentQIndex === activeAttempt.questions.length - 1}
+                          onClick={() => setCurrentQIndex(prev => prev + 1)}
+                          className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border rounded-lg text-xs font-semibold disabled:opacity-40 transition"
+                        >
+                          Next Question
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* B. CODING INTERFACE */}
+                {activeAttempt.attempt_type === "coding" && (
+                  <div className="grid grid-cols-12 gap-6">
+                    
+                    {/* Left panel problem detail */}
+                    <div className="col-span-12 lg:col-span-5 bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col h-[600px]">
+                      <div className="flex border-b border-border bg-muted/40 p-2 gap-1.5 shrink-0">
+                        <button
+                          onClick={() => setCodingTab("description")}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
+                            codingTab === "description" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          Description
+                        </button>
+                        <button
+                          onClick={() => setCodingTab("output")}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
+                            codingTab === "output" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          Terminal Output
+                        </button>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                        {codingTab === "description" ? (
+                          <div className="space-y-4">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded">
+                                {activeAttempt.questions[currentQIndex].difficulty}
+                              </span>
+                              <h3 className="font-bold text-lg mt-2">{activeAttempt.questions[currentQIndex].title}</h3>
+                            </div>
+                            <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap">
+                              {activeAttempt.questions[currentQIndex].description}
+                            </p>
+                            
+                            {activeAttempt.questions[currentQIndex].examples && activeAttempt.questions[currentQIndex].examples.length > 0 && (
+                              <div className="space-y-3 border-t border-border pt-4">
+                                <h4 className="font-bold text-xs uppercase text-muted-foreground">Examples</h4>
+                                {activeAttempt.questions[currentQIndex].examples.map((ex, idx) => (
+                                  <div key={idx} className="bg-muted/50 p-3 rounded-lg border border-border font-mono text-[11px] space-y-1">
+                                    <div><strong className="text-muted-foreground">Input:</strong> {ex.input}</div>
+                                    <div><strong className="text-muted-foreground">Output:</strong> {ex.output}</div>
+                                    {ex.explanation && <div><strong className="text-muted-foreground">Explanation:</strong> {ex.explanation}</div>}
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
+                          </div>
+                        ) : (
+                          <div className="font-mono text-xs p-4 bg-zinc-950 text-emerald-400 rounded-xl min-h-[400px] whitespace-pre-wrap">
+                            {compileOutput || "No output generated yet. Run compilation to see testcase results."}
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div className="font-mono text-xs p-4 bg-zinc-950 text-emerald-400 rounded-xl min-h-[400px] whitespace-pre-wrap">
-                        {compileOutput || "No output generated yet. Run compilation to see testcase results."}
+                    </div>
+
+                    {/* Right panel editor */}
+                    <div className="col-span-12 lg:col-span-7 bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col h-[600px]">
+                      <div className="flex border-b border-border bg-muted/40 px-4 py-2 justify-between items-center shrink-0">
+                        <span className="text-xs font-semibold text-muted-foreground">main.py (Python 3)</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleRunCodingTest}
+                            disabled={compiling}
+                            className="px-3.5 py-1.5 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                          >
+                            <Play size={12} /> {compiling ? "Running..." : "Run Testcases"}
+                          </button>
+                          <button
+                            onClick={handleNextCodingQuestion}
+                            disabled={submitting}
+                            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition"
+                          >
+                            {currentQIndex === activeAttempt.questions.length - 1 ? "Submit Challenge" : "Save & Next"}
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
 
-                {/* Right panel editor */}
-                <div className="col-span-12 lg:col-span-7 bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col h-[600px]">
-                  <div className="flex border-b border-border bg-muted/40 px-4 py-2 justify-between items-center shrink-0">
-                    <span className="text-xs font-semibold text-muted-foreground">main.py (Python 3)</span>
-                    <div className="flex gap-2">
+                      {/* Code editor body */}
+                      <textarea
+                        value={codeContent}
+                        onChange={(e) => setCodeContent(e.target.value)}
+                        className="flex-1 font-mono text-xs p-5 bg-zinc-950 text-zinc-100 focus:outline-none resize-none leading-relaxed border-0"
+                        placeholder="// Write python code here..."
+                      />
+                    </div>
+
+                  </div>
+                )}
+
+                {/* C. AI VOICE INTERVIEW INTERFACE */}
+                {activeAttempt.attempt_type === "interview" && (
+                  <div className="grid grid-cols-12 gap-6">
+                    
+                    {/* Host avatar and sound meter */}
+                    <div className="col-span-12 md:col-span-5 bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col items-center justify-center text-center h-[500px]">
+                      <div className="relative">
+                        {/* Animated visualizer circles */}
+                        {isRecording && (
+                          <div className="absolute inset-0 w-28 h-28 bg-emerald-500/20 rounded-full animate-ping" />
+                        )}
+                        <div className="w-28 h-28 rounded-full bg-blue-600/10 text-blue-600 flex items-center justify-center border-4 border-blue-500/20">
+                          <Cpu size={54} className={isRecording ? "animate-bounce" : ""} />
+                        </div>
+                      </div>
+
+                      <h3 className="font-bold text-lg mt-6">AI Recruiting Agent</h3>
+                      <p className="text-xs text-muted-foreground mt-2 max-w-sm">
+                        {isRecording ? "Listening to your response..." : isTranscribing ? "Processing audio file..." : "Host finished speaking. Ready for your answer."}
+                      </p>
+
+                      {/* Visualizer bars */}
+                      {isRecording && (
+                        <div className="flex gap-1 items-center justify-center mt-6">
+                          <span className="w-1.5 h-6 bg-emerald-500 rounded-full animate-pulse" />
+                          <span className="w-1.5 h-10 bg-emerald-500 rounded-full animate-pulse" />
+                          <span className="w-1.5 h-14 bg-emerald-500 rounded-full animate-pulse" />
+                          <span className="w-1.5 h-8 bg-emerald-500 rounded-full animate-pulse" />
+                          <span className="w-1.5 h-4 bg-emerald-500 rounded-full animate-pulse" />
+                        </div>
+                      )}
+
+                      {/* Mute button */}
                       <button
-                        onClick={handleRunCodingTest}
-                        disabled={compiling}
-                        className="px-3.5 py-1.5 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                        onClick={() => setIsMuted(!isMuted)}
+                        className="mt-8 p-3 rounded-full border border-border bg-muted hover:bg-muted/80 transition flex items-center gap-2 text-xs font-semibold text-foreground"
                       >
-                        <Play size={12} /> {compiling ? "Running..." : "Run Testcases"}
-                      </button>
-                      <button
-                        onClick={handleNextCodingQuestion}
-                        disabled={submitting}
-                        className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition"
-                      >
-                        {currentQIndex === activeAttempt.questions.length - 1 ? "Submit Challenge" : "Save & Next"}
+                        {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                        {isMuted ? "Unmute AI Voice" : "Mute AI Voice"}
                       </button>
                     </div>
+
+                    {/* Interview question flow & text panel */}
+                    <div className="col-span-12 md:col-span-7 bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col justify-between h-[500px]">
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+                          Question {currentQIndex + 1} of {activeAttempt.questions.length}
+                        </span>
+                        <h3 className="font-semibold text-lg text-foreground mt-2 leading-relaxed bg-muted/30 p-4 rounded-xl border border-border">
+                          {activeAttempt.questions[currentQIndex].q}
+                        </h3>
+                      </div>
+
+                      <div className="space-y-4 my-6">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Your transcribed answer:</span>
+                        <textarea
+                          value={spokenAnswer}
+                          onChange={(e) => setSpokenAnswer(e.target.value)}
+                          placeholder="Use microphone or start typing your answer here..."
+                          className="w-full h-32 p-4 rounded-xl border border-border bg-muted/40 focus:bg-card focus:outline-none focus:ring-2 focus:ring-blue-600 text-xs font-medium"
+                        />
+                      </div>
+
+                      <div className="flex gap-3 justify-end border-t border-border pt-4">
+                        {isRecording ? (
+                          <button
+                            onClick={stopRecordingAudio}
+                            className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
+                          >
+                            <MicOff size={14} /> Stop Recording
+                          </button>
+                        ) : (
+                          <button
+                            onClick={startRecordingAudio}
+                            disabled={isTranscribing}
+                            className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
+                          >
+                            <Mic size={14} /> {isTranscribing ? "Transcribing..." : "Record audio answer"}
+                          </button>
+                        )}
+                        <button
+                          onClick={handleNextInterviewQuestion}
+                          disabled={isTranscribing || submitting}
+                          className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
+                        >
+                          {currentQIndex === activeAttempt.questions.length - 1 ? "Submit Interview" : "Save & Next Question"}
+                        </button>
+                      </div>
+                    </div>
+
                   </div>
-
-                  {/* Code editor body */}
-                  <textarea
-                    value={codeContent}
-                    onChange={(e) => setCodeContent(e.target.value)}
-                    className="flex-1 font-mono text-xs p-5 bg-zinc-950 text-zinc-100 focus:outline-none resize-none leading-relaxed border-0"
-                    placeholder="// Write python code here..."
-                  />
-                </div>
-
-              </div>
+                )}
+              </>
             )}
-
-            {/* C. AI VOICE INTERVIEW INTERFACE */}
-            {activeAttempt.attempt_type === "interview" && (
-              <div className="grid grid-cols-12 gap-6">
-                
-                {/* Host avatar and sound meter */}
-                <div className="col-span-12 md:col-span-5 bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col items-center justify-center text-center h-[500px]">
-                  <div className="relative">
-                    {/* Animated visualizer circles */}
-                    {isRecording && (
-                      <div className="absolute inset-0 w-28 h-28 bg-emerald-500/20 rounded-full animate-ping" />
-                    )}
-                    <div className="w-28 h-28 rounded-full bg-blue-600/10 text-blue-600 flex items-center justify-center border-4 border-blue-500/20">
-                      <Cpu size={54} className={isRecording ? "animate-bounce" : ""} />
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-lg mt-6">AI Recruiting Agent</h3>
-                  <p className="text-xs text-muted-foreground mt-2 max-w-sm">
-                    {isRecording ? "Listening to your response..." : isTranscribing ? "Processing audio file..." : "Host finished speaking. Ready for your answer."}
-                  </p>
-
-                  {/* Visualizer bars */}
-                  {isRecording && (
-                    <div className="flex gap-1 items-center justify-center mt-6">
-                      <span className="w-1.5 h-6 bg-emerald-500 rounded-full animate-pulse" />
-                      <span className="w-1.5 h-10 bg-emerald-500 rounded-full animate-pulse" />
-                      <span className="w-1.5 h-14 bg-emerald-500 rounded-full animate-pulse" />
-                      <span className="w-1.5 h-8 bg-emerald-500 rounded-full animate-pulse" />
-                      <span className="w-1.5 h-4 bg-emerald-500 rounded-full animate-pulse" />
-                    </div>
-                  )}
-
-                  {/* Mute button */}
-                  <button
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="mt-8 p-3 rounded-full border border-border bg-muted hover:bg-muted/80 transition flex items-center gap-2 text-xs font-semibold text-foreground"
-                  >
-                    {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                    {isMuted ? "Unmute AI Voice" : "Mute AI Voice"}
-                  </button>
-                </div>
-
-                {/* Interview question flow & text panel */}
-                <div className="col-span-12 md:col-span-7 bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col justify-between h-[500px]">
-                  <div>
-                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
-                      Question {currentQIndex + 1} of {activeAttempt.questions.length}
-                    </span>
-                    <h3 className="font-semibold text-lg text-foreground mt-2 leading-relaxed bg-muted/30 p-4 rounded-xl border border-border">
-                      {activeAttempt.questions[currentQIndex].q}
-                    </h3>
-                  </div>
-
-                  <div className="space-y-4 my-6">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Your transcribed answer:</span>
-                    <textarea
-                      value={spokenAnswer}
-                      onChange={(e) => setSpokenAnswer(e.target.value)}
-                      placeholder="Use microphone or start typing your answer here..."
-                      className="w-full h-32 p-4 rounded-xl border border-border bg-muted/40 focus:bg-card focus:outline-none focus:ring-2 focus:ring-blue-600 text-xs font-medium"
-                    />
-                  </div>
-
-                  <div className="flex gap-3 justify-end border-t border-border pt-4">
-                    {isRecording ? (
-                      <button
-                        onClick={stopRecordingAudio}
-                        className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
-                      >
-                        <MicOff size={14} /> Stop Recording
-                      </button>
-                    ) : (
-                      <button
-                        onClick={startRecordingAudio}
-                        disabled={isTranscribing}
-                        className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
-                      >
-                        <Mic size={14} /> {isTranscribing ? "Transcribing..." : "Record audio answer"}
-                      </button>
-                    )}
-                    <button
-                      onClick={handleNextInterviewQuestion}
-                      disabled={isTranscribing || submitting}
-                      className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
-                    >
-                      {currentQIndex === activeAttempt.questions.length - 1 ? "Submit Interview" : "Save & Next Question"}
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
           </div>
         )}
 

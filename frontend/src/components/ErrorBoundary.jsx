@@ -75,10 +75,10 @@ export default class ErrorBoundary extends React.Component {
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight text-gray-100" style={{ color: "#f4f4f5" }}>
+              <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>
                 Something went wrong
               </h1>
-              <p className="text-sm text-gray-400 max-w-sm mx-auto leading-relaxed" style={{ color: "#a1a1aa" }}>
+              <p className="text-sm max-w-sm mx-auto leading-relaxed" style={{ color: "#d4d4d8" }}>
                 An unexpected error occurred in the application. Please try reloading the page or returning home.
               </p>
               {this.state.error && (
