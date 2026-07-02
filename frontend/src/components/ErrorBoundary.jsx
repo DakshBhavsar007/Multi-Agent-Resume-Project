@@ -11,8 +11,51 @@ export default class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  componentDidMount() {
+    const handleChunkError = (e) => {
+      const message = e.message || (e.reason && e.reason.message) || "";
+      if (
+        message.includes("Failed to fetch dynamically imported module") ||
+        message.includes("loading chunk") ||
+        message.includes("ChunkLoadError")
+      ) {
+        const lastReload = sessionStorage.getItem("chunk_error_reload");
+        const now = Date.now();
+        if (!lastReload || now - parseInt(lastReload, 10) > 15000) {
+          sessionStorage.setItem("chunk_error_reload", now.toString());
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener("error", handleChunkError, true);
+    window.addEventListener("unhandledrejection", handleChunkError);
+
+    this.cleanup = () => {
+      window.removeEventListener("error", handleChunkError, true);
+      window.removeEventListener("unhandledrejection", handleChunkError);
+    };
+  }
+
+  componentWillUnmount() {
+    if (this.cleanup) this.cleanup();
+  }
+
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    const errorStr = error?.toString() || "";
+    if (
+      errorStr.includes("Failed to fetch dynamically imported module") ||
+      errorStr.includes("loading chunk") ||
+      errorStr.includes("ChunkLoadError")
+    ) {
+      const lastReload = sessionStorage.getItem("chunk_error_reload");
+      const now = Date.now();
+      if (!lastReload || now - parseInt(lastReload, 10) > 15000) {
+        sessionStorage.setItem("chunk_error_reload", now.toString());
+        window.location.reload();
+      }
+    }
   }
 
   handleReset = () => {
