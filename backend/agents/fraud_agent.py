@@ -1,10 +1,29 @@
 import os
 import json
+import numpy as np
 from agents.llm import RotateLLMClient
 
 class FraudDetectionAgent:
     def __init__(self):
         self.client = RotateLLMClient()
+
+    def _extract_text_features(self, text: str) -> list:
+        """Extract statistical text features for anomaly detection."""
+        char_count = len(text)
+        words = text.split()
+        word_count = len(words)
+        if word_count == 0:
+            return [0, 0, 0, 0.0, 0.0, 0.0, 0.0]
+        sentence_count = max(1, text.count('.') + text.count('!') + text.count('?'))
+        avg_word_len = char_count / word_count
+        upper_case_ratio = sum(1 for c in text if c.isupper()) / (char_count + 1e-8)
+        digit_ratio = sum(1 for c in text if c.isdigit()) / (char_count + 1e-8)
+        
+        # Keyword density/repetition check
+        unique_words = len(set(w.lower() for w in words))
+        repetition_index = unique_words / word_count
+        
+        return [char_count, word_count, sentence_count, avg_word_len, upper_case_ratio, digit_ratio, repetition_index]
 
     def analyze_resume(self, resume_text: str, metadata: dict = None) -> dict:
         """
@@ -44,6 +63,8 @@ class FraudDetectionAgent:
           "summary": string (a concise explanation of the scan results, e.g., 'Verification complete. Document is highly authentic with low AI probability.')
         }}"""
 
+        # 1. Base LLM Quality/Originality Audit
+        res = None
         try:
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -62,11 +83,10 @@ class FraudDetectionAgent:
             if raw_content.endswith("```"):
                 raw_content = raw_content[:-3]
                 
-            return json.loads(raw_content.strip())
-            
+            res = json.loads(raw_content.strip())
         except Exception as e:
-            # Safe default fallback in case LLM or JSON parsing fails
-            return {
+            # Safe default fallback
+            res = {
                 "originality_score": 92,
                 "ai_probability": 8,
                 "plagiarism_score": 0,
@@ -81,6 +101,47 @@ class FraudDetectionAgent:
                 },
                 "summary": "Verification complete. Candidate profile is highly original and authentic."
             }
+
+        # 2. IsolationForest local statistical anomaly verification
+        anomaly_score = 1.0
+        try:
+            from sklearn.ensemble import IsolationForest
+            from api.models import Candidate
+            
+            # Fetch past candidate text stats for baseline learning
+            past_cands = Candidate.objects.exclude(raw_resume_data={})[:50]
+            feature_list = []
+            for c in past_cands:
+                t = c.raw_resume_data.get("text", "") or ""
+                if len(t) > 50:
+                    feature_list.append(self._extract_text_features(t))
+                    
+            # Inject synthetic typical baselines to secure model training variance
+            baselines = [
+                [3000, 450, 30, 6.0, 0.08, 0.02, 0.65],
+                [1500, 220, 15, 6.2, 0.07, 0.03, 0.72],
+                [5000, 750, 50, 5.8, 0.09, 0.01, 0.62],
+                [8000, 1500, 100, 5.0, 0.05, 0.01, 0.35]
+            ]
+            feature_list.extend(baselines)
+            
+            clf = IsolationForest(contamination=0.05, random_state=42)
+            clf.fit(feature_list)
+            
+            current_feat = [self._extract_text_features(resume_text)]
+            score_raw = float(clf.decision_function(current_feat)[0])
+            anomaly_score = float(np.clip((score_raw + 0.25) / 0.5, 0.0, 1.0))
+        except Exception as anomaly_err:
+            pass
+            
+        if anomaly_score < 0.7:
+            # Document features indicate statistical anomaly, apply slight safety penalty
+            res["originality_score"] = int(res["originality_score"] * (0.8 + 0.2 * anomaly_score))
+            res["ats_manipulation_detected"] = True
+            if "Statistical document feature anomaly detected" not in res["manipulation_flags"]:
+                res["manipulation_flags"].append("Statistical document feature anomaly detected")
+                
+        return res
 
     def analyze_job(self, job_title: str, job_description: str, metadata: dict = None) -> dict:
         """
@@ -152,6 +213,8 @@ class FraudDetectionAgent:
           "summary": string (a concise explanation of the scan results)
         }}"""
 
+        # 1. Base LLM Quality/Safety Audit
+        res = None
         try:
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -170,11 +233,10 @@ class FraudDetectionAgent:
             if raw_content.endswith("```"):
                 raw_content = raw_content[:-3]
                 
-            return json.loads(raw_content.strip())
-            
+            res = json.loads(raw_content.strip())
         except Exception as e:
-            # Safe default fallback in case LLM or JSON parsing fails
-            return {
+            # Safe default fallback
+            res = {
                 "originality_score": 91,
                 "risk_level": "Low",
                 "verified_company": "Yes",
@@ -218,4 +280,45 @@ class FraudDetectionAgent:
                 },
                 "summary": "Verification complete. Job listing appears safe and authentic."
             }
+
+        # 2. Local Anomaly Verification using IsolationForest
+        anomaly_score = 1.0
+        try:
+            from sklearn.ensemble import IsolationForest
+            from api.models import Session
+            
+            # Fetch past jobs text stats for baseline learning
+            past_jobs = Session.objects.filter(status="active")[:50]
+            feature_list = []
+            for j in past_jobs:
+                t = j.job_description or ""
+                if len(t) > 50:
+                    feature_list.append(self._extract_text_features(t))
+                    
+            # Inject baseline job posting statistics
+            baselines = [
+                [2000, 300, 20, 6.2, 0.08, 0.02, 0.70],
+                [1000, 150, 10, 6.5, 0.07, 0.03, 0.75],
+                [4000, 600, 40, 5.9, 0.09, 0.01, 0.65]
+            ]
+            feature_list.extend(baselines)
+            
+            clf = IsolationForest(contamination=0.05, random_state=42)
+            clf.fit(feature_list)
+            
+            current_feat = [self._extract_text_features(job_description)]
+            score_raw = float(clf.decision_function(current_feat)[0])
+            anomaly_score = float(np.clip((score_raw + 0.25) / 0.5, 0.0, 1.0))
+        except Exception as anomaly_err:
+            pass
+            
+        if anomaly_score < 0.7:
+            # Job description statistics are anomalous, apply risk penalty
+            res["originality_score"] = int(res["originality_score"] * (0.85 + 0.15 * anomaly_score))
+            res["risk_level"] = "Medium" if res["risk_level"] == "Low" else "High"
+            if "Anomalous job description features detected" not in res["manipulation_flags"]:
+                res["manipulation_flags"].append("Anomalous job description features detected")
+                
+        return res
+
 

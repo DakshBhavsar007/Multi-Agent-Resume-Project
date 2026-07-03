@@ -756,14 +756,30 @@ for skill in SKILLS_DATA["skills"]:
         _category_lookup[canon] = cat
 
 class SkillNormalizationAgent:
-    """Super-fast normalization using the built-in JSON lookup map."""
+    """Normalization using built-in JSON lookup map with semantic embedding backup and clustering."""
+    _canonical_embeddings = None
+    _canonical_names = None
+
     def __init__(self):
         pass
+
+    def _init_canonical_embeddings(self, model):
+        if SkillNormalizationAgent._canonical_embeddings is not None:
+            return
+        try:
+            SkillNormalizationAgent._canonical_names = list(_category_lookup.keys())
+            SkillNormalizationAgent._canonical_embeddings = model.encode(SkillNormalizationAgent._canonical_names)
+        except Exception:
+            pass
 
     async def normalize(self, raw_skills: list, db=None) -> list:
         return self._normalize_list(raw_skills)
         
     def _normalize_list(self, raw_skills: list) -> list:
+        from agents.embeddings import get_embedding_model
+        import numpy as np
+        model = get_embedding_model()
+        
         results = []
         for skill_obj in raw_skills:
             if isinstance(skill_obj, str):
@@ -777,6 +793,24 @@ class SkillNormalizationAgent:
             
             key = raw.lower().strip()
             match = _skill_lookup.get(key)
+            is_inferred = False
+            confidence = 1.0
+            
+            # Semantic fallback if direct match is missing and embedding model exists
+            if not match and model:
+                self._init_canonical_embeddings(model)
+                if SkillNormalizationAgent._canonical_embeddings is not None:
+                    try:
+                        raw_embedding = model.encode([raw])
+                        from sklearn.metrics.pairwise import cosine_similarity
+                        sims = cosine_similarity(raw_embedding, SkillNormalizationAgent._canonical_embeddings)[0]
+                        best_idx = np.argmax(sims)
+                        if sims[best_idx] > 0.70:
+                            match = SkillNormalizationAgent._canonical_names[best_idx]
+                            is_inferred = True
+                            confidence = round(float(sims[best_idx]), 2)
+                    except Exception:
+                        pass
             
             years = skill_obj.get("years")
             level = skill_obj.get("level")
@@ -799,8 +833,8 @@ class SkillNormalizationAgent:
                     "parent_category": _category_lookup.get(match, "Unknown"),
                     "proficiency": prof,
                     "years": years,
-                    "confidence": 1.0,
-                    "is_inferred": False,
+                    "confidence": confidence,
+                    "is_inferred": is_inferred,
                     "is_unknown": False
                 })
             else:
@@ -816,6 +850,46 @@ class SkillNormalizationAgent:
                     "is_unknown": True
                 })
         return results
+
+    def cluster_unmapped_skills(self, unknown_skills: list, n_clusters: int = 5) -> dict:
+        """
+        Groups a list of unknown skills into clusters using KMeans,
+        returning the groups of similar skills.
+        """
+        if not unknown_skills:
+            return {}
+            
+        from agents.embeddings import get_embedding_model
+        model = get_embedding_model()
+        if not model:
+            # Fallback group by first character
+            clusters = {}
+            for skill in unknown_skills:
+                group_id = f"Group-{skill[0].upper() if skill else 'Other'}"
+                if group_id not in clusters:
+                    clusters[group_id] = []
+                clusters[group_id].append(skill)
+            return clusters
+            
+        try:
+            from sklearn.cluster import KMeans
+            embeddings = model.encode(unknown_skills)
+            n_cl = min(n_clusters, len(unknown_skills))
+            if n_cl <= 0:
+                return {}
+                
+            kmeans = KMeans(n_clusters=n_cl, random_state=42)
+            labels = kmeans.fit_predict(embeddings)
+            
+            clusters = {}
+            for idx, label in enumerate(labels):
+                group_id = f"Cluster-{label + 1}"
+                if group_id not in clusters:
+                    clusters[group_id] = []
+                clusters[group_id].append(unknown_skills[idx])
+            return clusters
+        except Exception:
+            return {"All Skills": unknown_skills}
 
 # A simple sync version perfectly matching the celery worker expectations:
 def _normalize_skills_sync(raw_skills: list, db=None) -> list:

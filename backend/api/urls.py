@@ -26,6 +26,7 @@ from api.views import (
     seeker_billing,
     password_reset,
     round_views,
+    ml_views,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -285,5 +286,11 @@ urlpatterns = [
     path('api/v1/seeker/mock-interview/<str:attempt_id>', round_views.get_mock_attempt),
     path('api/v1/seeker/mock-interview/<str:attempt_id>/submit', round_views.submit_mock_attempt),
     path('api/v1/seeker/mock-interview/transcribe-audio', round_views.seeker_transcribe_audio),
+
+    # ── Machine Learning (scikit-learn) endpoints ─────────────────────────────
+    path('api/v1/seeker/predict-salary', ml_views.predict_salary_view, name='seeker-predict-salary'),
+    path('api/v1/seeker/recommendations', ml_views.recommend_jobs_view, name='seeker-recommendations'),
+    path('api/v1/seeker/ats-score', ml_views.ats_score_view, name='seeker-ats-score'),
+    path('api/v1/recruiter/cluster-skills', ml_views.cluster_skills_view, name='recruiter-cluster-skills'),
 ]
 
