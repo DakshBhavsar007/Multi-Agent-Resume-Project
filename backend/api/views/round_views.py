@@ -32,6 +32,18 @@ PROBLEM_CALL_MAPPING = {
     "valid-parentheses": {
         "python": "is_valid(inp['s'])",
         "javascript": "isValid(inp.s)"
+    },
+    "fizz-buzz": {
+        "python": "fizz_buzz(inp['n'])",
+        "javascript": "fizzBuzz(inp.n)"
+    },
+    "reverse-string": {
+        "python": "reverse_string(inp['s'])",
+        "javascript": "reverseString(inp.s)"
+    },
+    "fibonacci-number": {
+        "python": "fib(inp['n'])",
+        "javascript": "fib(inp.n)"
     }
 }
 
@@ -760,29 +772,7 @@ def get_coding_problems(request):
     return JsonResponse(success_response(data))
 
 
-@csrf_exempt
-@require_test_token
-def run_code(request):
-    """
-    POST /api/v1/test/run-code
-    Runs code against public test cases or custom input.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    try:
-        data = json.loads(request.body)
-        code = data.get("code")
-        language = data.get("language", "").lower()
-        slug = data.get("slug")
-        custom_input_raw = data.get("custom_input", None)
-    except Exception as e:
-        return JsonResponse(error_response("Invalid JSON"), status=400)
-
-    problem = CodingProblem.objects.filter(slug=slug).first()
-    if not problem:
-        return JsonResponse(error_response("Problem not found"), status=404)
-
+def execute_problem_code(problem, code, language, custom_input_raw=None):
     is_custom_run = False
     if custom_input_raw is not None and custom_input_raw.strip() != "":
         is_custom_run = True
@@ -801,7 +791,7 @@ def run_code(request):
         test_cases = problem.test_cases
 
     if not test_cases:
-        return JsonResponse(success_response({"all_passed": True, "results": []}))
+        return True, [], "", "", 0.0, 0
 
     run_results = []
     all_passed = True
@@ -815,6 +805,9 @@ def run_code(request):
             import json as py_json
             import re
             import time
+            import tempfile
+            import subprocess
+            import os
             inputs = [tc["input"] for tc in test_cases]
             inputs_json = py_json.dumps(inputs)
             
@@ -827,7 +820,7 @@ def run_code(request):
             if func_name:
                 call_code = f"{func_name}(**inp)"
             else:
-                call_code = PROBLEM_CALL_MAPPING.get(slug, {}).get("python", "None")
+                call_code = PROBLEM_CALL_MAPPING.get(problem.slug, {}).get("python", "None")
 
             runner_code = f"""
 import json
@@ -923,6 +916,9 @@ print(json.dumps({{"results": results, "peak_memory_bytes": peak}}))
             import json as js_json
             import re
             import time
+            import tempfile
+            import subprocess
+            import os
             inputs = [tc["input"] for tc in test_cases]
             inputs_json = js_json.dumps(inputs)
             
@@ -935,7 +931,7 @@ print(json.dumps({{"results": results, "peak_memory_bytes": peak}}))
             if func_name:
                 call_code = f"{func_name}(...Object.values(inp))"
             else:
-                call_code = PROBLEM_CALL_MAPPING.get(slug, {}).get("javascript", "null")
+                call_code = PROBLEM_CALL_MAPPING.get(problem.slug, {}).get("javascript", "null")
 
             runner_code = f"""
 const fs = require('fs');
@@ -955,9 +951,8 @@ for (let idx = 0; idx < inputs.length; idx++) {{
     }}
 }}
 
-const peak = process.memoryUsage().rss;
 console.log("___TEST_RESULTS___");
-console.log(JSON.stringify({{ results: results, peak_memory_bytes: peak }}));
+console.log(JSON.stringify({{results: results, peak_memory_bytes: 0}}));
 """
             with tempfile.NamedTemporaryFile(suffix=".js", delete=False, mode="w", encoding="utf-8") as f:
                 f.write(runner_code)
@@ -1024,7 +1019,7 @@ console.log(JSON.stringify({{ results: results, peak_memory_bytes: peak }}));
             finally:
                 os.remove(temp_filename)
         else:
-            return JsonResponse(error_response("Supported execution languages are Python and JavaScript"), status=400)
+            raise ValueError("Supported execution languages are Python and JavaScript")
 
     except subprocess.TimeoutExpired:
         all_passed = False
@@ -1032,6 +1027,39 @@ console.log(JSON.stringify({{ results: results, peak_memory_bytes: peak }}));
     except Exception as e:
         all_passed = False
         run_results = [{"passed": False, "error": f"Internal Runner Error: {str(e)}"}]
+
+    return all_passed, run_results, user_stdout, user_stderr, elapsed_seconds, peak_memory_kb
+
+
+@csrf_exempt
+@require_test_token
+def run_code(request):
+    """
+    POST /api/v1/test/run-code
+    Runs code against public test cases or custom input.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    try:
+        data = json.loads(request.body)
+        code = data.get("code")
+        language = data.get("language", "").lower()
+        slug = data.get("slug")
+        custom_input_raw = data.get("custom_input", None)
+    except Exception as e:
+        return JsonResponse(error_response("Invalid JSON"), status=400)
+
+    problem = CodingProblem.objects.filter(slug=slug).first()
+    if not problem:
+        return JsonResponse(error_response("Problem not found"), status=404)
+
+    try:
+        all_passed, run_results, user_stdout, user_stderr, elapsed_seconds, peak_memory_kb = execute_problem_code(
+            problem, code, language, custom_input_raw
+        )
+    except ValueError as ve:
+        return JsonResponse(error_response(str(ve)), status=400)
 
     return JsonResponse(success_response({
         "all_passed": all_passed,
@@ -1694,12 +1722,18 @@ def submit_mock_attempt(request, attempt_id):
                 
                 is_correct = False
                 if ans is not None:
-                    try:
-                        if int(ans) == int(correct_opt):
-                            correct_count += 1
-                            is_correct = True
-                    except (ValueError, TypeError):
-                        pass
+                    ans_str = str(ans).strip().upper()
+                    correct_str = str(correct_opt).strip().upper()
+                    if ans_str == correct_str:
+                        correct_count += 1
+                        is_correct = True
+                    else:
+                        try:
+                            if int(ans) == int(correct_opt):
+                                correct_count += 1
+                                is_correct = True
+                        except (ValueError, TypeError):
+                            pass
                 feedback[str(i)] = {
                     "correct": is_correct,
                     "correct_option": correct_opt,
@@ -1809,4 +1843,48 @@ def seeker_transcribe_audio(request):
         except Exception as e:
             logger.error("Audio transcription failed: %s", e)
             return JsonResponse(error_response("Audio transcription failed. Please check network connectivity."), status=500)
+    return _inner(request)
+
+
+@csrf_exempt
+def seeker_run_code(request):
+    """
+    POST /api/v1/seeker/mock-interview/run-code
+    Runs seeker practice code against testcases.
+    """
+    from api.views.seeker_auth import require_seeker_jwt
+    @require_seeker_jwt
+    def _inner(request):
+        if request.method != "POST":
+            return JsonResponse(error_response("Method not allowed"), status=405)
+
+        try:
+            data = json.loads(request.body)
+            code = data.get("code")
+            language = data.get("language", "python").lower()
+            slug = data.get("slug")
+            custom_input_raw = data.get("custom_input", None)
+        except Exception:
+            return JsonResponse(error_response("Invalid JSON"), status=400)
+
+        from api.models import CodingProblem
+        problem = CodingProblem.objects.filter(slug=slug).first()
+        if not problem:
+            return JsonResponse(error_response("Problem not found"), status=404)
+
+        try:
+            all_passed, run_results, user_stdout, user_stderr, elapsed_seconds, peak_memory_kb = execute_problem_code(
+                problem, code, language, custom_input_raw
+            )
+        except ValueError as ve:
+            return JsonResponse(error_response(str(ve)), status=400)
+
+        return JsonResponse(success_response({
+            "all_passed": all_passed,
+            "results": run_results,
+            "user_stdout": user_stdout,
+            "user_stderr": user_stderr,
+            "execution_time_sec": round(elapsed_seconds, 3),
+            "memory_usage_kb": peak_memory_kb
+        }))
     return _inner(request)

@@ -621,27 +621,34 @@ export default function MockInterviewPage() {
                       </div>
 
                       <div className="space-y-3 mt-6">
-                        {activeAttempt.questions[currentQIndex].options.map((opt, oIdx) => {
-                          const isSelected = answers[currentQIndex.toString()] === oIdx.toString();
-                          return (
-                            <button
-                              key={oIdx}
-                              onClick={() => setAnswers({ ...answers, [currentQIndex.toString()]: oIdx.toString() })}
-                              className={`w-full p-4 rounded-xl text-left border text-sm font-medium transition flex justify-between items-center ${
-                                isSelected
-                                  ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-sky-400"
-                                  : "border-border bg-muted/40 hover:bg-muted text-foreground"
-                              }`}
-                            >
-                              <span>{opt}</span>
-                              <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold ${
-                                isSelected ? "bg-blue-600 text-white border-blue-600" : "border-border bg-white text-zinc-400"
-                              }`}>
-                                {oIdx + 1}
-                              </span>
-                            </button>
-                          );
-                        })}
+                        {(() => {
+                          const opts = activeAttempt.questions[currentQIndex].options || {};
+                          const isArr = Array.isArray(opts);
+                          const optKeys = isArr ? opts.map((_, i) => i.toString()) : Object.keys(opts);
+                          
+                          return optKeys.map((optKey) => {
+                            const optVal = isArr ? opts[Number(optKey)] : opts[optKey];
+                            const isSelected = answers[currentQIndex.toString()] === optKey;
+                            return (
+                              <button
+                                key={optKey}
+                                onClick={() => setAnswers({ ...answers, [currentQIndex.toString()]: optKey })}
+                                className={`w-full p-4 rounded-xl text-left border text-sm font-medium transition flex justify-between items-center ${
+                                  isSelected
+                                    ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-sky-400"
+                                    : "border-border bg-muted/40 hover:bg-muted text-foreground"
+                                }`}
+                              >
+                                <span>{optVal}</span>
+                                <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold ${
+                                  isSelected ? "bg-blue-600 text-white border-blue-600" : "border-border bg-white text-zinc-400"
+                                }`}>
+                                  {isArr ? Number(optKey) + 1 : optKey}
+                                </span>
+                              </button>
+                            );
+                          });
+                        })()}
                       </div>
 
                       {/* Navigation controls */}
@@ -923,25 +930,32 @@ export default function MockInterviewPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-xs font-medium">
-                          {q.options.map((opt, oIdx) => {
-                            const isCorrectOpt = oIdx.toString() === q.correct_option?.toString();
-                            const isSelectedOpt = oIdx.toString() === fb.selected_option?.toString();
-                            return (
-                              <div
-                                key={oIdx}
-                                className={`p-3 rounded-lg border flex justify-between items-center ${
-                                  isCorrectOpt
-                                    ? "bg-green-500/5 border-green-500/30 text-green-600 dark:text-green-400"
-                                    : isSelectedOpt
-                                    ? "bg-red-500/5 border-red-500/30 text-red-600 dark:text-red-450"
-                                    : "border-border bg-muted/20 text-foreground"
-                                }`}
-                              >
-                                <span>{opt}</span>
-                                {isCorrectOpt && <span className="text-[10px] font-bold uppercase text-green-500">Correct Choice</span>}
-                              </div>
-                            );
-                          })}
+                          {(() => {
+                            const opts = q.options || {};
+                            const isArr = Array.isArray(opts);
+                            const optKeys = isArr ? opts.map((_, i) => i.toString()) : Object.keys(opts);
+                            
+                            return optKeys.map((optKey) => {
+                              const optVal = isArr ? opts[Number(optKey)] : opts[optKey];
+                              const isCorrectOpt = optKey.toString().toUpperCase() === q.correct_option?.toString().toUpperCase();
+                              const isSelectedOpt = optKey.toString().toUpperCase() === fb.selected_option?.toString().toUpperCase();
+                              return (
+                                <div
+                                  key={optKey}
+                                  className={`p-3 rounded-lg border flex justify-between items-center ${
+                                    isCorrectOpt
+                                      ? "bg-green-500/5 border-green-500/30 text-green-600 dark:text-green-400"
+                                      : isSelectedOpt
+                                      ? "bg-red-500/5 border-red-500/30 text-red-600 dark:text-red-450"
+                                      : "border-border bg-muted/20 text-foreground"
+                                  }`}
+                                >
+                                  <span>{optVal}</span>
+                                  {isCorrectOpt && <span className="text-[10px] font-bold uppercase text-green-500">Correct Choice</span>}
+                                </div>
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
                     );
