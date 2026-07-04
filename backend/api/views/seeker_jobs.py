@@ -161,19 +161,61 @@ def _get_flat_skills(skills):
     return flat
 
 
-def _compute_match_score(seeker_skills: list, job_skills: list) -> int:
+def _compute_match_score(seeker, session) -> int:
     """
-    Simple set-intersection match score (0–100).
-    A real implementation uses the MatchingAgent, but this is fast and dependency-free.
+    Computes a matching score (0-100) using the exact same logic as recruiter candidate scoring.
     """
-    if not seeker_skills or not job_skills:
+    if not seeker or not session:
         return 0
-    flat_seeker = _get_flat_skills(seeker_skills)
-    flat_job = _get_flat_skills(job_skills)
-    seeker_lower = {s.lower() for s in flat_seeker if s}
-    job_lower = {s.lower() for s in flat_job if s}
-    intersection = seeker_lower & job_lower
-    return round(len(intersection) / len(job_lower) * 100) if job_lower else 0
+        
+    # Check if there is already an applied candidate for this seeker in this session
+    try:
+        from api.models import JobApplication
+        app = JobApplication.objects.filter(seeker=seeker, session=session).select_related("candidate").first()
+        if app and app.candidate and app.candidate.match_score is not None:
+            return round(app.candidate.match_score)
+    except Exception:
+        pass
+
+    criteria = session.criteria or {}
+    required_skills = criteria.get("required_skills", [])
+    req_lower = [r.lower() for r in required_skills]
+    
+    norm_skills = seeker.skills or []
+    cand_skill_names = {
+        (s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)).lower()
+        if isinstance(s, dict) else str(s).lower()
+        for s in norm_skills if s
+    }
+    matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
+    matched = len(matched_list)
+    skill_score = round((matched / len(req_lower)) * 100) if req_lower else 0
+
+    # Experience score
+    min_exp = criteria.get("min_experience", 0)
+    resume = seeker.resume_data or {}
+    raw_exp_years = resume.get("total_experience_years")
+    if raw_exp_years is None:
+        raw_exp_years = 0.0
+    try:
+        exp_years = float(raw_exp_years)
+    except (ValueError, TypeError):
+        exp_years = 0.0
+    experience_score = min(100, round((exp_years / max(min_exp, 1)) * 100)) if min_exp > 0 else 50
+
+    # Location score
+    preferred_locs = criteria.get("preferred_locations", [])
+    cand_location = (seeker.location or resume.get("location") or "").lower()
+    location_score = 100 if not preferred_locs else (100 if any(l.lower() in cand_location for l in preferred_locs) else 30)
+
+    # Weighted overall score
+    weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})
+    score = round(
+        skill_score * weights.get("skills", 0.5) + 
+        experience_score * weights.get("experience", 0.3) + 
+        location_score * weights.get("location", 0.2)
+    )
+    return min(100, score)
 
 
 # ── Public (authenticated seeker) endpoints ────────────────────────────────────
@@ -218,7 +260,7 @@ def list_jobs(request):
 
         jobs = []
         for s in sessions[:200]:
-            score = _compute_match_score(seeker.skills, s.inferred_skills)
+            score = _compute_match_score(seeker, s)
             is_applied = str(s.id) in applied_ids
             is_saved = str(s.id) in saved_ids
             jobs.append(_session_to_job(s, match_score=score, applied=is_applied, is_saved=is_saved))
@@ -262,7 +304,7 @@ def job_detail(request, session_id):
         if not session:
             return JsonResponse(error_response("Job not found"), status=404)
 
-        score = _compute_match_score(seeker.skills, session.inferred_skills)
+        score = _compute_match_score(seeker, session)
         applied = JobApplication.objects.filter(seeker=seeker, session=session).exists()
         is_saved = SavedJob.objects.filter(seeker=seeker, session=session).exists()
 
@@ -591,7 +633,7 @@ def my_applications(request):
             # Match score fallback
             match_score = candidate.match_score if candidate else None
             if match_score is None:
-                match_score = _compute_match_score(seeker.skills, session.inferred_skills)
+                match_score = _compute_match_score(seeker, session)
 
             # Format rounds
             ui_rounds = []
@@ -848,7 +890,7 @@ def get_saved_jobs(request):
         jobs = []
         for sj in saved_jobs_qs:
             s = sj.session
-            score = _compute_match_score(seeker.skills, s.inferred_skills)
+            score = _compute_match_score(seeker, s)
             jobs.append(_session_to_job(s, match_score=score, applied=str(s.id) in applied_ids, is_saved=True))
             
         return JsonResponse(success_response({"jobs": jobs}))
