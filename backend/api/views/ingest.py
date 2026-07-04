@@ -190,6 +190,58 @@ def upload_zip(request):
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
+def _get_google_flow(oauth_type, session_id):
+    scopes = []
+    if oauth_type == "gmail":
+        scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
+    elif oauth_type in ["gdrive", "form"]:
+        scopes = ["https://www.googleapis.com/auth/drive.readonly"]
+
+    client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:3000/api/oauth/callback")
+
+    state = f"{oauth_type}:{session_id}"
+
+    if client_id and client_secret:
+        client_config = {
+            "web": {
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                "redirect_uris": [redirect_uri]
+            }
+        }
+        flow = Flow.from_client_config(
+            client_config,
+            scopes=scopes,
+            state=state
+        )
+    else:
+        client_secrets_file = os.getenv("GOOGLE_CLIENT_SECRETS_FILE", "credentials.json")
+        if not os.path.exists(client_secrets_file):
+            raise Exception("Google OAuth not configured. Please set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET env variables.")
+        flow = Flow.from_client_secrets_file(
+            client_secrets_file,
+            scopes=scopes,
+            state=state
+        )
+
+    flow.redirect_uri = redirect_uri
+    return flow
+
+def credentials_to_dict(credentials):
+    return {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
 @csrf_exempt
 @require_api_key
 def get_google_oauth_url(request):
@@ -198,46 +250,14 @@ def get_google_oauth_url(request):
     try:
         oauth_type = request.GET.get("type")
         session_id = request.GET.get("session_id")
+        if not oauth_type or not session_id:
+            return JsonResponse(error_response("type and session_id are required"), status=400)
         
-        scopes = []
-        if oauth_type == "gmail":
-            scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
-        elif oauth_type in ["gdrive", "form"]:
-            scopes = ["https://www.googleapis.com/auth/drive.readonly"]
+        try:
+            flow = _get_google_flow(oauth_type, session_id)
+        except Exception as flow_err:
+            return JsonResponse(error_response(str(flow_err)), status=400)
 
-        client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-        client_secret = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
-        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:3000/api/oauth/callback")
-
-        state = f"{oauth_type}:{session_id}"
-
-        if client_id and client_secret:
-            client_config = {
-                "web": {
-                    "client_id": client_id,
-                    "client_secret": client_secret,
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "redirect_uris": [redirect_uri]
-                }
-            }
-            flow = Flow.from_client_config(
-                client_config,
-                scopes=scopes,
-                state=state
-            )
-        else:
-            client_secrets_file = os.getenv("GOOGLE_CLIENT_SECRETS_FILE", "credentials.json")
-            if not os.path.exists(client_secrets_file):
-                return JsonResponse(error_response("Google OAuth not configured. Please set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET env variables."), status=400)
-            flow = Flow.from_client_secrets_file(
-                client_secrets_file,
-                scopes=scopes,
-                state=state
-            )
-
-        flow.redirect_uri = redirect_uri
         auth_url, _ = flow.authorization_url(
             access_type="offline",
             prompt="consent"
@@ -263,9 +283,22 @@ def gmail_connect(request):
         if not session:
             return JsonResponse(error_response("Session not found"), status=404)
 
-        session.gmail_tokens = {"token": auth_code}  # Dummy bind
-        session.gmail_address = "recruiter@vishleshan.com"
-        session.save()
+        try:
+            flow = _get_google_flow("gmail", session_id)
+            flow.fetch_token(code=auth_code)
+            credentials = flow.credentials
+            
+            # Fetch connected email dynamically
+            from googleapiclient.discovery import build
+            service = build('gmail', 'v1', credentials=credentials)
+            profile = service.users().getProfile(userId='me').execute()
+            gmail_address = profile.get('emailAddress', 'recruiter@vishleshan.com')
+            
+            session.gmail_tokens = credentials_to_dict(credentials)
+            session.gmail_address = gmail_address
+            session.save()
+        except Exception as oauth_err:
+            return JsonResponse(error_response(f"Google OAuth token exchange failed: {str(oauth_err)}"), status=400)
 
         return JsonResponse(success_response({
             "connected": True,
@@ -321,16 +354,32 @@ def gdrive_connect(request):
         if not session_id or not auth_code:
             return JsonResponse(error_response("session_id and auth_code are required"), status=400)
 
-        match = re.search(r'/folders/([a-zA-Z0-9_-]+)', folder_url)
-        folder_id = match.group(1) if match else folder_url
+        # Extract folder ID from URL
+        folder_id = None
+        match_folders = re.search(r'/folders/([a-zA-Z0-9_-]+)', folder_url)
+        if match_folders:
+            folder_id = match_folders.group(1)
+        else:
+            match_id = re.search(r'[?&]id=([a-zA-Z0-9_-]+)', folder_url)
+            if match_id:
+                folder_id = match_id.group(1)
+            else:
+                folder_id = folder_url.strip()
 
         session = Session.objects.filter(id=session_id).first()
         if not session:
             return JsonResponse(error_response("Session not found"), status=404)
 
-        session.gdrive_tokens = {"token": auth_code}
-        session.gdrive_folder_id = folder_id
-        session.save()
+        try:
+            flow = _get_google_flow("gdrive", session_id)
+            flow.fetch_token(code=auth_code)
+            credentials = flow.credentials
+            
+            session.gdrive_tokens = credentials_to_dict(credentials)
+            session.gdrive_folder_id = folder_id
+            session.save()
+        except Exception as oauth_err:
+            return JsonResponse(error_response(f"Google OAuth token exchange failed: {str(oauth_err)}"), status=400)
 
         return JsonResponse(success_response({
             "connected": True,

@@ -10,6 +10,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, 
 import { sessionsAPI, ingestAPI, candidatesAPI, exportAPI, roundsAPI } from '../lib/api';
 import { useIngestStore } from '../stores/ingestStore';
 import { useCandidateStore } from '../stores/candidateStore';
+import { useAuthStore } from '../stores/authStore';
 
 import CandidateCard from '../components/CandidateCard';
 import PremiumBadge from '../components/PremiumBadge';
@@ -72,6 +73,9 @@ export default function SessionWorkspacePage() {
   const queryClient = useQueryClient();
   const { jobs, addJob, updateJob, removeJob } = useIngestStore();
   const { highlightedIds } = useCandidateStore();
+  const { company } = useAuthStore();
+
+  const isEnterprise = company?.tier?.toLowerCase() === 'enterprise';
 
   const [activeTab, setActiveTab] = useState("upload");
   const [activeRound, setActiveRound] = useState(null);
@@ -469,6 +473,44 @@ export default function SessionWorkspacePage() {
           </div>
         </div>
 
+        {/* Active Jobs Top Tracker Banner */}
+        {Object.values(jobs).some(j => j.status === 'pending' || j.status === 'processing') && (
+          <div className="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-zinc-900/40 dark:to-zinc-800/40 border border-blue-100 dark:border-zinc-700/50 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-3.5 w-3.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-accent"></span>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-charcoal dark:text-zinc-200 flex items-center gap-1.5">
+                  Resumes are being processed in the background
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-zinc-400 font-medium">
+                  We are parsing, analyzing, and scoring resumes. You can browse the candidates as they appear.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3 md:self-center">
+              {Object.values(jobs).map((job) => {
+                if (job.status !== 'pending' && job.status !== 'processing') return null;
+                return (
+                  <div key={job.id} className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border border-blue-200/50 dark:border-zinc-700 rounded-xl px-3.5 py-2 flex items-center gap-3 shadow-sm">
+                    <RefreshCw size={13} className="animate-spin text-accent" />
+                    <div className="text-xs font-semibold text-charcoal dark:text-zinc-300">
+                      <span className="capitalize">{job.type}</span>: <span className="font-mono font-bold text-accent">{job.processed || 0}/{job.total || 0}</span>
+                    </div>
+                    {/* Small progress bar */}
+                    <div className="w-12 bg-gray-100 dark:bg-zinc-700 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-accent h-full" style={{ width: `${job.progress_percent || 0}%` }}></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* TABS */}
         <div className="flex gap-8 mt-4">
           {[
@@ -539,16 +581,31 @@ export default function SessionWorkspacePage() {
 
                   {/* ZIP Archive — Premium Feature */}
                   <div className="relative">
-                    <PremiumBadge tooltip="Bulk ZIP upload is available on the Enterprise plan">
-                      <div className="bg-white rounded-2xl p-6 border-2 border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                    {!isEnterprise ? (
+                      <PremiumBadge tooltip="Bulk ZIP upload is available on the Enterprise plan">
+                        <div className="bg-white rounded-2xl p-6 border-2 border-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                          <Archive size={32} className="text-accent mb-3" />
+                          <h4 className="font-bold text-charcoal text-lg mb-1">ZIP Upload</h4>
+                          <p className="text-xs text-charcoal mb-4 font-medium">Upload a ZIP containing all resume files</p>
+                          <div className="border-2 border-dashed border-gray-300 rounded-xl h-[120px] flex items-center justify-center bg-gray-50">
+                            <p className="text-sm font-bold text-gray-500">Drop ZIP file here</p>
+                          </div>
+                        </div>
+                      </PremiumBadge>
+                    ) : (
+                      <div className="bg-white rounded-2xl p-6 border-2 border-transparent hover:border-accent transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                         <Archive size={32} className="text-accent mb-3" />
                         <h4 className="font-bold text-charcoal text-lg mb-1">ZIP Upload</h4>
                         <p className="text-xs text-charcoal mb-4 font-medium">Upload a ZIP containing all resume files</p>
-                        <div className="border-2 border-dashed border-gray-300 rounded-xl h-[120px] flex items-center justify-center bg-gray-50">
-                          <p className="text-sm font-bold text-gray-500">Drop ZIP file here</p>
+                        <div 
+                          {...getZipProps()} 
+                          className="border-2 border-dashed border-[#2563EB] rounded-xl h-[120px] flex items-center justify-center bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition-colors relative overflow-hidden"
+                        >
+                          <input {...getZipInput()} />
+                          <p className="text-sm font-bold text-accent">Drop ZIP file here or click to browse</p>
                         </div>
                       </div>
-                    </PremiumBadge>
+                    )}
                   </div>
 
                   {/* Gmail Sync */}
