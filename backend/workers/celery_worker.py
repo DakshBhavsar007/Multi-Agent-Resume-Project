@@ -397,8 +397,40 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
                         "matched_count": matched,
                         "total_required": len(req_lower)
                     }
-                    if min_match_score > 0 and score < min_match_score:
-                        new_cand.status = "rejected"
+                # Pre-generate AI insights if LLM parsed
+                if parsed_res.get("parsing_method") == "llm":
+                    try:
+                        from agents.llm import RotateLLMClient
+                        import json as py_json
+                        llm = RotateLLMClient()
+                        system_prompt = (
+                            "You are an expert technical recruiter analyzing a candidate's fit for a job. "
+                            "Respond in JSON format with exactly three fields: "
+                            "1. 'why_hire': A brief, impactful paragraph summarizing the candidate's top strengths and alignment (2-3 sentences). "
+                            "2. 'risk_factors': A brief paragraph highlighting gaps, concerns, or areas they might need support in (1-2 sentences). "
+                            "3. 'skill_match_breakdown': A list of exactly 3 core skill categories from the job/resume with their match percentage (integer 0-100), structured like: "
+                            "   [{\"skill\": \"React / Frontend\", \"percentage\": 96}, {\"skill\": \"Leadership\", \"percentage\": 82}, {\"skill\": \"Cloud / DevOps\", \"percentage\": 61}]."
+                        )
+                        flat_skills = [
+                            s.get('canonical_skill') or s.get('skill') or str(s) if isinstance(s, dict) else str(s)
+                            for s in normalized_skills if s
+                        ]
+                        prompt = (
+                            f"Job Title: {session_row.job_title}\n"
+                            f"Job Description:\n{session_row.job_description[:1000]}\n\n"
+                            f"Candidate Name: {new_cand.name}\n"
+                            f"Candidate Skills: {', '.join(flat_skills)}\n"
+                            f"Candidate Experience:\n{py_json.dumps(raw_data.get('experience', [])[:3])}\n"
+                        )
+                        response_text = llm.generate(prompt, system_prompt)
+                        if "```json" in response_text:
+                            response_text = response_text.split("```json")[1].split("```")[0]
+                        elif "```" in response_text:
+                            response_text = response_text.split("```")[1].split("```")[0]
+                        ai_insights = py_json.loads(response_text.strip())
+                        new_cand.match_details["ai_insights"] = ai_insights
+                    except Exception as inline_ex:
+                        print(f"[Inline LLM] AI Insights pre-computation failed: {inline_ex}")
 
                 new_cand.save()
 
@@ -491,6 +523,45 @@ def enrich_candidates_llm(candidate_ids: list):
             try:
                 from api.views.jobs import _calculate_match_score
                 _calculate_match_score(cand, cand.session)
+                
+                # Pre-generate AI insights after LLM enrichment
+                try:
+                    from agents.llm import RotateLLMClient
+                    import json as py_json
+                    llm = RotateLLMClient()
+                    system_prompt = (
+                        "You are an expert technical recruiter analyzing a candidate's fit for a job. "
+                        "Respond in JSON format with exactly three fields: "
+                        "1. 'why_hire': A brief, impactful paragraph summarizing the candidate's top strengths and alignment (2-3 sentences). "
+                        "2. 'risk_factors': A brief paragraph highlighting gaps, concerns, or areas they might need support in (1-2 sentences). "
+                        "3. 'skill_match_breakdown': A list of exactly 3 core skill categories from the job/resume with their match percentage (integer 0-100), structured like: "
+                        "   [{\"skill\": \"React / Frontend\", \"percentage\": 96}, {\"skill\": \"Leadership\", \"percentage\": 82}, {\"skill\": \"Cloud / DevOps\", \"percentage\": 61}]."
+                    )
+                    flat_skills = [
+                        s.get('canonical_skill') or s.get('skill') or str(s) if isinstance(s, dict) else str(s)
+                        for s in cand.normalized_skills if s
+                    ]
+                    prompt = (
+                        f"Job Title: {cand.session.job_title}\n"
+                        f"Job Description:\n{cand.session.job_description[:1000]}\n\n"
+                        f"Candidate Name: {cand.name}\n"
+                        f"Candidate Skills: {', '.join(flat_skills)}\n"
+                        f"Candidate Experience:\n{py_json.dumps(parsed.get('experience', [])[:3])}\n"
+                    )
+                    response_text = llm.generate(prompt, system_prompt)
+                    if "```json" in response_text:
+                        response_text = response_text.split("```json")[1].split("```")[0]
+                    elif "```" in response_text:
+                        response_text = response_text.split("```")[1].split("```")[0]
+                    ai_insights = py_json.loads(response_text.strip())
+                    
+                    cand.refresh_from_db()
+                    m_details = cand.match_details or {}
+                    m_details["ai_insights"] = ai_insights
+                    cand.match_details = m_details
+                    cand.save(update_fields=["match_details"])
+                except Exception as insight_ex:
+                    print(f"[LLM Enrich] AI Insights pre-generation failed: {insight_ex}")
             except Exception as score_ex:
                 print(f"[LLM Enrich] Score recalculation failed for {cid}: {score_ex}")
         except Candidate.DoesNotExist:
