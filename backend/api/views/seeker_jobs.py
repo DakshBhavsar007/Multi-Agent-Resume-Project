@@ -161,7 +161,7 @@ def _get_flat_skills(skills):
     return flat
 
 
-def _compute_match_score(seeker, session, precomputed_score=None) -> int:
+def _compute_match_score(seeker, session, precomputed_score=None, has_applied=None) -> int:
     """
     Computes a matching score (0-100) using the exact same logic as recruiter candidate scoring.
     """
@@ -171,14 +171,17 @@ def _compute_match_score(seeker, session, precomputed_score=None) -> int:
     if precomputed_score is not None:
         return precomputed_score
         
-    # Check if there is already an applied candidate for this seeker in this session
-    try:
-        from api.models import JobApplication
-        app = JobApplication.objects.filter(seeker=seeker, session=session).select_related("candidate").first()
-        if app and app.candidate and app.candidate.match_score is not None:
-            return round(app.candidate.match_score)
-    except Exception:
+    if has_applied is False:
         pass
+    else:
+        # Check if there is already an applied candidate for this seeker in this session
+        try:
+            from api.models import JobApplication
+            app = JobApplication.objects.filter(seeker=seeker, session=session).select_related("candidate").first()
+            if app and app.candidate and app.candidate.match_score is not None:
+                return round(app.candidate.match_score)
+        except Exception:
+            pass
 
     criteria = session.criteria or {}
     required_skills = criteria.get("required_skills", [])
@@ -264,10 +267,11 @@ def list_jobs(request):
 
         jobs = []
         for s in sessions[:200]:
-            pre_score = applied_apps.get(str(s.id))
-            score = _compute_match_score(seeker, s, precomputed_score=pre_score)
-            is_applied = str(s.id) in applied_ids
-            is_saved = str(s.id) in saved_ids
+            sid_str = str(s.id)
+            is_applied = sid_str in applied_ids
+            pre_score = applied_apps.get(sid_str) if is_applied else None
+            score = _compute_match_score(seeker, s, precomputed_score=pre_score, has_applied=is_applied)
+            is_saved = sid_str in saved_ids
             jobs.append(_session_to_job(s, match_score=score, applied=is_applied, is_saved=is_saved))
 
         # Sort by match score descending
