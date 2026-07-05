@@ -485,6 +485,14 @@ def release_due_results_for_seeker(seeker):
     apps = JobApplication.objects.filter(seeker=seeker).select_related('session', 'candidate')
     now = timezone.now()
 
+    # Pre-fetch status update notifications to prevent N+1 query loop
+    existing_notifs = set(
+        Notification.objects.filter(
+            seeker=seeker,
+            type='status_updated'
+        ).values_list('title', 'message', flat=False)
+    )
+
     for app in apps:
         candidate = app.candidate
         if not candidate:
@@ -538,22 +546,22 @@ def release_due_results_for_seeker(seeker):
                 app.status = target_app_status
                 app.save(update_fields=['status'])
                 
-                # Create in-app notification if it doesn't exist yet
-                notif_exists = Notification.objects.filter(
-                    seeker=seeker,
-                    type='status_updated',
-                    title=f'Application Update — {session.job_title}',
-                    message__contains=target_app_status.title()
-                ).exists()
+                # Check in-app notification in-memory instead of querying DB
+                notif_title = f'Application Update — {session.job_title}'
+                notif_exists = any(
+                    t == notif_title and target_app_status.title() in m
+                    for t, m in existing_notifs
+                )
                 
                 if not notif_exists:
-                    Notification.objects.create(
+                    new_notif = Notification.objects.create(
                         seeker=seeker,
                         type='status_updated',
-                        title=f'Application Update — {session.job_title}',
+                        title=notif_title,
                         message=f'Your application at {session.company.name if session.company else "Vishleshan Partner"} has been updated to: {target_app_status.title()}.',
                         link=f'/jobs/applications?app_id={app.id}',
                     )
+                    existing_notifs.add((new_notif.title, new_notif.message))
                     
                     # Send email
                     send_status_update_to_seeker(
