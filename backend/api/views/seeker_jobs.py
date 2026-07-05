@@ -161,12 +161,15 @@ def _get_flat_skills(skills):
     return flat
 
 
-def _compute_match_score(seeker, session) -> int:
+def _compute_match_score(seeker, session, precomputed_score=None) -> int:
     """
     Computes a matching score (0-100) using the exact same logic as recruiter candidate scoring.
     """
     if not seeker or not session:
         return 0
+        
+    if precomputed_score is not None:
+        return precomputed_score
         
     # Check if there is already an applied candidate for this seeker in this session
     try:
@@ -246,11 +249,12 @@ def list_jobs(request):
         if location:
             sessions = sessions.filter(job_description__icontains=location)
 
-        # Get seeker's applied session IDs
-        applied_ids = set(
-            str(sid) for sid in
-            JobApplication.objects.filter(seeker=seeker).values_list("session_id", flat=True)
-        )
+        # Get seeker's applied session IDs and precomputed match scores
+        applied_apps = {
+            str(app.session_id): round(app.candidate.match_score) if (app.candidate and app.candidate.match_score is not None) else None
+            for app in JobApplication.objects.filter(seeker=seeker).select_related("candidate")
+        }
+        applied_ids = set(applied_apps.keys())
 
         # Get seeker's saved session IDs
         saved_ids = set(
@@ -260,7 +264,8 @@ def list_jobs(request):
 
         jobs = []
         for s in sessions[:200]:
-            score = _compute_match_score(seeker, s)
+            pre_score = applied_apps.get(str(s.id))
+            score = _compute_match_score(seeker, s, precomputed_score=pre_score)
             is_applied = str(s.id) in applied_ids
             is_saved = str(s.id) in saved_ids
             jobs.append(_session_to_job(s, match_score=score, applied=is_applied, is_saved=is_saved))
