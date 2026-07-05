@@ -219,6 +219,8 @@ export default function App() {
           <Route path="/refund-policy" element={<RefundPolicyPage />} />
           <Route path="/forgot-password" element={<ResetPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/careers" element={<Navigate to="/jobs" replace />} />
+          <Route path="/hiring-safety" element={<Navigate to="/jobs/safety-checker" replace />} />
 
           {/* Job Seeker Routes */}
           <Route path="/jobs" element={<UserHome />} />
