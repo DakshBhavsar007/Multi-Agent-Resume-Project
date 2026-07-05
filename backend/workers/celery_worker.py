@@ -620,6 +620,122 @@ def sync_gdrive_resumes(session_id: str, job_id: str):
         job.completed_at = datetime.now(timezone.utc)
         job.save()
 
+@celery_app.task(name="sync_google_form_resumes")
+def sync_google_form_resumes(session_id: str, job_id: str):
+    try:
+        session_row = SessionModel.objects.get(id=session_id)
+        job = IngestJob.objects.get(id=job_id)
+    except (SessionModel.DoesNotExist, IngestJob.DoesNotExist):
+        return
+
+    if not session_row.gdrive_tokens:
+        job.status = "failed"
+        job.error_log = ["Google Form not connected"]
+        job.save()
+        return
+
+    try:
+        import google.oauth2.credentials
+        from googleapiclient.discovery import build
+        creds = google.oauth2.credentials.Credentials(**session_row.gdrive_tokens)
+        
+        # Build sheets service
+        service = build('sheets', 'v4', credentials=creds)
+        spreadsheet_id = session_row.gdrive_folder_id
+        
+        # Fetch spreadsheet metadata to get the first sheet name
+        sheet_metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+        sheets = sheet_metadata.get('sheets', [])
+        if not sheets:
+            raise Exception("No sheets found in spreadsheet")
+        first_sheet_name = sheets[0]['properties']['title']
+        
+        # Read range
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id, 
+            range=f"'{first_sheet_name}'!A1:Z200"
+        ).execute()
+        
+        rows = result.get('values', [])
+        if not rows:
+            job.status = "done"
+            job.completed_at = datetime.now(timezone.utc)
+            job.save()
+            return
+            
+        headers = [h.strip().lower() for h in rows[0]]
+        
+        # Helper to find column index by header name matching
+        def find_col_idx(names):
+            for name in names:
+                for idx, h in enumerate(headers):
+                    if name in h:
+                        return idx
+            return -1
+
+        name_idx = find_col_idx(["name", "full name", "candidate"])
+        email_idx = find_col_idx(["email", "e-mail", "mail"])
+        phone_idx = find_col_idx(["phone", "contact", "mobile", "number"])
+        loc_idx = find_col_idx(["location", "address", "city", "country"])
+        skills_idx = find_col_idx(["skills", "skillset", "technologies", "tech stack"])
+        exp_idx = find_col_idx(["experience", "exp", "years"])
+        
+        rounds = session_row.rounds or []
+        first_round_order = rounds[0]["order"] if rounds else 0
+        
+        from agents.normalization_agent import SkillNormalizationAgent
+        norm_agent = SkillNormalizationAgent()
+        
+        imported = 0
+        
+        for row_vals in rows[1:]:
+            # Pad row_vals to headers length
+            row_vals += [""] * (len(headers) - len(row_vals))
+            
+            cand_name = row_vals[name_idx] if name_idx != -1 else "Form Applicant"
+            cand_email = row_vals[email_idx] if email_idx != -1 else None
+            cand_phone = row_vals[phone_idx] if phone_idx != -1 else None
+            cand_loc = row_vals[loc_idx] if loc_idx != -1 else None
+            raw_skills = str(row_vals[skills_idx]).split(";") if (skills_idx != -1 and row_vals[skills_idx]) else []
+            exp_years = 0
+            if exp_idx != -1 and row_vals[exp_idx]:
+                try:
+                    exp_val = re.sub(r'[^\d.]', '', str(row_vals[exp_idx]))
+                    exp_years = float(exp_val) if exp_val else 0
+                except:
+                    pass
+            
+            # Normalize skills
+            from asgiref.sync import async_to_sync
+            normalized = async_to_sync(norm_agent.normalize)(raw_skills) if raw_skills else []
+            
+            # Create Candidate
+            Candidate.objects.create(
+                session_id=session_id,
+                name=cand_name,
+                email=cand_email,
+                phone=cand_phone,
+                location=cand_loc,
+                total_experience_years=exp_years,
+                normalized_skills=normalized,
+                current_round_index=first_round_order,
+                status="new",
+                source="google_form"
+            )
+            imported += 1
+            
+        job.total_files = imported
+        job.processed_files = imported
+        job.status = "done"
+        job.completed_at = datetime.now(timezone.utc)
+        job.save()
+        
+    except Exception as e:
+        job.status = "failed"
+        job.error_log = [str(e)]
+        job.completed_at = datetime.now(timezone.utc)
+        job.save()
+
 @celery_app.task(name="match_all_candidates")
 def match_all_candidates(session_id: str, job_id: str):
     try:

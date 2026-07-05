@@ -13,7 +13,7 @@ from google_auth_oauthlib.flow import Flow
 from api.models import Session, IngestJob, Candidate
 from api.decorators import require_api_key, check_rate_limit
 from models.schemas import success_response, error_response
-from workers.celery_worker import process_resume_batch, sync_gmail_resumes, sync_gdrive_resumes
+from workers.celery_worker import process_resume_batch, sync_gmail_resumes, sync_gdrive_resumes, sync_google_form_resumes
 from agents.normalization_agent import SkillNormalizationAgent
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
@@ -431,16 +431,49 @@ def google_form(request):
     try:
         data = json.loads(request.body)
         session_id = data.get("session_id")
-        if not session_id:
-            return JsonResponse(error_response("session_id is required"), status=400)
+        auth_code = data.get("auth_code")
+        sheet_url = data.get("sheet_url", "")
+        if not session_id or not auth_code:
+            return JsonResponse(error_response("session_id and auth_code are required"), status=400)
+
+        # Extract Sheet ID from URL
+        sheet_id = None
+        match_spreadsheets = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', sheet_url)
+        if match_spreadsheets:
+            sheet_id = match_spreadsheets.group(1)
+        else:
+            match_id = re.search(r'[?&]id=([a-zA-Z0-9_-]+)', sheet_url)
+            if match_id:
+                sheet_id = match_id.group(1)
+            else:
+                sheet_id = sheet_url.strip()
 
         session = Session.objects.filter(id=session_id).first()
         if not session:
             return JsonResponse(error_response("Session not found"), status=404)
 
-        job = IngestJob.objects.create(session=session, type="form", status="pending")
+        try:
+            flow = _get_google_flow("form", session_id)
+            flow.fetch_token(code=auth_code)
+            credentials = flow.credentials
+            
+            # Save spreadsheet ID as gdrive_folder_id and tokens as gdrive_tokens
+            session.gdrive_tokens = credentials_to_dict(credentials)
+            session.gdrive_folder_id = sheet_id
+            session.save()
+        except Exception as oauth_err:
+            return JsonResponse(error_response(f"Google OAuth token exchange failed: {str(oauth_err)}"), status=400)
 
-        return JsonResponse(success_response({"job_id": str(job.id), "status": "pending"}))
+        # Trigger sync task
+        job = IngestJob.objects.create(session=session, type="form", status="pending")
+        sync_google_form_resumes.delay(str(session.id), str(job.id))
+
+        return JsonResponse(success_response({
+            "connected": True,
+            "sheet_id": sheet_id,
+            "job_id": str(job.id),
+            "status": "pending"
+        }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 

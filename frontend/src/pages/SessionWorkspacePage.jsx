@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2 } from 'lucide-react';
+import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2, ArrowLeft } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -322,6 +322,15 @@ export default function SessionWorkspacePage() {
         } catch(err) {
           toast.error("Failed to connect or sync Google Drive. Provide a valid Drive folder URL.");
         }
+      } else if (e.data.type === "GFORM_AUTH_CODE") {
+        try {
+          const res = await ingestAPI.connectForm({ session_id: id, sheet_url: driveUrl, auth_code: e.data.code });
+          toast.success("Google Form connected!");
+          addJob(res.job_id, "form");
+          toast.success("Google Form sync started!");
+        } catch(err) {
+          toast.error("Failed to connect or sync Google Form. Provide a valid Google Sheet URL.");
+        }
       }
     };
     window.addEventListener("message", handleMessage);
@@ -399,6 +408,14 @@ export default function SessionWorkspacePage() {
         
         {/* HEADER */}
         <div>
+          <div className="flex items-center gap-3 mb-2">
+            <Link 
+              to="/dashboard/sessions" 
+              className="text-gray-400 hover:text-charcoal transition-colors flex items-center gap-1.5 text-xs font-bold"
+            >
+              <ArrowLeft size={14} /> Back to Sessions
+            </Link>
+          </div>
           <h1 className="text-[24px] font-bold text-charcoal">{session.name}</h1>
           <p className="text-base text-gray-500 mt-0.5">{session.job_title}</p>
           
@@ -649,17 +666,47 @@ export default function SessionWorkspacePage() {
                     <div className="flex items-center gap-4 mb-4 border-b border-gray-100 pb-3">
                       <LinkIcon size={24} className="text-accent" />
                       <div className="flex gap-6">
-                        <span className="text-sm font-black text-charcoal border-b-2 border-accent pb-[13px] -mb-[14px]">Drive</span>
-                        <span className="text-sm font-bold text-gray-400 pb-[13px] hover:text-gray-600 cursor-pointer">Google Form</span>
+                        <button 
+                          onClick={() => setGoogleType("drive")}
+                          className={`text-sm pb-[13px] -mb-[14px] transition-all font-semibold ${
+                            googleType === "drive" 
+                              ? "font-black text-charcoal border-b-2 border-accent" 
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        >
+                          Drive
+                        </button>
+                        <button 
+                          onClick={() => setGoogleType("form")}
+                          className={`text-sm pb-[13px] -mb-[14px] transition-all font-semibold ${
+                            googleType === "form" 
+                              ? "font-black text-charcoal border-b-2 border-accent" 
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        >
+                          Google Form
+                        </button>
                       </div>
                     </div>
-                    <p className="text-xs text-charcoal mb-4 font-medium flex-1">Sync from a shared Drive folder link</p>
+                    <p className="text-xs text-charcoal mb-4 font-medium flex-1">
+                      {googleType === "drive" 
+                        ? "Sync from a shared Drive folder link" 
+                        : "Sync candidates from a Google Form response sheet"}
+                    </p>
                     <div className="flex flex-col justify-end mt-auto">
-                      <input type="text" placeholder="Paste Google Drive folder URL here..." value={driveUrl} onChange={e=>setDriveUrl(e.target.value)} className="w-full text-xs p-2.5 font-medium border-2 border-gray-100 rounded-lg mb-2 focus:border-accent focus:outline-none bg-gray-50" />
+                      <input 
+                        type="text" 
+                        placeholder={googleType === "drive" 
+                          ? "Paste Google Drive folder URL here..." 
+                          : "Paste Google Form response Sheet URL here..."} 
+                        value={driveUrl} 
+                        onChange={e=>setDriveUrl(e.target.value)} 
+                        className="w-full text-xs p-2.5 font-medium border-2 border-gray-100 rounded-lg mb-2 focus:border-accent focus:outline-none bg-gray-50" 
+                      />
                       <button 
                         onClick={async () => {
                           try {
-                            const { auth_url } = await ingestAPI.getOAuthUrl("gdrive", id);
+                            const { auth_url } = await ingestAPI.getOAuthUrl(googleType, id);
                             window.open(auth_url, "gdrive_oauth", "width=500,height=600,left=200,top=100");
                           } catch (e) { toast.error(e.message); }
                         }}
