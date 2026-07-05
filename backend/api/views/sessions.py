@@ -186,6 +186,12 @@ def session_detail(request, session_id):
             total_hired = Candidate.objects.filter(session_id=session.id, status="hired").count()
             total_rejected = Candidate.objects.filter(session_id=session.id, status="rejected").count()
 
+            # Dynamic sync dates from completed IngestJobs
+            from api.models import IngestJob
+            latest_gmail = IngestJob.objects.filter(session_id=session.id, type="gmail", status="done").order_by("-completed_at").first()
+            latest_gdrive = IngestJob.objects.filter(session_id=session.id, type="gdrive", status="done").order_by("-completed_at").first()
+            latest_gform = IngestJob.objects.filter(session_id=session.id, type="form", status="done").order_by("-completed_at").first()
+
             return JsonResponse(success_response({
                 "id": str(session.id),
                 "name": session.name,
@@ -200,6 +206,9 @@ def session_detail(request, session_id):
                 "total_hired": total_hired,
                 "total_rejected": total_rejected,
                 "gmail_address": session.gmail_address,
+                "last_gmail_sync": latest_gmail.completed_at.isoformat() if (latest_gmail and latest_gmail.completed_at) else None,
+                "last_gdrive_sync": latest_gdrive.completed_at.isoformat() if (latest_gdrive and latest_gdrive.completed_at) else None,
+                "last_gform_sync": latest_gform.completed_at.isoformat() if (latest_gform and latest_gform.completed_at) else None,
                 "created_at": session.created_at.isoformat() if session.created_at else None,
                 "updated_at": session.updated_at.isoformat() if session.updated_at else None
             }))

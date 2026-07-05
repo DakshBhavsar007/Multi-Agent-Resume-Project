@@ -15,6 +15,14 @@ import { useAuthStore } from '../stores/authStore';
 import CandidateCard from '../components/CandidateCard';
 import PremiumBadge from '../components/PremiumBadge';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext
+} from '../components/ui/pagination';
 
 const TagInput = ({ tags, onChange, placeholder, tagColor }) => {
   const [input, setInput] = useState("");
@@ -80,6 +88,7 @@ export default function SessionWorkspacePage() {
   const [activeTab, setActiveTab] = useState("upload");
   const [activeRound, setActiveRound] = useState(null);
   const [filters, setFilters] = useState({ search: "", location: "", min_score: 0, skill: "", sort: "Match Score ↓" });
+  const [candidatesPage, setCandidatesPage] = useState(1);
   
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [driveUrl, setDriveUrl] = useState("");
@@ -218,15 +227,21 @@ export default function SessionWorkspacePage() {
     if (filters.min_score) params.set("min_score", filters.min_score.toString());
     if (filters.location) params.set("location", filters.location);
     if (filters.sort) params.set("sort", filters.sort);
+    params.set("page", candidatesPage.toString());
+    params.set("per_page", "10");
     return "?" + params.toString();
   };
 
   const { data: candidatesData } = useQuery({
-    queryKey: ["candidates", id, activeRound, filters],
+    queryKey: ["candidates", id, activeRound, filters, candidatesPage],
     queryFn: () => candidatesAPI.list(id, buildQS()),
     refetchInterval: 15000,
     enabled: activeTab === "candidates" || activeTab === "analytics"
   });
+
+  useEffect(() => {
+    setCandidatesPage(1);
+  }, [activeRound, filters]);
 
   const { data: allCandidatesData } = useQuery({
     queryKey: ["all_candidates", id],
@@ -515,7 +530,12 @@ export default function SessionWorkspacePage() {
                   <div key={job.id} className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border border-blue-200/50 dark:border-zinc-700 rounded-xl px-3.5 py-2 flex items-center gap-3 shadow-sm">
                     <RefreshCw size={13} className="animate-spin text-accent" />
                     <div className="text-xs font-semibold text-charcoal dark:text-zinc-300">
-                      <span className="capitalize">{job.type}</span>: <span className="font-mono font-bold text-accent">{job.processed || 0}/{job.total || 0}</span>
+                      <span className="capitalize">{job.type === 'gdrive' ? 'Google Drive' : job.type === 'form' ? 'Google Form' : job.type}</span>:{" "}
+                      {job.status === "pending" || !job.total ? (
+                        <span className="text-gray-400 italic">Scanning & fetching...</span>
+                      ) : (
+                        <span className="font-mono font-bold text-accent">{job.processed || 0}/{job.total || 0}</span>
+                      )}
                     </div>
                     {/* Small progress bar */}
                     <div className="w-12 bg-gray-100 dark:bg-zinc-700 rounded-full h-1.5 overflow-hidden">
@@ -688,11 +708,21 @@ export default function SessionWorkspacePage() {
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-charcoal mb-4 font-medium flex-1">
+                    <p className="text-xs text-charcoal mb-2 font-medium flex-1">
                       {googleType === "drive" 
                         ? "Sync from a shared Drive folder link" 
                         : "Sync candidates from a Google Form response sheet"}
                     </p>
+                    
+                    {googleType === "drive" ? (
+                      <p className="text-[11px] font-semibold text-green-600/70 mb-4 pl-1">
+                        Last synced: {session.last_gdrive_sync ? new Date(session.last_gdrive_sync).toLocaleString() : 'Never'}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] font-semibold text-green-600/70 mb-4 pl-1">
+                        Last synced: {session.last_gform_sync ? new Date(session.last_gform_sync).toLocaleString() : 'Never'}
+                      </p>
+                    )}
                     <div className="flex flex-col justify-end mt-auto">
                       <input 
                         type="text" 
@@ -968,6 +998,37 @@ export default function SessionWorkspacePage() {
                   </div>
                 )}
               </div>
+              
+              {/* PAGINATION */}
+              {candidatesData?.pages > 1 && (
+                <div className="mt-6 flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      {candidatesPage > 1 && (
+                        <PaginationItem>
+                          <PaginationPrevious onClick={() => setCandidatesPage(p => p - 1)} />
+                        </PaginationItem>
+                      )}
+                      {Array.from({ length: candidatesData.pages }, (_, i) => i + 1).map((p) => (
+                        <PaginationItem key={p}>
+                          <PaginationLink
+                            isActive={p === candidatesPage}
+                            onClick={() => setCandidatesPage(p)}
+                            className="cursor-pointer"
+                          >
+                            {p}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      {candidatesPage < candidatesData.pages && (
+                        <PaginationItem>
+                          <PaginationNext onClick={() => setCandidatesPage(p => p + 1)} />
+                        </PaginationItem>
+                      )}
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </div>
           )}
 

@@ -781,7 +781,7 @@ def sync_google_form_resumes(session_id: str, job_id: str):
             normalized = async_to_sync(norm_agent.normalize)(raw_skills) if raw_skills else []
             
             # Create Candidate
-            Candidate.objects.create(
+            cand = Candidate.objects.create(
                 session_id=session_id,
                 name=cand_name,
                 email=cand_email,
@@ -793,6 +793,45 @@ def sync_google_form_resumes(session_id: str, job_id: str):
                 status="new",
                 source="google_form"
             )
+            
+            # Calculate match score and details
+            from api.views.jobs import _calculate_match_score
+            _calculate_match_score(cand, session_row)
+            
+            # Pre-generate AI insights for the synced candidate
+            try:
+                from agents.llm import RotateLLMClient
+                import json as py_json
+                llm = RotateLLMClient()
+                system_prompt = (
+                    "You are an expert technical recruiter analyzing a candidate's fit for a job. "
+                    "Respond in JSON format with exactly three fields: "
+                    "1. 'why_hire': A brief, impactful paragraph summarizing the candidate's top strengths and alignment (2-3 sentences). "
+                    "2. 'risk_factors': A brief paragraph highlighting gaps, concerns, or areas they might need support in (1-2 sentences). "
+                    "3. 'skill_match_breakdown': A list of exactly 3 core skill categories from the job/resume with their match percentage (integer 0-100), structured like: "
+                    "   [{\"skill\": \"React / Frontend\", \"percentage\": 96}, {\"skill\": \"Leadership\", \"percentage\": 82}, {\"skill\": \"Cloud / DevOps\", \"percentage\": 61}]."
+                )
+                flat_skills = [
+                    s.get('canonical_skill') or s.get('skill') or str(s) if isinstance(s, dict) else str(s)
+                    for s in normalized if s
+                ]
+                prompt = (
+                    f"Job Title: {session_row.job_title}\n"
+                    f"Job Description:\n{session_row.job_description[:1000]}\n\n"
+                    f"Candidate Name: {cand.name}\n"
+                    f"Candidate Skills: {', '.join(flat_skills)}\n"
+                )
+                response_text = llm.generate(prompt, system_prompt)
+                if "```json" in response_text:
+                    response_text = response_text.split("```json")[1].split("```")[0]
+                elif "```" in response_text:
+                    response_text = response_text.split("```")[1].split("```")[0]
+                ai_insights = py_json.loads(response_text.strip())
+                cand.match_details["ai_insights"] = ai_insights
+                cand.save()
+            except Exception as insights_ex:
+                print(f"[Form Sync LLM] AI Insights pre-computation failed: {insights_ex}")
+                
             imported += 1
             
         job.total_files = imported

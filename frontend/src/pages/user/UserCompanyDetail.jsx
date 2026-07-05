@@ -16,7 +16,12 @@ export default function UserCompanyDetail() {
   useEffect(() => {
     if (!companyId) return;
     setLoading(true);
-    publicAPI.getCompany(companyId)
+    const hasSeekerToken = !!localStorage.getItem("vish_seeker_token");
+    const apiCall = hasSeekerToken 
+      ? seekerAPI.getCompany(companyId) 
+      : publicAPI.getCompany(companyId);
+
+    apiCall
       .then((data) => {
         const mappedCompany = {
           id: data.id,
