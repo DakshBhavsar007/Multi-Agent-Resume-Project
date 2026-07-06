@@ -15,12 +15,6 @@ export default function BrevoTracker() {
     // Load Brevo SDK 2.0 tracker script
     if (!window.Brevo) {
       window.Brevo = [];
-      window.Brevo.push = function () {
-        window.Brevo.push.args = (window.Brevo.push.args || []);
-        window.Brevo.push.args.push(arguments);
-      };
-      window.Brevo.push.args = [];
-
       window.Brevo.push([
         'init',
         {
@@ -41,6 +35,7 @@ export default function BrevoTracker() {
       }
     }
   }, []);
+
 
   // Track page views on route changes
   useEffect(() => {
