@@ -165,4 +165,13 @@ body {
   color: #2563eb !important;
 }
 
+/* Developer Landing Page Steps Shadow */
+.dev-step-circle {
+  box-shadow: 0 20px 25px -5px rgba(229, 231, 235, 0.5), 0 8px 10px -6px rgba(229, 231, 235, 0.5) !important;
+}
+
+.dark .dev-step-circle {
+  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.08) !important;
+}
+
 

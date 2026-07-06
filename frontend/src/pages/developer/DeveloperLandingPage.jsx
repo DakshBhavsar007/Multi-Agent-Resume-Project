@@ -271,19 +271,19 @@ const response = await fetch(
             <div className="hidden md:block absolute top-[44px] left-[15%] right-[15%] h-[2px] bg-gray-200 dark:bg-zinc-800 z-0"></div>
             
             <div className="flex-1 flex flex-col items-center text-center relative z-10">
-               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 shadow-xl shadow-gray-200/50 dark:shadow-[0_10px_30px_rgba(255,255,255,0.06)] flex items-center justify-center text-4xl mb-6 font-bold text-accent">1</div>
+               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 dev-step-circle flex items-center justify-center text-4xl mb-6 font-bold text-accent">1</div>
                <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white flex items-center justify-center gap-2">Get API Key</h3>
                <p className="text-gray-500 dark:text-zinc-400 font-medium">Create an account and generate a live API key in your developer dashboard to authenticate your application.</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center relative z-10">
-               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 shadow-xl shadow-gray-200/50 dark:shadow-[0_10px_30px_rgba(255,255,255,0.06)] flex items-center justify-center text-4xl mb-6 font-bold text-accent">2</div>
+               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 dev-step-circle flex items-center justify-center text-4xl mb-6 font-bold text-accent">2</div>
                <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white flex items-center justify-center gap-2">Send Resumes</h3>
                <p className="text-gray-500 dark:text-zinc-400 font-medium">Post PDF, DOCX, ZIP files or raw text to our secure endpoints. We process them synchronously or asynchronously.</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center relative z-10">
-               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 shadow-xl shadow-gray-200/50 dark:shadow-[0_10px_30px_rgba(255,255,255,0.06)] flex items-center justify-center text-4xl mb-6 font-bold text-accent">3</div>
+               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 dev-step-circle flex items-center justify-center text-4xl mb-6 font-bold text-accent">3</div>
                <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white flex items-center justify-center gap-2">Get Results</h3>
                <p className="text-gray-500 dark:text-zinc-400 font-medium">Receive structured JSON containing normalized skills, normalized job titles, experience data and contextual rankings.</p>
             </div>
