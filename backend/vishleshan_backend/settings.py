@@ -86,3 +86,16 @@ PHOTO_DIR = os.getenv("PHOTO_DIR", "photos")
 # File upload limit configs (10MB)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# Email settings using django-anymail for Brevo (HTTP-based API to bypass Render SMTP block)
+INSTALLED_APPS += [
+    'anymail',
+]
+
+ANYMAIL = {
+    "BREVO_API_KEY": os.getenv("BREVO_API_KEY"),
+}
+
+EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+DEFAULT_FROM_EMAIL = os.getenv("MAIL_FROM", "noreply@vishleshan.ai")
+

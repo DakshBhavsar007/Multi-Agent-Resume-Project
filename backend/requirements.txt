@@ -38,4 +38,5 @@ dj-database-url>=2.1.0
 gunicorn>=21.2.0
 reportlab>=4.1.0
 scikit-learn>=1.4.0
+django-anymail[brevo]>=11.0
 scipy>=1.12.0

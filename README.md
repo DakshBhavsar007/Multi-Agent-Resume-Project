@@ -220,6 +220,7 @@ pip install -r requirements.txt
 # Set GEMINI_API_KEYS with a comma-separated list of your Gemini API keys
 # Set GEMINI_MODEL=gemini-2.5-flash for optimized free tier quota usage
 # Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET for Google authentication
+# Set BREVO_API_KEY, BREVO_MA_KEY, and MAIL_FROM for email, SMS, and CRM tracking
 
 # Run Database Migrations
 python manage.py migrate --fake-initial
@@ -239,8 +240,9 @@ celery -A workers.celery_worker worker --loglevel=info --pool=threads --concurre
 cd frontend
 npm install
 cp .env.local.example .env.local
-# Set NEXT_PUBLIC_API_URL, VITE_GOOGLE_CLIENT_ID, and VITE_GITHUB_CLIENT_ID in .env.local
+# Set NEXT_PUBLIC_API_URL, VITE_GOOGLE_CLIENT_ID, VITE_GITHUB_CLIENT_ID, and VITE_BREVO_MA_KEY in .env.local
 npm run dev
+
 ```
 
 The frontend runs on port `5173` by default and serves all three portals (Recruiter, Job Seeker, Developer) from a single Vite dev server.

@@ -9,6 +9,8 @@ import { usePortalAuthStore } from './stores/portalAuthStore';
 import LandingPage from './pages/LandingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import BrevoTracker from './components/BrevoTracker';
+
 
 // Lazy load pages for performance optimization
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -197,6 +199,7 @@ export default function App() {
       />
       <Router>
         <ScrollToTop />
+        <BrevoTracker />
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-screen bg-[#09090b]">
             <div className="flex flex-col items-center gap-4">

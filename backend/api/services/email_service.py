@@ -51,6 +51,7 @@ def send_application_confirmation_to_seeker(
 ) -> bool:
     """
     Confirm to a job seeker that their application was submitted.
+    Also syncs the contact details and tracks the event in Brevo CRM.
     """
     subject = f"Application Submitted — {job_title} at {company_name}"
     message = f"""
@@ -64,7 +65,31 @@ You can track the status of all your applications here:
 Good luck!
 — Vishleshan Platform
 """
-    return _send(seeker_email, subject, message)
+    email_sent = _send(seeker_email, subject, message)
+    
+    # Brevo CRM Integration
+    try:
+        from api.models import JobSeekerAccount
+        seeker = JobSeekerAccount.objects.filter(email=seeker_email).first()
+        phone = seeker.phone if seeker else ""
+        from api.services.brevo_service import sync_contact, track_automation_event
+        sync_contact(
+            email=seeker_email,
+            first_name=seeker_name.split()[0] if seeker_name else "",
+            last_name=" ".join(seeker_name.split()[1:]) if len(seeker_name.split()) > 1 else "",
+            phone=phone,
+            attributes={"LATEST_APPLIED_JOB": job_title}
+        )
+        track_automation_event(
+            email=seeker_email,
+            event_name="job_applied",
+            properties={"job_title": job_title, "company_name": company_name}
+        )
+    except Exception as err:
+        logger.warning("Brevo confirmation sync/event failed: %s", err)
+
+    return email_sent
+
 
 
 def send_status_update_to_seeker(
@@ -76,6 +101,7 @@ def send_status_update_to_seeker(
 ) -> bool:
     """
     Notify a job seeker that their application status has changed.
+    Also sends an SMS and updates their status in Brevo CRM.
     """
     status_messages = {
         "shortlisted": f"Great news! You have been shortlisted for {job_title} at {company_name}. The company may reach out to you soon.",
@@ -103,7 +129,41 @@ View your applications:
 
 — Vishleshan Platform
 """
-    return _send(seeker_email, subject, message)
+    email_sent = _send(seeker_email, subject, message)
+
+    # Brevo CRM / SMS / Automation Integration
+    try:
+        from api.models import JobSeekerAccount
+        seeker = JobSeekerAccount.objects.filter(email=seeker_email).first()
+        if seeker:
+            from api.services.brevo_service import send_sms, sync_contact, track_automation_event
+            # 1. Update contact status attributes in CRM
+            sync_contact(
+                email=seeker_email,
+                attributes={"LATEST_APPLICATION_STATUS": new_status.title()}
+            )
+            
+            # 2. Send SMS if phone is available
+            if seeker.phone:
+                status_text = {
+                    "shortlisted": "shortlisted ✅",
+                    "rejected": "updated (rejected)",
+                    "hired": "offered 🎉"
+                }.get(new_status, new_status)
+                sms_msg = f"Hi {seeker_name}, your application for {job_title} at {company_name} has been {status_text}. Log in to Vishleshan to view details."
+                send_sms(recipient_phone=seeker.phone, message_content=sms_msg)
+                
+            # 3. Track automation event
+            track_automation_event(
+                email=seeker_email,
+                event_name="application_status_updated",
+                properties={"status": new_status, "job_title": job_title, "company_name": company_name}
+            )
+    except Exception as err:
+        logger.warning("Brevo additional status update notifications failed: %s", err)
+
+    return email_sent
+
 
 
 def _send(to_email: str, subject: str, message: str) -> bool:
@@ -133,6 +193,7 @@ def send_new_job_notification_to_follower(
 ) -> bool:
     """
     Notify a follower of a company that a new job has been posted.
+    Also sends an SMS notification if a phone number is registered.
     """
     subject = f"New Job Opening: {job_title} at {company_name}"
     message = f"""
@@ -146,7 +207,20 @@ Click here to view details and apply:
 You are receiving this because you follow {company_name} on Between.
 — Between Platform
 """
-    return _send(seeker_email, subject, message)
+    email_sent = _send(seeker_email, subject, message)
+
+    try:
+        from api.models import JobSeekerAccount
+        seeker = JobSeekerAccount.objects.filter(email=seeker_email).first()
+        if seeker and seeker.phone:
+            from api.services.brevo_service import send_sms
+            sms_msg = f"Hi {seeker_name}, {company_name} has just posted a new role: {job_title}. Apply now: {FRONTEND_URL}/jobs/{session_id}"
+            send_sms(recipient_phone=seeker.phone, message_content=sms_msg)
+    except Exception as err:
+        logger.warning("Brevo follower SMS notification failed: %s", err)
+
+    return email_sent
+
 
 
 def send_email(to_email: str, subject: str, html_body: str = "", text_body: str = "") -> bool:
