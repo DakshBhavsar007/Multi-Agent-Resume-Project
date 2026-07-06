@@ -16,6 +16,7 @@ from jose import jwt, JWTError
 from api.models import JobSeekerAccount
 from api.decorators import JWT_SECRET, JWT_ALGORITHM
 from models.schemas import success_response, error_response
+from api.services.email_service import send_welcome_email
 
 logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -112,6 +113,8 @@ def _seeker_dict(seeker: JobSeekerAccount) -> dict:
         "location": seeker.location,
         "headline": seeker.headline,
         "tier": seeker.tier,
+        "email_verified": seeker.email_verified,
+        "phone_verified": seeker.phone_verified,
         "has_resume": bool(seeker.resume_file_path or seeker.resume_data),
         "skills": seeker.skills or [],
         "resume_file_path": seeker.resume_file_path,
@@ -168,11 +171,19 @@ def register(request):
         )
 
         token = _make_seeker_token(seeker)
-        return JsonResponse(success_response({
+        resp = JsonResponse(success_response({
             "seeker_token": token,
             "seeker": _seeker_dict(seeker),
             "message": "Account created successfully",
         }), status=201)
+
+        # Send welcome email + Brevo CRM sync (non-blocking)
+        try:
+            send_welcome_email(user_email=email, user_name=full_name, role="seeker")
+        except Exception:
+            logger.warning("Welcome email failed for seeker %s", email)
+
+        return resp
 
     except json.JSONDecodeError:
         return JsonResponse(error_response("Invalid JSON body"), status=400)
@@ -208,6 +219,12 @@ def login(request):
     except Exception as e:
         logger.error("Seeker login error: %s", e)
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
+    finally:
+        try:
+            from api.services.brevo_service import track_automation_event
+            track_automation_event(email=email, event_name="seeker_login")
+        except Exception:
+            pass
 
 
 @csrf_exempt

@@ -23,6 +23,7 @@ import {
   X
 } from "lucide-react";
 import NewKeyModal from "../../components/developer/NewKeyModal";
+import VerificationModal from "../../components/VerificationModal";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip, ResponsiveContainer } from "recharts";
@@ -276,6 +277,7 @@ export default function DeveloperKeys({ defaultTab }) {
 
   const { company_name, developer, setAuth } = usePortalAuthStore();
   
+  const [verifyTarget, setVerifyTarget] = useState(null);
   // Profile state
   const [profile, setProfile] = useState({ name: company_name || "", website: developer?.website_url || "" });
   
@@ -470,15 +472,30 @@ const data = await response.json();`
                      className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 
                    />
                 </div>
-                <div>
-                   <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5 block pl-0.5">Developer Email</label>
-                   <input 
-                     type="email" 
-                     readOnly 
-                     value={developer?.email || "developer@example.com"} 
-                     className="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-800 font-bold focus:outline-none cursor-not-allowed" 
-                   />
-                </div>
+                 <div>
+                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5 block pl-0.5">Developer Email</label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="email" 
+                        readOnly 
+                        value={developer?.email || "developer@example.com"} 
+                        className="flex-1 p-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-800 font-bold focus:outline-none cursor-not-allowed" 
+                      />
+                      {developer?.is_verified ? (
+                        <span className="shrink-0 inline-flex items-center px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/30 gap-1">
+                          <Check className="w-3 h-3" /> Verified
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setVerifyTarget({ type: 'email', value: developer?.email })}
+                          className="shrink-0 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-all focus:outline-none"
+                        >
+                          Verify Email
+                        </button>
+                      )}
+                    </div>
+                 </div>
                 <div>
                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5 block pl-0.5">Website URL</label>
                    <input 
@@ -669,6 +686,24 @@ const data = await response.json();`
 
       {/* MODAL */}
       <NewKeyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={refetch} />
+
+      {verifyTarget && (
+        <VerificationModal
+          isOpen={true}
+          onClose={() => setVerifyTarget(null)}
+          type={verifyTarget.type}
+          value={verifyTarget.value}
+          role="developer"
+          onSuccess={() => {
+            setAuth({
+              ...developer,
+              [verifyTarget.type === 'email' ? 'is_verified' : 'phone_verified']: true
+            });
+            toast.success(`${verifyTarget.type === 'email' ? 'Email' : 'Phone'} verified successfully!`);
+            setVerifyTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }

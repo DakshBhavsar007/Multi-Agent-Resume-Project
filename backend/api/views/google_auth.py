@@ -69,7 +69,8 @@ def recruiter_auth_google(request):
                 name=name,
                 email=email,
                 password_hash=pwd_context.hash(secrets.token_urlsafe(16)),
-                tier="free"
+                tier="free",
+                email_verified=True
             )
             # Create default API key
             APIKey.objects.create(
@@ -79,6 +80,10 @@ def recruiter_auth_google(request):
                 public_key="vish_pub_" + secrets.token_urlsafe(24),
                 environment="production"
             )
+        else:
+            if not company.email_verified:
+                company.email_verified = True
+                company.save()
 
         api_key_obj = APIKey.objects.filter(company_id=company.id, is_active=True).first()
         masked_secret = None
@@ -100,7 +105,7 @@ def recruiter_auth_google(request):
             "email": company.email,
             "tier": company.tier,
             "api_key": masked_secret,
-            "requires_profile_completion": not (company.industry and company.hq_location and company.company_size and company.website_url)
+            "requires_profile_completion": not (company.industry and company.hq_location and company.company_size and company.website_url and company.phone_verified)
         }))
     except ValueError as e:
         return JsonResponse(error_response(str(e)), status=400)
@@ -129,8 +134,13 @@ def seeker_auth_google(request):
                 full_name=name,
                 email=email,
                 password_hash=pwd_context.hash(secrets.token_urlsafe(16)),
-                tier="free"
+                tier="free",
+                email_verified=True
             )
+        else:
+            if not seeker.email_verified:
+                seeker.email_verified = True
+                seeker.save()
 
         payload = {
             "seeker_id": str(seeker.id),
@@ -151,7 +161,7 @@ def seeker_auth_google(request):
             "has_resume": bool(seeker.resume_file_path or seeker.resume_data),
             "skills": seeker.skills,
             "created_at": seeker.created_at.isoformat() if seeker.created_at else None,
-            "requires_profile_completion": not (seeker.phone and seeker.location and seeker.headline)
+            "requires_profile_completion": not (seeker.phone and seeker.location and seeker.headline and seeker.phone_verified)
         }
 
         return JsonResponse(success_response({
@@ -195,6 +205,10 @@ def developer_auth_google(request):
                 tier="free",
                 is_verified=True
             )
+        else:
+            if not dev.is_verified:
+                dev.is_verified = True
+                dev.save()
             # Create default API keys
             test_secret = "vish_test_" + secrets.token_urlsafe(24)
             test_public = "vish_pub_test_" + secrets.token_urlsafe(24)
@@ -236,7 +250,7 @@ def developer_auth_google(request):
             "email": dev.email,
             "tier": dev.tier,
             "company_name": dev.company_name,
-            "requires_profile_completion": not dev.website_url
+            "requires_profile_completion": not (dev.website_url and dev.phone_verified)
         }
         if is_new:
             resp.update({

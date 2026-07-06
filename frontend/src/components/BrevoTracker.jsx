@@ -2,11 +2,13 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSeekerAuthStore } from '../stores/seekerAuthStore';
 import { useAuthStore } from '../stores/authStore';
+import { usePortalAuthStore } from '../stores/portalAuthStore';
 
 export default function BrevoTracker() {
   const location = useLocation();
   const seeker = useSeekerAuthStore((state) => state.seeker);
   const company = useAuthStore((state) => state.company);
+  const developer = usePortalAuthStore((state) => state.developer);
 
   useEffect(() => {
     const brevoKey = import.meta.env.VITE_BREVO_MA_KEY || 'gqq4aaawytrk7xx4oyj4s62z';
@@ -44,7 +46,7 @@ export default function BrevoTracker() {
     }
   }, [location.pathname]);
 
-  // Identify logged-in users (Seekers or Recruiters/Companies)
+  // Identify logged-in users (Seekers, Recruiters/Companies, or Developers)
   useEffect(() => {
     if (!window.Brevo) return;
 
@@ -69,8 +71,18 @@ export default function BrevoTracker() {
           USER_ROLE: 'recruiter',
         },
       ]);
+    } else if (developer && developer.email) {
+      window.Brevo.push([
+        'identify',
+        developer.email,
+        {
+          COMPANY: developer.company_name || '',
+          FIRSTNAME: developer.company_name || '',
+          USER_ROLE: 'developer',
+        },
+      ]);
     }
-  }, [seeker, company]);
+  }, [seeker, company, developer]);
 
 
   return null;

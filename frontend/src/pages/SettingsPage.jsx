@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { authAPI, billingAPI } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import PageTransition from '../components/PageTransition';
+import VerificationModal from '../components/VerificationModal';
 import { LocationSelector } from '../components/ui/LocationSelector';
 import { 
   Building, 
@@ -28,6 +29,7 @@ export default function SettingsPage() {
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const { company, clearAuth, tier, setAuth } = useAuthStore();
+  const [verifyTarget, setVerifyTarget] = useState(null);
   const [companyName, setCompanyName] = useState(company?.name || '');
   const [industry, setIndustry] = useState(company?.industry || '');
   const [hqLocation, setHqLocation] = useState(company?.hq_location || '');
@@ -307,6 +309,7 @@ export default function SettingsPage() {
   ];
 
   return (
+    <>
     <PageTransition className="max-w-6xl mx-auto py-8 px-4 w-full overflow-y-auto h-full space-y-8">
       {/* HEADER */}
       <div>
@@ -348,7 +351,21 @@ export default function SettingsPage() {
               <div className="space-y-5 max-w-lg">
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Admin Email</label>
-                  <input type="text" value={company?.email || 'N/A'} readOnly className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500 font-medium focus:outline-none" />
+                  <div className="flex items-center gap-2">
+                    <input type="text" value={company?.email || 'N/A'} readOnly className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500 font-medium focus:outline-none" />
+                    {company?.email_verified ? (
+                      <span className="shrink-0 inline-flex items-center px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/30 gap-1">
+                        <Check className="w-3 h-3" /> Verified
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setVerifyTarget({ type: 'email', value: company?.email })}
+                        className="shrink-0 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-all focus:outline-none"
+                      >
+                        Verify Email
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Company Name</label>
@@ -791,6 +808,24 @@ export default function SettingsPage() {
         </div>
       )}
     </PageTransition>
+
+      {verifyTarget && (
+        <VerificationModal
+          isOpen={true}
+          onClose={() => setVerifyTarget(null)}
+          type={verifyTarget.type}
+          value={verifyTarget.value}
+          role="recruiter"
+          onSuccess={() => {
+            setAuth({
+              ...company,
+              [verifyTarget.type === 'email' ? 'email_verified' : 'phone_verified']: true
+            });
+            toast.success(`${verifyTarget.type === 'email' ? 'Email' : 'Phone'} verified successfully!`);
+          }}
+        />
+      )}
+    </>
   );
 }
 

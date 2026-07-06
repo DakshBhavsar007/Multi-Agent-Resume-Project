@@ -10,6 +10,10 @@ from jose import jwt
 from api.models import Company, APIKey
 from api.decorators import require_recruiter_jwt, JWT_SECRET, JWT_ALGORITHM, redis_client
 from models.schemas import success_response, error_response
+from api.services.email_service import send_welcome_email
+
+import logging
+logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -76,12 +80,14 @@ def register(request):
         }
         token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-        return JsonResponse(success_response({
+        resp = JsonResponse(success_response({
             "jwt_token": token,
             "company_id": str(new_company.id),
             "name": new_company.name,
             "email": new_company.email,
             "tier": new_company.tier,
+            "email_verified": new_company.email_verified,
+            "phone_verified": new_company.phone_verified,
             "logo_path": new_company.logo_path,
             "industry": new_company.industry,
             "hq_location": new_company.hq_location,
@@ -94,6 +100,14 @@ def register(request):
             "public_key": public,
             "message": "Save your secret key — shown only once"
         }))
+
+        # Send welcome email + Brevo CRM sync (non-blocking)
+        try:
+            send_welcome_email(user_email=email, user_name=company_name, role="recruiter")
+        except Exception:
+            logger.warning("Welcome email failed for recruiter %s", email)
+
+        return resp
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
@@ -134,11 +148,20 @@ def login(request):
             "name": company.name,
             "email": company.email,
             "tier": company.tier,
+            "email_verified": company.email_verified,
+            "phone_verified": company.phone_verified,
             "logo_path": company.logo_path,
             "api_key": masked_secret
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+    finally:
+        # Track login event in Brevo (non-blocking, best-effort)
+        try:
+            from api.services.brevo_service import track_automation_event
+            track_automation_event(email=email, event_name="recruiter_login")
+        except Exception:
+            pass
 
 @csrf_exempt
 @require_recruiter_jwt
@@ -240,6 +263,8 @@ def me(request):
         "name": request.company.name,
         "email": request.company.email,
         "tier": request.company.tier,
+        "email_verified": request.company.email_verified,
+        "phone_verified": request.company.phone_verified,
         "logo_path": request.company.logo_path,
         "industry": request.company.industry,
         "hq_location": request.company.hq_location,

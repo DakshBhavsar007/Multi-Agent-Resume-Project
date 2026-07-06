@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import UsageProgress from "../../components/developer/UsageProgress";
 import { OnboardingTour, useTour } from "../../components/OnboardingTour";
 import ThemeToggle from "../../components/ThemeToggle";
+import AlertBanner from "../../components/AlertBanner";
 
 const DEVELOPER_TOUR_STEPS = [
   {
@@ -285,6 +286,7 @@ export default function DeveloperPortalLayout() {
         className="pt-16 transition-[padding] duration-200 min-h-screen flex-1 bg-white dark:bg-[#0b0b0c] overflow-y-auto"
         style={{ paddingLeft: sidebarCollapsed ? 72 : 260 }}
       >
+        <AlertBanner />
         <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto">
           <ErrorBoundary>
             <motion.div key={pathname} initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.08}} className="w-full h-full">

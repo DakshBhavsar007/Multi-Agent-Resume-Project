@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { seekerAPI, API_HOST } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
+import VerificationModal from "../../components/VerificationModal";
+import { useSeekerAuthStore } from "../../stores/seekerAuthStore";
 import { LocationSelector } from "../../components/ui/LocationSelector";
 import { 
   Mail, MapPin, Pencil, Briefcase, GraduationCap, 
@@ -14,6 +16,7 @@ import toast from "react-hot-toast";
 
 export default function UserProfile() {
   const [seeker, setSeeker] = useState(null);
+  const [verifyTarget, setVerifyTarget] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -509,8 +512,36 @@ export default function UserProfile() {
                   ) : (
                     <>
                       <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{seeker?.location || "India"}</span>
-                      {seeker?.phone && <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />{seeker.phone}</span>}
-                      <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" />{seeker?.email}</span>
+                      {seeker?.phone && (
+                        <span className="flex items-center gap-1.5 shrink-0">
+                          <Phone className="h-3.5 w-3.5" />
+                          {seeker.phone}
+                          {seeker.phone_verified ? (
+                            <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/30">Verified</span>
+                          ) : (
+                            <button
+                              onClick={() => setVerifyTarget({ type: 'phone', value: seeker.phone })}
+                              className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-500 hover:bg-amber-600 text-white transition-all focus:outline-none"
+                            >
+                              Verify
+                            </button>
+                          )}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1.5 shrink-0">
+                        <Mail className="h-3.5 w-3.5" />
+                        {seeker?.email}
+                        {seeker?.email_verified ? (
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/30">Verified</span>
+                        ) : (
+                          <button
+                            onClick={() => setVerifyTarget({ type: 'email', value: seeker?.email })}
+                            className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-500 hover:bg-amber-600 text-white transition-all focus:outline-none"
+                          >
+                            Verify
+                          </button>
+                        )}
+                      </span>
                     </>
                   )}
                 </div>
@@ -912,6 +943,27 @@ export default function UserProfile() {
           </aside>
         </div>
       </section>
+
+      {verifyTarget && (
+        <VerificationModal
+          isOpen={true}
+          onClose={() => setVerifyTarget(null)}
+          type={verifyTarget.type}
+          value={verifyTarget.value}
+          role="seeker"
+          onSuccess={() => {
+            setSeeker(prev => ({
+              ...prev,
+              [verifyTarget.type === 'email' ? 'email_verified' : 'phone_verified']: true
+            }));
+            useSeekerAuthStore.getState().updateSeeker({
+              [verifyTarget.type === 'email' ? 'email_verified' : 'phone_verified']: true
+            });
+            toast.success(`${verifyTarget.type === 'email' ? 'Email' : 'Phone'} verified successfully!`);
+          }}
+        />
+      )}
+
       <Footer />
     </div>
   );

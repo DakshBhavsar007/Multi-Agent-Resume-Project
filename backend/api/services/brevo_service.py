@@ -15,6 +15,10 @@ BREVO_MA_KEY = os.getenv("BREVO_MA_KEY") or BREVO_API_KEY # Fallback if same key
 SMS_SENDER = os.getenv("BREVO_SMS_SENDER", "Between")
 WHATSAPP_SENDER = os.getenv("BREVO_WHATSAPP_SENDER") # E.g., "+1234567890"
 
+# SMS and WhatsApp require paid credits on Brevo.
+# Set BREVO_SMS_ENABLED=true in .env only if you have purchased SMS credits.
+BREVO_SMS_ENABLED = os.getenv("BREVO_SMS_ENABLED", "false").lower() in ("true", "1", "yes")
+
 HEADERS = {
     "accept": "application/json",
     "content-type": "application/json",
@@ -25,7 +29,12 @@ def send_sms(recipient_phone: str, message_content: str, sender_name: str = SMS_
     """
     Send a transactional SMS.
     recipient_phone: must include country code (e.g. "+91XXXXXXXXXX" or "91XXXXXXXXXX")
+    NOTE: Requires purchased SMS credits on Brevo. Skipped if BREVO_SMS_ENABLED is false.
     """
+    if not BREVO_SMS_ENABLED:
+        logger.info("SMS sending skipped (BREVO_SMS_ENABLED=false). Would have sent to %s", recipient_phone)
+        return {"status": "skipped", "message": "SMS not enabled (free tier). Enable with BREVO_SMS_ENABLED=true if you have SMS credits."}
+
     if not BREVO_API_KEY:
         logger.warning("Brevo API key not set. SMS send skipped.")
         return {"status": "error", "message": "API key not set"}

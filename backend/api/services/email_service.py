@@ -245,3 +245,114 @@ def send_email(to_email: str, subject: str, html_body: str = "", text_body: str 
         logger.warning("Email failed to %s (%s): %s", to_email, subject, exc)
         return False
 
+
+def send_welcome_email(
+    user_email: str,
+    user_name: str,
+    role: str,  # 'seeker', 'recruiter', 'developer'
+) -> bool:
+    """
+    Send a branded welcome email to new users and sync them to Brevo CRM.
+    Called from register views for all three portals.
+    """
+    role_labels = {
+        "seeker": "Job Seeker",
+        "recruiter": "Recruiter",
+        "developer": "Developer",
+    }
+    role_label = role_labels.get(role, "User")
+
+    role_links = {
+        "seeker": f"{FRONTEND_URL}/jobs",
+        "recruiter": f"{FRONTEND_URL}/dashboard",
+        "developer": f"{FRONTEND_URL}/developer",
+    }
+    cta_link = role_links.get(role, FRONTEND_URL)
+
+    subject = f"Welcome to Between AI, {user_name.split()[0] if user_name else 'there'}! 🎉"
+    text_body = f"""
+Hi {user_name},
+
+Welcome to Between AI — the intelligent hiring platform!
+
+You have signed up as a {role_label}. Here is what you can do next:
+
+- Explore the platform: {cta_link}
+- Complete your profile for the best experience
+- Verify your email and phone number for security
+
+If you have any questions, reply to this email or contact our support team.
+
+— The Between AI Team
+"""
+    html_body = f"""
+    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 32px 24px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
+                Welcome to Between AI
+            </h1>
+            <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">
+                Intelligent Hiring Platform
+            </p>
+        </div>
+        <div style="padding: 32px 24px;">
+            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px;">
+                Hi <strong>{user_name}</strong>,
+            </p>
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
+                Thank you for signing up as a <strong style="color: #374151;">{role_label}</strong>!
+                We are excited to have you on board.
+            </p>
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
+                <p style="color: #374151; font-size: 14px; font-weight: 600; margin: 0 0 12px;">Get started:</p>
+                <ul style="color: #6b7280; font-size: 13px; line-height: 2; margin: 0; padding-left: 20px;">
+                    <li>Complete your profile for the best experience</li>
+                    <li>Verify your email and phone number</li>
+                    <li>Explore all features available on your dashboard</li>
+                </ul>
+            </div>
+            <div style="text-align: center; margin-bottom: 24px;">
+                <a href="{cta_link}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 10px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);">
+                    Go to Dashboard →
+                </a>
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; line-height: 1.5;">
+                If you have any questions, simply reply to this email.
+            </p>
+        </div>
+        <div style="background: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #f3f4f6;">
+            <p style="color: #d1d5db; font-size: 11px; margin: 0;">
+                Between AI — Vishleshan Platform
+            </p>
+        </div>
+    </div>
+    """
+
+    email_sent = _send(user_email, subject, text_body)
+
+    # Also send the HTML version
+    try:
+        send_email(to_email=user_email, subject=subject, html_body=html_body, text_body=text_body.strip())
+    except Exception:
+        pass  # The plain text version was already attempted above
+
+    # Brevo CRM Integration — sync new user as a contact
+    try:
+        from api.services.brevo_service import sync_contact, track_automation_event
+        first_name = user_name.split()[0] if user_name else ""
+        last_name = " ".join(user_name.split()[1:]) if len(user_name.split()) > 1 else ""
+        sync_contact(
+            email=user_email,
+            first_name=first_name,
+            last_name=last_name,
+            attributes={"USER_ROLE": role_label, "SIGNUP_SOURCE": "direct"}
+        )
+        track_automation_event(
+            email=user_email,
+            event_name=f"{role}_signup",
+            properties={"role": role, "name": user_name}
+        )
+    except Exception as err:
+        logger.warning("Brevo welcome sync failed for %s: %s", user_email, err)
+
+    return email_sent

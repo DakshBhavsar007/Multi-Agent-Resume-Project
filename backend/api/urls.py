@@ -27,6 +27,7 @@ from api.views import (
     password_reset,
     round_views,
     ml_views,
+    verification,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -51,6 +52,12 @@ urlpatterns = [
     path('api/v1/auth/logout', recruiter_auth.logout, name='auth-logout'),
     path('api/v1/auth/change-password', recruiter_auth.change_password, name='auth-change-password'),
     path('api/v1/auth/update-profile', recruiter_auth.update_profile, name='auth-update-profile'),
+    
+    # ── User Verification Endpoints ───────────────────────────────────────────
+    path('api/v1/auth/verification/send-email-otp', verification.send_email_otp, name='verification-send-email-otp'),
+    path('api/v1/auth/verification/verify-email-otp', verification.verify_email_otp, name='verification-verify-email-otp'),
+    path('api/v1/auth/verification/send-phone-otp', verification.send_phone_otp, name='verification-send-phone-otp'),
+    path('api/v1/auth/verification/verify-phone-otp', verification.verify_phone_otp, name='verification-verify-phone-otp'),
     path('api/v1/auth/upload-logo', recruiter_auth.upload_logo, name='auth-upload-logo'),
     path('api/v1/auth/notifications', recruiter_auth.get_recruiter_notifications, name='auth-notifications'),
     path('api/v1/auth/notifications/read-all', recruiter_auth.mark_all_recruiter_notifications_read, name='auth-notifications-read-all'),

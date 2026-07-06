@@ -9,6 +9,10 @@ from jose import jwt
 from api.models import DeveloperAccount, DeveloperAPIKey, BillingSubscription
 from api.decorators import require_developer_jwt, JWT_SECRET, JWT_ALGORITHM
 from models.schemas import success_response, error_response
+from api.services.email_service import send_welcome_email
+
+import logging
+logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -76,11 +80,13 @@ def register(request):
         }
         token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-        return JsonResponse(success_response({
+        resp = JsonResponse(success_response({
             "jwt_token": token,
             "developer_id": str(new_dev.id),
             "email": new_dev.email,
             "tier": new_dev.tier,
+            "is_verified": new_dev.is_verified,
+            "phone_verified": new_dev.phone_verified,
             "company_name": new_dev.company_name,
             "test_secret_key": test_secret,
             "test_public_key": test_public,
@@ -88,6 +94,14 @@ def register(request):
             "public_key": live_public,
             "message": "Check email to verify (skip for demo)"
         }))
+
+        # Send welcome email + Brevo CRM sync (non-blocking)
+        try:
+            send_welcome_email(user_email=email, user_name=company_name, role="developer")
+        except Exception:
+            logger.warning("Welcome email failed for developer %s", email)
+
+        return resp
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
@@ -122,10 +136,18 @@ def login(request):
             "developer_id": str(dev.id),
             "email": dev.email,
             "tier": dev.tier,
+            "is_verified": dev.is_verified,
+            "phone_verified": dev.phone_verified,
             "company_name": dev.company_name
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+    finally:
+        try:
+            from api.services.brevo_service import track_automation_event
+            track_automation_event(email=email, event_name="developer_login")
+        except Exception:
+            pass
 
 @csrf_exempt
 @require_developer_jwt
@@ -139,6 +161,7 @@ def get_me(request):
         "email": dev.email,
         "tier": dev.tier,
         "is_verified": dev.is_verified,
+        "phone_verified": dev.phone_verified,
         "website_url": dev.website_url,
         "allowed_domains": dev.allowed_domains,
         "created_at": dev.created_at.isoformat() if dev.created_at else None

@@ -25,6 +25,7 @@ import { useAuthStore } from '../stores/authStore';
 import { authAPI, sessionsAPI, candidatesAPI, billingAPI } from '../lib/api';
 import { useQuery } from '@tanstack/react-query';
 import RateLimitBanner from '../components/RateLimitBanner';
+import AlertBanner from '../components/AlertBanner';
 import { OnboardingTour, useTour } from '../components/OnboardingTour';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
 import { toast } from 'react-hot-toast';
@@ -708,6 +709,7 @@ export default function DashboardLayout() {
         className="pt-16 transition-[padding] duration-200 min-h-screen"
         style={{ paddingLeft: isDesktop ? sideWidth : 0 }}
       >
+        <AlertBanner />
         <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto">
           <Outlet />
         </div>

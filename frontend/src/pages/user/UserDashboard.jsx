@@ -6,6 +6,7 @@ import { seekerAPI } from "../../lib/api";
 import { Bookmark, Briefcase, CheckCircle2, Clock, TrendingUp, Sparkles, AlertCircle, Edit, Plus, Check, FileText, Zap } from "lucide-react";
 import toast from "react-hot-toast";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
+import AlertBanner from "../../components/AlertBanner";
 
 const statuses = ["Applied", "Interview", "Offer", "Saved"];
 
@@ -206,6 +207,7 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <AlertBanner />
       <section className="mx-auto max-w-7xl px-6 pt-10">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
           <div className="min-w-0">
