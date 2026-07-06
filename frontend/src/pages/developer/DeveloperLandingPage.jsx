@@ -8,6 +8,7 @@ import { portalBilling, portalAuth } from "../../lib/portalApi";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { SocialTooltip } from "../../components/ui/social-media";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import ThemeToggle from "../../components/ThemeToggle";
 
 export default function DeveloperLandingPage() {
   useDocumentTitle(
@@ -122,9 +123,9 @@ const response = await fetch(
   };
 
   return (
-    <div className="min-h-screen font-sans text-charcoal bg-bg">
+    <div className="min-h-screen font-sans text-charcoal bg-bg dark:text-zinc-100 dark:bg-[#09090b]">
       {/* NAVBAR */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-1" : "bg-white/90 backdrop-blur-md py-2"}`}>
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-white dark:bg-zinc-950 border-b border-gray-100 dark:border-zinc-800/80 shadow-md py-1" : "bg-white/90 dark:bg-zinc-950/90 border-b border-transparent dark:border-transparent backdrop-blur-md py-2"}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-[#2A2A2A] p-1">
@@ -140,12 +141,12 @@ const response = await fetch(
                 <circle cx="68" cy="32" r="24" fill="#2563eb" />
               </svg>
             </div>
-            <span className="font-display text-[22px] text-foreground tracking-tight font-semibold">
+            <span className="font-display text-[22px] text-charcoal dark:text-white tracking-tight font-semibold">
               Between
             </span>
-            <span className="text-[13px] text-gray-500 dark:text-gray-400 font-medium ml-1">for Developers</span>
+            <span className="text-[13px] text-gray-500 dark:text-zinc-400 font-medium ml-1">for Developers</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-300">
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-zinc-300">
             <Link to="/" className="hover:text-accent dark:hover:text-white transition-colors">Home</Link>
             <a href="#features" className="hover:text-accent dark:hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="hover:text-accent dark:hover:text-white transition-colors">Pricing</a>
@@ -153,30 +154,34 @@ const response = await fetch(
           </div>
           <div className="hidden md:flex items-center gap-4">
             {isDevLoggedIn ? (
-              <Link to="/developer/portal" className="px-5 py-2 rounded-lg text-accent border border-accent font-semibold hover:bg-gray-100 transition-colors">Dashboard</Link>
+              <Link to="/developer/portal" className="px-5 py-2 rounded-lg text-accent border border-accent font-semibold hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">Dashboard</Link>
             ) : (
-              <Link to="/developer/login" className="px-5 py-2 rounded-lg text-accent border border-accent font-semibold hover:bg-gray-100 transition-colors">Sign In</Link>
+              <Link to="/developer/login" className="px-5 py-2 rounded-lg text-accent border border-accent font-semibold hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">Sign In</Link>
             )}
             <Link to="/developer/register" className="px-5 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-dark transition-colors shadow-sm">Get API Key</Link>
+            <ThemeToggle />
           </div>
-          <button className="md:hidden text-charcoal" onClick={() => setMobileMenu(!mobileMenu)}>
-            {mobileMenu ? <X /> : <Menu />}
-          </button>
+          <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
+            <button className="text-charcoal dark:text-zinc-100" onClick={() => setMobileMenu(!mobileMenu)}>
+              {mobileMenu ? <X /> : <Menu />}
+            </button>
+          </div>
         </div>
       </nav>
 
       {/* MOBILE MENU */}
       {mobileMenu && (
-        <div className="fixed inset-0 top-[60px] bg-white z-40 p-6 flex flex-col gap-6 md:hidden">
-            <Link to="/" className="text-lg font-semibold text-gray-700" onClick={() => setMobileMenu(false)}>Home</Link>
-            <a href="#features" className="text-lg font-semibold text-gray-700" onClick={() => setMobileMenu(false)}>Features</a>
-            <a href="#pricing" className="text-lg font-semibold text-gray-700" onClick={() => setMobileMenu(false)}>Pricing</a>
-            <a href="#docs" className="text-lg font-semibold text-gray-700" onClick={() => setMobileMenu(false)}>Docs</a>
-            <div className="border-t pt-6 flex flex-col gap-4">
+        <div className="fixed inset-0 top-[60px] bg-white dark:bg-zinc-950 z-40 p-6 flex flex-col gap-6 md:hidden">
+            <Link to="/" className="text-lg font-semibold text-gray-700 dark:text-zinc-300" onClick={() => setMobileMenu(false)}>Home</Link>
+            <a href="#features" className="text-lg font-semibold text-gray-700 dark:text-zinc-300" onClick={() => setMobileMenu(false)}>Features</a>
+            <a href="#pricing" className="text-lg font-semibold text-gray-700 dark:text-zinc-300" onClick={() => setMobileMenu(false)}>Pricing</a>
+            <a href="#docs" className="text-lg font-semibold text-gray-700 dark:text-zinc-300" onClick={() => setMobileMenu(false)}>Docs</a>
+            <div className="border-t border-gray-100 dark:border-zinc-800/80 pt-6 flex flex-col gap-4">
                {isDevLoggedIn ? (
-                  <Link to="/developer/portal" className="w-full text-center px-5 py-3 rounded-lg text-accent border border-accent font-semibold" onClick={() => setMobileMenu(false)}>Dashboard</Link>
+                  <Link to="/developer/portal" className="w-full text-center px-5 py-3 rounded-lg text-accent border border-accent font-semibold hover:bg-gray-100 dark:hover:bg-zinc-900" onClick={() => setMobileMenu(false)}>Dashboard</Link>
                ) : (
-                  <Link to="/developer/login" className="w-full text-center px-5 py-3 rounded-lg text-accent border border-accent font-semibold" onClick={() => setMobileMenu(false)}>Sign In</Link>
+                  <Link to="/developer/login" className="w-full text-center px-5 py-3 rounded-lg text-accent border border-accent font-semibold hover:bg-gray-100 dark:hover:bg-zinc-900" onClick={() => setMobileMenu(false)}>Sign In</Link>
                )}
                <Link to="/developer/register" className="w-full text-center px-5 py-3 rounded-lg bg-accent text-white font-semibold" onClick={() => setMobileMenu(false)}>Get API Key</Link>
             </div>
@@ -186,24 +191,24 @@ const response = await fetch(
       {/* HERO */}
       <header className="pt-32 pb-20 px-6 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
         <div className="md:col-span-5 flex flex-col items-start gap-6">
-          <span className="px-4 py-1.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-semibold flex flex-row items-center gap-2">
+          <span className="px-4 py-1.5 rounded-full bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-850 text-gray-700 dark:text-zinc-300 text-sm font-semibold flex flex-row items-center gap-2">
             <Cpu size={14} /> AI-Powered Talent API
           </span>
-          <h1 className="text-4xl lg:text-[48px] font-black text-charcoal leading-[1.1] tracking-tight">
+          <h1 className="text-4xl lg:text-[48px] font-black text-charcoal dark:text-white leading-[1.1] tracking-tight">
             Resume Intelligence API<br />for HR Platforms
           </h1>
-          <p className="text-lg text-gray-600 max-w-[480px] leading-relaxed">
+          <p className="text-lg text-gray-600 dark:text-zinc-400 max-w-[480px] leading-relaxed">
             Parse resumes semantically, match skills intelligently, and rank candidates — all through a simple REST API. Integrate in minutes.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2">
              <Link to={isDevLoggedIn ? "/developer/portal" : "/developer/register"} className="flex justify-center items-center px-6 py-3.5 rounded-xl bg-accent text-white font-bold hover:bg-accent-dark transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-accent/30 gap-2">
                {isDevLoggedIn ? "Go to Dashboard" : "Get Free API Key"} <span className="text-xl leading-none">→</span>
              </Link>
-             <a href="#docs" className="flex justify-center items-center px-6 py-3.5 rounded-xl border-2 border-accent text-accent font-bold hover:bg-accent/5 transition-all">
+             <a href="#docs" className="flex justify-center items-center px-6 py-3.5 rounded-xl border-2 border-accent text-accent font-bold hover:bg-accent/5 dark:hover:bg-zinc-900 transition-all">
                View Documentation
              </a>
           </div>
-          <div className="flex flex-col gap-2 mt-4 text-sm font-medium text-gray-500">
+          <div className="flex flex-col gap-2 mt-4 text-sm font-medium text-gray-500 dark:text-zinc-450">
              <div className="flex items-center gap-2">
                 <Check size={16} className="text-green-500" /> No credit card required
              </div>
@@ -259,75 +264,75 @@ const response = await fetch(
       {/* HOW IT WORKS */}
       <section className="py-24 max-w-7xl mx-auto px-6" id="how-it-works">
          <div className="text-center mb-16">
-           <h2 className="text-3xl font-bold text-charcoal">How it works</h2>
-           <p className="text-gray-500 mt-4">Integrate automated intelligence into your platform in 3 easy steps.</p>
+           <h2 className="text-3xl font-bold text-charcoal dark:text-white">How it works</h2>
+           <p className="text-gray-500 dark:text-zinc-400 mt-4">Integrate automated intelligence into your platform in 3 easy steps.</p>
          </div>
          <div className="flex flex-col md:flex-row gap-8 items-start relative">
-            <div className="hidden md:block absolute top-[44px] left-[15%] right-[15%] h-[2px] bg-gray-200 z-0"></div>
+            <div className="hidden md:block absolute top-[44px] left-[15%] right-[15%] h-[2px] bg-gray-200 dark:bg-zinc-800 z-0"></div>
             
             <div className="flex-1 flex flex-col items-center text-center relative z-10">
-               <div className="w-24 h-24 rounded-2xl bg-white border border-gray-100 shadow-xl shadow-gray-200/50 flex items-center justify-center text-4xl mb-6 font-bold text-accent">1</div>
-               <h3 className="text-xl font-bold mb-3 flex items-center justify-center gap-2">Get API Key</h3>
-               <p className="text-gray-500 font-medium">Create an account and generate a live API key in your developer dashboard to authenticate your application.</p>
+               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 shadow-xl dark:shadow-none flex items-center justify-center text-4xl mb-6 font-bold text-accent">1</div>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white flex items-center justify-center gap-2">Get API Key</h3>
+               <p className="text-gray-500 dark:text-zinc-400 font-medium">Create an account and generate a live API key in your developer dashboard to authenticate your application.</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center relative z-10">
-               <div className="w-24 h-24 rounded-2xl bg-white border border-gray-100 shadow-xl shadow-gray-200/50 flex items-center justify-center text-4xl mb-6 font-bold text-accent">2</div>
-               <h3 className="text-xl font-bold mb-3 flex items-center justify-center gap-2">Send Resumes</h3>
-               <p className="text-gray-500 font-medium">Post PDF, DOCX, ZIP files or raw text to our secure endpoints. We process them synchronously or asynchronously.</p>
+               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 shadow-xl dark:shadow-none flex items-center justify-center text-4xl mb-6 font-bold text-accent">2</div>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white flex items-center justify-center gap-2">Send Resumes</h3>
+               <p className="text-gray-500 dark:text-zinc-400 font-medium">Post PDF, DOCX, ZIP files or raw text to our secure endpoints. We process them synchronously or asynchronously.</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center relative z-10">
-               <div className="w-24 h-24 rounded-2xl bg-white border border-gray-100 shadow-xl shadow-gray-200/50 flex items-center justify-center text-4xl mb-6 font-bold text-accent">3</div>
-               <h3 className="text-xl font-bold mb-3 flex items-center justify-center gap-2">Get Results</h3>
-               <p className="text-gray-500 font-medium">Receive structured JSON containing normalized skills, normalized job titles, experience data and contextual rankings.</p>
+               <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 shadow-xl dark:shadow-none flex items-center justify-center text-4xl mb-6 font-bold text-accent">3</div>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white flex items-center justify-center gap-2">Get Results</h3>
+               <p className="text-gray-500 dark:text-zinc-400 font-medium">Receive structured JSON containing normalized skills, normalized job titles, experience data and contextual rankings.</p>
             </div>
          </div>
       </section>
 
       {/* FEATURES GRID */}
-      <section className="py-24 bg-white border-y border-gray-100" id="features">
+      <section className="py-24 bg-white dark:bg-zinc-950 border-y border-gray-100 dark:border-zinc-800/80" id="features">
          <div className="max-w-7xl mx-auto px-6">
            <div className="mb-16">
-             <h2 className="text-3xl lg:text-4xl font-bold text-charcoal text-center">Everything you need for intelligent hiring</h2>
+             <h2 className="text-3xl lg:text-4xl font-bold text-charcoal dark:text-white text-center">Everything you need for intelligent hiring</h2>
            </div>
            
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
              
-             <div className="p-8 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 group">
+             <div className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border-2 border-transparent hover:border-accent hover:bg-white dark:hover:bg-zinc-900 hover:shadow-xl dark:hover:shadow-none hover:shadow-amber-500/5 transition-all duration-300 group">
                <Search size={32} className="text-accent mb-4 group-hover:scale-110 transition-transform origin-left" />
-               <h3 className="text-xl font-bold mb-3">Semantic Matching</h3>
-               <p className="text-gray-500 leading-relaxed font-medium">"React.js = ReactJS = react js — we understand it all."</p>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white">Semantic Matching</h3>
+               <p className="text-gray-500 dark:text-zinc-400 leading-relaxed font-medium">"React.js = ReactJS = react js — we understand it all."</p>
              </div>
              
-             <div className="p-8 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 group">
+             <div className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border-2 border-transparent hover:border-accent hover:bg-white dark:hover:bg-zinc-900 hover:shadow-xl dark:hover:shadow-none hover:shadow-amber-500/5 transition-all duration-300 group">
                <FileText size={32} className="text-accent mb-4 group-hover:scale-110 transition-transform origin-left" />
-               <h3 className="text-xl font-bold mb-3">Multi-Format Parsing</h3>
-               <p className="text-gray-500 leading-relaxed font-medium">"PDF, DOCX, plain text, ZIP archives, Google Drive directly connected."</p>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white">Multi-Format Parsing</h3>
+               <p className="text-gray-500 dark:text-zinc-400 leading-relaxed font-medium">"PDF, DOCX, plain text, ZIP archives, Google Drive directly connected."</p>
              </div>
              
-             <div className="p-8 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 group">
+             <div className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border-2 border-transparent hover:border-accent hover:bg-white dark:hover:bg-zinc-900 hover:shadow-xl dark:hover:shadow-none hover:shadow-amber-500/5 transition-all duration-300 group">
                <Brain size={32} className="text-accent mb-4 group-hover:scale-110 transition-transform origin-left" />
-               <h3 className="text-xl font-bold mb-3">Skill Normalization</h3>
-               <p className="text-gray-500 leading-relaxed font-medium">"Auto-maps synonyms, infers related skills implicitly mentioned, detects proficiency levels."</p>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white">Skill Normalization</h3>
+               <p className="text-gray-500 dark:text-zinc-400 leading-relaxed font-medium">"Auto-maps synonyms, infers related skills implicitly mentioned, detects proficiency levels."</p>
              </div>
              
-             <div className="p-8 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 group">
+             <div className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border-2 border-transparent hover:border-accent hover:bg-white dark:hover:bg-zinc-900 hover:shadow-xl dark:hover:shadow-none hover:shadow-amber-500/5 transition-all duration-300 group">
                <Cpu size={32} className="text-accent mb-4 group-hover:scale-110 transition-transform origin-left" />
-               <h3 className="text-xl font-bold mb-3">AI Chatbot API</h3>
-               <p className="text-gray-500 leading-relaxed font-medium">"Query your candidate database in natural language through our API interface."</p>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white">AI Chatbot API</h3>
+               <p className="text-gray-500 dark:text-zinc-400 leading-relaxed font-medium">"Query your candidate database in natural language through our API interface."</p>
              </div>
 
-             <div className="p-8 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 group">
+             <div className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border-2 border-transparent hover:border-accent hover:bg-white dark:hover:bg-zinc-900 hover:shadow-xl dark:hover:shadow-none hover:shadow-amber-500/5 transition-all duration-300 group">
                <Zap size={32} className="text-accent mb-4 group-hover:scale-110 transition-transform origin-left" />
-               <h3 className="text-xl font-bold mb-3">Batch Processing</h3>
-               <p className="text-gray-500 leading-relaxed font-medium">"Process 500 resumes asynchronously at once with webhook notifications on completion."</p>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white">Batch Processing</h3>
+               <p className="text-gray-500 dark:text-zinc-400 leading-relaxed font-medium">"Process 500 resumes asynchronously at once with webhook notifications on completion."</p>
              </div>
 
-             <div className="p-8 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 group">
+             <div className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border-2 border-transparent hover:border-accent hover:bg-white dark:hover:bg-zinc-900 hover:shadow-xl dark:hover:shadow-none hover:shadow-amber-500/5 transition-all duration-300 group">
                <Lock size={32} className="text-accent mb-4 group-hover:scale-110 transition-transform origin-left" />
-               <h3 className="text-xl font-bold mb-3">Enterprise Security</h3>
-               <p className="text-gray-500 leading-relaxed font-medium">"Secure API keys, strict rate limiting, domain whitelisting, and CORS compliant."</p>
+               <h3 className="text-xl font-bold mb-3 text-charcoal dark:text-white">Enterprise Security</h3>
+               <p className="text-gray-500 dark:text-zinc-400 leading-relaxed font-medium">"Secure API keys, strict rate limiting, domain whitelisting, and CORS compliant."</p>
              </div>
 
            </div>
@@ -337,8 +342,8 @@ const response = await fetch(
       {/* CODE EXAMPLES */}
       <section className="py-24 max-w-5xl mx-auto px-6" id="docs">
         <div className="text-center mb-12">
-           <h2 className="text-3xl font-bold text-charcoal">Integration is a breeze</h2>
-           <p className="text-gray-500 mt-4">Available via standard REST interfaces in any language.</p>
+           <h2 className="text-3xl font-bold text-charcoal dark:text-white">Integration is a breeze</h2>
+           <p className="text-gray-500 dark:text-zinc-400 mt-4">Available via standard REST interfaces in any language.</p>
          </div>
          <div className="bg-[#1E1E1E] rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
             <div className="flex border-b border-gray-700 bg-[#2D2D2D]">
@@ -361,26 +366,26 @@ const response = await fetch(
       </section>
 
       {/* PRICING */}
-      <section className="py-24 bg-gray-50 border-t border-gray-100" id="pricing">
+      <section className="py-24 bg-gray-50 dark:bg-[#0b0b0d] border-t border-gray-100 dark:border-zinc-800/80" id="pricing">
          <div className="max-w-7xl mx-auto px-6">
            <div className="text-center mb-16">
-             <h2 className="text-3xl font-bold text-charcoal">Simple, transparent pricing</h2>
-             <p className="text-gray-500 mt-4">Start for free. Pay as you scale.</p>
+             <h2 className="text-3xl font-bold text-charcoal dark:text-white">Simple, transparent pricing</h2>
+             <p className="text-gray-500 dark:text-zinc-400 mt-4">Start for free. Pay as you scale.</p>
            </div>
            
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-5xl mx-auto">
              {plans.map((plan) => (
-                <div key={plan.id} className={`bg-white rounded-3xl p-8 shadow-xl ${plan.id === 'starter' ? 'border-2 border-accent md:-translate-y-4 shadow-amber-500/10' : 'border border-gray-100'}`}>
+                <div key={plan.id} className={`bg-white dark:bg-zinc-950 rounded-3xl p-8 shadow-xl ${plan.id === 'starter' ? 'border-2 border-accent md:-translate-y-4 shadow-amber-500/10' : 'border border-gray-100 dark:border-zinc-850'}`}>
                    {plan.id === "starter" && <p className="text-accent text-sm font-bold uppercase tracking-wider mb-2">Most Popular</p>}
-                   <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                   <div className="flex items-baseline gap-1 mb-8 border-b border-gray-100 pb-8">
-                     <span className="text-4xl font-black">₹{plan.price}</span>
-                     <span className="text-gray-500">/month</span>
+                   <h3 className="text-2xl font-bold mb-2 text-charcoal dark:text-white">{plan.name}</h3>
+                   <div className="flex items-baseline gap-1 mb-8 border-b border-gray-100 dark:border-zinc-800/50 pb-8">
+                     <span className="text-4xl font-black text-charcoal dark:text-white">₹{plan.price}</span>
+                     <span className="text-gray-500 dark:text-zinc-400">/month</span>
                    </div>
                    
                    <ul className="flex flex-col gap-4 mb-8">
                      {plan.features?.map((f, i) => (
-                        <li key={i} className="flex items-center gap-3 font-medium text-gray-600">
+                        <li key={i} className="flex items-center gap-3 font-medium text-gray-600 dark:text-zinc-350">
                           <Check size={18} className="text-green-500 shrink-0" /> {f}
                         </li>
                      ))}
@@ -388,16 +393,16 @@ const response = await fetch(
                    
                    {isDevLoggedIn ? (
                       plan.id === tier ? (
-                        <button disabled className="w-full block text-center py-3.5 rounded-xl font-bold bg-green-50 text-green-700 border border-green-200 cursor-not-allowed">
+                        <button disabled className="w-full block text-center py-3.5 rounded-xl font-bold bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-900/50 cursor-not-allowed">
                           Current Plan
                         </button>
                       ) : (
-                        <Link to="/developer/portal/billing" className={`w-full block text-center py-3.5 rounded-xl font-bold transition-all ${plan.id === 'starter' ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20' : 'bg-gray-100 text-charcoal hover:bg-gray-200'}`}>
+                        <Link to="/developer/portal/billing" className={`w-full block text-center py-3.5 rounded-xl font-bold transition-all ${plan.id === 'starter' ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20' : 'bg-gray-100 dark:bg-zinc-900 text-charcoal dark:text-zinc-100 hover:bg-gray-200 dark:hover:bg-zinc-800'}`}>
                           Subscribe now
                         </Link>
                       )
                     ) : (
-                      <Link to="/developer/register" className={`w-full block text-center py-3.5 rounded-xl font-bold transition-all ${plan.id === 'starter' ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20' : 'bg-gray-100 text-charcoal hover:bg-gray-200'}`}>
+                      <Link to="/developer/register" className={`w-full block text-center py-3.5 rounded-xl font-bold transition-all ${plan.id === 'starter' ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20' : 'bg-gray-100 dark:bg-zinc-900 text-charcoal dark:text-zinc-100 hover:bg-gray-200 dark:hover:bg-zinc-800'}`}>
                         {plan.price === 0 ? "Start for free" : "Subscribe now"}
                       </Link>
                     )}

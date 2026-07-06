@@ -9,7 +9,7 @@ export default function BrevoTracker() {
   const company = useAuthStore((state) => state.company);
 
   useEffect(() => {
-    const brevoKey = import.meta.env.VITE_BREVO_MA_KEY;
+    const brevoKey = import.meta.env.VITE_BREVO_MA_KEY || 'gqq4aaawytrk7xx4oyj4s62z';
     if (!brevoKey) return;
 
     // Load Brevo SDK 2.0 tracker script
