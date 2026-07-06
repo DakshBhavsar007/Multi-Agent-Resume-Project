@@ -76,6 +76,7 @@ const UserApply = lazy(() => import('./pages/user/UserApply'));
 const UserApplications = lazy(() => import('./pages/user/UserApplications'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const CompleteProfilePage = lazy(() => import('./pages/CompleteProfilePage'));
 
 const ApplicantResultsPage = lazy(() => import('./pages/ApplicantResultsPage'));
 const TestEntry = lazy(() => import('./pages/test/TestEntry'));
@@ -216,6 +217,7 @@ export default function App() {
           <Route path="/auth/verify" element={<AuthVerifyPage />} />
           <Route path="/auth/github/callback" element={<GitHubCallbackPage />} />
           <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+          <Route path="/auth/complete-profile" element={<CompleteProfilePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/terms" element={<TermsPage />} />

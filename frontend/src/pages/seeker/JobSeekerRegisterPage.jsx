@@ -28,6 +28,13 @@ export default function JobSeekerRegisterPage() {
               setLoading(true);
               try {
                 const data = await seekerAPI.googleLogin(tokenResponse.access_token);
+                if (data.seeker?.requires_profile_completion) {
+                  localStorage.removeItem("vish_seeker_token");
+                  localStorage.removeItem("vish_seeker_data");
+                  sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'seeker', data }));
+                  navigate('/auth/complete-profile');
+                  return;
+                }
                 setAuth(data);
                 toast.success('Signed up successfully with Google!');
                 navigate('/jobs/dashboard');

@@ -47,6 +47,13 @@ export default function DeveloperRegisterPage() {
               setLoading(true);
               try {
                 const data = await portalAuth.googleLogin(tokenResponse.access_token);
+                if (data.requires_profile_completion) {
+                  localStorage.removeItem("portal_jwt");
+                  localStorage.removeItem("portal_dev");
+                  sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'developer', data }));
+                  navigate('/auth/complete-profile');
+                  return;
+                }
                 if (data.is_new) {
                   setApiKeysData(data);
                   toast.success("Account created successfully with Google!");

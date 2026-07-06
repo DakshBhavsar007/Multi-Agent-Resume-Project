@@ -35,11 +35,25 @@ export default function GitHubCallbackPage() {
       try {
         if (state === 'seeker') {
           const data = await seekerAPI.githubLogin(code);
+          if (data.seeker?.requires_profile_completion) {
+            localStorage.removeItem("vish_seeker_token");
+            localStorage.removeItem("vish_seeker_data");
+            sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'seeker', data }));
+            navigate('/auth/complete-profile');
+            return;
+          }
           setSeekerAuth(data);
           toast.success(`Welcome, ${data.seeker.full_name}!`);
           navigate('/jobs/dashboard');
         } else if (state === 'developer') {
           const data = await portalAuth.githubLogin(code);
+          if (data.requires_profile_completion) {
+            localStorage.removeItem("portal_jwt");
+            localStorage.removeItem("portal_dev");
+            sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'developer', data }));
+            navigate('/auth/complete-profile');
+            return;
+          }
           setPortalAuth(data);
           if (data.is_new) {
             setNewDevData(data);
@@ -51,6 +65,15 @@ export default function GitHubCallbackPage() {
         } else {
           // Default to recruiter / company
           const data = await authAPI.githubLogin(code);
+          if (data.requires_profile_completion) {
+            localStorage.removeItem("vish_jwt");
+            localStorage.removeItem("vish_api_key");
+            localStorage.removeItem("vish_company");
+            localStorage.removeItem("between_user");
+            sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'recruiter', data }));
+            navigate('/auth/complete-profile');
+            return;
+          }
           setRecruiterAuth(data);
           toast.success(`Signed in successfully as ${data.name || 'Recruiter'}!`);
           navigate('/dashboard');

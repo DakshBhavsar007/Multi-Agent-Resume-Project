@@ -143,7 +143,8 @@ def recruiter_auth_github(request):
             "name": company.name,
             "email": company.email,
             "tier": company.tier,
-            "api_key": masked_secret
+            "api_key": masked_secret,
+            "requires_profile_completion": not (company.industry and company.hq_location and company.company_size and company.website_url)
         }))
     except ValueError as e:
         return JsonResponse(error_response(str(e)), status=400)
@@ -194,6 +195,7 @@ def seeker_auth_github(request):
             "has_resume": bool(seeker.resume_file_path or seeker.resume_data),
             "skills": seeker.skills,
             "created_at": seeker.created_at.isoformat() if seeker.created_at else None,
+            "requires_profile_completion": not (seeker.phone and seeker.location and seeker.headline)
         }
 
         return JsonResponse(success_response({
@@ -277,7 +279,8 @@ def developer_auth_github(request):
             "developer_id": str(dev.id),
             "email": dev.email,
             "tier": dev.tier,
-            "company_name": dev.company_name
+            "company_name": dev.company_name,
+            "requires_profile_completion": not dev.website_url
         }
         if is_new:
             resp.update({

@@ -137,6 +137,24 @@ export default function SessionWorkspacePage() {
   }, [session, isEditModalOpen]);
 
   const handleSaveChanges = async () => {
+    const now = new Date();
+    for (let i = 0; i < editRounds.length; i++) {
+      const r = editRounds[i];
+      if (!r.name.trim()) {
+        toast.error(`Please provide a name for Round ${i + 1}`);
+        return;
+      }
+      if (!r.result_announcement_date) {
+        toast.error(`Result declaration date & time is compulsory for round: ${r.name}`);
+        return;
+      }
+      const announcementDate = new Date(r.result_announcement_date);
+      if (announcementDate < now) {
+        toast.error(`Result declaration date & time for round "${r.name}" cannot be in the past`);
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       // 1. Update session details
@@ -1328,30 +1346,50 @@ export default function SessionWorkspacePage() {
               <div className="space-y-2 border-t border-gray-100 pt-4">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Interview Rounds</label>
                 {editRounds.map((round, idx) => (
-                  <div key={idx} className="flex gap-4 items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <span className="text-xs font-bold text-gray-400 w-16">Round {round.order}</span>
-                    <input 
-                      type="text" 
-                      value={round.name}
-                      onChange={e => {
-                        const updated = [...editRounds];
-                        updated[idx].name = e.target.value;
-                        setEditRounds(updated);
-                      }}
-                      className="flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold"
-                      placeholder="Round Name"
-                    />
-                    <input 
-                      type="text" 
-                      value={round.interviewer || ""}
-                      onChange={e => {
-                        const updated = [...editRounds];
-                        updated[idx].interviewer = e.target.value;
-                        setEditRounds(updated);
-                      }}
-                      className="flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold"
-                      placeholder="Interviewer Name"
-                    />
+                  <div key={idx} className="flex flex-col gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div className="flex gap-4 items-center">
+                      <span className="text-xs font-bold text-gray-400 w-16">Round {round.order}</span>
+                      <input 
+                        type="text" 
+                        value={round.name}
+                        onChange={e => {
+                          const updated = [...editRounds];
+                          updated[idx].name = e.target.value;
+                          setEditRounds(updated);
+                        }}
+                        className="flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold"
+                        placeholder="Round Name"
+                      />
+                      <input 
+                        type="text" 
+                        value={round.interviewer || ""}
+                        onChange={e => {
+                          const updated = [...editRounds];
+                          updated[idx].interviewer = e.target.value;
+                          setEditRounds(updated);
+                        }}
+                        className="flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold"
+                        placeholder="Interviewer Name"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 pl-20">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Result Declaration Time*:</label>
+                      <input
+                        type="datetime-local"
+                        value={round.result_announcement_date || ""}
+                        min={(() => {
+                          const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+                          return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+                        })()}
+                        onChange={e => {
+                          const updated = [...editRounds];
+                          updated[idx].result_announcement_date = e.target.value;
+                          setEditRounds(updated);
+                        }}
+                        className="text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold flex-1"
+                        required
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

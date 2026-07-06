@@ -29,6 +29,13 @@ export default function DeveloperLoginPage() {
               setLoading(true);
               try {
                 const data = await portalAuth.googleLogin(tokenResponse.access_token);
+                if (data.requires_profile_completion) {
+                  localStorage.removeItem("portal_jwt");
+                  localStorage.removeItem("portal_dev");
+                  sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'developer', data }));
+                  navigate('/auth/complete-profile');
+                  return;
+                }
                 setAuth(data);
                 toast.success("Signed in successfully with Google!");
                 navigate("/developer/portal/dashboard");

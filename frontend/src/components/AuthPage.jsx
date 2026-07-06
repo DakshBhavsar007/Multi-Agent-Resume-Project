@@ -341,11 +341,27 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
               try {
                 if (currentRole === 'recruiter') {
                   const data = await authAPI.googleLogin(tokenResponse.access_token);
+                  if (data.requires_profile_completion) {
+                    localStorage.removeItem("vish_jwt");
+                    localStorage.removeItem("vish_api_key");
+                    localStorage.removeItem("vish_company");
+                    localStorage.removeItem("between_user");
+                    sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'recruiter', data }));
+                    navigate('/auth/complete-profile');
+                    return;
+                  }
                   recruiterAuth.setAuth(data);
                   toast.success("Signed in successfully with Google!");
                   navigate('/dashboard');
                 } else if (currentRole === 'developer') {
                   const data = await portalAuth.googleLogin(tokenResponse.access_token);
+                  if (data.requires_profile_completion) {
+                    localStorage.removeItem("portal_jwt");
+                    localStorage.removeItem("portal_dev");
+                    sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'developer', data }));
+                    navigate('/auth/complete-profile');
+                    return;
+                  }
                   if (data.is_new) {
                     setApiKeysData(data);
                     toast.success("Account created successfully with Google!");
@@ -361,6 +377,13 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                   }
                 } else if (currentRole === 'seeker') {
                   const data = await seekerAPI.googleLogin(tokenResponse.access_token);
+                  if (data.seeker?.requires_profile_completion) {
+                    localStorage.removeItem("vish_seeker_token");
+                    localStorage.removeItem("vish_seeker_data");
+                    sessionStorage.setItem('temp_oauth_data', JSON.stringify({ role: 'seeker', data }));
+                    navigate('/auth/complete-profile');
+                    return;
+                  }
                   seekerAuth.setAuth(data);
                   toast.success(`Welcome, ${data.seeker.full_name}!`);
                   navigate('/jobs/dashboard');
