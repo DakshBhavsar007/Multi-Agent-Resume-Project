@@ -103,7 +103,16 @@ def register(request):
 
         # Send welcome email + Brevo CRM sync (non-blocking)
         try:
-            send_welcome_email(user_email=email, user_name=company_name, role="recruiter")
+            send_welcome_email(
+                user_email=email,
+                user_name=company_name,
+                role="recruiter",
+                custom_attributes={
+                    "HQ_LOCATION": hq_location or "N/A",
+                    "INDUSTRY": industry or "N/A",
+                    "WEBSITE": website_url or "N/A"
+                }
+            )
         except Exception:
             logger.warning("Welcome email failed for recruiter %s", email)
 

@@ -250,6 +250,7 @@ def send_welcome_email(
     user_email: str,
     user_name: str,
     role: str,  # 'seeker', 'recruiter', 'developer'
+    custom_attributes: dict = None,
 ) -> bool:
     """
     Send a branded welcome email to new users and sync them to Brevo CRM.
@@ -341,11 +342,16 @@ If you have any questions, reply to this email or contact our support team.
         from api.services.brevo_service import sync_contact, track_automation_event
         first_name = user_name.split()[0] if user_name else ""
         last_name = " ".join(user_name.split()[1:]) if len(user_name.split()) > 1 else ""
+        
+        attributes = {"USER_ROLE": role_label, "SIGNUP_SOURCE": "direct"}
+        if custom_attributes:
+            attributes.update(custom_attributes)
+
         sync_contact(
             email=user_email,
             first_name=first_name,
             last_name=last_name,
-            attributes={"USER_ROLE": role_label, "SIGNUP_SOURCE": "direct"}
+            attributes=attributes
         )
         track_automation_event(
             email=user_email,

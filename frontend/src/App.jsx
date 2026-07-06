@@ -10,6 +10,7 @@ import LandingPage from './pages/LandingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import BrevoTracker from './components/BrevoTracker';
+import BrevoConversations from './components/BrevoConversations';
 
 
 // Lazy load pages for performance optimization
@@ -201,6 +202,7 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <BrevoTracker />
+        <BrevoConversations />
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-screen bg-[#09090b]">
             <div className="flex flex-col items-center gap-4">

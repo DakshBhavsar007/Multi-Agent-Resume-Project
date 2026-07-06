@@ -97,7 +97,14 @@ def register(request):
 
         # Send welcome email + Brevo CRM sync (non-blocking)
         try:
-            send_welcome_email(user_email=email, user_name=company_name, role="developer")
+            send_welcome_email(
+                user_email=email,
+                user_name=company_name,
+                role="developer",
+                custom_attributes={
+                    "WEBSITE": data.get("website_url") or "N/A"
+                }
+            )
         except Exception:
             logger.warning("Welcome email failed for developer %s", email)
 
