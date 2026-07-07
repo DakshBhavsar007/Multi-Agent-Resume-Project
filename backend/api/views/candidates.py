@@ -109,9 +109,7 @@ def _serialize_candidate_summary(c):
         "raw_resume_data": parsed,
         "status": c.status,
         "source": c.source,
-        "created_at": c.created_at.isoformat() if c.created_at else None,
-        "session_id": str(c.session_id),
-        "ai_insights": match_details.get("ai_insights")
+        "created_at": c.created_at.isoformat() if c.created_at else None
     }
 
 @csrf_exempt
@@ -211,68 +209,6 @@ def get_candidate(request, session_id, cand_id):
         if request.method == "GET":
             parsed = candidate.raw_resume_data or {}
             inner_parsed = parsed.get("parsed", parsed)
-            
-            # Lazy generate AI insights if not already present
-            match_details = candidate.match_details or {}
-            if "ai_insights" not in match_details:
-                try:
-                    from agents.llm import RotateLLMClient
-                    import json as py_json
-                    llm = RotateLLMClient()
-                    
-                    system_prompt = (
-                        "You are an expert technical recruiter analyzing a candidate's fit for a job. "
-                        "Respond in JSON format with exactly three fields: "
-                        "1. 'why_hire': A brief, impactful paragraph summarizing the candidate's top strengths and alignment (2-3 sentences). "
-                        "2. 'risk_factors': A brief paragraph highlighting gaps, concerns, or areas they might need support in (1-2 sentences). "
-                        "3. 'skill_match_breakdown': A list of exactly 3 core skill categories from the job/resume with their match percentage (integer 0-100), structured like: "
-                        "   [{\"skill\": \"React / Frontend\", \"percentage\": 96}, {\"skill\": \"Leadership\", \"percentage\": 82}, {\"skill\": \"Cloud / DevOps\", \"percentage\": 61}]."
-                    )
-                    
-                    cand_skills = candidate.normalized_skills or []
-                    flat_skills = []
-                    for s in cand_skills:
-                        if isinstance(s, dict):
-                            flat_skills.append(s.get('canonical_skill') or s.get('skill') or str(s))
-                        else:
-                            flat_skills.append(str(s))
-                            
-                    prompt = (
-                        f"Job Title: {candidate.session.job_title}\n"
-                        f"Job Description:\n{candidate.session.job_description[:1000]}\n\n"
-                        f"Candidate Name: {candidate.name}\n"
-                        f"Candidate Skills: {', '.join(flat_skills)}\n"
-                        f"Candidate Experience:\n{py_json.dumps(inner_parsed.get('experience', [])[:3])}\n"
-                    )
-                    
-                    response_text = llm.generate(prompt, system_prompt)
-                    if "```json" in response_text:
-                        response_text = response_text.split("```json")[1].split("```")[0]
-                    elif "```" in response_text:
-                        response_text = response_text.split("```")[1].split("```")[0]
-                    ai_insights = py_json.loads(response_text.strip())
-                    
-                    match_details["ai_insights"] = ai_insights
-                    candidate.match_details = match_details
-                    candidate.save(update_fields=["match_details"])
-                except Exception as e:
-                    logger.warning("Dynamic candidate AI insights generation failed: %s", e)
-
-            # Re-read match_details in case it was updated
-            match_details = candidate.match_details or {}
-
-            # Get other_skills
-            other_skills = []
-            if isinstance(candidate.normalized_skills, list):
-                matched_s = match_details.get("matched_skills", [])
-                missing_s = match_details.get("missing_skills", [])
-                matched_names = {s.get("canonical_skill") or s.get("skill") or str(s) if isinstance(s, dict) else str(s) for s in matched_s}
-                missing_names = {s.get("canonical_skill") or s.get("skill") or str(s) if isinstance(s, dict) else str(s) for s in missing_s}
-                for s in candidate.normalized_skills:
-                    s_name = _get_skill_name(s)
-                    if s_name and s_name not in matched_names and s_name not in missing_names:
-                        other_skills.append(s)
-
             return JsonResponse(success_response({
                 "id": str(candidate.id),
                 "name": candidate.name,
@@ -281,13 +217,7 @@ def get_candidate(request, session_id, cand_id):
                 "location": candidate.location,
                 "photo_url": candidate.resume_photo_path,
                 "match_score": candidate.match_score,
-                "match_details": match_details,
-                "skill_score": match_details.get("skill_score"),
-                "experience_score": match_details.get("experience_score"),
-                "location_score": match_details.get("location_score"),
-                "matched_skills": match_details.get("matched_skills", []),
-                "missing_skills": match_details.get("missing_skills", []),
-                "other_skills": other_skills[:10],
+                "match_details": candidate.match_details,
                 "recommendation": candidate.recommendation,
                 "total_experience_years": candidate.total_experience_years,
                 "normalized_skills": candidate.normalized_skills,
@@ -296,8 +226,7 @@ def get_candidate(request, session_id, cand_id):
                 "current_round_index": candidate.current_round_index,
                 "status": candidate.status,
                 "source": candidate.source,
-                "created_at": candidate.created_at.isoformat() if candidate.created_at else None,
-                "ai_insights": match_details.get("ai_insights")
+                "created_at": candidate.created_at.isoformat() if candidate.created_at else None
             }))
 
         return JsonResponse(error_response("Method not allowed"), status=405)

@@ -16,7 +16,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
-from api.models import Session, Candidate, JobApplication, Notification, JobSeekerAccount, SavedJob
+from api.models import Session, Candidate, JobApplication, Notification, JobSeekerAccount, SavedJob, ApplicantRoundAttempt, SessionRound
 from api.views.seeker_auth import require_seeker_jwt
 from api.services.email_service import (
     send_application_received_to_company,
@@ -71,41 +71,20 @@ def _get_salary_range(session) -> str:
     }
     symbol = currency_symbols.get(salary_currency, salary_currency + " ")
     
-    if salary_min is None:
-        # Fallback to description parsing
-        meta = _parse_job_description_meta(session.job_description)
-        return meta["salary_range"]
-        
-    try:
-        s_min = float(salary_min)
-        s_max = float(salary_max) if salary_max is not None else s_min
-        
-        def format_val(val):
-            if salary_currency == "INR":
-                # For INR: values are in LPA unit (e.g. 12 = 12 LPA, 100 = 1 Cr)
-                if val >= 100.0:
-                    cr = val / 100.0
-                    if cr.is_integer():
-                        return f"{symbol}{int(cr)} Cr"
-                    return f"{symbol}{cr:.2f} Cr"
-                else:
-                    if val.is_integer():
-                        return f"{symbol}{int(val)} LPA"
-                    return f"{symbol}{val:.1f} LPA"
-            else:
-                # USD, GBP, EUR: just show the raw numbers
-                if val.is_integer():
-                    return f"{symbol}{int(val)}"
-                return f"{symbol}{val}"
+    if salary_min is not None and salary_max is not None:
+        try:
+            return f"{symbol}{int(salary_min):,} - {symbol}{int(salary_max):,}"
+        except (ValueError, TypeError):
+            pass
+    elif salary_min is not None:
+        try:
+            return f"{symbol}{int(salary_min):,}+"
+        except (ValueError, TypeError):
+            pass
             
-        if s_min == s_max:
-            return format_val(s_min)
-        return f"{format_val(s_min)} - {format_val(s_max)}"
-            
-    except (ValueError, TypeError):
-        # Fallback to description parsing
-        meta = _parse_job_description_meta(session.job_description)
-        return meta["salary_range"]
+    # Fallback to description parsing
+    meta = _parse_job_description_meta(session.job_description)
+    return meta["salary_range"]
 
 
 def _session_to_job(session: Session, match_score=None, applied=False, is_saved=False) -> dict:
@@ -161,67 +140,19 @@ def _get_flat_skills(skills):
     return flat
 
 
-def _compute_match_score(seeker, session, precomputed_score=None, has_applied=None) -> int:
+def _compute_match_score(seeker_skills: list, job_skills: list) -> int:
     """
-    Computes a matching score (0-100) using the exact same logic as recruiter candidate scoring.
+    Simple set-intersection match score (0–100).
+    A real implementation uses the MatchingAgent, but this is fast and dependency-free.
     """
-    if not seeker or not session:
+    if not seeker_skills or not job_skills:
         return 0
-        
-    if precomputed_score is not None:
-        return precomputed_score
-        
-    if has_applied is False:
-        pass
-    else:
-        # Check if there is already an applied candidate for this seeker in this session
-        try:
-            from api.models import JobApplication
-            app = JobApplication.objects.filter(seeker=seeker, session=session).select_related("candidate").first()
-            if app and app.candidate and app.candidate.match_score is not None:
-                return round(app.candidate.match_score)
-        except Exception:
-            pass
-
-    criteria = session.criteria or {}
-    required_skills = criteria.get("required_skills", [])
-    req_lower = [r.lower() for r in required_skills]
-    
-    norm_skills = seeker.skills or []
-    cand_skill_names = {
-        (s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)).lower()
-        if isinstance(s, dict) else str(s).lower()
-        for s in norm_skills if s
-    }
-    matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
-    matched = len(matched_list)
-    skill_score = round((matched / len(req_lower)) * 100) if req_lower else 0
-
-    # Experience score
-    min_exp = criteria.get("min_experience", 0)
-    resume = seeker.resume_data or {}
-    raw_exp_years = resume.get("total_experience_years")
-    if raw_exp_years is None:
-        raw_exp_years = 0.0
-    try:
-        exp_years = float(raw_exp_years)
-    except (ValueError, TypeError):
-        exp_years = 0.0
-    experience_score = min(100, round((exp_years / max(min_exp, 1)) * 100)) if min_exp > 0 else 50
-
-    # Location score
-    preferred_locs = criteria.get("preferred_locations", [])
-    cand_location = (seeker.location or resume.get("location") or "").lower()
-    location_score = 100 if not preferred_locs else (100 if any(l.lower() in cand_location for l in preferred_locs) else 30)
-
-    # Weighted overall score
-    weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})
-    score = round(
-        skill_score * weights.get("skills", 0.5) + 
-        experience_score * weights.get("experience", 0.3) + 
-        location_score * weights.get("location", 0.2)
-    )
-    return min(100, score)
+    flat_seeker = _get_flat_skills(seeker_skills)
+    flat_job = _get_flat_skills(job_skills)
+    seeker_lower = {s.lower() for s in flat_seeker if s}
+    job_lower = {s.lower() for s in flat_job if s}
+    intersection = seeker_lower & job_lower
+    return round(len(intersection) / len(job_lower) * 100) if job_lower else 0
 
 
 # ── Public (authenticated seeker) endpoints ────────────────────────────────────
@@ -252,12 +183,11 @@ def list_jobs(request):
         if location:
             sessions = sessions.filter(job_description__icontains=location)
 
-        # Get seeker's applied session IDs and precomputed match scores
-        applied_apps = {
-            str(app.session_id): round(app.candidate.match_score) if (app.candidate and app.candidate.match_score is not None) else None
-            for app in JobApplication.objects.filter(seeker=seeker).select_related("candidate")
-        }
-        applied_ids = set(applied_apps.keys())
+        # Get seeker's applied session IDs
+        applied_ids = set(
+            str(sid) for sid in
+            JobApplication.objects.filter(seeker=seeker).values_list("session_id", flat=True)
+        )
 
         # Get seeker's saved session IDs
         saved_ids = set(
@@ -267,11 +197,9 @@ def list_jobs(request):
 
         jobs = []
         for s in sessions[:200]:
-            sid_str = str(s.id)
-            is_applied = sid_str in applied_ids
-            pre_score = applied_apps.get(sid_str) if is_applied else None
-            score = _compute_match_score(seeker, s, precomputed_score=pre_score, has_applied=is_applied)
-            is_saved = sid_str in saved_ids
+            score = _compute_match_score(seeker.skills, s.inferred_skills)
+            is_applied = str(s.id) in applied_ids
+            is_saved = str(s.id) in saved_ids
             jobs.append(_session_to_job(s, match_score=score, applied=is_applied, is_saved=is_saved))
 
         # Sort by match score descending
@@ -313,7 +241,7 @@ def job_detail(request, session_id):
         if not session:
             return JsonResponse(error_response("Job not found"), status=404)
 
-        score = _compute_match_score(seeker, session)
+        score = _compute_match_score(seeker.skills, session.inferred_skills)
         applied = JobApplication.objects.filter(seeker=seeker, session=session).exists()
         is_saved = SavedJob.objects.filter(seeker=seeker, session=session).exists()
 
@@ -371,6 +299,7 @@ def apply_job(request, session_id):
         if seeker.tier != "premium":
             from django.utils import timezone
             from datetime import timedelta
+            from api.models import JobApplication
             thirty_days_ago = timezone.now() - timedelta(days=30)
             app_count = JobApplication.objects.filter(seeker=seeker, applied_at__gte=thirty_days_ago).count()
             if app_count >= 3:
@@ -489,14 +418,6 @@ def release_due_results_for_seeker(seeker):
     apps = JobApplication.objects.filter(seeker=seeker).select_related('session', 'candidate')
     now = timezone.now()
 
-    # Pre-fetch status update notifications to prevent N+1 query loop
-    existing_notifs = set(
-        Notification.objects.filter(
-            seeker=seeker,
-            type='status_updated'
-        ).values_list('title', 'message', flat=False)
-    )
-
     for app in apps:
         candidate = app.candidate
         if not candidate:
@@ -550,22 +471,22 @@ def release_due_results_for_seeker(seeker):
                 app.status = target_app_status
                 app.save(update_fields=['status'])
                 
-                # Check in-app notification in-memory instead of querying DB
-                notif_title = f'Application Update — {session.job_title}'
-                notif_exists = any(
-                    t == notif_title and target_app_status.title() in m
-                    for t, m in existing_notifs
-                )
+                # Create in-app notification if it doesn't exist yet
+                notif_exists = Notification.objects.filter(
+                    seeker=seeker,
+                    type='status_updated',
+                    title=f'Application Update — {session.job_title}',
+                    message__contains=target_app_status.title()
+                ).exists()
                 
                 if not notif_exists:
-                    new_notif = Notification.objects.create(
+                    Notification.objects.create(
                         seeker=seeker,
                         type='status_updated',
-                        title=notif_title,
+                        title=f'Application Update — {session.job_title}',
                         message=f'Your application at {session.company.name if session.company else "Vishleshan Partner"} has been updated to: {target_app_status.title()}.',
                         link=f'/jobs/applications?app_id={app.id}',
                     )
-                    existing_notifs.add((new_notif.title, new_notif.message))
                     
                     # Send email
                     send_status_update_to_seeker(
@@ -644,13 +565,16 @@ def my_applications(request):
                     seeker_status = "shortlisted" if visible_round_index > 1 else "applied"
             else:
                 highest_cleared_declared = min(max(cand_round - 1, 0), max_declared_order)
-                visible_round_index = min(highest_cleared_declared + 1, len(sorted_rounds) if sorted_rounds else 1)
+                if cand_round > (len(sorted_rounds) if sorted_rounds else 0):
+                    visible_round_index = cand_round
+                else:
+                    visible_round_index = min(highest_cleared_declared + 1, len(sorted_rounds) if sorted_rounds else 1)
                 seeker_status = "shortlisted" if visible_round_index > 1 else "applied"
 
             # Match score fallback
             match_score = candidate.match_score if candidate else None
             if match_score is None:
-                match_score = _compute_match_score(seeker, session)
+                match_score = _compute_match_score(seeker.skills, session.inferred_skills)
 
             # Format rounds
             ui_rounds = []
@@ -662,11 +586,20 @@ def my_applications(request):
                     "result_announcement_date": r.get("result_announcement_date")
                 })
 
+            # Compute offer letter URL relative path if present
+            offer_letter_url = None
+            if app.offer_letter_path:
+                try:
+                    upload_root = os.getenv("UPLOAD_DIR", "uploads")
+                    rel = os.path.relpath(app.offer_letter_path, upload_root).replace("\\", "/")
+                    offer_letter_url = f"/uploads/{rel}"
+                except Exception:
+                    offer_letter_url = None
+
             # Check for active proctored rounds
             test_link = None
             test_round_name = None
             if candidate:
-                from api.models import SessionRound, ApplicantRoundAttempt
                 active_attempt = ApplicantRoundAttempt.objects.filter(
                     candidate=candidate,
                     round__round_number=candidate.current_round_index,
@@ -699,7 +632,6 @@ def my_applications(request):
             # Calculate rejection reason if rejected
             rejection_reason = None
             if seeker_status == "rejected" and candidate:
-                from api.models import SessionRound, ApplicantRoundAttempt
                 failed_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first()
                 if failed_sr:
                     attempt = ApplicantRoundAttempt.objects.filter(candidate=candidate, round=failed_sr).first()
@@ -715,16 +647,6 @@ def my_applications(request):
                                 rejection_reason += f" - {attempt.interview_recommendation}"
                 if not rejection_reason:
                     rejection_reason = f"Resume match score ({match_score}%) did not meet recruiter criteria."
-
-            # Compute offer letter URL relative path if present
-            offer_letter_url = None
-            if app.offer_letter_path:
-                try:
-                    upload_root = os.getenv("UPLOAD_DIR", "uploads")
-                    rel = os.path.relpath(app.offer_letter_path, upload_root).replace("\\", "/")
-                    offer_letter_url = f"/uploads/{rel}"
-                except Exception:
-                    offer_letter_url = None
 
             result.append({
                 "id": str(app.id),
@@ -745,6 +667,7 @@ def my_applications(request):
                 "test_link": test_link,
                 "test_round_name": test_round_name,
                 "rejection_reason": rejection_reason,
+                "candidate_id": str(candidate.id) if candidate else None,
             })
 
         return JsonResponse(success_response({
@@ -907,7 +830,7 @@ def get_saved_jobs(request):
         jobs = []
         for sj in saved_jobs_qs:
             s = sj.session
-            score = _compute_match_score(seeker, s)
+            score = _compute_match_score(seeker.skills, s.inferred_skills)
             jobs.append(_session_to_job(s, match_score=score, applied=str(s.id) in applied_ids, is_saved=True))
             
         return JsonResponse(success_response({"jobs": jobs}))
