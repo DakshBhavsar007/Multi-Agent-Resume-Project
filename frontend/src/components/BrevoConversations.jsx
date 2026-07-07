@@ -9,9 +9,12 @@ export default function BrevoConversations() {
   const developer = usePortalAuthStore((state) => state.developer);
 
   useEffect(() => {
-    // Read the Conversations ID from environment variables, fallback to VITE_BREVO_MA_KEY if shared
-    const conversationsId = import.meta.env.VITE_BREVO_CONVERSATIONS_ID || import.meta.env.VITE_BREVO_MA_KEY || 'gqq4aaawytrk7xx4oyj4s62z';
-    if (!conversationsId) return;
+    // Read the Conversations ID from environment variables
+    const conversationsId = import.meta.env.VITE_BREVO_CONVERSATIONS_ID;
+    if (!conversationsId) {
+      console.log("Brevo Conversations: VITE_BREVO_CONVERSATIONS_ID is not configured. Live chat widget is disabled.");
+      return;
+    }
 
     if (!window.BrevoConversations) {
       // Define window.BrevoConversationsSetup before loading the script

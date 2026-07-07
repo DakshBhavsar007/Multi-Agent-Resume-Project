@@ -2,7 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Phone, X, ShieldCheck, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://between-backend.indevs.in' || 'http://localhost:8000';
+const getApiBase = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    return envUrl.endsWith('/api/v1') ? envUrl.slice(0, -7) : envUrl;
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.origin;
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      return "http://127.0.0.1:8000";
+    }
+    return host;
+  }
+  return "http://127.0.0.1:8000";
+};
+
+const API_BASE_URL = getApiBase();
 
 export default function VerificationModal({ isOpen, onClose, type, value, role, onSuccess }) {
   const [otp, setOtp] = useState('');
