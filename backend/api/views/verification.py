@@ -144,8 +144,7 @@ def verify_email_otp(request):
 def send_phone_otp(request):
     """
     Send phone verification OTP.
-    On the free Brevo tier, SMS is not available, so the OTP is delivered
-    via email to the user's registered email address.
+    Attempts to send via Brevo SMS if enabled. Falls back to simulated OTP on screen for free tier.
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
@@ -162,40 +161,52 @@ def send_phone_otp(request):
         if not phone and not email:
             return JsonResponse({'success': False, 'error': 'Phone number or email is required'}, status=400)
 
-        # Look up the user to get their email for OTP delivery
-        user = None
+        # Look up user email if missing
         user_email = email
-        if email:
-            user = get_user_by_role_and_email(role, email)
-        if not user and phone:
+        if not user_email and phone:
             user = get_user_by_role_and_phone(role, phone)
             if user:
                 user_email = user.email
 
-        if not user:
-            return JsonResponse({'success': False, 'error': 'Account not found'}, status=404)
-
-        if not user_email:
-            return JsonResponse({'success': False, 'error': 'No email address on file to deliver the verification code'}, status=400)
-
         # Generate 6-digit OTP
         otp = str(random.randint(100000, 999999))
-        cache_key = f"phone_otp:{role}:{user_email}"
+        
+        # Cache key is keyed on email if available, else phone
+        cache_key = f"phone_otp:{role}:{user_email or phone}"
         cache.set(cache_key, otp, timeout=300)  # 5 minutes
 
-        # Deliver OTP via email (free tier — SMS requires paid credits)
-        subject = "Phone Verification Code — Between AI"
-        text_body = f"Your phone verification code is: {otp}. It will expire in 5 minutes."
-        html_body = _build_otp_html(otp, purpose="phone number verification")
+        # Normalize phone
+        normalized_phone = phone.strip() if phone else ""
+        if normalized_phone and not normalized_phone.startswith("+"):
+            normalized_phone = normalized_phone.lstrip("0")
+            if len(normalized_phone) == 10:
+                normalized_phone = "+91" + normalized_phone
 
-        sent = send_email(to_email=user_email, subject=subject, html_body=html_body, text_body=text_body)
-        if not sent:
-            return JsonResponse({'success': False, 'error': 'Failed to send verification code'}, status=500)
+        # Attempt to send via real Brevo SMS if enabled
+        from api.services.brevo_service import send_sms
+        sms_sent = False
+        if normalized_phone:
+            try:
+                sms_msg = f"Your Between AI verification code is: {otp}. Valid for 5 minutes."
+                res = send_sms(recipient_phone=normalized_phone, message_content=sms_msg)
+                if res.get("status") not in ("error", "skipped") and "messageId" in res:
+                    sms_sent = True
+            except Exception as e:
+                logger.warning("Brevo SMS send failed, falling back to simulated screen code: %s", e)
 
+        if sms_sent:
+            return JsonResponse({
+                'success': True,
+                'data': {
+                    'message': f'Verification code sent successfully to {normalized_phone} via SMS.',
+                }
+            })
+        
+        # Fallback to simulated code on screen (free tier/no credits)
         return JsonResponse({
             'success': True,
             'data': {
-                'message': f'Verification code sent to your email ({user_email}). Please check your inbox.',
+                'message': f'Simulated OTP sent to your phone. (Demo code: {otp})',
             }
         })
         
@@ -230,7 +241,7 @@ def verify_phone_otp(request):
         if not user_email:
             return JsonResponse({'success': False, 'error': 'Could not locate account'}, status=404)
 
-        cache_key = f"phone_otp:{role}:{user_email}"
+        cache_key = f"phone_otp:{role}:{user_email or phone}"
         saved_otp = cache.get(cache_key)
 
         if not saved_otp:
