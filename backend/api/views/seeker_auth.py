@@ -168,6 +168,8 @@ def register(request):
             headline=data.get("headline", "").strip() or None,
             skills=skills,
             tier="free",
+            phone_verified=data.get("phone_verified", False),
+            email_verified=data.get("email_verified", False),
         )
 
         token = _make_seeker_token(seeker)
@@ -249,8 +251,12 @@ def update_profile(request):
             seeker.full_name = data["full_name"].strip()
             fields_changed.append("full_name")
         if "phone" in data:
-            seeker.phone = data["phone"].strip() or None
-            fields_changed.append("phone")
+            new_phone = data["phone"].strip() or None
+            if seeker.phone != new_phone:
+                seeker.phone = new_phone
+                seeker.phone_verified = False
+                fields_changed.append("phone")
+                fields_changed.append("phone_verified")
         if "location" in data:
             seeker.location = data["location"].strip() or None
             fields_changed.append("location")

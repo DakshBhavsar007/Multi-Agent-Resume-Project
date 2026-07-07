@@ -28,6 +28,7 @@ import { LocationSelector } from './ui/LocationSelector';
 import { usePortalAuthStore } from '../stores/portalAuthStore';
 import { useSeekerAuthStore } from '../stores/seekerAuthStore';
 import './AuthPage.css';
+import VerificationModal from './VerificationModal';
 
 const AntigravityGrid = () => {
   const canvasRef = useRef(null);
@@ -153,6 +154,15 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   const [foundedYear, setFoundedYear] = useState('');
   const [about, setAbout] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [verifyTarget, setVerifyTarget] = useState(null);
+
+  const handlePhoneChange = (val) => {
+    setPhone(val);
+    if (phoneVerified) {
+      setPhoneVerified(false);
+    }
+  };
   const [skills, setSkills] = useState('');
 
   const [showPassRules, setShowPassRules] = useState(false);
@@ -503,6 +513,7 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
             location: locationField,
             headline,
             phone,
+            phone_verified: phoneVerified,
             skills: skills ? skills.split(',').map(s => s.trim()) : []
           });
           seekerAuth.setAuth(data);
@@ -789,13 +800,37 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                     </div>
                     <div className="input-group">
                       <label>Phone Number</label>
-                      <input 
-                        type="tel" 
-                        placeholder="e.g. +91 9876543210" 
-                        value={phone} 
-                        onChange={e => setPhone(e.target.value)} 
-                        required 
-                      />
+                      <div className="flex gap-2">
+                        <input 
+                          type="tel" 
+                          placeholder="e.g. +91 9876543210" 
+                          value={phone} 
+                          onChange={e => handlePhoneChange(e.target.value)} 
+                          required 
+                          style={{ flex: 1 }}
+                        />
+                        {phone && (
+                          <button
+                            type="button"
+                            disabled={phoneVerified}
+                            onClick={() => {
+                              if (!phone.trim()) {
+                                toast.error("Please enter a phone number first");
+                                return;
+                              }
+                              setVerifyTarget({ type: 'phone', value: phone.trim() });
+                            }}
+                            className={`px-4 text-xs font-bold rounded-xl transition-all ${
+                              phoneVerified 
+                                ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/50 cursor-default'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                            style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            {phoneVerified ? 'Verified ✓' : 'Verify'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="input-group">
                       <label>Professional Headline</label>
@@ -1251,6 +1286,20 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         </button>
 
       </motion.div>
+      {verifyTarget && (
+        <VerificationModal
+          isOpen={true}
+          onClose={() => setVerifyTarget(null)}
+          type={verifyTarget.type}
+          value={verifyTarget.value}
+          role="seeker"
+          userEmail={email}
+          onSuccess={() => {
+            setPhoneVerified(true);
+            toast.success('Phone number verified successfully!');
+          }}
+        />
+      )}
     </div>
   );
 };
