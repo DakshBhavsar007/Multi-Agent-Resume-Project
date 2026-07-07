@@ -19,7 +19,7 @@ const getApiBase = () => {
 
 const API_BASE_URL = getApiBase();
 
-export default function VerificationModal({ isOpen, onClose, type, value, role, onSuccess }) {
+export default function VerificationModal({ isOpen, onClose, type, value, role, userEmail, onSuccess }) {
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -59,8 +59,7 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
       } else {
         endpoint = `${API_BASE_URL}/api/v1/auth/verification/send-phone-otp`;
         payload.phone = value;
-        // Also send email if available to locate developer/seeker account
-        payload.email = localStorage.getItem('user_email') || '';
+        payload.email = userEmail || '';
       }
 
       const res = await axios.post(endpoint, payload);
@@ -99,7 +98,7 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
       } else {
         endpoint = `${API_BASE_URL}/api/v1/auth/verification/verify-phone-otp`;
         payload.phone = value;
-        payload.email = localStorage.getItem('user_email') || '';
+        payload.email = userEmail || '';
       }
 
       const res = await axios.post(endpoint, payload);

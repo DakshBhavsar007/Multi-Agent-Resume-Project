@@ -951,6 +951,7 @@ export default function UserProfile() {
           type={verifyTarget.type}
           value={verifyTarget.value}
           role="seeker"
+          userEmail={seeker?.email}
           onSuccess={() => {
             setSeeker(prev => ({
               ...prev,
