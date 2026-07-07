@@ -358,6 +358,19 @@ export default function NewSessionPage() {
       }
     }
 
+    // Validate result declaration dates are not in the past
+    const now = new Date();
+    for (let i = 0; i < formData.rounds.length; i++) {
+      const r = formData.rounds[i];
+      if (r.result_announcement_date) {
+        const declaredDate = new Date(r.result_announcement_date);
+        if (declaredDate < now) {
+          toast.error(`Result Declaration Time for Round ${i + 1} ("${r.name || `Round ${i + 1}`}") cannot be in the past.`);
+          return;
+        }
+      }
+    }
+
     setCreating(true);
     try {
       let currentSessionId = inferredData?.session_id;
@@ -843,6 +856,15 @@ export default function NewSessionPage() {
                         <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">Result Declaration Time (optional):</label>
                         <input
                           type="datetime-local"
+                          min={(() => {
+                            const now = new Date();
+                            const year = now.getFullYear();
+                            const month = String(now.getMonth() + 1).padStart(2, '0');
+                            const day = String(now.getDate()).padStart(2, '0');
+                            const hours = String(now.getHours()).padStart(2, '0');
+                            const minutes = String(now.getMinutes()).padStart(2, '0');
+                            return `${year}-${month}-${day}T${hours}:${minutes}`;
+                          })()}
                           value={round.result_announcement_date || ""}
                           onChange={(e) => {
                             const newRounds = [...formData.rounds];
