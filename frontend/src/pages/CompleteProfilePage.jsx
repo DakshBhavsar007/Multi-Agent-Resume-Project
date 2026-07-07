@@ -6,7 +6,7 @@ import { usePortalAuthStore } from '../stores/portalAuthStore';
 import { authAPI, seekerAPI } from '../lib/api';
 import { portalAuth } from '../lib/portalApi';
 import { toast } from 'react-hot-toast';
-import { Loader2, ShieldCheck, Mail, User, Phone, MapPin, Briefcase, Globe, Landmark, Users } from 'lucide-react';
+import { Loader2, ShieldCheck, Mail, User, Phone, MapPin, Briefcase, Globe, Landmark, Users, ArrowRight } from 'lucide-react';
 
 export default function CompleteProfilePage() {
   const navigate = useNavigate();
