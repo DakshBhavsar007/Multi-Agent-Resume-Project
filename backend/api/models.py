@@ -4,11 +4,11 @@ from django.utils import timezone
 
 class Company(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     email = models.CharField(max_length=255, unique=True)
     password_hash = models.CharField(max_length=500)
     tier = models.CharField(max_length=50, default="free")
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     email_verified = models.BooleanField(default=False)
     phone_verified = models.BooleanField(default=False)
     industry = models.CharField(max_length=255, null=True, blank=True)
