@@ -4,11 +4,14 @@ import { seekerAPI } from '../../lib/api';
 import { useSeekerAuthStore } from '../../stores/seekerAuthStore';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
+import VerificationModal from '../../components/VerificationModal';
 
 export default function JobSeekerRegisterPage() {
   const navigate = useNavigate();
   const setAuth = useSeekerAuthStore(s => s.setAuth);
   const [form, setForm] = useState({ full_name: '', email: '', password: '', location: '', headline: '' });
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [verifyTarget, setVerifyTarget] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const googleClientRef = useRef(null);
@@ -53,6 +56,7 @@ export default function JobSeekerRegisterPage() {
 
   const handle = async (e) => {
     e.preventDefault();
+    if (!isEmailVerified) { toast.error('Please verify your email address first'); return; }
     if (form.password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     setLoading(true);
     try {
@@ -94,14 +98,38 @@ export default function JobSeekerRegisterPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-charcoal">Email Address *</label>
-            <input 
-              type="email" 
-              placeholder="you@example.com" 
-              value={form.email}
-              onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-gray-400 font-medium"
-              required 
-            />
+            <div className="flex gap-2" style={{ display: 'flex', gap: '8px' }}>
+              <input 
+                type="email" 
+                placeholder="you@example.com" 
+                value={form.email}
+                disabled={isEmailVerified}
+                onChange={e => {
+                  setForm(p => ({ ...p, email: e.target.value }));
+                  setIsEmailVerified(false);
+                }}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-gray-400 font-medium"
+                required 
+                style={{ flex: 1 }}
+              />
+              {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && (
+                <button
+                  type="button"
+                  disabled={isEmailVerified}
+                  onClick={() => {
+                    setVerifyTarget({ type: 'email', value: form.email.trim(), role: 'seeker', isSignup: true });
+                  }}
+                  className={`px-4 text-xs font-bold rounded-xl transition-all ${
+                    isEmailVerified 
+                      ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/50 cursor-default'
+                      : 'bg-accent text-white hover:bg-accent-dark'
+                  }`}
+                  style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {isEmailVerified ? 'Verified ✓' : 'Verify'}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -210,6 +238,22 @@ export default function JobSeekerRegisterPage() {
           </p>
         </div>
       </div>
+      {verifyTarget && (
+        <VerificationModal
+          isOpen={true}
+          onClose={() => setVerifyTarget(null)}
+          type={verifyTarget.type}
+          value={verifyTarget.value}
+          role={verifyTarget.role}
+          isSignup={verifyTarget.isSignup}
+          userEmail={form.email}
+          onSuccess={() => {
+            if (verifyTarget.type === 'email') {
+              setIsEmailVerified(true);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

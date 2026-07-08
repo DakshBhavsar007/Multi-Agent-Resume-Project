@@ -155,7 +155,15 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   const [about, setAbout] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneVerified, setPhoneVerified] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [verifyTarget, setVerifyTarget] = useState(null);
+
+  const handleEmailChange = (val) => {
+    setEmail(val);
+    if (isEmailVerified) {
+      setIsEmailVerified(false);
+    }
+  };
 
   const handlePhoneChange = (val) => {
     setPhone(val);
@@ -480,6 +488,9 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         }
       } else {
         // Signup Step 1 Validation
+        if (!isEmailVerified) {
+          throw new Error("Please verify your email address first");
+        }
         if (password !== confirmPassword) {
           throw new Error("Passwords do not match");
         }
@@ -532,6 +543,10 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
 
   // Developer Signup Flow: Step 2 Plan Selection
   const handleSelectDeveloperPlan = async () => {
+    if (!isEmailVerified) {
+      toast.error("Please verify your email address first");
+      return;
+    }
     setLoading(true);
     try {
       const data = await portalAuth.register({
@@ -872,13 +887,34 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
             {/* Standard Login/Signup Fields */}
             <div className="input-group">
               <label>{role === 'recruiter' ? 'Work Email' : 'Email Address'}</label>
-              <input 
-                type="email" 
-                placeholder="name@company.com" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                required 
-              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="email" 
+                  placeholder="name@company.com" 
+                  value={email} 
+                  onChange={e => handleEmailChange(e.target.value)} 
+                  disabled={!isLogin && isEmailVerified}
+                  required 
+                  style={{ flex: 1 }}
+                />
+                {!isLogin && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                  <button
+                    type="button"
+                    disabled={isEmailVerified}
+                    onClick={() => {
+                      setVerifyTarget({ type: 'email', value: email.trim(), role, isSignup: true });
+                    }}
+                    className={`px-4 text-xs font-bold rounded-xl transition-all ${
+                      isEmailVerified 
+                        ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/50 cursor-default'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                    style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {isEmailVerified ? 'Verified ✓' : 'Verify'}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="input-group relative">
@@ -1292,11 +1328,17 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
           onClose={() => setVerifyTarget(null)}
           type={verifyTarget.type}
           value={verifyTarget.value}
-          role="seeker"
+          role={verifyTarget.role || role}
+          isSignup={verifyTarget.isSignup || false}
           userEmail={email}
           onSuccess={() => {
-            setPhoneVerified(true);
-            toast.success('Phone number verified successfully!');
+            if (verifyTarget.type === 'email') {
+              setIsEmailVerified(true);
+              toast.success('Email verified successfully!');
+            } else {
+              setPhoneVerified(true);
+              toast.success('Phone number verified successfully!');
+            }
           }}
         />
       )}

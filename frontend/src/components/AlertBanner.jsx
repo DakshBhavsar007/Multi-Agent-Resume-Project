@@ -18,16 +18,16 @@ export default function AlertBanner() {
   useEffect(() => {
     if (recruiter) {
       setUnverifiedEmail(!recruiter.email_verified);
-      setUnverifiedPhone(!recruiter.phone_verified);
-      setShowBanner(!recruiter.email_verified || !recruiter.phone_verified);
+      setUnverifiedPhone(false);
+      setShowBanner(!recruiter.email_verified);
     } else if (seeker) {
       setUnverifiedEmail(!seeker.email_verified);
       setUnverifiedPhone(!seeker.phone_verified);
       setShowBanner(!seeker.email_verified || !seeker.phone_verified);
     } else if (developer) {
       setUnverifiedEmail(!developer.is_verified);
-      setUnverifiedPhone(!developer.phone_verified);
-      setShowBanner(!developer.is_verified || !developer.phone_verified);
+      setUnverifiedPhone(false);
+      setShowBanner(!developer.is_verified);
     } else {
       setShowBanner(false);
     }

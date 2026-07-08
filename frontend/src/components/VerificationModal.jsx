@@ -19,7 +19,7 @@ const getApiBase = () => {
 
 const API_BASE_URL = getApiBase();
 
-export default function VerificationModal({ isOpen, onClose, type, value, role, userEmail, onSuccess }) {
+export default function VerificationModal({ isOpen, onClose, type, value, role, userEmail, onSuccess, isSignup }) {
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -56,6 +56,7 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
       if (type === 'email') {
         endpoint = `${API_BASE_URL}/api/v1/auth/verification/send-email-otp`;
         payload.email = value;
+        payload.is_signup = isSignup || false;
       } else {
         endpoint = `${API_BASE_URL}/api/v1/auth/verification/send-phone-otp`;
         payload.phone = value;
