@@ -72,3 +72,9 @@ backend/scratch/
 /*.pdf
 *.pdf
 
+# ML Model artifacts (trained at build time on Render)
+backend/models/*.pkl
+backend/models/ner_resume_parser/
+backend/datasets/Salary.csv
+backend/datasets/DSL-StrongPasswordData.csv
+backend/datasets/Resume/

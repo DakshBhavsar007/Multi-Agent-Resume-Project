@@ -28,11 +28,44 @@ class SalaryPredictionAgent:
         # Feature vector size: 9 features
         return [exp, is_remote, is_bengaluru, is_sf, is_london, has_ai_ml, has_frontend, has_backend, has_devops]
 
+    def _predict_with_local_model(self, X_features: list, currency: str) -> tuple:
+        """Loads the pre-trained RandomForest model from models/salary_model.pkl and predicts min/max salary with currency scaling."""
+        import pickle
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        model_path = os.path.abspath(os.path.join(current_dir, "..", "models", "salary_model.pkl"))
+        if os.path.exists(model_path):
+            with open(model_path, "rb") as f:
+                data = pickle.load(f)
+            min_model = data["min_model"]
+            max_model = data["max_model"]
+            pred_min = float(min_model.predict([X_features])[0])
+            pred_max = float(max_model.predict([X_features])[0])
+            
+            # Apply currency scaling factors
+            if currency == "INR":
+                # Convert USD thousands to INR Lakhs (e.g. $100k USD -> 10.0 Lakhs INR)
+                scale = 0.10
+            elif currency == "GBP":
+                # Convert USD thousands to GBP thousands (e.g. $100k USD -> 75k GBP)
+                scale = 0.75
+            elif currency == "EUR":
+                # Convert USD thousands to EUR thousands (e.g. $100k USD -> 85k EUR)
+                scale = 0.85
+            else:
+                scale = 1.0
+                
+            return pred_min * scale, pred_max * scale
+        return None, None
+
     def predict_expected_salary(self, skills: list, experience_years: float, location: str, currency: str = "USD") -> dict:
         """
         Predicts predicted min and max salary for a given set of skills, experience, and location
         using a local GradientBoostingRegressor trained dynamically on active job listings.
         """
+        target_currency = currency if currency in ["USD", "INR", "GBP", "EUR"] else "USD"
+        current_features = self._extract_job_features(skills, experience_years, location, target_currency)
+        
+        # 1. Try: Dynamic local database training
         try:
             from api.models import Session
             
@@ -40,7 +73,7 @@ class SalaryPredictionAgent:
             sessions = Session.objects.exclude(criteria__salary_min__isnull=True).exclude(criteria__salary_max__isnull=True)
             
             # Filter sessions matching target currency to train a clean local model
-            sessions = [s for s in sessions if s.criteria.get("salary_currency", "USD") == currency]
+            sessions = [s for s in sessions if s.criteria.get("salary_currency", "USD") == target_currency]
             
             if len(sessions) >= 8:
                 from sklearn.ensemble import GradientBoostingRegressor
@@ -55,7 +88,7 @@ class SalaryPredictionAgent:
                     job_exp = crit.get("min_experience", 0.0)
                     job_loc = crit.get("preferred_locations", ["Remote"])[0] if crit.get("preferred_locations") else "Remote"
                     
-                    features = self._extract_job_features(job_skills, job_exp, job_loc, currency)
+                    features = self._extract_job_features(job_skills, job_exp, job_loc, target_currency)
                     X.append(features)
                     y_min.append(float(crit.get("salary_min")))
                     y_max.append(float(crit.get("salary_max")))
@@ -69,9 +102,8 @@ class SalaryPredictionAgent:
                 reg_max.fit(X, y_max)
                 
                 # Predict for current candidate profile
-                current_features = [self._extract_job_features(skills, experience_years, location, currency)]
-                pred_min = float(reg_min.predict(current_features)[0])
-                pred_max = float(reg_max.predict(current_features)[0])
+                pred_min = float(reg_min.predict([current_features])[0])
+                pred_max = float(reg_max.predict([current_features])[0])
                 
                 # Ensure constraints: max >= min and round values
                 pred_min = max(0.0, round(pred_min, 1))
@@ -80,14 +112,30 @@ class SalaryPredictionAgent:
                 return {
                     "predicted_min": pred_min,
                     "predicted_max": pred_max,
-                    "currency": currency,
+                    "currency": target_currency,
                     "model_type": "GradientBoostingRegressor (Dynamic Local)",
                     "confidence": "High (Trained on local market data)"
                 }
         except Exception as pred_err:
             pass
             
-        # 2. Rule-based fallback if ML fails or insufficient training samples are present
+        # 2. Try: Pre-trained offline RandomForest model fallback
+        try:
+            pred_min, pred_max = self._predict_with_local_model(current_features, target_currency)
+            if pred_min is not None and pred_max is not None:
+                pred_min = max(0.0, round(pred_min, 1))
+                pred_max = max(pred_min, round(pred_max, 1))
+                return {
+                    "predicted_min": pred_min,
+                    "predicted_max": pred_max,
+                    "currency": target_currency,
+                    "model_type": "RandomForestRegressor (Pre-trained Offline)",
+                    "confidence": "High (Kaggle Baseline + Synthetic adjustments)"
+                }
+        except Exception as offline_err:
+            pass
+            
+        # 3. Fallback: Rule-based engine if ML fails or insufficient training samples are present
         base_rates = {
             "USD": {"base": 80.0, "exp_factor": 15.0, "ai_bonus": 20.0, "sf_bonus": 30.0},
             "INR": {"base": 8.0, "exp_factor": 2.5, "ai_bonus": 5.0, "sf_bonus": 0.0},
@@ -95,7 +143,7 @@ class SalaryPredictionAgent:
             "EUR": {"base": 50.0, "exp_factor": 8.0, "ai_bonus": 12.0, "sf_bonus": 0.0},
         }
         
-        rate = base_rates.get(currency, base_rates["USD"])
+        rate = base_rates.get(target_currency, base_rates["USD"])
         
         # Calculate baseline
         val_min = rate["base"] + (float(experience_years) * rate["exp_factor"])
@@ -115,7 +163,7 @@ class SalaryPredictionAgent:
         return {
             "predicted_min": round(val_min, 1),
             "predicted_max": round(val_max, 1),
-            "currency": currency,
+            "currency": target_currency,
             "model_type": "Statistical Baseline Rule Engine",
-            "confidence": "Medium (Insufficient training data)"
+            "confidence": "Medium (Fallback)"
         }
