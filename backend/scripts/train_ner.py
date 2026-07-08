@@ -6,9 +6,11 @@ import spacy
 from spacy.training.example import Example
 from spacy.util import filter_spans
 
-# File Paths
-DATASET_PATH = r"c:\Users\parul\Desktop\Resume Project\DAIICT_Hackathon-26\backend\datasets\Entity Recognition in Resumes.json"
-MODEL_DIR = r"c:\Users\parul\Desktop\Resume Project\DAIICT_Hackathon-26\backend\models\ner_resume_parser"
+# File Paths dynamically resolved relative to the script directory
+SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.abspath(os.path.join(SCRIPTS_DIR, ".."))
+DATASET_PATH = os.path.join(BACKEND_DIR, "datasets", "Entity Recognition in Resumes.json")
+MODEL_DIR = os.path.join(BACKEND_DIR, "models", "ner_resume_parser")
 
 def load_data():
     print(f"Loading dataset from: {DATASET_PATH}")
