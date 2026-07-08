@@ -441,11 +441,17 @@ def get_applicant_results(request, session_id):
     if str(session.company_id) != str(request.company.id):
         return JsonResponse(error_response("Permission denied"), status=403)
 
-    candidates = Candidate.objects.filter(session=session, deleted_at__isnull=True)
+    from django.db.models import Prefetch
+    candidates = Candidate.objects.filter(session=session, deleted_at__isnull=True).prefetch_related(
+        Prefetch(
+            'round_attempts',
+            queryset=ApplicantRoundAttempt.objects.select_related('round')
+        )
+    )
     results = []
 
     for c in candidates:
-        attempts = ApplicantRoundAttempt.objects.filter(candidate=c)
+        attempts = c.round_attempts.all()
         attempts_data = []
         overall_scores_sum = 0
         valid_scores_count = 0
@@ -527,8 +533,11 @@ def generate_test_links(request, session_id):
     rounds = SessionRound.objects.filter(session=session)
     generated = []
 
+    candidates = Candidate.objects.filter(id__in=candidate_ids, session=session)
+    candidate_map = {str(c.id): c for c in candidates}
+
     for cid in candidate_ids:
-        candidate = Candidate.objects.filter(id=cid, session=session).first()
+        candidate = candidate_map.get(str(cid))
         if not candidate:
             continue
 
