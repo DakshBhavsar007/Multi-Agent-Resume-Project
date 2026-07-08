@@ -137,6 +137,25 @@ class AtsParsingAgent:
             os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
             current_dir = os.path.dirname(os.path.abspath(__file__))
             model_path = os.path.abspath(os.path.join(current_dir, "..", "models", "ner_resume_parser"))
+            
+            # Download from Hugging Face if local SpaCy model folder doesn't exist
+            if not os.path.exists(model_path) or not os.path.exists(os.path.join(model_path, "config.cfg")):
+                repo_id = os.environ.get("HF_MODEL_REPO")
+                if repo_id:
+                    try:
+                        logger.info("Local SpaCy model not found. Downloading from Hugging Face: %s", repo_id)
+                        from huggingface_hub import snapshot_download
+                        models_parent = os.path.abspath(os.path.join(current_dir, "..", "models"))
+                        snapshot_download(
+                            repo_id=repo_id,
+                            allow_patterns="ner_resume_parser/*",
+                            local_dir=models_parent,
+                            local_dir_use_symlinks=False
+                        )
+                        logger.info("Successfully downloaded SpaCy model from Hugging Face.")
+                    except Exception as hf_err:
+                        logger.error("Failed to download SpaCy model from Hugging Face: %s", hf_err)
+            
             self._nlp = spacy.load(model_path)
         return self._nlp
 

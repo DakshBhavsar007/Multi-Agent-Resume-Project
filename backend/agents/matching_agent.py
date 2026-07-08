@@ -167,6 +167,17 @@ class SemanticMatchingAgent:
                 import pickle
                 current_dir = os.path.dirname(os.path.abspath(__file__))
                 model_path = os.path.abspath(os.path.join(current_dir, "..", "models", "matching_model.pkl"))
+                
+                # Download from Hugging Face if local model doesn't exist
+                if not os.path.exists(model_path):
+                    repo_id = os.environ.get("HF_MODEL_REPO")
+                    if repo_id:
+                        try:
+                            from huggingface_hub import hf_hub_download
+                            model_path = hf_hub_download(repo_id=repo_id, filename="matching_model.pkl")
+                        except Exception as hf_err:
+                            pass
+                            
                 if os.path.exists(model_path):
                     with open(model_path, "rb") as f:
                         clf_offline = pickle.load(f)
