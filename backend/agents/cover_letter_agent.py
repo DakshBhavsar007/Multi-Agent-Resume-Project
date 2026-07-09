@@ -11,7 +11,18 @@ class CoverLetterGeneratorAgent:
         Align the seeker's skills and experience with the job description requirements.
         Keep it professional, authentic, and polite. Return the text of the cover letter only."""
 
-        skills_str = ", ".join(seeker_skills) if seeker_skills else "software development"
+        flat_skills = []
+        for s in (seeker_skills or []):
+            if isinstance(s, dict):
+                name = s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or s.get("name") or str(s)
+                if name:
+                    flat_skills.append(name)
+            elif isinstance(s, str):
+                flat_skills.append(s)
+            else:
+                flat_skills.append(str(s))
+        
+        skills_str = ", ".join(flat_skills) if flat_skills else "software development"
         exp_str = str(seeker_experience)[:1500] if seeker_experience else "General experience"
         
         prompt = f"""Write a tailored cover letter for:

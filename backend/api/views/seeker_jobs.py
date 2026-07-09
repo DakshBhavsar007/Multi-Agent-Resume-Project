@@ -299,7 +299,6 @@ def apply_job(request, session_id):
         if seeker.tier != "premium":
             from django.utils import timezone
             from datetime import timedelta
-            from api.models import JobApplication
             thirty_days_ago = timezone.now() - timedelta(days=30)
             app_count = JobApplication.objects.filter(seeker=seeker, applied_at__gte=thirty_days_ago).count()
             if app_count >= 3:
@@ -859,7 +858,7 @@ def generate_cover_letter(request):
         agent = CoverLetterGeneratorAgent()
         
         # Pull candidate details
-        seeker_skills = seeker.skills or []
+        seeker_skills = _get_flat_skills(seeker.skills or [])
         seeker_experience = seeker.resume_data.get("experience") or seeker.resume_data.get("work_experience") or []
         
         letter = agent.generate_cover_letter(
