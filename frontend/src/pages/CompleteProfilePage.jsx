@@ -7,11 +7,8 @@ import { authAPI, seekerAPI } from '../lib/api';
 import { portalAuth } from '../lib/portalApi';
 import { toast } from 'react-hot-toast';
 import { Loader2, ShieldCheck, Mail, User, Phone, MapPin, Briefcase, Globe, Landmark, Users, ArrowRight } from 'lucide-react';
-<<<<<<< HEAD
-=======
 import { LocationSelector } from '../components/ui/LocationSelector';
 import VerificationModal from '../components/VerificationModal';
->>>>>>> 99190c749a7974c21c3edfd30768f9ab085cba53
 
 export default function CompleteProfilePage() {
   const navigate = useNavigate();
