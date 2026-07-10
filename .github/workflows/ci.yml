@@ -25,6 +25,14 @@ jobs:
           cd frontend
           npm install
 
+      - name: Create frontend env file
+        run: |
+          cd frontend
+          echo "VITE_API_URL=http://127.0.0.1:8000/api/v1" >> .env.local
+          echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" >> .env.local
+          echo "VITE_GITHUB_CLIENT_ID=${{ secrets.VITE_GITHUB_CLIENT_ID }}" >> .env.local
+          echo "VITE_GITHUB_REDIRECT_URI=http://localhost:5173/auth/github/callback" >> .env.local
+
       - name: Run build check
         run: |
           cd frontend
