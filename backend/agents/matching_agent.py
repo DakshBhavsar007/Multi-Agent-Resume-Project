@@ -160,6 +160,32 @@ class SemanticMatchingAgent:
         except Exception as ml_err:
             pass
             
+        # Try offline pre-trained matching model fallback if local database training has insufficient samples
+        if hired_probability is None:
+            try:
+                import os
+                import pickle
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                model_path = os.path.abspath(os.path.join(current_dir, "..", "models", "matching_model.pkl"))
+                
+                # Download from Hugging Face if local model doesn't exist
+                if not os.path.exists(model_path):
+                    repo_id = os.environ.get("HF_MODEL_REPO")
+                    if repo_id:
+                        try:
+                            from huggingface_hub import hf_hub_download
+                            model_path = hf_hub_download(repo_id=repo_id, filename="matching_model.pkl")
+                        except Exception as hf_err:
+                            pass
+                            
+                if os.path.exists(model_path):
+                    with open(model_path, "rb") as f:
+                        clf_offline = pickle.load(f)
+                    features = [[skill_score, exp_score, loc_score]]
+                    hired_probability = float(clf_offline.predict_proba(features)[0][1]) * 100
+            except Exception as offline_ml_err:
+                pass
+            
         if hired_probability is not None:
             # Blend manual weighted score with ML hiring probability (80% manual, 20% ML prediction)
             final = round(0.8 * final + 0.2 * hired_probability, 1)

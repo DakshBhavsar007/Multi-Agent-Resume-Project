@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from api.models import (
     Session, SessionRound, Candidate, MCQQuestion, CodingProblem,
-    ApplicantRoundAttempt, RoundType, JobApplication
+    ApplicantRoundAttempt, RoundType, JobApplication, SeekerMockAttempt
 )
 from api.decorators import require_api_key
 from models.schemas import success_response, error_response
@@ -32,18 +32,6 @@ PROBLEM_CALL_MAPPING = {
     "valid-parentheses": {
         "python": "is_valid(inp['s'])",
         "javascript": "isValid(inp.s)"
-    },
-    "fizz-buzz": {
-        "python": "fizz_buzz(inp['n'])",
-        "javascript": "fizzBuzz(inp.n)"
-    },
-    "reverse-string": {
-        "python": "reverse_string(inp['s'])",
-        "javascript": "reverseString(inp.s)"
-    },
-    "fibonacci-number": {
-        "python": "fib(inp['n'])",
-        "javascript": "fib(inp.n)"
     }
 }
 
@@ -453,11 +441,17 @@ def get_applicant_results(request, session_id):
     if str(session.company_id) != str(request.company.id):
         return JsonResponse(error_response("Permission denied"), status=403)
 
-    candidates = Candidate.objects.filter(session=session, deleted_at__isnull=True)
+    from django.db.models import Prefetch
+    candidates = Candidate.objects.filter(session=session, deleted_at__isnull=True).prefetch_related(
+        Prefetch(
+            'round_attempts',
+            queryset=ApplicantRoundAttempt.objects.select_related('round')
+        )
+    )
     results = []
 
     for c in candidates:
-        attempts = ApplicantRoundAttempt.objects.filter(candidate=c)
+        attempts = c.round_attempts.all()
         attempts_data = []
         overall_scores_sum = 0
         valid_scores_count = 0
@@ -539,8 +533,11 @@ def generate_test_links(request, session_id):
     rounds = SessionRound.objects.filter(session=session)
     generated = []
 
+    candidates = Candidate.objects.filter(id__in=candidate_ids, session=session)
+    candidate_map = {str(c.id): c for c in candidates}
+
     for cid in candidate_ids:
-        candidate = Candidate.objects.filter(id=cid, session=session).first()
+        candidate = candidate_map.get(str(cid))
         if not candidate:
             continue
 
@@ -770,6 +767,727 @@ def get_coding_problems(request):
         })
 
     return JsonResponse(success_response(data))
+
+
+@csrf_exempt
+@require_test_token
+def run_code(request):
+    """
+    POST /api/v1/test/run-code
+    Runs code against public test cases or custom input.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    try:
+        data = json.loads(request.body)
+        code = data.get("code")
+        language = data.get("language", "").lower()
+        slug = data.get("slug")
+        custom_input_raw = data.get("custom_input", None)
+    except Exception as e:
+        return JsonResponse(error_response("Invalid JSON"), status=400)
+
+    problem = CodingProblem.objects.filter(slug=slug).first()
+    if not problem:
+        return JsonResponse(error_response("Problem not found"), status=404)
+
+    is_custom_run = False
+    if custom_input_raw is not None and custom_input_raw.strip() != "":
+        is_custom_run = True
+        try:
+            parsed_input = json.loads(custom_input_raw)
+            if not isinstance(parsed_input, dict):
+                parsed_input = {"input": parsed_input}
+        except Exception:
+            parsed_input = {"input": custom_input_raw}
+        
+        test_cases = [{
+            "input": parsed_input,
+            "expected_output": None
+        }]
+    else:
+        test_cases = problem.test_cases
+
+    if not test_cases:
+        return JsonResponse(success_response({"all_passed": True, "results": []}))
+
+    run_results = []
+    all_passed = True
+    user_stdout = ""
+    user_stderr = ""
+    elapsed_seconds = 0.0
+    peak_memory_kb = 0
+
+    try:
+        if language == "python":
+            import json as py_json
+            import re
+            import time
+            inputs = [tc["input"] for tc in test_cases]
+            inputs_json = py_json.dumps(inputs)
+            
+            func_name = None
+            if problem.starter_code and isinstance(problem.starter_code, dict):
+                match = re.search(r'def\s+([a-zA-Z0-9_]+)\s*\(', problem.starter_code.get("python", ""))
+                if match:
+                    func_name = match.group(1)
+            
+            if func_name:
+                call_code = f"{func_name}(**inp)"
+            else:
+                call_code = PROBLEM_CALL_MAPPING.get(slug, {}).get("python", "None")
+
+            runner_code = f"""
+import json
+import sys
+import tracemalloc
+
+# User submitted code
+{code}
+
+inputs = json.loads('''{inputs_json}''')
+results = []
+tracemalloc.start()
+
+for idx, inp in enumerate(inputs):
+    try:
+        res = {call_code}
+        results.append({{"success": True, "output": res}})
+    except Exception as e:
+        results.append({{"success": False, "error": str(e)}})
+
+current, peak = tracemalloc.get_traced_memory()
+tracemalloc.stop()
+
+print("___TEST_RESULTS___")
+print(json.dumps({{"results": results, "peak_memory_bytes": peak}}))
+"""
+            with tempfile.NamedTemporaryFile(suffix=".py", delete=False, mode="w", encoding="utf-8") as f:
+                f.write(runner_code)
+                temp_filename = f.name
+
+            try:
+                start_time = time.perf_counter()
+                proc = subprocess.run(
+                    ["python", temp_filename],
+                    capture_output=True,
+                    text=True,
+                    timeout=2.5
+                )
+                end_time = time.perf_counter()
+                elapsed_seconds = end_time - start_time
+                stdout = proc.stdout
+                stderr = proc.stderr
+
+                if "___TEST_RESULTS___" in stdout:
+                    parts = stdout.split("___TEST_RESULTS___")
+                    user_stdout = parts[0].strip()
+                    payload = py_json.loads(parts[1].strip())
+                    outputs = payload.get("results", [])
+                    peak_memory_kb = int(payload.get("peak_memory_bytes", 0) / 1024)
+
+                    for idx, out in enumerate(outputs):
+                        tc = test_cases[idx]
+                        expected = tc.get("expected_output")
+                        
+                        if out.get("success"):
+                            actual = out.get("output")
+                            if is_custom_run:
+                                run_results.append({
+                                    "passed": True,
+                                    "input": tc["input"],
+                                    "expected": None,
+                                    "actual": actual
+                                })
+                            else:
+                                passed = (actual == expected)
+                                run_results.append({
+                                    "passed": passed,
+                                    "input": tc["input"],
+                                    "expected": expected,
+                                    "actual": actual
+                                })
+                                if not passed:
+                                    all_passed = False
+                        else:
+                            all_passed = False
+                            run_results.append({
+                                "passed": False,
+                                "input": tc["input"],
+                                "expected": expected,
+                                "error": out.get("error")
+                            })
+                else:
+                    all_passed = False
+                    user_stderr = stderr or stdout or "Execution failed with exit code"
+                    run_results.append({
+                        "passed": False,
+                        "error": user_stderr
+                    })
+            finally:
+                os.remove(temp_filename)
+
+        elif language in ["javascript", "js"]:
+            import json as js_json
+            import re
+            import time
+            inputs = [tc["input"] for tc in test_cases]
+            inputs_json = js_json.dumps(inputs)
+            
+            func_name = None
+            if problem.starter_code and isinstance(problem.starter_code, dict):
+                match = re.search(r'function\s+([a-zA-Z0-9_]+)\s*\(', problem.starter_code.get("javascript", ""))
+                if match:
+                    func_name = match.group(1)
+            
+            if func_name:
+                call_code = f"{func_name}(...Object.values(inp))"
+            else:
+                call_code = PROBLEM_CALL_MAPPING.get(slug, {}).get("javascript", "null")
+
+            runner_code = f"""
+const fs = require('fs');
+
+# User submitted code
+{code}
+
+const inputs = JSON.parse('{inputs_json}');
+const results = [];
+for (let idx = 0; idx < inputs.length; idx++) {{
+    const inp = inputs[idx];
+    try {{
+        const res = {call_code};
+        results.push({{success: true, output: res}});
+    }} catch (e) {{
+        results.push({{success: false, error: e.message}});
+    }}
+}}
+
+const peak = process.memoryUsage().rss;
+console.log("___TEST_RESULTS___");
+console.log(JSON.stringify({{ results: results, peak_memory_bytes: peak }}));
+"""
+            with tempfile.NamedTemporaryFile(suffix=".js", delete=False, mode="w", encoding="utf-8") as f:
+                f.write(runner_code)
+                temp_filename = f.name
+
+            try:
+                start_time = time.perf_counter()
+                proc = subprocess.run(
+                    ["node", temp_filename],
+                    capture_output=True,
+                    text=True,
+                    timeout=2.5
+                )
+                end_time = time.perf_counter()
+                elapsed_seconds = end_time - start_time
+                stdout = proc.stdout
+                stderr = proc.stderr
+
+                if "___TEST_RESULTS___" in stdout:
+                    parts = stdout.split("___TEST_RESULTS___")
+                    user_stdout = parts[0].strip()
+                    payload = js_json.loads(parts[1].strip())
+                    outputs = payload.get("results", [])
+                    peak_memory_kb = int(payload.get("peak_memory_bytes", 0) / 1024)
+
+                    for idx, out in enumerate(outputs):
+                        tc = test_cases[idx]
+                        expected = tc.get("expected_output")
+
+                        if out.get("success"):
+                            actual = out.get("output")
+                            if is_custom_run:
+                                run_results.append({
+                                    "passed": True,
+                                    "input": tc["input"],
+                                    "expected": None,
+                                    "actual": actual
+                                })
+                            else:
+                                passed = (actual == expected)
+                                run_results.append({
+                                    "passed": passed,
+                                    "input": tc["input"],
+                                    "expected": expected,
+                                    "actual": actual
+                                })
+                                if not passed:
+                                    all_passed = False
+                        else:
+                            all_passed = False
+                            run_results.append({
+                                "passed": False,
+                                "input": tc["input"],
+                                "expected": expected,
+                                "error": out.get("error")
+                            })
+                else:
+                    all_passed = False
+                    user_stderr = stderr or stdout or "Execution failed with exit code"
+                    run_results.append({
+                        "passed": False,
+                        "error": user_stderr
+                    })
+            finally:
+                os.remove(temp_filename)
+        else:
+            return JsonResponse(error_response("Supported execution languages are Python and JavaScript"), status=400)
+
+    except subprocess.TimeoutExpired:
+        all_passed = False
+        run_results = [{"passed": False, "error": "Execution Timed Out (Limit: 2.5 seconds)"}]
+    except Exception as e:
+        all_passed = False
+        run_results = [{"passed": False, "error": f"Internal Runner Error: {str(e)}"}]
+
+    return JsonResponse(success_response({
+        "all_passed": all_passed,
+        "results": run_results,
+        "user_stdout": user_stdout,
+        "user_stderr": user_stderr,
+        "execution_time_sec": round(elapsed_seconds, 3),
+        "memory_usage_kb": peak_memory_kb
+    }))
+
+
+@csrf_exempt
+@require_test_token
+def submit_coding(request):
+    """
+    POST /api/v1/test/submit-coding
+    Final submission of coding answers.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    attempt = request.attempt
+    try:
+        data = json.loads(request.body)
+        submissions = data.get("submissions", [])  # [{"slug": "...", "code": "...", "language": "...", "results": [...]}]
+    except Exception as e:
+        return JsonResponse(error_response("Invalid JSON"), status=400)
+
+    passed_count = 0
+    for sub in submissions:
+        all_passed = sub.get("all_passed", False)
+        if all_passed:
+            passed_count += 1
+
+    total_problems = len(submissions)
+    score = round((passed_count / total_problems) * 100, 2) if total_problems > 0 else 0
+
+    attempt.coding_submissions = submissions
+    attempt.coding_score = score
+    attempt.submitted_at = timezone.now()
+    attempt.status = "submitted"
+    attempt.overall_score = score
+    attempt.save()
+
+    # Automatically evaluate candidate pipeline progression
+    auto_progress_candidate(attempt.candidate, attempt.round.session, score)
+
+    return JsonResponse(success_response({
+        "score": score,
+        "passed_count": passed_count,
+        "total_problems": total_problems
+    }))
+
+
+@csrf_exempt
+@require_test_token
+def get_interview_questions(request):
+    """
+    GET /api/v1/test/interview-questions
+    Gets interview questions pre-generated for this candidate/session.
+    """
+    attempt = request.attempt
+    sr = request.round
+
+    if attempt.status == "pending":
+        attempt.status = "in_progress"
+        attempt.started_at = timezone.now()
+        attempt.save()
+
+    # Generate questions dynamically on-demand if not already generated
+    if not sr.interview_questions:
+        agent = InterviewAgent()
+        questions = agent.generate_questions(
+            job_title=sr.session.job_title,
+            job_description=sr.session.job_description,
+            candidate_resume=attempt.candidate.raw_resume_data or {},
+            manual_questions=[],
+            total_questions=sr.mcq_question_count or 5  # default/suggested questions count
+        )
+        sr.interview_questions = questions
+        sr.save()
+
+    # Return questions list (only question texts and index)
+    qs_served = []
+    for idx, q in enumerate(sr.interview_questions):
+        qs_served.append({
+            "index": idx,
+            "q": q.get("q")
+        })
+
+    return JsonResponse(success_response(qs_served))
+
+
+@csrf_exempt
+@require_test_token
+def submit_interview_answer(request):
+    """
+    POST /api/v1/test/submit-interview-answer
+    Submits a single transcribed answer and evaluates it in real-time.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    attempt = request.attempt
+    sr = request.round
+
+    try:
+        data = json.loads(request.body)
+        q_idx = int(data.get("question_index"))
+        answer_text = data.get("answer_text", "")
+        audio_path = data.get("audio_path", "")
+    except Exception as e:
+        return JsonResponse(error_response("Invalid JSON"), status=400)
+
+    questions = sr.interview_questions
+    if q_idx < 0 or q_idx >= len(questions):
+        return JsonResponse(error_response("Invalid question index"), status=400)
+
+    question_obj = questions[q_idx]
+    expected_keywords = question_obj.get("expected_keywords", [])
+
+    agent = InterviewAgent()
+    eval_res = agent.evaluate_answer(
+        question=question_obj.get("q"),
+        expected_keywords=expected_keywords,
+        answer_text=answer_text,
+        job_title=sr.session.job_title
+    )
+
+    # Save to candidate attempt transcript
+    transcript = attempt.interview_transcript or []
+    # Replace if index already answered (e.g. retry) or append
+    existing_idx = None
+    for i, t in enumerate(transcript):
+        if t.get("question_index") == q_idx:
+            existing_idx = i
+            break
+
+    answer_record = {
+        "question_index": q_idx,
+        "q": question_obj.get("q"),
+        "answer_text": answer_text,
+        "audio_path": audio_path,
+        "relevance_score": eval_res.get("relevance_score"),
+        "depth_score": eval_res.get("depth_score"),
+        "accuracy_score": eval_res.get("accuracy_score"),
+        "keywords_hit": eval_res.get("keywords_hit", []),
+        "keywords_missed": eval_res.get("keywords_missed", []),
+        "feedback": eval_res.get("feedback"),
+        "asked_at": timezone.now().isoformat(),  # simplified timestamps
+        "answered_at": timezone.now().isoformat()
+    }
+
+    if existing_idx is not None:
+        transcript[existing_idx] = answer_record
+    else:
+        transcript.append(answer_record)
+
+    attempt.interview_transcript = transcript
+    attempt.save()
+
+    return JsonResponse(success_response(eval_res))
+
+
+@csrf_exempt
+@require_test_token
+def finalize_interview(request):
+    """
+    POST /api/v1/test/finalize-interview
+    Finalizes the interview, generating overall summary.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    attempt = request.attempt
+    sr = request.round
+
+    transcript = attempt.interview_transcript or []
+    agent = InterviewAgent()
+    summary = agent.generate_interview_summary(
+        transcript=transcript,
+        job_title=sr.session.job_title,
+        candidate_name=attempt.candidate.name or "Candidate"
+    )
+
+    attempt.interview_score = summary.get("overall_score", 0)
+    attempt.interview_summary = summary.get("detailed_summary", "")
+    attempt.interview_recommendation = summary.get("recommendation", "")
+    attempt.interview_hiring_likelihood = summary.get("hiring_likelihood", "")
+    attempt.submitted_at = timezone.now()
+    attempt.status = "submitted"
+    attempt.overall_score = summary.get("overall_score", 0)
+    attempt.save()
+
+    # Recruiter review decision required: skip auto progression for interview attempts.
+    cand = attempt.candidate
+    rec = summary.get("recommendation", "").lower()
+    score = summary.get("overall_score", 0)
+    if score == 0 and ("proceed" in rec or "hire" in rec):
+        score = 70.0
+    # auto_progress_candidate is skipped here to let recruiter decide manually
+
+    return JsonResponse(success_response(summary))
+
+
+@csrf_exempt
+@require_test_token
+def transcribe_audio(request):
+    """
+    POST /api/v1/test/transcribe-audio
+    Transcribes audio using Groq Whisper API.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    audio_file = request.FILES.get("audio")
+    if not audio_file:
+        return JsonResponse(error_response("No audio file found"), status=400)
+
+    groq_key = os.environ.get("GROQ_API_KEY")
+    if not groq_key:
+        return JsonResponse(error_response("Groq API key not configured"), status=500)
+
+    try:
+        client = OpenAI(
+            api_key=groq_key,
+            base_url="https://api.groq.com/openai/v1"
+        )
+        
+        # Read the file data
+        file_bytes = audio_file.read()
+        file_name = audio_file.name or "audio.webm"
+
+        # Call Groq Whisper API
+        transcription = client.audio.transcriptions.create(
+            file=(file_name, file_bytes, "audio/webm"),
+            model="whisper-large-v3-turbo",
+            language="en"
+        )
+        
+        return JsonResponse(success_response({"text": transcription.text}))
+    except Exception as e:
+        logger.error("Audio transcription failed: %s", e)
+        return JsonResponse(error_response(f"Transcription failed: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_test_token
+def save_proctoring_flag(request):
+    """
+    POST /api/v1/test/proctoring-flag
+    Appends proctoring flags in real-time.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    attempt = request.attempt
+    try:
+        data = json.loads(request.body)
+        flag_type = data.get("type")
+        screenshot = data.get("screenshot_base64")
+    except Exception as e:
+        return JsonResponse(error_response("Invalid JSON"), status=400)
+
+    flags = attempt.proctoring_flags or []
+    flags.append({
+        "type": flag_type,
+        "timestamp": timezone.now().isoformat(),
+        "screenshot_path": screenshot
+    })
+
+    attempt.proctoring_flags = flags
+
+    # Recalculate proctoring score
+    # Starts at 100, drops by 10 per violation, min is 0
+    score = max(0, 100 - (len(flags) * 10))
+    attempt.proctoring_score = score
+    attempt.save()
+
+    return JsonResponse(success_response({"proctoring_score": score, "flags_count": len(flags)}))
+
+
+@csrf_exempt
+@require_api_key
+def upload_question_paper(request):
+    """
+    POST /api/v1/sessions/upload-question-paper
+    Accepts multipart/form-data with 'file' (PDF/DOCX/TXT).
+    Extracts MCQ questions or Coding problems using LLM and seeds them.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    try:
+        uploaded_file = request.FILES.get("file")
+        if not uploaded_file:
+            return JsonResponse(error_response("No file uploaded"), status=400)
+
+        filename = uploaded_file.name
+        ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+        if ext not in ["pdf", "docx", "doc", "txt"]:
+            return JsonResponse(error_response("Only PDF, DOCX, and TXT files are supported"), status=400)
+
+        file_bytes = uploaded_file.read()
+        session_id = request.POST.get("session_id", None)
+        category = request.POST.get("category", "general")
+        round_type = request.POST.get("round_type", "mcq")
+
+        from agents.mcq_paper_parser_agent import MCQPaperParserAgent
+        agent = MCQPaperParserAgent()
+
+        if round_type == "coding":
+            problems = agent.extract_and_parse_coding(file_bytes, filename)
+            if not problems:
+                return JsonResponse(success_response({
+                    "message": "No coding problems could be extracted from this file.",
+                    "questions_extracted": 0,
+                    "created_in_db": 0,
+                    "slugs": [],
+                    "preview": []
+                }))
+            result = agent.save_coding_to_db(problems, session_id)
+            return JsonResponse(success_response({
+                "message": f"Successfully extracted {len(problems)} coding problems",
+                "questions_extracted": len(problems),
+                "created_in_db": result["created"],
+                "already_existed": result["skipped"],
+                "slugs": result["slugs"],
+                "preview": problems[:5]
+            }))
+        else:
+            questions = agent.extract_and_parse(file_bytes, filename, category)
+            if not questions:
+                return JsonResponse(success_response({
+                    "message": "No MCQ questions could be extracted from this file.",
+                    "questions_extracted": 0,
+                    "created_in_db": 0,
+                    "preview": []
+                }))
+            result = agent.save_to_db(questions, session_id)
+            return JsonResponse(success_response({
+                "message": f"Successfully extracted {len(questions)} MCQ questions",
+                "questions_extracted": len(questions),
+                "created_in_db": result["created"],
+                "already_existed": result["skipped"],
+                "preview": questions[:5]
+            }))
+    except ValueError as ve:
+        return JsonResponse(error_response(str(ve)), status=400)
+    except Exception as e:
+        logger.error("upload_question_paper error: %s", e)
+        return JsonResponse(error_response(f"Failed to process file: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_test_token
+def mock_submit(request):
+    """
+    POST /api/v1/test/mock-submit
+    Mock submit for testing purposes.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    attempt = request.attempt
+    try:
+        data = json.loads(request.body)
+        score = float(data.get("score", 85.0))
+    except Exception:
+        score = 85.0
+
+    attempt.status = "submitted"
+    attempt.overall_score = score
+    
+    if attempt.round.round_type == "mcq":
+        attempt.mcq_score = score
+    elif attempt.round.round_type == "coding":
+        attempt.coding_score = score
+    elif attempt.round.round_type == "interview":
+        attempt.interview_score = score
+        attempt.interview_recommendation = "Proceed" if score >= 50.0 else "Reject"
+        attempt.interview_summary = "Mock interview submission for testing."
+
+    attempt.submitted_at = timezone.now()
+    attempt.save()
+
+    # Run pipeline evaluation
+    auto_progress_candidate(attempt.candidate, attempt.round.session, score)
+
+    return JsonResponse(success_response({"message": "Mock submission successful", "score": score}))
+
+
+@csrf_exempt
+def mock_switch_round(request):
+    """
+    POST /api/v1/test/mock-switch-round
+    Forces a candidate to a specific round index for testing.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    try:
+        data = json.loads(request.body)
+        candidate_id = data.get("candidate_id")
+        target_round_number = int(data.get("round_number", 1))
+    except Exception as e:
+        return JsonResponse(error_response("Invalid JSON or parameters"), status=400)
+
+    from api.models import Candidate, SessionRound, ApplicantRoundAttempt
+    from django.utils import timezone
+    from datetime import timedelta
+    import secrets
+
+    candidate = Candidate.objects.filter(id=candidate_id).first()
+    if not candidate:
+        return JsonResponse(error_response("Candidate not found"), status=404)
+
+    # Force round index and reset status
+    candidate.current_round_index = target_round_number
+    candidate.status = "forwarded"  # Reset status so they are active in pipeline
+    candidate.save(update_fields=['current_round_index', 'status'])
+
+    # Find the corresponding SessionRound
+    sr = SessionRound.objects.filter(session=candidate.session, round_number=target_round_number).first()
+    if sr:
+        # Reset or create attempt for this round
+        attempt, created = ApplicantRoundAttempt.objects.get_or_create(
+            candidate=candidate,
+            round=sr,
+            defaults={
+                "access_token": secrets.token_urlsafe(32),
+                "token_expires_at": timezone.now() + timedelta(days=7),
+                "status": "pending"
+            }
+        )
+        # If it already existed, reset its status to pending so it can be retaken from scratch
+        if not created:
+            attempt.status = "pending"
+            attempt.mcq_score = None
+            attempt.coding_score = None
+            attempt.interview_score = None
+            attempt.overall_score = None
+            attempt.submitted_at = None
+            attempt.started_at = None
+            attempt.save()
+
+    return JsonResponse(success_response({"message": f"Successfully forced candidate to round {target_round_number}"}))
 
 
 def execute_problem_code(problem, code, language, custom_input_raw=None):
@@ -1031,486 +1749,6 @@ console.log(JSON.stringify({{results: results, peak_memory_bytes: 0}}));
     return all_passed, run_results, user_stdout, user_stderr, elapsed_seconds, peak_memory_kb
 
 
-@csrf_exempt
-@require_test_token
-def run_code(request):
-    """
-    POST /api/v1/test/run-code
-    Runs code against public test cases or custom input.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    try:
-        data = json.loads(request.body)
-        code = data.get("code")
-        language = data.get("language", "").lower()
-        slug = data.get("slug")
-        custom_input_raw = data.get("custom_input", None)
-    except Exception as e:
-        return JsonResponse(error_response("Invalid JSON"), status=400)
-
-    problem = CodingProblem.objects.filter(slug=slug).first()
-    if not problem:
-        return JsonResponse(error_response("Problem not found"), status=404)
-
-    try:
-        all_passed, run_results, user_stdout, user_stderr, elapsed_seconds, peak_memory_kb = execute_problem_code(
-            problem, code, language, custom_input_raw
-        )
-    except ValueError as ve:
-        return JsonResponse(error_response(str(ve)), status=400)
-
-    return JsonResponse(success_response({
-        "all_passed": all_passed,
-        "results": run_results,
-        "user_stdout": user_stdout,
-        "user_stderr": user_stderr,
-        "execution_time_sec": round(elapsed_seconds, 3),
-        "memory_usage_kb": peak_memory_kb
-    }))
-
-
-@csrf_exempt
-@require_test_token
-def submit_coding(request):
-    """
-    POST /api/v1/test/submit-coding
-    Final submission of coding answers.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    attempt = request.attempt
-    try:
-        data = json.loads(request.body)
-        submissions = data.get("submissions", [])  # [{"slug": "...", "code": "...", "language": "...", "results": [...]}]
-    except Exception as e:
-        return JsonResponse(error_response("Invalid JSON"), status=400)
-
-    passed_count = 0
-    for sub in submissions:
-        all_passed = sub.get("all_passed", False)
-        if all_passed:
-            passed_count += 1
-
-    total_problems = len(submissions)
-    score = round((passed_count / total_problems) * 100, 2) if total_problems > 0 else 0
-
-    attempt.coding_submissions = submissions
-    attempt.coding_score = score
-    attempt.submitted_at = timezone.now()
-    attempt.status = "submitted"
-    attempt.overall_score = score
-    attempt.save()
-
-    # Automatically evaluate candidate pipeline progression
-    auto_progress_candidate(attempt.candidate, attempt.round.session, score)
-
-    return JsonResponse(success_response({
-        "score": score,
-        "passed_count": passed_count,
-        "total_problems": total_problems
-    }))
-
-
-@csrf_exempt
-@require_test_token
-def get_interview_questions(request):
-    """
-    GET /api/v1/test/interview-questions
-    Gets interview questions pre-generated for this candidate/session.
-    """
-    attempt = request.attempt
-    sr = request.round
-
-    if attempt.status == "pending":
-        attempt.status = "in_progress"
-        attempt.started_at = timezone.now()
-        attempt.save()
-
-    # Generate questions dynamically on-demand if not already generated
-    if not sr.interview_questions:
-        agent = InterviewAgent()
-        questions = agent.generate_questions(
-            job_title=sr.session.job_title,
-            job_description=sr.session.job_description,
-            candidate_resume=attempt.candidate.raw_resume_data or {},
-            manual_questions=[],
-            total_questions=sr.mcq_question_count or 5  # default/suggested questions count
-        )
-        sr.interview_questions = questions
-        sr.save()
-
-    # Return questions list (only question texts and index)
-    qs_served = []
-    for idx, q in enumerate(sr.interview_questions):
-        qs_served.append({
-            "index": idx,
-            "q": q.get("q")
-        })
-
-    return JsonResponse(success_response(qs_served))
-
-
-@csrf_exempt
-@require_test_token
-def submit_interview_answer(request):
-    """
-    POST /api/v1/test/submit-interview-answer
-    Submits a single transcribed answer and evaluates it in real-time.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    attempt = request.attempt
-    sr = request.round
-
-    try:
-        data = json.loads(request.body)
-        q_idx = int(data.get("question_index"))
-        answer_text = data.get("answer_text", "")
-        audio_path = data.get("audio_path", "")
-    except Exception as e:
-        return JsonResponse(error_response("Invalid JSON"), status=400)
-
-    questions = sr.interview_questions
-    if q_idx < 0 or q_idx >= len(questions):
-        return JsonResponse(error_response("Invalid question index"), status=400)
-
-    question_obj = questions[q_idx]
-    expected_keywords = question_obj.get("expected_keywords", [])
-
-    agent = InterviewAgent()
-    eval_res = agent.evaluate_answer(
-        question=question_obj.get("q"),
-        expected_keywords=expected_keywords,
-        answer_text=answer_text,
-        job_title=sr.session.job_title
-    )
-
-    # Save to candidate attempt transcript
-    transcript = attempt.interview_transcript or []
-    # Replace if index already answered (e.g. retry) or append
-    existing_idx = None
-    for i, t in enumerate(transcript):
-        if t.get("question_index") == q_idx:
-            existing_idx = i
-            break
-
-    answer_record = {
-        "question_index": q_idx,
-        "q": question_obj.get("q"),
-        "answer_text": answer_text,
-        "audio_path": audio_path,
-        "relevance_score": eval_res.get("relevance_score"),
-        "depth_score": eval_res.get("depth_score"),
-        "accuracy_score": eval_res.get("accuracy_score"),
-        "keywords_hit": eval_res.get("keywords_hit", []),
-        "keywords_missed": eval_res.get("keywords_missed", []),
-        "feedback": eval_res.get("feedback"),
-        "asked_at": timezone.now().isoformat(),  # simplified timestamps
-        "answered_at": timezone.now().isoformat()
-    }
-
-    if existing_idx is not None:
-        transcript[existing_idx] = answer_record
-    else:
-        transcript.append(answer_record)
-
-    attempt.interview_transcript = transcript
-    attempt.save()
-
-    return JsonResponse(success_response(eval_res))
-
-
-@csrf_exempt
-@require_test_token
-def finalize_interview(request):
-    """
-    POST /api/v1/test/finalize-interview
-    Finalizes the interview, generating overall summary.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    attempt = request.attempt
-    sr = request.round
-
-    transcript = attempt.interview_transcript or []
-    agent = InterviewAgent()
-    summary = agent.generate_interview_summary(
-        transcript=transcript,
-        job_title=sr.session.job_title,
-        candidate_name=attempt.candidate.name or "Candidate"
-    )
-
-    attempt.interview_score = summary.get("overall_score", 0)
-    attempt.interview_summary = summary.get("detailed_summary", "")
-    attempt.interview_recommendation = summary.get("recommendation", "")
-    attempt.interview_hiring_likelihood = summary.get("hiring_likelihood", "")
-    attempt.submitted_at = timezone.now()
-    attempt.status = "submitted"
-    attempt.overall_score = summary.get("overall_score", 0)
-    attempt.save()
-
-    # Recruiter review decision required: skip auto progression for interview attempts.
-    cand = attempt.candidate
-    rec = (summary.get("recommendation") or "").lower()
-    score = summary.get("overall_score", 0)
-    if score == 0 and ("proceed" in rec or "hire" in rec):
-        score = 70.0
-    # auto_progress_candidate is skipped here to let recruiter decide manually
-
-    return JsonResponse(success_response(summary))
-
-
-@csrf_exempt
-@require_test_token
-def transcribe_audio(request):
-    """
-    POST /api/v1/test/transcribe-audio
-    Transcribes audio using Groq Whisper API.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    audio_file = request.FILES.get("audio")
-    if not audio_file:
-        return JsonResponse(error_response("No audio file found"), status=400)
-
-    groq_key = os.environ.get("GROQ_API_KEY")
-    if not groq_key:
-        return JsonResponse(error_response("Groq API key not configured"), status=500)
-
-    try:
-        import io
-        client = OpenAI(
-            api_key=groq_key,
-            base_url="https://api.groq.com/openai/v1"
-        )
-        
-        # Read the file data
-        file_bytes = audio_file.read()
-        file_name = audio_file.name or "audio.webm"
-
-        # Call Groq Whisper API
-        transcription = client.audio.transcriptions.create(
-            file=(file_name, io.BytesIO(file_bytes), "audio/webm"),
-            model="whisper-large-v3-turbo",
-            language="en"
-        )
-        
-        return JsonResponse(success_response({"text": transcription.text}))
-    except Exception as e:
-        logger.error("Audio transcription failed: %s", e)
-        return JsonResponse(error_response(f"Transcription failed: {str(e)}"), status=500)
-
-
-@csrf_exempt
-@require_test_token
-def save_proctoring_flag(request):
-    """
-    POST /api/v1/test/proctoring-flag
-    Appends proctoring flags in real-time.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    attempt = request.attempt
-    try:
-        data = json.loads(request.body)
-        flag_type = data.get("type")
-        screenshot = data.get("screenshot_base64")
-    except Exception as e:
-        return JsonResponse(error_response("Invalid JSON"), status=400)
-
-    flags = attempt.proctoring_flags or []
-    flags.append({
-        "type": flag_type,
-        "timestamp": timezone.now().isoformat(),
-        "screenshot_path": screenshot
-    })
-
-    attempt.proctoring_flags = flags
-
-    # Recalculate proctoring score
-    # Starts at 100, drops by 10 per violation, min is 0
-    score = max(0, 100 - (len(flags) * 10))
-    attempt.proctoring_score = score
-    attempt.save()
-
-    return JsonResponse(success_response({"proctoring_score": score, "flags_count": len(flags)}))
-
-
-@csrf_exempt
-@require_api_key
-def upload_question_paper(request):
-    """
-    POST /api/v1/sessions/upload-question-paper
-    Accepts multipart/form-data with 'file' (PDF/DOCX/TXT).
-    Extracts MCQ questions or Coding problems using LLM and seeds them.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    try:
-        uploaded_file = request.FILES.get("file")
-        if not uploaded_file:
-            return JsonResponse(error_response("No file uploaded"), status=400)
-
-        filename = uploaded_file.name
-        ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-        if ext not in ["pdf", "docx", "doc", "txt"]:
-            return JsonResponse(error_response("Only PDF, DOCX, and TXT files are supported"), status=400)
-
-        file_bytes = uploaded_file.read()
-        session_id = request.POST.get("session_id", None)
-        category = request.POST.get("category", "general")
-        round_type = request.POST.get("round_type", "mcq")
-
-        from agents.mcq_paper_parser_agent import MCQPaperParserAgent
-        agent = MCQPaperParserAgent()
-
-        if round_type == "coding":
-            problems = agent.extract_and_parse_coding(file_bytes, filename)
-            if not problems:
-                return JsonResponse(success_response({
-                    "message": "No coding problems could be extracted from this file.",
-                    "questions_extracted": 0,
-                    "created_in_db": 0,
-                    "slugs": [],
-                    "preview": []
-                }))
-            result = agent.save_coding_to_db(problems, session_id)
-            return JsonResponse(success_response({
-                "message": f"Successfully extracted {len(problems)} coding problems",
-                "questions_extracted": len(problems),
-                "created_in_db": result["created"],
-                "already_existed": result["skipped"],
-                "slugs": result["slugs"],
-                "preview": problems[:5]
-            }))
-        else:
-            questions = agent.extract_and_parse(file_bytes, filename, category)
-            if not questions:
-                return JsonResponse(success_response({
-                    "message": "No MCQ questions could be extracted from this file.",
-                    "questions_extracted": 0,
-                    "created_in_db": 0,
-                    "preview": []
-                }))
-            result = agent.save_to_db(questions, session_id)
-            return JsonResponse(success_response({
-                "message": f"Successfully extracted {len(questions)} MCQ questions",
-                "questions_extracted": len(questions),
-                "created_in_db": result["created"],
-                "already_existed": result["skipped"],
-                "preview": questions[:5]
-            }))
-    except ValueError as ve:
-        return JsonResponse(error_response(str(ve)), status=400)
-    except Exception as e:
-        logger.error("upload_question_paper error: %s", e)
-        return JsonResponse(error_response(f"Failed to process file: {str(e)}"), status=500)
-
-
-@csrf_exempt
-@require_test_token
-def mock_submit(request):
-    """
-    POST /api/v1/test/mock-submit
-    Mock submit for testing purposes.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    attempt = request.attempt
-    try:
-        data = json.loads(request.body)
-        score = float(data.get("score", 85.0))
-    except Exception:
-        score = 85.0
-
-    attempt.status = "submitted"
-    attempt.overall_score = score
-    
-    if attempt.round.round_type == "mcq":
-        attempt.mcq_score = score
-    elif attempt.round.round_type == "coding":
-        attempt.coding_score = score
-    elif attempt.round.round_type == "interview":
-        attempt.interview_score = score
-        attempt.interview_recommendation = "Proceed" if score >= 50.0 else "Reject"
-        attempt.interview_summary = "Mock interview submission for testing."
-
-    attempt.submitted_at = timezone.now()
-    attempt.save()
-
-    # Run pipeline evaluation
-    auto_progress_candidate(attempt.candidate, attempt.round.session, score)
-
-    return JsonResponse(success_response({"message": "Mock submission successful", "score": score}))
-
-
-@csrf_exempt
-def mock_switch_round(request):
-    """
-    POST /api/v1/test/mock-switch-round
-    Forces a candidate to a specific round index for testing.
-    """
-    if request.method != "POST":
-        return JsonResponse(error_response("Method not allowed"), status=405)
-
-    try:
-        data = json.loads(request.body)
-        candidate_id = data.get("candidate_id")
-        target_round_number = int(data.get("round_number", 1))
-    except Exception as e:
-        return JsonResponse(error_response("Invalid JSON or parameters"), status=400)
-
-    from api.models import Candidate, SessionRound, ApplicantRoundAttempt
-    from django.utils import timezone
-    from datetime import timedelta
-    import secrets
-
-    candidate = Candidate.objects.filter(id=candidate_id).first()
-    if not candidate:
-        return JsonResponse(error_response("Candidate not found"), status=404)
-
-    # Force round index and reset status
-    candidate.current_round_index = target_round_number
-    candidate.status = "forwarded"  # Reset status so they are active in pipeline
-    candidate.save(update_fields=['current_round_index', 'status'])
-
-    # Find the corresponding SessionRound
-    sr = SessionRound.objects.filter(session=candidate.session, round_number=target_round_number).first()
-    if sr:
-        # Reset or create attempt for this round
-        attempt, created = ApplicantRoundAttempt.objects.get_or_create(
-            candidate=candidate,
-            round=sr,
-            defaults={
-                "access_token": secrets.token_urlsafe(32),
-                "token_expires_at": timezone.now() + timedelta(days=7),
-                "status": "pending"
-            }
-        )
-        # If it already existed, reset its status to pending so it can be retaken from scratch
-        if not created:
-            attempt.status = "pending"
-            attempt.mcq_score = None
-            attempt.coding_score = None
-            attempt.interview_score = None
-            attempt.overall_score = None
-            attempt.submitted_at = None
-            attempt.started_at = None
-            attempt.save()
-
-    return JsonResponse(success_response({"message": f"Successfully forced candidate to round {target_round_number}"}))
-
-
-@csrf_exempt
 def create_mock_attempt(request):
     """
     POST /api/v1/seeker/mock-interview/create

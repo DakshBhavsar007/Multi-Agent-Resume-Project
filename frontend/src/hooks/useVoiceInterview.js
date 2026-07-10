@@ -8,6 +8,8 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const audioStreamRef = useRef(null);
+  const silenceIntervalRef = useRef(null);
+  const silenceContextRef = useRef(null);
 
   // Speak text with natural speech settings
   const speakText = useCallback((text, onDone) => {
@@ -50,6 +52,7 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
   }, []);
 
   // Start recording microphone
+  // Start recording microphone
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -65,6 +68,16 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
       };
 
       recorder.onstop = async () => {
+        // Clear silence detection timers
+        if (silenceIntervalRef.current) {
+          clearInterval(silenceIntervalRef.current);
+          silenceIntervalRef.current = null;
+        }
+        if (silenceContextRef.current) {
+          silenceContextRef.current.close().catch(() => {});
+          silenceContextRef.current = null;
+        }
+
         setPhase("transcribing");
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         
@@ -86,6 +99,64 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
       mediaRecorderRef.current = recorder;
       recorder.start();
       setPhase("recording");
+
+      // Setup Silence Detection (VAD)
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioCtx();
+        silenceContextRef.current = audioCtx;
+        
+        const analyser = audioCtx.createAnalyser();
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 256;
+        
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        let silenceStart = null;
+        let hasSpoken = false;
+        let startTimer = Date.now();
+
+        silenceIntervalRef.current = setInterval(() => {
+          if (recorder.state !== "recording") return;
+          analyser.getByteFrequencyData(dataArray);
+          
+          const sum = dataArray.reduce((a, b) => a + b, 0);
+          const avg = sum / bufferLength;
+
+          // Check if candidate has started speaking
+          if (avg > 15) {
+            hasSpoken = true;
+          }
+
+          if (hasSpoken) {
+            // If they started speaking, detect 2.5 seconds of silence to auto-stop
+            if (avg < 8) {
+              if (silenceStart === null) {
+                silenceStart = Date.now();
+              } else if (Date.now() - silenceStart > 2500) {
+                console.log("Silence Auto-Stop triggered.");
+                recorder.stop();
+                stream.getTracks().forEach((track) => track.stop());
+              }
+            } else {
+              silenceStart = null;
+            }
+          } else {
+            // Safety grace period fallback: if they don't speak for 12 seconds, stop recording
+            if (Date.now() - startTimer > 12000) {
+              console.log("Silence Auto-Stop: Grace period expired without speech.");
+              recorder.stop();
+              stream.getTracks().forEach((track) => track.stop());
+            }
+          }
+        }, 100);
+
+      } catch (vadErr) {
+        console.warn("VAD setup skipped/failed:", vadErr);
+      }
+
     } catch (err) {
       console.error("Failed to start voice capture", err);
       alert("Microphone permission denied or not found.");
@@ -95,6 +166,15 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
 
   // Stop recording
   const stopRecording = useCallback(() => {
+    if (silenceIntervalRef.current) {
+      clearInterval(silenceIntervalRef.current);
+      silenceIntervalRef.current = null;
+    }
+    if (silenceContextRef.current) {
+      silenceContextRef.current.close().catch(() => {});
+      silenceContextRef.current = null;
+    }
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
       if (audioStreamRef.current) {

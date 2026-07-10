@@ -1,3 +1,28 @@
+import sys
+from types import ModuleType
+
+# Mock pkg_resources to prevent ModuleNotFoundError in Python 3.12+ environments (e.g. for razorpay)
+try:
+    import pkg_resources
+except ImportError:
+    class DistributionNotFound(Exception):
+        pass
+
+    class MockDistribution:
+        def __init__(self):
+            self.version = "1.0.0"
+            
+    class MockPkgResources(ModuleType):
+        def __init__(self, name):
+            super().__init__(name)
+            self.DistributionNotFound = DistributionNotFound
+            
+        def get_distribution(self, name):
+            return MockDistribution()
+            
+    mock_pkg = MockPkgResources("pkg_resources")
+    sys.modules["pkg_resources"] = mock_pkg
+
 import os
 from pathlib import Path
 import dj_database_url

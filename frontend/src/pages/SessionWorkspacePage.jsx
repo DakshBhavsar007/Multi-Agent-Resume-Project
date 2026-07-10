@@ -931,7 +931,14 @@ export default function SessionWorkspacePage() {
                 </div>
                 <select value={filters.location} onChange={e=>setFilters({...filters, location: e.target.value})} className="border-2 border-gray-200 p-2.5 rounded-lg text-sm font-bold focus:outline-none focus:border-accent text-charcoal bg-white shadow-sm cursor-pointer">
                   <option value="">All Locations</option>
-                  <option value="Remote">Remote</option>
+                  {Array.from(new Set(
+                    (allCandidatesList || [])
+                      .map(c => c.location)
+                      .filter(Boolean)
+                      .map(loc => loc.trim())
+                  )).sort().map((loc, idx) => (
+                    <option key={idx} value={loc}>{loc}</option>
+                  ))}
                 </select>
                 <div className="flex items-center gap-3 border-2 border-gray-200 p-2.5 rounded-lg px-4 bg-white shadow-sm">
                   <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Score &gt;</span>

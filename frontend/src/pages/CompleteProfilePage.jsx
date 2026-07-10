@@ -7,6 +7,11 @@ import { authAPI, seekerAPI } from '../lib/api';
 import { portalAuth } from '../lib/portalApi';
 import { toast } from 'react-hot-toast';
 import { Loader2, ShieldCheck, Mail, User, Phone, MapPin, Briefcase, Globe, Landmark, Users, ArrowRight } from 'lucide-react';
+<<<<<<< HEAD
+=======
+import { LocationSelector } from '../components/ui/LocationSelector';
+import VerificationModal from '../components/VerificationModal';
+>>>>>>> 99190c749a7974c21c3edfd30768f9ab085cba53
 
 export default function CompleteProfilePage() {
   const navigate = useNavigate();
@@ -21,6 +26,15 @@ export default function CompleteProfilePage() {
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
   const [headline, setHeadline] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [verifyTarget, setVerifyTarget] = useState(null);
+
+  const handlePhoneChange = (val) => {
+    setPhone(val);
+    if (phoneVerified) {
+      setPhoneVerified(false);
+    }
+  };
 
   // Developer Form State
   const [websiteUrl, setWebsiteUrl] = useState('');
@@ -47,6 +61,7 @@ export default function CompleteProfilePage() {
         setPhone(parsed.data.seeker.phone || '');
         setLocation(parsed.data.seeker.location || '');
         setHeadline(parsed.data.seeker.headline || '');
+        setPhoneVerified(!!parsed.data.seeker.phone_verified);
       } else if (parsed.role === 'developer' && parsed.data) {
         setWebsiteUrl(parsed.data.website_url || '');
       } else if (parsed.role === 'recruiter' && parsed.data) {
@@ -223,33 +238,49 @@ export default function CompleteProfilePage() {
               {/* Phone */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Phone Number*</label>
-                <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                  <input
-                    type="tel"
-                    required
-                    placeholder="e.g. +91 98765 43210"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none transition-colors"
-                  />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. +91 98765 43210"
+                      value={phone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none transition-colors"
+                    />
+                  </div>
+                  {phone && (
+                    <button
+                      type="button"
+                      disabled={phoneVerified}
+                      onClick={() => {
+                        if (!phone.trim()) {
+                          toast.error("Please enter a phone number first");
+                          return;
+                        }
+                        setVerifyTarget({ type: 'phone', value: phone.trim() });
+                      }}
+                      className={`px-4 text-xs font-bold rounded-xl transition-all ${
+                        phoneVerified 
+                          ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/50 cursor-default'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      }`}
+                    >
+                      {phoneVerified ? 'Verified ✓' : 'Verify'}
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* Location */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 location-selector-complete-profile">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Current Location*</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Mumbai, Maharashtra"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none transition-colors"
-                  />
-                </div>
+                <LocationSelector
+                  value={location}
+                  onChange={setLocation}
+                  isLight={false}
+                />
               </div>
 
               {/* Headline */}
@@ -325,39 +356,31 @@ export default function CompleteProfilePage() {
               </div>
 
               {/* HQ Location */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">HQ Location*</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Bengaluru, India"
-                      value={hqLocation}
-                      onChange={(e) => setHqLocation(e.target.value)}
-                      className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none transition-colors"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">HQ Location*</label>
+                <LocationSelector
+                  value={hqLocation}
+                  onChange={setHqLocation}
+                  isLight={false}
+                />
+              </div>
 
-                {/* Company Size */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Company Size*</label>
-                  <div className="relative">
-                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                    <select
-                      value={companySize}
-                      onChange={(e) => setCompanySize(e.target.value)}
-                      className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors appearance-none"
-                    >
-                      <option value="1-10" className="bg-zinc-900">1-10 employees</option>
-                      <option value="11-50" className="bg-zinc-900">11-50 employees</option>
-                      <option value="51-200" className="bg-zinc-900">51-200 employees</option>
-                      <option value="201-500" className="bg-zinc-900">201-500 employees</option>
-                      <option value="501+" className="bg-zinc-900">501+ employees</option>
-                    </select>
-                  </div>
+              {/* Company Size */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Company Size*</label>
+                <div className="relative">
+                  <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                  <select
+                    value={companySize}
+                    onChange={(e) => setCompanySize(e.target.value)}
+                    className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors appearance-none"
+                  >
+                    <option value="1-10" className="bg-zinc-900">1-10 employees</option>
+                    <option value="11-50" className="bg-zinc-900">11-50 employees</option>
+                    <option value="51-200" className="bg-zinc-900">51-200 employees</option>
+                    <option value="201-500" className="bg-zinc-900">201-500 employees</option>
+                    <option value="501+" className="bg-zinc-900">501+ employees</option>
+                  </select>
                 </div>
               </div>
             </>
@@ -383,6 +406,20 @@ export default function CompleteProfilePage() {
           </button>
         </form>
       </div>
+      {verifyTarget && (
+        <VerificationModal
+          isOpen={true}
+          onClose={() => setVerifyTarget(null)}
+          type={verifyTarget.type}
+          value={verifyTarget.value}
+          role="seeker"
+          userEmail={email}
+          onSuccess={() => {
+            setPhoneVerified(true);
+            toast.success('Phone number verified successfully!');
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -104,6 +104,8 @@ def recruiter_auth_google(request):
             "name": company.name,
             "email": company.email,
             "tier": company.tier,
+            "email_verified": company.email_verified,
+            "phone_verified": company.phone_verified,
             "api_key": masked_secret,
             "requires_profile_completion": not (company.industry and company.hq_location and company.company_size and company.website_url and company.phone_verified)
         }))
@@ -160,6 +162,8 @@ def seeker_auth_google(request):
             "tier": seeker.tier,
             "has_resume": bool(seeker.resume_file_path or seeker.resume_data),
             "skills": seeker.skills,
+            "email_verified": seeker.email_verified,
+            "phone_verified": seeker.phone_verified,
             "created_at": seeker.created_at.isoformat() if seeker.created_at else None,
             "requires_profile_completion": not (seeker.phone and seeker.location and seeker.headline and seeker.phone_verified)
         }
@@ -205,10 +209,6 @@ def developer_auth_google(request):
                 tier="free",
                 is_verified=True
             )
-        else:
-            if not dev.is_verified:
-                dev.is_verified = True
-                dev.save()
             # Create default API keys
             test_secret = "vish_test_" + secrets.token_urlsafe(24)
             test_public = "vish_pub_test_" + secrets.token_urlsafe(24)
@@ -235,6 +235,10 @@ def developer_auth_google(request):
                 plan="free",
                 status="active"
             )
+        else:
+            if not dev.is_verified:
+                dev.is_verified = True
+                dev.save()
 
         payload = {
             "developer_id": str(dev.id),
@@ -249,6 +253,8 @@ def developer_auth_google(request):
             "developer_id": str(dev.id),
             "email": dev.email,
             "tier": dev.tier,
+            "is_verified": dev.is_verified,
+            "phone_verified": dev.phone_verified,
             "company_name": dev.company_name,
             "requires_profile_completion": not (dev.website_url and dev.phone_verified)
         }

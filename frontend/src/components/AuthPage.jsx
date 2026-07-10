@@ -28,6 +28,7 @@ import { LocationSelector } from './ui/LocationSelector';
 import { usePortalAuthStore } from '../stores/portalAuthStore';
 import { useSeekerAuthStore } from '../stores/seekerAuthStore';
 import './AuthPage.css';
+import VerificationModal from './VerificationModal';
 
 const AntigravityGrid = () => {
   const canvasRef = useRef(null);
@@ -153,6 +154,23 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   const [foundedYear, setFoundedYear] = useState('');
   const [about, setAbout] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [verifyTarget, setVerifyTarget] = useState(null);
+
+  const handleEmailChange = (val) => {
+    setEmail(val);
+    if (isEmailVerified) {
+      setIsEmailVerified(false);
+    }
+  };
+
+  const handlePhoneChange = (val) => {
+    setPhone(val);
+    if (phoneVerified) {
+      setPhoneVerified(false);
+    }
+  };
   const [skills, setSkills] = useState('');
 
   const [showPassRules, setShowPassRules] = useState(false);
@@ -470,6 +488,9 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         }
       } else {
         // Signup Step 1 Validation
+        if (!isEmailVerified) {
+          throw new Error("Please verify your email address first");
+        }
         if (password !== confirmPassword) {
           throw new Error("Passwords do not match");
         }
@@ -503,6 +524,8 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
             location: locationField,
             headline,
             phone,
+            phone_verified: phoneVerified,
+            email_verified: isEmailVerified,
             skills: skills ? skills.split(',').map(s => s.trim()) : []
           });
           seekerAuth.setAuth(data);
@@ -521,6 +544,10 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
 
   // Developer Signup Flow: Step 2 Plan Selection
   const handleSelectDeveloperPlan = async () => {
+    if (!isEmailVerified) {
+      toast.error("Please verify your email address first");
+      return;
+    }
     setLoading(true);
     try {
       const data = await portalAuth.register({
@@ -789,13 +816,37 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                     </div>
                     <div className="input-group">
                       <label>Phone Number</label>
-                      <input 
-                        type="tel" 
-                        placeholder="e.g. +91 9876543210" 
-                        value={phone} 
-                        onChange={e => setPhone(e.target.value)} 
-                        required 
-                      />
+                      <div className="flex gap-2">
+                        <input 
+                          type="tel" 
+                          placeholder="e.g. +91 9876543210" 
+                          value={phone} 
+                          onChange={e => handlePhoneChange(e.target.value)} 
+                          required 
+                          style={{ flex: 1 }}
+                        />
+                        {phone && (
+                          <button
+                            type="button"
+                            disabled={phoneVerified}
+                            onClick={() => {
+                              if (!phone.trim()) {
+                                toast.error("Please enter a phone number first");
+                                return;
+                              }
+                              setVerifyTarget({ type: 'phone', value: phone.trim() });
+                            }}
+                            className={`px-4 text-xs font-bold rounded-xl transition-all ${
+                              phoneVerified 
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                            style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            {phoneVerified ? 'Verified ✓' : 'Verify'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="input-group">
                       <label>Professional Headline</label>
@@ -837,13 +888,34 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
             {/* Standard Login/Signup Fields */}
             <div className="input-group">
               <label>{role === 'recruiter' ? 'Work Email' : 'Email Address'}</label>
-              <input 
-                type="email" 
-                placeholder="name@company.com" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                required 
-              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="email" 
+                  placeholder="name@company.com" 
+                  value={email} 
+                  onChange={e => handleEmailChange(e.target.value)} 
+                  disabled={!isLogin && isEmailVerified}
+                  required 
+                  style={{ flex: 1 }}
+                />
+                {!isLogin && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                  <button
+                    type="button"
+                    disabled={isEmailVerified}
+                    onClick={() => {
+                      setVerifyTarget({ type: 'email', value: email.trim(), role, isSignup: true });
+                    }}
+                    className={`px-4 text-xs font-bold rounded-xl transition-all ${
+                      isEmailVerified 
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                    style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {isEmailVerified ? 'Verified ✓' : 'Verify'}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="input-group relative">
@@ -1251,6 +1323,26 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         </button>
 
       </motion.div>
+      {verifyTarget && (
+        <VerificationModal
+          isOpen={true}
+          onClose={() => setVerifyTarget(null)}
+          type={verifyTarget.type}
+          value={verifyTarget.value}
+          role={verifyTarget.role || role}
+          isSignup={verifyTarget.isSignup || false}
+          userEmail={email}
+          onSuccess={() => {
+            if (verifyTarget.type === 'email') {
+              setIsEmailVerified(true);
+              toast.success('Email verified successfully!');
+            } else {
+              setPhoneVerified(true);
+              toast.success('Phone number verified successfully!');
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

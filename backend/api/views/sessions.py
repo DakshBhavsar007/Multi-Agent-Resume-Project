@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count
@@ -11,28 +10,6 @@ from api.decorators import require_api_key, check_rate_limit
 from models.schemas import success_response, error_response
 from agents.inference_agent import SkillInferenceAgent
 from workers.celery_worker import match_all_candidates
-from api.services.notification_service import notify_followers_of_new_job
-
-def validate_announcement_dates(rounds):
-    now_naive = datetime.now()
-    for r in rounds:
-        ann_date_str = r.get("result_announcement_date")
-        if ann_date_str:
-            try:
-                clean_str = ann_date_str.split('+')[0]
-                if clean_str.endswith('Z'):
-                    clean_str = clean_str[:-1]
-                
-                dt = datetime.fromisoformat(clean_str)
-                if dt.tzinfo is not None:
-                    if dt < timezone.now():
-                        return f"Result announcement date {ann_date_str} for round '{r.get('name')}' cannot be in the past"
-                else:
-                    if dt < now_naive:
-                        return f"Result announcement date {ann_date_str} for round '{r.get('name')}' cannot be in the past"
-            except ValueError:
-                return f"Invalid date format for round '{r.get('name')}': {ann_date_str}"
-    return None
 
 def _verify_session_ownership(session, company):
     if str(session.company_id) != str(company.id):
@@ -52,9 +29,6 @@ def session_root(request):
                 return JsonResponse(error_response("name, job_title, job_description are required"), status=400)
 
             rounds_req = data.get("rounds") or []
-            validation_err = validate_announcement_dates(rounds_req)
-            if validation_err:
-                return JsonResponse(error_response(validation_err), status=400)
             rounds_data = []
             for r in rounds_req:
                 ann_date = r.get("result_announcement_date")
@@ -82,9 +56,6 @@ def session_root(request):
                 rounds=rounds_data,
                 status=status_val
             )
-
-            if new_session.status == "active":
-                notify_followers_of_new_job(new_session)
 
             return JsonResponse(success_response({
                 "id": str(new_session.id),
@@ -186,12 +157,6 @@ def session_detail(request, session_id):
             total_hired = Candidate.objects.filter(session_id=session.id, status="hired").count()
             total_rejected = Candidate.objects.filter(session_id=session.id, status="rejected").count()
 
-            # Dynamic sync dates from completed IngestJobs
-            from api.models import IngestJob
-            latest_gmail = IngestJob.objects.filter(session_id=session.id, type="gmail", status="done").order_by("-completed_at").first()
-            latest_gdrive = IngestJob.objects.filter(session_id=session.id, type="gdrive", status="done").order_by("-completed_at").first()
-            latest_gform = IngestJob.objects.filter(session_id=session.id, type="form", status="done").order_by("-completed_at").first()
-
             return JsonResponse(success_response({
                 "id": str(session.id),
                 "name": session.name,
@@ -206,16 +171,12 @@ def session_detail(request, session_id):
                 "total_hired": total_hired,
                 "total_rejected": total_rejected,
                 "gmail_address": session.gmail_address,
-                "last_gmail_sync": latest_gmail.completed_at.isoformat() if (latest_gmail and latest_gmail.completed_at) else None,
-                "last_gdrive_sync": latest_gdrive.completed_at.isoformat() if (latest_gdrive and latest_gdrive.completed_at) else None,
-                "last_gform_sync": latest_gform.completed_at.isoformat() if (latest_gform and latest_gform.completed_at) else None,
                 "created_at": session.created_at.isoformat() if session.created_at else None,
                 "updated_at": session.updated_at.isoformat() if session.updated_at else None
             }))
 
         elif request.method == "PATCH":
             data = json.loads(request.body)
-            was_active = (session.status == "active")
             if "name" in data and data["name"] is not None:
                 session.name = data["name"]
             if "job_title" in data and data["job_title"] is not None:
@@ -223,9 +184,6 @@ def session_detail(request, session_id):
             if "job_description" in data and data["job_description"] is not None:
                 session.job_description = data["job_description"]
             if "rounds" in data and data["rounds"] is not None:
-                validation_err = validate_announcement_dates(data["rounds"])
-                if validation_err:
-                    return JsonResponse(error_response(validation_err), status=400)
                 rounds_data = []
                 for r in data["rounds"]:
                     ann_date = r.get("result_announcement_date")
@@ -276,7 +234,7 @@ def session_detail(request, session_id):
                         time_limit_minutes=time_limit,
                         mcq_question_count=20 if rtype == "mcq" else 0,
                         coding_problems=coding_problems,
-                        passing_score=r.get("passing_score", 50) if r.get("passing_score") is not None else 50
+                        passing_score=50
                     )
                     created_rounds.append(sr)
                 
@@ -306,9 +264,6 @@ def session_detail(request, session_id):
 
             session.updated_at = timezone.now()
             session.save()
-
-            if session.status == "active" and not was_active:
-                notify_followers_of_new_job(session)
 
             return JsonResponse(success_response({
                 "message": "Session updated",

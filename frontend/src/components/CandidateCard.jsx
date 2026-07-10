@@ -155,21 +155,22 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
   const normalizedSkills = activeCandidate?.normalized_skills || [];
   const allSkills = matchedSkills.length > 0 || missingSkills.length > 0 ? [...matchedSkills, ...missingSkills] : normalizedSkills;
   const hasSkills = allSkills.length > 0 || otherSkills.length > 0;
-  const experience = activeCandidate?.experience || [];
-  const education = activeCandidate?.education || [];
-  const expYears = activeCandidate?.experience_years ?? activeCandidate?.total_experience_years ?? 0;
+  // New deeply extracted fields
+  const rawData = activeCandidate?.raw_resume_data || {};
+
+  const experience = activeCandidate?.experience || rawData?.experience || [];
+  const education = activeCandidate?.education || rawData?.education || [];
+  const expYears = activeCandidate?.experience_years ?? activeCandidate?.total_experience_years ?? rawData?.total_experience_years ?? 0;
 
   const skillScore = activeCandidate?.skill_score ?? activeCandidate?.match_details?.skill_score ?? 0;
   const experienceScore = activeCandidate?.experience_score ?? activeCandidate?.match_details?.experience_score ?? 0;
   const locationScore = activeCandidate?.location_score ?? activeCandidate?.match_details?.location_score ?? 0;
 
-  // New deeply extracted fields
-  const rawData = activeCandidate?.raw_resume_data || {};
   const summary = rawData.summary || activeCandidate?.summary || "";
   const projects = rawData.projects || activeCandidate?.projects || [];
-  const certifications = activeCandidate?.certifications || activeCandidate?.awards || [];
+  const certifications = activeCandidate?.certifications || activeCandidate?.awards || rawData?.certifications || [];
   const achievements = activeCandidate?.achievements || rawData.achievements || rawData.awards || activeCandidate?.awards || [];
-  const languages = activeCandidate?.languages || [];
+  const languages = activeCandidate?.languages || rawData?.languages || [];
 
   const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
   const photoUrl = activeCandidate?.photo_url ? (activeCandidate.photo_url.startsWith('http') ? activeCandidate.photo_url : `${apiBase}${activeCandidate.photo_url}`) : null;

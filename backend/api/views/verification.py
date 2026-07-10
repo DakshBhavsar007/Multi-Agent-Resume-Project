@@ -63,14 +63,15 @@ def send_email_otp(request):
         body = json.loads(request.body)
         email = body.get('email')
         role = body.get('role')  # 'seeker', 'recruiter', 'developer'
+        is_signup = body.get('is_signup', False)
         
         if not email or not role:
             return JsonResponse({'success': False, 'error': 'Email and role are required'}, status=400)
         
-        # Verify user exists
+        # If signup, ensure email is not already registered
         user = get_user_by_role_and_email(role, email)
-        if not user:
-            return JsonResponse({'success': False, 'error': 'Account not found with this email'}, status=404)
+        if is_signup and user:
+            return JsonResponse({'success': False, 'error': 'An account with this email already exists'}, status=400)
         
         # Generate 6-digit OTP
         otp = str(random.randint(100000, 999999))
@@ -115,17 +116,15 @@ def verify_email_otp(request):
         if saved_otp != otp_submitted:
             return JsonResponse({'success': False, 'error': 'Invalid verification code.'}, status=400)
 
-        # Mark verified
+        # Mark verified if user exists
         user = get_user_by_role_and_email(role, email)
-        if not user:
-            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+        if user:
+            if role in ('seeker', 'recruiter'):
+                user.email_verified = True
+            elif role == 'developer':
+                user.is_verified = True  # Developer uses is_verified for email
+            user.save()
         
-        if role in ('seeker', 'recruiter'):
-            user.email_verified = True
-        elif role == 'developer':
-            user.is_verified = True  # Developer uses is_verified for email
-        
-        user.save()
         cache.delete(cache_key)
         
         return JsonResponse({
@@ -153,7 +152,7 @@ def send_phone_otp(request):
         body = json.loads(request.body)
         phone = body.get('phone')
         role = body.get('role')
-        email = body.get('email')  # Used to locate the user account
+        email = body.get('email')  # Used to locate the user account if they exist
         
         if not role:
             return JsonResponse({'success': False, 'error': 'Role is required'}, status=400)
@@ -172,7 +171,8 @@ def send_phone_otp(request):
         otp = str(random.randint(100000, 999999))
         
         # Cache key is keyed on email if available, else phone
-        cache_key = f"phone_otp:{role}:{user_email or phone}"
+        key_identifier = user_email or phone
+        cache_key = f"phone_otp:{role}:{key_identifier}"
         cache.set(cache_key, otp, timeout=300)  # 5 minutes
 
         # Normalize phone
@@ -231,17 +231,18 @@ def verify_phone_otp(request):
         if not phone and not email:
             return JsonResponse({'success': False, 'error': 'Phone or email is required'}, status=400)
         
-        # Determine the cache key (keyed on email)
+        # Determine the cache key
         user_email = email
         if not user_email and phone:
             user = get_user_by_role_and_phone(role, phone)
             if user:
                 user_email = user.email
 
-        if not user_email:
-            return JsonResponse({'success': False, 'error': 'Could not locate account'}, status=404)
+        key_identifier = user_email or phone
+        if not key_identifier:
+            return JsonResponse({'success': False, 'error': 'Could not locate identifier for verification'}, status=400)
 
-        cache_key = f"phone_otp:{role}:{user_email or phone}"
+        cache_key = f"phone_otp:{role}:{key_identifier}"
         saved_otp = cache.get(cache_key)
 
         if not saved_otp:
@@ -250,15 +251,17 @@ def verify_phone_otp(request):
         if otp_submitted != saved_otp:
             return JsonResponse({'success': False, 'error': 'Invalid verification code.'}, status=400)
         
-        # Look up user and mark phone as verified
-        user = get_user_by_role_and_email(role, user_email)
-        if not user:
-            return JsonResponse({'success': False, 'error': 'User account not found'}, status=404)
-        
-        user.phone_verified = True
-        if phone and hasattr(user, 'phone'):
-            user.phone = phone
-        user.save()
+        # Look up user and mark phone as verified IF they exist
+        user = get_user_by_role_and_email(role, user_email) if user_email else None
+        if not user and phone:
+            user = get_user_by_role_and_phone(role, phone)
+
+        if user:
+            user.phone_verified = True
+            if phone and hasattr(user, 'phone'):
+                user.phone = phone
+            user.save()
+
         cache.delete(cache_key)
         
         return JsonResponse({

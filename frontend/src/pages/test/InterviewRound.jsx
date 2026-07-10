@@ -16,6 +16,12 @@ export default function InterviewRound() {
   const [context, setContext] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [idx, setIdx] = useState(0);
+  const idxRef = useRef(0);
+
+  const updateIdx = (newIdx) => {
+    setIdx(newIdx);
+    idxRef.current = newIdx;
+  };
 
   // Device diagnostic waiting room states
   const [deviceCheckPassed, setDeviceCheckPassed] = useState(false);
@@ -144,10 +150,12 @@ export default function InterviewRound() {
           activeVideoRef.current.srcObject = activeStream;
         }
         
-        // Start interview welcome TTS
+        // Start interview welcome TTS - FoloUp automated trigger
         speakText("Hello! I am your AI interviewer today. Let's begin the interview. Here is your first question.", () => {
           if (questions && questions[0]) {
-            speakText(questions[0].q);
+            speakText(questions[0].q, () => {
+              startRecording();
+            });
           }
         });
       } catch (err) {
@@ -224,50 +232,83 @@ export default function InterviewRound() {
 
   // Process answers received from recording transcription
   const handleTranscript = async (text) => {
+    if (!text || text.trim() === "" || text.includes("Microphone captured silence") || text.includes("Transcription Error")) {
+      speakText("I couldn't hear you clearly. Could you please repeat that?", () => {
+        startRecording();
+      });
+      return;
+    }
+
     setSpokenAnswer(text);
     setAiGenerating(true);
     setAiResponse("Evaluating response...");
 
-    const q = questions[idx];
+    const currentIdx = idxRef.current;
+    const q = questions[currentIdx];
     try {
       const res = await testAPI.submitInterviewAnswer(q.index, text);
-      setAiResponse(res.feedback || "Answer saved successfully.");
+      const feedback = res.feedback || "Thank you for that answer.";
+      setAiResponse(feedback);
       
-      // AI TTS feedback response with natural conversational transition
-      if (res.feedback) {
-        speakText(res.feedback);
+      // Auto conversational transition - FoloUp hands-free pattern
+      if (currentIdx === questions.length - 1) {
+        speakText(`${feedback} Thank you! You have answered all questions. The interview is now complete.`, () => {
+          setCompleted(true);
+          if (localStream) {
+            localStream.getTracks().forEach((t) => t.stop());
+          }
+        });
+      } else {
+        const nextIdx = currentIdx + 1;
+        const nextQ = questions[nextIdx];
+        
+        const transitions = [
+          "Interesting, thank you. Let's move to our next question.",
+          "Got it, thank you. Let me ask you this next.",
+          "Thank you for sharing that. Moving on.",
+          "Understood. Ready for the next question?"
+        ];
+        const selectedTransition = transitions[Math.floor(Math.random() * transitions.length)];
+        
+        // Sync screen question immediately so the text matches the spoke question
+        updateIdx(nextIdx);
+        
+        speakText(`${feedback} ${selectedTransition} ${nextQ.q}`, () => {
+          // Clear old response logs and start recording once AI finishes speaking
+          setSpokenAnswer("");
+          setAiResponse("");
+          startRecording();
+        });
       }
     } catch (err) {
       toast.error(err.message || "Failed to submit answer.");
       setAiResponse("Could not contact the evaluation agent.");
+      speakText("There was an error saving your response. Let's try recording again.", () => {
+        startRecording();
+      });
     } finally {
       setAiGenerating(false);
     }
   };
 
   const handleNext = () => {
+    // Retain manual skip/next button support as fallback
     setSpokenAnswer("");
     setAiResponse("");
-    if (idx === questions.length - 1) {
+    const currentIdx = idxRef.current;
+    if (currentIdx === questions.length - 1) {
       setCompleted(true);
       speakText("Thank you! You have answered all questions. You may now submit and exit the interview.");
-      // Stop webcam preview stream on completion
       if (localStream) {
         localStream.getTracks().forEach((t) => t.stop());
       }
     } else {
-      setIdx((i) => i + 1);
-      const nextQ = questions[idx + 1];
-      
-      // Multi-agent FoloUp conversational speech transitions
-      const transitions = [
-        "Interesting, thank you. Let's move to our next question.",
-        "Got it, thank you. Let me ask you this next.",
-        "Thank you for sharing that. Moving on.",
-        "Understood. Ready for the next question?"
-      ];
-      const selectedTransition = transitions[Math.floor(Math.random() * transitions.length)];
-      speakText(`${selectedTransition} ${nextQ.q}`);
+      const nextIdx = currentIdx + 1;
+      updateIdx(nextIdx);
+      const nextQ = questions[nextIdx];
+      speakText(nextQ.q, () => {
+        startRecording();
+      });
     }
   };
 
@@ -478,14 +519,18 @@ export default function InterviewRound() {
                           onClick={stopRecording}
                           className="flex items-center gap-2 rounded-full bg-slate-950 hover:bg-slate-900 text-white font-bold px-6 py-2.5 text-xs shadow-sm transition"
                         >
-                          <span className="h-2 w-2 bg-red-500 rounded-sm" />
+                          <span className="h-2 w-2 bg-red-500 rounded-sm animate-pulse" />
                           Stop Recording
                         </button>
                       )}
                     </div>
 
+                    {isRecording && (
+                      <span className="text-[10px] text-blue-500 font-semibold animate-pulse block">🎙️ Listening... speak now. (Auto-saves when you stop talking)</span>
+                    )}
+
                     {isTranscribing && (
-                      <span className="text-[10px] text-slate-400 font-semibold animate-pulse block">Transcribing spoken voice answer...</span>
+                      <span className="text-[10px] text-slate-400 font-semibold animate-pulse block">⚙️ Transcribing spoken voice answer...</span>
                     )}
                   </div>
                 </div>

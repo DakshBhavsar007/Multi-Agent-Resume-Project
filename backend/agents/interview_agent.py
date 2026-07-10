@@ -201,8 +201,9 @@ Evaluate their response across these dimensions:
 3. Way of Representation & Communication (0 to 10) - Structure, clarity, and articulation.
 4. Relevance to the question (0 to 10).
 
-Write a conversational, friendly, and brief response (max 3 sentences) acknowledging their answer (like a human interviewer would) and transitioning.
-For example: "Excellent explanation of how databases use indices! You correctly identified that it speeds up retrieval, although you could also mention B-tree structures. Ready for the next question?"
+Write a conversational, friendly, and brief response (max 2 sentences) acknowledging their answer (like a human interviewer would).
+CRITICAL RULE: DO NOT ask any follow-up questions or introduce any new topics, as the next question is already pre-defined and will be asked separately. End with a simple transition phrase like "Let's move on." or "Thank you for sharing that."
+For example: "Excellent explanation of how databases use indices! You correctly identified that it speeds up retrieval, although you could also mention B-tree structures."
 
 Return ONLY a valid JSON object (no markdown block):
 {{

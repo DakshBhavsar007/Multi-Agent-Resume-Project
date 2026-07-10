@@ -54,11 +54,143 @@ def _section_heading(text, styles):
     ]
 
 
+def normalize_resume_content(content: dict) -> dict:
+    """
+    If content has the raw parser agent schema, normalize it to the draft schema
+    expected by render_resume_pdf.
+    """
+    if not isinstance(content, dict):
+        return {}
+        
+    # If it already looks like the draft schema, return as is
+    if "personalInfo" in content:
+        return content
+
+    # Adapt from parser agent schema
+    personal_info = {
+        "fullName": content.get("name") or "",
+        "title": content.get("headline") or content.get("current_role") or "",
+        "email": content.get("email") or "",
+        "phone": content.get("phone") or "",
+        "location": content.get("location") or "",
+        "website": content.get("website_url") or "",
+        "linkedin": content.get("linkedin_url") or "",
+        "github": content.get("github_url") or ""
+    }
+
+    # Skills mapping (from list of dicts to list of strings)
+    skills_list = []
+    raw_skills = content.get("skills") or []
+    for s in raw_skills:
+        if isinstance(s, dict):
+            name = s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or s.get("name") or ""
+        else:
+            name = str(s)
+        if name.strip():
+            skills_list.append(name.strip())
+
+    # Experience mapping
+    experience = []
+    raw_exp = content.get("experience") or []
+    for idx, exp in enumerate(raw_exp):
+        bullets = exp.get("bullets") or exp.get("responsibilities") or []
+        if not bullets and exp.get("description"):
+            bullets = [exp["description"]]
+        experience.append({
+            "id": exp.get("id") or str(idx + 1),
+            "company": exp.get("company", ""),
+            "title": exp.get("role") or exp.get("title") or "",
+            "location": exp.get("location", ""),
+            "startDate": exp.get("start_date") or exp.get("startDate") or "",
+            "endDate": exp.get("end_date") or exp.get("endDate") or "",
+            "bullets": bullets
+        })
+
+    # Education mapping
+    education = []
+    raw_edu = content.get("education") or []
+    for idx, edu in enumerate(raw_edu):
+        education.append({
+            "id": edu.get("id") or str(idx + 1),
+            "school": edu.get("institution") or edu.get("school") or "",
+            "degree": edu.get("degree", ""),
+            "location": edu.get("location", ""),
+            "startDate": edu.get("startDate") or "",
+            "endDate": str(edu.get("year")) if edu.get("year") else (edu.get("year_end") or edu.get("endDate") or "")
+        })
+
+    # Projects mapping
+    projects = []
+    raw_proj = content.get("projects") or []
+    for idx, proj in enumerate(raw_proj):
+        tech_raw = proj.get("techStack") or proj.get("tech_stack") or proj.get("technologies") or []
+        if isinstance(tech_raw, str):
+            tech_list = [t.strip() for t in tech_raw.split(",") if t.strip()]
+        elif isinstance(tech_raw, list):
+            tech_list = [str(t).strip() for t in tech_raw if t]
+        else:
+            tech_list = []
+        projects.append({
+            "id": proj.get("id") or str(idx + 1),
+            "name": proj.get("name") or proj.get("title") or "",
+            "link": proj.get("link") or proj.get("url") or "",
+            "description": proj.get("description", ""),
+            "techStack": tech_list
+        })
+
+    # Certifications mapping
+    certifications = []
+    raw_certs = content.get("certifications") or []
+    for idx, cert in enumerate(raw_certs):
+        if isinstance(cert, dict):
+            cert_name = cert.get("name", "")
+            cert_issuer = cert.get("issuer", "")
+            cert_date = str(cert.get("year")) if cert.get("year") else (cert.get("date") or "")
+        else:
+            cert_name = str(cert)
+            cert_issuer = ""
+            cert_date = ""
+        certifications.append({
+            "id": str(idx + 1),
+            "name": cert_name,
+            "issuer": cert_issuer,
+            "date": cert_date
+        })
+
+    # Languages mapping
+    languages = []
+    raw_langs = content.get("languages") or []
+    for idx, lang in enumerate(raw_langs):
+        if isinstance(lang, dict):
+            lang_name = lang.get("name", "")
+            lang_prof = lang.get("proficiency", "")
+        else:
+            lang_name = str(lang)
+            lang_prof = ""
+        languages.append({
+            "id": str(idx + 1),
+            "name": lang_name,
+            "proficiency": lang_prof
+        })
+
+    return {
+        "personalInfo": personal_info,
+        "summary": content.get("professional_summary") or content.get("summary") or "",
+        "skills": skills_list,
+        "experience": experience,
+        "education": education,
+        "projects": projects,
+        "certifications": certifications,
+        "languages": languages
+    }
+
+
 def render_resume_pdf(content: dict, output_path: str):
     """
     content: ResumeDraft.content (same schema as the React template expects)
     output_path: where to write the generated PDF
     """
+    content = normalize_resume_content(content)
     styles = _styles()
     doc = SimpleDocTemplate(
         output_path, pagesize=letter,

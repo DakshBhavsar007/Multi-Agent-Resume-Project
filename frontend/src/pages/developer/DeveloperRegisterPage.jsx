@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Check, Copy, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { portalAuth, portalBilling } from "../../lib/portalApi";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
+import VerificationModal from "../../components/VerificationModal";
 
 export default function DeveloperRegisterPage() {
   const [step, setStep] = useState(1);
@@ -18,6 +19,8 @@ export default function DeveloperRegisterPage() {
   const [selectedPlan, setSelectedPlan] = useState("starter");
   const [loading, setLoading] = useState(false);
   const [apiKeysData, setApiKeysData] = useState(null);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [verifyTarget, setVerifyTarget] = useState(null);
 
   // UI state
   const [showTestSecret, setShowTestSecret] = useState(false);
@@ -104,6 +107,9 @@ export default function DeveloperRegisterPage() {
     if (!form.company_name || !form.email || !form.password) {
       return toast.error("Please fill all required fields");
     }
+    if (!isEmailVerified) {
+      return toast.error("Please verify your email address first");
+    }
     setStep(2);
   };
 
@@ -166,7 +172,37 @@ export default function DeveloperRegisterPage() {
              </div>
              <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-charcoal">Work Email*</label>
-                <input type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none font-medium" required />
+                <div className="flex gap-2" style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="email" 
+                    value={form.email} 
+                    disabled={isEmailVerified}
+                    onChange={e => {
+                      setForm({...form, email:e.target.value});
+                      setIsEmailVerified(false);
+                    }} 
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none font-medium" 
+                    required 
+                    style={{ flex: 1 }}
+                  />
+                  {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && (
+                    <button
+                      type="button"
+                      disabled={isEmailVerified}
+                      onClick={() => {
+                        setVerifyTarget({ type: 'email', value: form.email.trim(), role: 'developer', isSignup: true });
+                      }}
+                      className={`px-4 text-xs font-bold rounded-xl transition-all ${
+                        isEmailVerified 
+                          ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/50 cursor-default'
+                          : 'bg-accent text-white hover:bg-accent-dark'
+                      }`}
+                      style={{ minWidth: '85px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      {isEmailVerified ? 'Verified ✓' : 'Verify'}
+                    </button>
+                  )}
+                </div>
              </div>
              <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-charcoal">Password*</label>
@@ -382,6 +418,22 @@ export default function DeveloperRegisterPage() {
               </button>
            </div>
         </motion.div>
+      )}
+      {verifyTarget && (
+        <VerificationModal
+          isOpen={true}
+          onClose={() => setVerifyTarget(null)}
+          type={verifyTarget.type}
+          value={verifyTarget.value}
+          role={verifyTarget.role}
+          isSignup={verifyTarget.isSignup}
+          userEmail={form.email}
+          onSuccess={() => {
+            if (verifyTarget.type === 'email') {
+              setIsEmailVerified(true);
+            }
+          }}
+        />
       )}
     </div>
   );

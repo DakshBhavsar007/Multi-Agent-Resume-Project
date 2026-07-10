@@ -6,7 +6,7 @@ from api.models import Company, Session, JobApplication, Notification, JobSeeker
 from api.views.seeker_auth import require_seeker_jwt
 from models.schemas import success_response, error_response
 
-def _serialize_company(company, is_following=False, active_sessions=None):
+def _serialize_company(company, is_following=False, active_sessions=None, followers_count=None):
     # Get active job sessions for this company
     if active_sessions is None:
         active_sessions = Session.objects.filter(company=company, status="active")
@@ -24,19 +24,20 @@ def _serialize_company(company, is_following=False, active_sessions=None):
         })
         
     cid_str = str(company.id)
-    try:
-        followers_count = JobSeekerAccount.objects.filter(
-            resume_data__followed_companies__contains=cid_str
-        ).count()
-    except Exception:
-        # Fallback to python count if the DB doesn't support json __contains properly
-        followers_count = 0
-        all_seekers = JobSeekerAccount.objects.all()
-        for s in all_seekers:
-            if s.resume_data and isinstance(s.resume_data, dict):
-                followed = s.resume_data.get("followed_companies", [])
-                if isinstance(followed, list) and cid_str in followed:
-                    followers_count += 1
+    if followers_count is None:
+        try:
+            followers_count = JobSeekerAccount.objects.filter(
+                resume_data__followed_companies__contains=cid_str
+            ).count()
+        except Exception:
+            # Fallback to python count if the DB doesn't support json __contains properly
+            followers_count = 0
+            all_seekers = JobSeekerAccount.objects.all()
+            for s in all_seekers:
+                if s.resume_data and isinstance(s.resume_data, dict):
+                    followed = s.resume_data.get("followed_companies", [])
+                    if isinstance(followed, list) and cid_str in followed:
+                        followers_count += 1
         
     return {
         "id": str(company.id),
@@ -57,6 +58,22 @@ def _serialize_company(company, is_following=False, active_sessions=None):
     }
 
 # ── Public Endpoints ──────────────────────────────────────────────────────────
+
+def _get_bulk_followers_count(company_ids):
+    counts = {str(cid): 0 for cid in company_ids}
+    try:
+        seekers_followed = JobSeekerAccount.objects.exclude(resume_data__isnull=True).values_list('resume_data', flat=True)
+        for rd in seekers_followed:
+            if isinstance(rd, dict):
+                followed = rd.get("followed_companies", [])
+                if isinstance(followed, list):
+                    for cid in followed:
+                        cid_str = str(cid)
+                        if cid_str in counts:
+                            counts[cid_str] += 1
+    except Exception:
+        pass
+    return counts
 
 @csrf_exempt
 def public_list_companies(request):
@@ -84,7 +101,17 @@ def public_list_companies(request):
             cid_str = str(s.company_id)
             sessions_by_company.setdefault(cid_str, []).append(s)
 
-        serialized = [_serialize_company(c, active_sessions=sessions_by_company.get(str(c.id), [])) for c in paginated_companies]
+        # Pre-calculate follower counts
+        follower_counts = _get_bulk_followers_count(company_ids)
+
+        serialized = [
+            _serialize_company(
+                c, 
+                active_sessions=sessions_by_company.get(str(c.id), []),
+                followers_count=follower_counts.get(str(c.id), 0)
+            ) 
+            for c in paginated_companies
+        ]
         return JsonResponse(success_response({
             "companies": serialized,
             "total": total_companies,
@@ -145,8 +172,16 @@ def seeker_list_companies(request):
             cid_str = str(s.company_id)
             sessions_by_company.setdefault(cid_str, []).append(s)
 
+        # Pre-calculate follower counts
+        follower_counts = _get_bulk_followers_count(company_ids)
+
         serialized = [
-            _serialize_company(c, str(c.id) in followed, active_sessions=sessions_by_company.get(str(c.id), []))
+            _serialize_company(
+                c, 
+                str(c.id) in followed, 
+                active_sessions=sessions_by_company.get(str(c.id), []),
+                followers_count=follower_counts.get(str(c.id), 0)
+            )
             for c in paginated_companies
         ]
         return JsonResponse(success_response({
@@ -287,8 +322,16 @@ def seeker_following_companies(request):
             cid_str = str(s.company_id)
             sessions_by_company.setdefault(cid_str, []).append(s)
 
+        # Pre-calculate follower counts
+        follower_counts = _get_bulk_followers_count(company_ids)
+
         serialized = [
-            _serialize_company(c, True, active_sessions=sessions_by_company.get(str(c.id), []))
+            _serialize_company(
+                c, 
+                True, 
+                active_sessions=sessions_by_company.get(str(c.id), []),
+                followers_count=follower_counts.get(str(c.id), 0)
+            )
             for c in companies
         ]
         return JsonResponse(success_response({

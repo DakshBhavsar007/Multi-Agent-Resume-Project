@@ -164,10 +164,10 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
             >
               <div style={{
                 width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                background: plan.featured ? 'rgba(255,255,255,0.15)' : 'var(--border)',
+                background: plan.featured ? 'rgba(74, 222, 128, 0.2)' : 'rgba(34, 197, 94, 0.12)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Check size={11} strokeWidth={3} color={plan.featured ? '#ffffff' : 'var(--accent, #111111)'} />
+                <Check size={11} strokeWidth={3} color={plan.featured ? '#4ade80' : '#22c55e'} />
               </div>
               <span style={{ color: plan.featured ? 'rgba(255,255,255,0.85)' : 'var(--text)' }}>{f.text}</span>
             </motion.li>
@@ -175,50 +175,78 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
         </ul>
 
         {/* CTA Button */}
-        <motion.button
-          whileHover={!isFree && !isCurrentPlan ? { scale: 1.02 } : {}}
-          whileTap={!isFree && !isCurrentPlan ? { scale: 0.98 } : {}}
-          onClick={() => !isFree && !isCurrentPlan && onUpgrade(plan.id)}
-          disabled={isFree || isCurrentPlan || isLoading}
-          style={{
-            width: '100%',
-            padding: '14px 20px',
-            borderRadius: 12,
-            border: plan.featured
-              ? 'none'
-              : isCurrentPlan ? '1.5px solid var(--border)' : '1.5px solid var(--accent, #111111)',
-            fontWeight: 700,
-            fontSize: 14,
-            cursor: (isFree || isCurrentPlan) ? 'default' : 'pointer',
-            background: plan.featured
-              ? isCurrentPlan ? 'rgba(255,255,255,0.12)' : '#ffffff'
-              : isCurrentPlan ? 'var(--border)' : 'var(--accent, #111111)',
-            color: plan.featured
-              ? isCurrentPlan ? 'rgba(255,255,255,0.5)' : '#111111'
-              : isCurrentPlan ? 'var(--text-secondary)' : 'var(--bg)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            transition: 'all 0.18s ease',
-          }}
-        >
-          {isLoading ? (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{
-                width: 15, height: 15, borderRadius: '50%',
-                border: '2px solid rgba(0,0,0,0.15)',
-                borderTopColor: plan.featured ? '#111111' : '#ffffff',
-                animation: 'spin 0.7s linear infinite',
-                display: 'inline-block'
-              }} />
-              Processing
-            </span>
-          ) : isCurrentPlan ? (
-            <><ShieldCheck size={15} /> Current Plan</>
-          ) : isFree ? (
-            'Free forever'
-          ) : (
-            <><CreditCard size={15} /> {plan.cta} <ArrowRight size={13} /></>
-          )}
-        </motion.button>
+        {(() => {
+          let btnBg = '';
+          let btnColor = '';
+          let btnBorder = 'none';
+
+          if (isCurrentPlan) {
+            if (plan.featured) {
+              btnBg = 'rgba(255, 255, 255, 0.12)';
+              btnColor = 'rgba(255, 255, 255, 0.7)';
+              btnBorder = '1.5px solid rgba(255, 255, 255, 0.2)';
+            } else {
+              btnBg = 'var(--accent-light, var(--border))';
+              btnColor = 'var(--text-secondary)';
+              btnBorder = '1.5px solid var(--border)';
+            }
+          } else if (isFree) {
+            // Disabled 'Free forever' button
+            btnBg = 'var(--accent-light, var(--border))';
+            btnColor = 'var(--text-secondary)';
+            btnBorder = '1.5px solid var(--border)';
+          } else {
+            // Active upgrade button
+            if (plan.featured) {
+              btnBg = '#ffffff';
+              btnColor = '#111111';
+            } else {
+              btnBg = 'var(--primary)';
+              btnColor = 'var(--primary-foreground)';
+            }
+          }
+
+          return (
+            <motion.button
+              whileHover={!isFree && !isCurrentPlan ? { scale: 1.02 } : {}}
+              whileTap={!isFree && !isCurrentPlan ? { scale: 0.98 } : {}}
+              onClick={() => !isFree && !isCurrentPlan && onUpgrade(plan.id)}
+              disabled={isFree || isCurrentPlan || isLoading}
+              style={{
+                width: '100%',
+                padding: '14px 20px',
+                borderRadius: 12,
+                border: btnBorder,
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: (isFree || isCurrentPlan) ? 'default' : 'pointer',
+                background: btnBg,
+                color: btnColor,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                transition: 'all 0.18s ease',
+              }}
+            >
+              {isLoading ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    width: 15, height: 15, borderRadius: '50%',
+                    border: '2px solid rgba(0,0,0,0.15)',
+                    borderTopColor: plan.featured ? '#111111' : '#ffffff',
+                    animation: 'spin 0.7s linear infinite',
+                    display: 'inline-block'
+                  }} />
+                  Processing
+                </span>
+              ) : isCurrentPlan ? (
+                <><ShieldCheck size={15} /> Current Plan</>
+              ) : isFree ? (
+                'Free forever'
+              ) : (
+                <><CreditCard size={15} /> {plan.cta} <ArrowRight size={13} /></>
+              )}
+            </motion.button>
+          );
+        })()}
 
         {plan.id === 'premium' && isCurrentPlan && (
           <button

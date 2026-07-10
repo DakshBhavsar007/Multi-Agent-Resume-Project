@@ -816,6 +816,7 @@ export default function SettingsPage() {
           type={verifyTarget.type}
           value={verifyTarget.value}
           role="recruiter"
+          userEmail={company?.email}
           onSuccess={() => {
             setAuth({
               ...company,

@@ -168,7 +168,7 @@ export default function DeveloperBilling() {
                 
                 <ul className="flex flex-col gap-3 font-medium text-sm text-gray-600 mb-8 flex-1">
                   {p.features.map(f => (
-                    <li key={f} className="flex gap-2 items-start"><Check size={16} className={`${isActive ? "text-accent" : "text-green-500"} shrink-0 mt-0.5`} /> <span>{f}</span></li>
+                    <li key={f} className="flex gap-2 items-start"><Check size={16} className="text-green-500 shrink-0 mt-0.5" /> <span>{f}</span></li>
                   ))}
                 </ul>
 

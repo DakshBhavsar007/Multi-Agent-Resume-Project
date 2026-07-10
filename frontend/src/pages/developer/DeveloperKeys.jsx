@@ -694,6 +694,7 @@ const data = await response.json();`
           type={verifyTarget.type}
           value={verifyTarget.value}
           role="developer"
+          userEmail={developer?.email}
           onSuccess={() => {
             setAuth({
               ...developer,

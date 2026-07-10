@@ -4,11 +4,11 @@ from django.utils import timezone
 
 class Company(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     email = models.CharField(max_length=255, unique=True)
     password_hash = models.CharField(max_length=500)
     tier = models.CharField(max_length=50, default="free")
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     email_verified = models.BooleanField(default=False)
     phone_verified = models.BooleanField(default=False)
     industry = models.CharField(max_length=255, null=True, blank=True)
@@ -63,22 +63,22 @@ class Candidate(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     session = models.ForeignKey(Session, on_delete=models.CASCADE, db_column="session_id")
     name = models.CharField(max_length=255, null=True, blank=True)
-    email = models.CharField(max_length=255, null=True, blank=True)
+    email = models.CharField(max_length=255, null=True, blank=True, db_index=True)
     phone = models.CharField(max_length=50, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
     resume_photo_path = models.CharField(max_length=500, null=True, blank=True)
     resume_file_path = models.CharField(max_length=500, null=True, blank=True)
     raw_resume_data = models.JSONField(default=dict)
     normalized_skills = models.JSONField(default=list)
-    match_score = models.FloatField(null=True, blank=True)
+    match_score = models.FloatField(null=True, blank=True, db_index=True)
     match_details = models.JSONField(default=dict)
     recommendation = models.CharField(max_length=100, null=True, blank=True)
     total_experience_years = models.FloatField(default=0.0)
-    current_round_index = models.IntegerField(default=0)
+    current_round_index = models.IntegerField(default=0, db_index=True)
     status = models.CharField(max_length=50, default="new", db_index=True)
     source = models.CharField(max_length=50, default="upload")
     created_at = models.DateTimeField(default=timezone.now)
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     class Meta:
         db_table = "candidates"
@@ -527,8 +527,8 @@ class ApplicantRoundAttempt(models.Model):
 class SeekerMockAttempt(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     seeker = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, related_name="mock_attempts")
-    attempt_type = models.CharField(max_length=50) # "aptitude" | "coding" | "interview"
-    status = models.CharField(max_length=20, default="pending") # "pending" | "in_progress" | "submitted"
+    attempt_type = models.CharField(max_length=50, db_index=True) # "aptitude" | "coding" | "interview"
+    status = models.CharField(max_length=20, default="pending", db_index=True) # "pending" | "in_progress" | "submitted"
     score = models.FloatField(null=True, blank=True)
     questions = models.JSONField(default=list)
     answers = models.JSONField(default=dict)
