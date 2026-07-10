@@ -525,6 +525,7 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
             headline,
             phone,
             phone_verified: phoneVerified,
+            email_verified: isEmailVerified,
             skills: skills ? skills.split(',').map(s => s.trim()) : []
           });
           seekerAuth.setAuth(data);
@@ -837,7 +838,7 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                             }}
                             className={`px-4 text-xs font-bold rounded-xl transition-all ${
                               phoneVerified 
-                                ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/50 cursor-default'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default'
                                 : 'bg-blue-600 hover:bg-blue-700 text-white'
                             }`}
                             style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -906,7 +907,7 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                     }}
                     className={`px-4 text-xs font-bold rounded-xl transition-all ${
                       isEmailVerified 
-                        ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/50 cursor-default'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default'
                         : 'bg-blue-600 hover:bg-blue-700 text-white'
                     }`}
                     style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}

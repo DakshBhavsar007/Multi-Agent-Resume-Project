@@ -209,13 +209,40 @@ def get_candidate(request, session_id, cand_id):
         if request.method == "GET":
             parsed = candidate.raw_resume_data or {}
             inner_parsed = parsed.get("parsed", parsed)
+            
+            upload_root = os.getenv("UPLOAD_DIR", "uploads")
+            photo_root = os.getenv("PHOTO_DIR", "photos")
+            
+            photo_url = None
+            if candidate.resume_photo_path:
+                try:
+                    if candidate.resume_photo_path.startswith("http") or candidate.resume_photo_path.startswith("/photos/"):
+                        photo_url = candidate.resume_photo_path
+                    else:
+                        rel = os.path.relpath(candidate.resume_photo_path, photo_root).replace("\\", "/")
+                        photo_url = f"/photos/{rel}"
+                except:
+                    photo_url = None
+                    
+            resume_url = None
+            if candidate.resume_file_path:
+                try:
+                    if candidate.resume_file_path.startswith("http") or candidate.resume_file_path.startswith("/uploads/"):
+                        resume_url = candidate.resume_file_path
+                    else:
+                        rel = os.path.relpath(candidate.resume_file_path, upload_root).replace("\\", "/")
+                        resume_url = f"/uploads/{rel}"
+                except:
+                    resume_url = None
+
             return JsonResponse(success_response({
                 "id": str(candidate.id),
                 "name": candidate.name,
                 "email": candidate.email,
                 "phone": candidate.phone,
                 "location": candidate.location,
-                "photo_url": candidate.resume_photo_path,
+                "photo_url": photo_url,
+                "resume_url": resume_url,
                 "match_score": candidate.match_score,
                 "match_details": candidate.match_details,
                 "recommendation": candidate.recommendation,
@@ -590,13 +617,40 @@ def get_candidate_no_session(request, cand_id):
         if request.method == "GET":
             parsed = candidate.raw_resume_data or {}
             inner_parsed = parsed.get("parsed", parsed)
+            
+            upload_root = os.getenv("UPLOAD_DIR", "uploads")
+            photo_root = os.getenv("PHOTO_DIR", "photos")
+            
+            photo_url = None
+            if candidate.resume_photo_path:
+                try:
+                    if candidate.resume_photo_path.startswith("http") or candidate.resume_photo_path.startswith("/photos/"):
+                        photo_url = candidate.resume_photo_path
+                    else:
+                        rel = os.path.relpath(candidate.resume_photo_path, photo_root).replace("\\", "/")
+                        photo_url = f"/photos/{rel}"
+                except:
+                    photo_url = None
+                    
+            resume_url = None
+            if candidate.resume_file_path:
+                try:
+                    if candidate.resume_file_path.startswith("http") or candidate.resume_file_path.startswith("/uploads/"):
+                        resume_url = candidate.resume_file_path
+                    else:
+                        rel = os.path.relpath(candidate.resume_file_path, upload_root).replace("\\", "/")
+                        resume_url = f"/uploads/{rel}"
+                except:
+                    resume_url = None
+
             return JsonResponse(success_response({
                 "id": str(candidate.id),
                 "name": candidate.name,
                 "email": candidate.email,
                 "phone": candidate.phone,
                 "location": candidate.location,
-                "photo_url": candidate.resume_photo_path,
+                "photo_url": photo_url,
+                "resume_url": resume_url,
                 "match_score": candidate.match_score,
                 "match_details": candidate.match_details,
                 "recommendation": candidate.recommendation,

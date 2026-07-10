@@ -353,39 +353,31 @@ export default function CompleteProfilePage() {
               </div>
 
               {/* HQ Location */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">HQ Location*</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Bengaluru, India"
-                      value={hqLocation}
-                      onChange={(e) => setHqLocation(e.target.value)}
-                      className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none transition-colors"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">HQ Location*</label>
+                <LocationSelector
+                  value={hqLocation}
+                  onChange={setHqLocation}
+                  isLight={false}
+                />
+              </div>
 
-                {/* Company Size */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Company Size*</label>
-                  <div className="relative">
-                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                    <select
-                      value={companySize}
-                      onChange={(e) => setCompanySize(e.target.value)}
-                      className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors appearance-none"
-                    >
-                      <option value="1-10" className="bg-zinc-900">1-10 employees</option>
-                      <option value="11-50" className="bg-zinc-900">11-50 employees</option>
-                      <option value="51-200" className="bg-zinc-900">51-200 employees</option>
-                      <option value="201-500" className="bg-zinc-900">201-500 employees</option>
-                      <option value="501+" className="bg-zinc-900">501+ employees</option>
-                    </select>
-                  </div>
+              {/* Company Size */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Company Size*</label>
+                <div className="relative">
+                  <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                  <select
+                    value={companySize}
+                    onChange={(e) => setCompanySize(e.target.value)}
+                    className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors appearance-none"
+                  >
+                    <option value="1-10" className="bg-zinc-900">1-10 employees</option>
+                    <option value="11-50" className="bg-zinc-900">11-50 employees</option>
+                    <option value="51-200" className="bg-zinc-900">51-200 employees</option>
+                    <option value="201-500" className="bg-zinc-900">201-500 employees</option>
+                    <option value="501+" className="bg-zinc-900">501+ employees</option>
+                  </select>
                 </div>
               </div>
             </>

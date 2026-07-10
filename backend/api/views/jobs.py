@@ -329,23 +329,34 @@ def scan_job_safety_public(request, session_id):
         log_name = f"Job: {session.job_title}"
         log = FraudScanLog.objects.filter(candidate_name=log_name, role="Job Posting").order_by("-created_at").first()
 
-        if not log:
+        if not log or (session.updated_at and log.created_at and session.updated_at > log.created_at):
             agent = FraudDetectionAgent()
             pref_loc = "Remote"
             if session.criteria and session.criteria.get("preferred_locations"):
-                pref_loc = session.criteria.get("preferred_locations")[0]
+                pref_loc = ", ".join(session.criteria.get("preferred_locations"))
                 
             analysis = agent.analyze_job(session.job_title, session.job_description, {
-                "location": pref_loc
+                "location": pref_loc,
+                "company_name": session.company.name if session.company else "Unknown Company",
+                "company_email": session.company.email if session.company else "Unknown Email",
+                "company_website": session.company.website_url if session.company else "Unknown Website",
+                "company_industry": session.company.industry if session.company else "Unknown",
+                "company_hq": session.company.hq_location if session.company else "Unknown",
+                "salary_min": session.criteria.get("salary_min") if (session.criteria and "salary_min" in session.criteria) else None,
+                "salary_max": session.criteria.get("salary_max") if (session.criteria and "salary_max" in session.criteria) else None,
+                "salary_currency": session.criteria.get("salary_currency", "USD") if (session.criteria and "salary_currency" in session.criteria) else "USD"
             })
             
             originality = analysis.get("originality_score", 95)
             ai_prob = analysis.get("ai_probability", 10)
             plagiarism = analysis.get("plagiarism_score", 5)
             
-            status_str = analysis.get("status", "Approved")
+            status_str = analysis.get("status") or "Verified Clean"
             if originality < 70 or plagiarism > 30 or analysis.get("ats_manipulation_detected", False):
                 status_str = "Suspicious Listing"
+
+            if log:
+                log.delete()
 
             log = FraudScanLog.objects.create(
                 company=session.company,
