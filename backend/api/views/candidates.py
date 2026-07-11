@@ -667,3 +667,132 @@ def get_candidate_no_session(request, cand_id):
         return JsonResponse(error_response("Method not allowed"), status=405)
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+@csrf_exempt
+@require_api_key
+def candidate_clusters(request, session_id):
+    """
+    GET /api/v1/sessions/<session_id>/candidate-clusters
+    Clusters session candidates based on their skills, experience descriptions, and summaries.
+    Uses TF-IDF Vectorizer and KMeans clustering from scikit-learn.
+    """
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    try:
+        # Verify session exists
+        session = Session.objects.filter(id=session_id).first()
+        if not session:
+            return JsonResponse(error_response("Session not found"), status=404)
+
+        # Get all non-deleted candidates for this session
+        candidates = Candidate.objects.filter(session_id=session_id, deleted_at__isnull=True)
+        cand_count = candidates.count()
+
+        if cand_count < 3:
+            return JsonResponse(success_response({
+                "message": "At least 3 candidates are required to perform clustering analysis.",
+                "clusters": []
+            }))
+
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.cluster import KMeans
+
+        text_list = []
+        candidates_info = []
+
+        for c in candidates:
+            # 1. Normalize/collect skills
+            skills_list = []
+            for s in (c.normalized_skills or []):
+                if isinstance(s, dict):
+                    skills_list.append(s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or "")
+                else:
+                    skills_list.append(str(s))
+            skills_str = " ".join([sk for sk in skills_list if sk])
+
+            # 2. Extract professional summary
+            parsed = c.raw_resume_data or {}
+            inner_parsed = parsed.get("parsed", parsed)
+            summary = inner_parsed.get("professional_summary") or inner_parsed.get("summary") or ""
+
+            # 3. Extract experience descriptions and roles
+            experience_roles = []
+            for exp in inner_parsed.get("experience", []):
+                role = exp.get("role") or exp.get("title") or ""
+                desc = exp.get("description") or ""
+                experience_roles.append(f"{role} {desc}")
+            exp_str = " ".join(experience_roles)
+
+            # Combine everything into a text profile
+            profile_text = f"{skills_str} {summary} {exp_str}".strip()
+            
+            # If candidate profile text is empty, fallback to candidate name and default skills
+            if not profile_text:
+                profile_text = f"candidate {c.name or ''}"
+
+            text_list.append(profile_text)
+            
+            # Collect short info for response serialization
+            candidates_info.append({
+                "id": str(c.id),
+                "name": c.name or "Unknown Candidate",
+                "email": c.email,
+                "match_score": c.match_score,
+                "recommendation": c.recommendation,
+                "skills": [s for s in skills_list if s][:5],
+                "total_experience_years": c.total_experience_years
+            })
+
+        # Apply TF-IDF Vectorizer
+        vectorizer = TfidfVectorizer(stop_words='english', min_df=1)
+        tfidf_matrix = vectorizer.fit_transform(text_list)
+
+        # Number of clusters (dynamically set to 3, capped by candidate count)
+        n_clusters = min(3, cand_count)
+        
+        # Fit KMeans clustering
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
+        kmeans.fit(tfidf_matrix)
+
+        # Get feature words and centroids to name each cluster
+        order_centroids = kmeans.cluster_centers_.argsort()[:, ::-1]
+        terms = vectorizer.get_feature_names_out()
+        
+        cluster_names = {}
+        for i in range(n_clusters):
+            # Extract top 3-4 feature words
+            top_words = []
+            for ind in order_centroids[i]:
+                word = terms[ind]
+                # Filter out numbers and common names/unwanted terms
+                if not word.isdigit() and len(word) > 2:
+                    top_words.append(word)
+                if len(top_words) >= 3:
+                    break
+            cluster_names[i] = ", ".join(top_words).title() if top_words else f"Segment {i+1}"
+
+        # Group candidates by predicted labels
+        clusters_data = []
+        for cluster_idx in range(n_clusters):
+            cands_in_cluster = [
+                candidates_info[idx] 
+                for idx, label in enumerate(kmeans.labels_) 
+                if label == cluster_idx
+            ]
+            clusters_data.append({
+                "cluster_id": cluster_idx,
+                "cluster_name": cluster_names[cluster_idx],
+                "candidates": cands_in_cluster,
+                "count": len(cands_in_cluster)
+            })
+
+        return JsonResponse(success_response({
+            "message": "Clustering analysis completed successfully.",
+            "clusters": clusters_data
+        }))
+
+    except Exception as e:
+        logger.error(f"Error in candidate clustering: {str(e)}", exc_info=True)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+

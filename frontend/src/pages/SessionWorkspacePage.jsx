@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2, ArrowLeft } from 'lucide-react';
+import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2, ArrowLeft, Network } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -99,6 +99,12 @@ export default function SessionWorkspacePage() {
   const { data: session, isLoading } = useQuery({
     queryKey: ["session", id],
     queryFn: () => sessionsAPI.get(id)
+  });
+
+  const { data: clustersData, isLoading: isLoadingClusters } = useQuery({
+    queryKey: ["candidate-clusters", id],
+    queryFn: () => sessionsAPI.getClusters(id),
+    enabled: activeTab === "clusters"
   });
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -571,6 +577,7 @@ export default function SessionWorkspacePage() {
           {[
             { id: "upload", label: "Upload Resumes", icon: <Upload size={16} className="inline mr-2" /> },
             { id: "candidates", label: "Candidates", icon: <Users size={16} className="inline mr-2" /> },
+            { id: "clusters", label: "Talent Segments", icon: <Network size={16} className="inline mr-2" /> },
             { id: "analytics", label: "Analytics", icon: <BarChart3 size={16} className="inline mr-2" /> }
           ].map(t => (
             <button
@@ -1052,6 +1059,89 @@ export default function SessionWorkspacePage() {
                       )}
                     </PaginationContent>
                   </Pagination>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CLUSTERS TAB */}
+          {activeTab === "clusters" && (
+            <div className="space-y-6 max-w-6xl pb-10">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-6 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                <div>
+                  <h3 className="text-xl font-bold text-charcoal dark:text-zinc-100 flex items-center gap-2">
+                    <Network className="text-accent" size={22} />
+                    Talent Pool Segmentation
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
+                    Unsupervised KMeans machine learning grouping of candidates based on resume context, extracted skills, and experiences.
+                  </p>
+                </div>
+                {clustersData?.clusters?.length > 0 && (
+                  <div className="bg-blue-50 dark:bg-zinc-800/50 text-accent dark:text-zinc-200 text-xs px-4 py-2 rounded-xl font-bold border border-blue-100 dark:border-zinc-700/50 self-start sm:self-center">
+                    Auto-grouped into {clustersData.clusters.length} distinct segments
+                  </div>
+                )}
+              </div>
+
+              {isLoadingClusters ? (
+                <div className="flex flex-col items-center justify-center p-12 h-[300px]">
+                  <Loader2 className="animate-spin text-accent mb-4" size={36} />
+                  <span className="text-sm font-bold text-gray-500 dark:text-zinc-400">Analyzing resume patterns & clustering profiles...</span>
+                </div>
+              ) : !clustersData?.clusters || clustersData.clusters.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 bg-gray-50 dark:bg-zinc-900 rounded-2xl border-2 border-dashed border-gray-200 dark:border-zinc-800 h-[300px] text-center">
+                  <Network size={48} className="text-gray-300 dark:text-zinc-700 mb-4" />
+                  <h3 className="font-black text-gray-600 dark:text-zinc-400 text-xl mb-2">Clustering unavailable</h3>
+                  <p className="text-sm text-gray-400 dark:text-zinc-500 font-medium max-w-sm">
+                    {clustersData?.message || "Please upload at least 3 candidates to perform clustering analysis."}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {clustersData.clusters.map((cluster) => (
+                    <div key={cluster.cluster_id} className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col min-h-[400px]">
+                      {/* Cluster Header */}
+                      <div className="p-5 border-b border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50 flex justify-between items-start">
+                        <div>
+                          <span className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Segment #{cluster.cluster_id + 1}</span>
+                          <h4 className="font-bold text-charcoal dark:text-zinc-100 text-lg line-clamp-1">{cluster.cluster_name}</h4>
+                        </div>
+                        <span className="bg-accent/10 dark:bg-accent/20 text-accent dark:text-zinc-200 text-xs px-2.5 py-1 rounded-full font-black">
+                          {cluster.count} {cluster.count === 1 ? 'candidate' : 'candidates'}
+                        </span>
+                      </div>
+                      
+                      {/* Cluster Candidate List */}
+                      <div className="p-5 flex-1 overflow-y-auto max-h-[350px] divide-y divide-gray-50 dark:divide-zinc-800/50">
+                        {cluster.candidates.map((cand) => (
+                          <div key={cand.id} className="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between group">
+                            <div className="flex-1 mr-4">
+                              <h5 className="font-bold text-charcoal dark:text-zinc-200 text-sm group-hover:text-accent transition-colors">{cand.name}</h5>
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {cand.skills.map((skill, sIdx) => (
+                                  <span key={sIdx} className="text-[10px] bg-gray-50 dark:bg-zinc-800 border border-gray-200/50 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 font-bold px-1.5 py-0.5 rounded-md">
+                                    {skill}
+                                  </span>
+                                ))}
+                                {cand.skills.length === 0 && (
+                                  <span className="text-[10px] text-gray-400 italic">No skills extracted</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="bg-green-100/80 dark:bg-green-950/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-lg text-xs font-black">
+                                {cand.match_score || 0}%
+                              </span>
+                              <span className="text-[10px] text-gray-400 dark:text-zinc-500 block mt-1 font-bold">
+                                {cand.total_experience_years ? `${cand.total_experience_years} yrs` : 'No exp'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

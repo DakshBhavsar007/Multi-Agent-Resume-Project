@@ -124,7 +124,8 @@ export const sessionsAPI = {
     req("POST",`/sessions/${id}/infer-skills`,b),
   matchAll: (id) => 
     req("POST",`/sessions/${id}/match-all`),
-  generateJD: (b) => req("POST", "/sessions/generate-jd", b)
+  generateJD: (b) => req("POST", "/sessions/generate-jd", b),
+  getClusters: (id) => req("GET", `/sessions/${id}/candidate-clusters`)
 }
 
 // INGEST

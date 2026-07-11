@@ -92,6 +92,8 @@ urlpatterns = [
          candidates.list_candidates, name='candidates-list'),
     path('api/v1/sessions/<str:session_id>/candidates/bulk-reject',
          candidates.bulk_reject, name='candidates-bulk-reject'),
+    path('api/v1/sessions/<str:session_id>/candidate-clusters',
+         candidates.candidate_clusters, name='candidates-clusters'),
     # Frontend: GET /candidates/{id} → get_candidate, DELETE /candidates/{id} → delete_candidate
     # Both handled in get_candidate view (dispatches by method)
     path('api/v1/sessions/<str:session_id>/candidates/<str:cand_id>',

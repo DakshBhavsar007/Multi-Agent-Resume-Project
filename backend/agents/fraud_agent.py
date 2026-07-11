@@ -234,6 +234,37 @@ class FraudDetectionAgent:
                 raw_content = raw_content[:-3]
                 
             res = json.loads(raw_content.strip())
+            
+            # Programmatic Domain Check Override to prevent LLM hallucinations
+            company_email = (metadata or {}).get("company_email", "")
+            email_is_official = True
+            if company_email:
+                email_lower = company_email.lower().strip()
+                if "@" in email_lower:
+                    domain = email_lower.split("@")[-1]
+                    public_providers = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com", "icloud.com", "proton.me", "protonmail.com"]
+                    if domain in public_providers:
+                        email_is_official = False
+            
+            if email_is_official and company_email and "@" in company_email:
+                if "detailed_checks" not in res:
+                    res["detailed_checks"] = {}
+                if "recruiter_email" not in res["detailed_checks"]:
+                    res["detailed_checks"]["recruiter_email"] = {}
+                
+                res["detailed_checks"]["recruiter_email"]["status"] = "Yes"
+                res["detailed_checks"]["recruiter_email"]["details"] = f"Recruiter uses official domain email ({company_email})."
+                
+                # Remove any email/domain mismatch flags from manipulation_flags
+                flags = res.get("manipulation_flags", [])
+                res["manipulation_flags"] = [f for f in flags if "email" not in f.lower() and "domain" not in f.lower()]
+                
+                # Correct originality_score and risk levels if they were incorrectly flagged
+                if len(res["manipulation_flags"]) == 0:
+                    res["originality_score"] = max(res.get("originality_score", 90), 92)
+                    res["risk_level"] = "Low"
+                    res["status"] = "Approved"
+                    res["verified_company"] = "Yes"
         except Exception as e:
             # Safe default fallback
             res = {
