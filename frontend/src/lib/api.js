@@ -515,5 +515,9 @@ export const testAPI = {
   mockSwitchRound: (candidateId, roundNumber) => testReq("POST", "/mock-switch-round", { candidate_id: candidateId, round_number: roundNumber })
 };
 
+export const dynamicAPI = {
+  get: () => req("GET", "/dynamic-data")
+};
+
 
 

@@ -6,6 +6,7 @@ import { Play, Copy } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import { portalKeys } from "../../lib/portalApi";
+import { dynamicAPI } from "../../lib/api";
 
 const SECTIONS = [
   { id: "getting-started", title: "Getting Started" },
@@ -30,6 +31,31 @@ const SECTIONS = [
 ];
 
 export default function DeveloperDocs() {
+  const [docSections, setDocSections] = useState(SECTIONS);
+  const [sdksData, setSdksData] = useState([
+    { lang: "Python", pkg: "between-py", icon: "🐍", install: "pip install between-py" },
+    { lang: "JavaScript", pkg: "between-js", icon: "🟨", install: "npm install between-js" },
+    { lang: "Go", pkg: "go-between", icon: "🐹", install: "go get between.indevs.in/go-between" }
+  ]);
+  const [templates, setTemplates] = useState({
+    match_request: `curl -X POST "https://api.between.indevs.in/api/v1/match" \\\n  -H "X-API-Key: YOUR_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "job_title": "Senior React Developer",\n    "job_description": "5+ years React, TypeScript...",\n    "top_k": 5\n  }'`,
+    match_response: `{\n  "success": true,\n  "data": {\n    "matches": [\n      {\n        "candidate_id": "cnd_12345",\n        "name": "Jane Doe",\n        "match_score": 94.2,\n        "matched_skills": ["React","TypeScript"]\n      }\n    ]\n  }\n}`,
+    chat_request: `curl -X POST "https://api.between.indevs.in/api/v1/chat" \\\n  -H "X-API-Key: YOUR_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "message": "Find React devs with 3+ years experience",\n    "session_id": "ses_abc123"\n  }'`,
+    chat_response: `{\n  "success": true,\n  "data": {\n    "answer": "Found 3 matching candidates.",\n    "candidates": [\n      {"candidate_id": "cnd_12345", "name": "Jane Doe"}\n    ],\n    "tokens_used": 180\n  }\n}`
+  });
+
+  useEffect(() => {
+    dynamicAPI.get()
+      .then(res => {
+        if (res.docs) {
+          if (res.docs.sections) setDocSections(res.docs.sections);
+          if (res.docs.sdks) setSdksData(res.docs.sdks);
+          if (res.docs.templates) setTemplates(res.docs.templates);
+        }
+      })
+      .catch(err => console.error("Failed to load dynamic docs:", err));
+  }, []);
+
   const [activeSection, setActiveSection] = useState("getting-started");
   const [playgroundOpen, setPlaygroundOpen] = useState(false);
   const [pgEndpoint, setPgEndpoint] = useState(null);
@@ -240,7 +266,7 @@ export default function DeveloperDocs() {
       <nav className="hidden lg:block w-64 shrink-0 pr-8 sticky top-8 max-h-[calc(100vh-64px)] overflow-y-auto custom-scrollbar">
          <h2 className="text-xl font-black text-charcoal dark:text-zinc-100 mb-6">Documentation</h2>
          <ul className="flex flex-col gap-1.5 text-sm font-semibold">
-           {SECTIONS.map(sec => (
+           {docSections.map(sec => (
              <li key={sec.id}>
                <button 
                  onClick={() => scrollTo(sec.id)} 
@@ -568,32 +594,13 @@ export default function DeveloperDocs() {
                <div>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Request</span>
                  <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl -X POST "https://api.between.indevs.in/api/v1/match" \
-  -H "X-API-Key: YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "job_title": "Senior React Developer",
-    "job_description": "5+ years React, TypeScript...",
-    "top_k": 5
-  }'`}
+                    {templates.match_request}
                  </SyntaxHighlighter>
                </div>
                <div>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Response</span>
                  <SyntaxHighlighter language="json" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`{
-  "success": true,
-  "data": {
-    "matches": [
-      {
-        "candidate_id": "cnd_12345",
-        "name": "Jane Doe",
-        "match_score": 94.2,
-        "matched_skills": ["React","TypeScript"]
-      }
-    ]
-  }
-}`}
+                    {templates.match_response}
                  </SyntaxHighlighter>
                </div>
             </div>
@@ -613,28 +620,13 @@ export default function DeveloperDocs() {
                <div>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Request</span>
                  <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`curl -X POST "https://api.between.indevs.in/api/v1/chat" \
-  -H "X-API-Key: YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "Find React devs with 3+ years experience",
-    "session_id": "ses_abc123"
-  }'`}
+                    {templates.chat_request}
                  </SyntaxHighlighter>
                </div>
                <div>
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Response</span>
                  <SyntaxHighlighter language="json" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
-{`{
-  "success": true,
-  "data": {
-    "answer": "Found 3 matching candidates.",
-    "candidates": [
-      {"candidate_id": "cnd_12345", "name": "Jane Doe"}
-    ],
-    "tokens_used": 180
-  }
-}`}
+                    {templates.chat_response}
                  </SyntaxHighlighter>
                </div>
             </div>
@@ -849,11 +841,7 @@ export default function DeveloperDocs() {
               Official client libraries and code examples to help you integrate Between into your stack quickly.
             </p>
             <div className="grid md:grid-cols-3 gap-4 mb-8">
-              {[
-                { lang: "Python", pkg: "between-py", icon: "??", install: "pip install between-py" },
-                { lang: "JavaScript", pkg: "between-js", icon: "?", install: "npm install between-js" },
-                { lang: "Go", pkg: "go-between", icon: "??", install: "go get between.indevs.in/go-between" }
-              ].map(sdk => (
+              {sdksData.map(sdk => (
                 <div key={sdk.lang} className="border border-gray-200 rounded-2xl p-5 bg-gray-50/40 hover:bg-gray-50 transition-colors">
                   <div className="text-2xl mb-2">{sdk.icon}</div>
                   <div className="font-bold text-charcoal text-sm mb-1">{sdk.lang} SDK</div>

@@ -699,5 +699,183 @@ def cross_portal_login(request):
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
 
+@csrf_exempt
+def dynamic_data(request):
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+        
+    locations = {
+        "India": {
+            "Gujarat": ["Ahmedabad", "Gandhinagar", "Surat", "Vadodara", "Rajkot"],
+            "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik"],
+            "Karnataka": ["Bengaluru", "Mysore", "Hubli", "Mangalore"],
+            "Delhi": ["New Delhi", "Delhi Cantt"],
+            "Telangana": ["Hyderabad", "Warangal"],
+            "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"],
+            "Uttar Pradesh": ["Noida", "Lucknow", "Kanpur", "Agra"],
+            "Haryana": ["Gurugram", "Faridabad", "Panipat"]
+        },
+        "United States": {
+            "California": ["San Francisco", "Los Angeles", "San Diego", "San Jose"],
+            "New York": ["New York City", "Buffalo", "Rochester"],
+            "Texas": ["Austin", "Houston", "Dallas", "San Antonio"],
+            "Washington": ["Seattle", "Bellevue", "Redmond"],
+            "Massachusetts": ["Boston", "Cambridge", "Worcester"]
+        },
+        "United Kingdom": {
+            "England": ["London", "Manchester", "Birmingham", "Leeds", "Bristol"],
+            "Scotland": ["Edinburgh", "Glasgow", "Aberdeen"]
+        },
+        "Canada": {
+            "Ontario": ["Toronto", "Ottawa", "Mississauga", "Hamilton"],
+            "British Columbia": ["Vancouver", "Victoria", "Burnaby"],
+            "Quebec": ["Montreal", "Quebec City"]
+        },
+        "Germany": {
+            "Bavaria": ["Munich", "Nuremberg", "Augsburg"],
+            "Berlin": ["Berlin"],
+            "Hamburg": ["Hamburg"]
+        },
+        "Singapore": {
+            "Central Region": ["Singapore"]
+        }
+    }
+    
+    seeker_plans = {
+        "free": {
+            "name": "Free Forever",
+            "price": "0",
+            "period": "forever",
+            "features": [
+                "1 dynamic AI resume builder resume",
+                "Basic resume safety analysis",
+                "Up to 5 job applications per month",
+                "Keystroke telemetry protection (1 profile)"
+            ],
+            "quota_description": "Perfect for casual seekers looking to secure their identity."
+        },
+        "pro_monthly": {
+            "name": "Pro Monthly",
+            "price": "49",
+            "period": "month",
+            "features": [
+                "Unlimited dynamic AI resumes",
+                "Deep safety analysis & fraud alerts",
+                "Unlimited job applications",
+                "Priority matching bypass queue",
+                "Comprehensive keystroke telemetry profiling (unlimited)"
+            ],
+            "quota_description": "For serious candidates searching actively."
+        },
+        "pro_yearly": {
+            "name": "Pro Yearly",
+            "price": "399",
+            "period": "year",
+            "features": [
+                "Everything in Pro Monthly",
+                "Save 32% compared to monthly plan",
+                "Direct API access to portfolio protection scanner",
+                "VIP email support & resume audit checks"
+            ],
+            "quota_description": "Best value for long-term career safety."
+        }
+    }
+    
+    developer_plans = {
+        "free": {
+            "name": "Free",
+            "price": "0",
+            "features": [
+                "100 resume parses/mo",
+                "500 candidate matching operations/mo",
+                "100 AI chatbot queries/mo",
+                "0 safety scans/mo (upgrade required)"
+            ],
+            "limits": {
+                "parses": 100,
+                "matches": 500,
+                "chat": 100,
+                "safety": 0
+            }
+        },
+        "starter": {
+            "name": "Starter",
+            "price": "79",
+            "features": [
+                "1,000 resume parses/mo",
+                "10,000 candidate matching operations/mo",
+                "2,000 AI chatbot queries/mo",
+                "100 safety scans/mo included"
+            ],
+            "limits": {
+                "parses": 1000,
+                "matches": 10000,
+                "chat": 2000,
+                "safety": 100
+            }
+        },
+        "business": {
+            "name": "Business",
+            "price": "299",
+            "features": [
+                "10,000 resume parses/mo",
+                "Unlimited candidate matching operations/mo",
+                "Unlimited AI chatbot queries/mo",
+                "1,000 safety scans/mo included"
+            ],
+            "limits": {
+                "parses": 10000,
+                "matches": -1,
+                "chat": -1,
+                "safety": 1000
+            }
+        }
+    }
+    
+    docs_structure = {
+        "sections": [
+            { "id": "getting-started", "title": "Getting Started" },
+            { "id": "authentication", "title": "Authentication" },
+            { "id": "sessions", "title": "Sessions" },
+            { 
+                "id": "resume-ingestion", 
+                "title": "Resume Ingestion", 
+                "sub": [
+                    { "id": "file-upload", "title": "File Upload" },
+                    { "id": "gmail-sync", "title": "Gmail Sync" },
+                    { "id": "google-drive", "title": "Google Drive" },
+                    { "id": "ats-import", "title": "ATS Import" }
+                ]
+            },
+            { "id": "candidates", "title": "Candidates" },
+            { "id": "candidate-clustering", "title": "Candidate Clustering" },
+            { "id": "job-matching", "title": "Job Matching" },
+            { "id": "ai-chatbot", "title": "AI Chatbot" },
+            { "id": "fraud-detection", "title": "Fraud Detection" },
+            { "id": "webhooks", "title": "Webhooks" },
+            { "id": "rate-limits", "title": "Rate Limits & Errors" },
+            { "id": "sdks", "title": "SDKs & Examples" }
+        ],
+        "sdks": [
+            { "lang": "Python", "pkg": "between-py", "icon": "🐍", "install": "pip install between-py" },
+            { "lang": "JavaScript", "pkg": "between-js", "icon": "🟨", "install": "npm install between-js" },
+            { "lang": "Go", "pkg": "go-between", "icon": "🐹", "install": "go get between.indevs.in/go-between" }
+        ],
+        "templates": {
+            "match_request": "curl -X POST \"https://api.between.indevs.in/api/v1/match\" \\\n  -H \"X-API-Key: YOUR_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"job_title\": \"Senior React Developer\",\n    \"job_description\": \"5+ years React, TypeScript...\",\n    \"top_k\": 5\n  }'",
+            "match_response": "{\n  \"success\": true,\n  \"data\": {\n    \"matches\": [\n      {\n        \"candidate_id\": \"cnd_12345\",\n        \"name\": \"Jane Doe\",\n        \"match_score\": 94.2,\n        \"matched_skills\": [\"React\",\"TypeScript\"]\n      }\n    ]\n  }\n}",
+            "chat_request": "curl -X POST \"https://api.between.indevs.in/api/v1/chat\" \\\n  -H \"X-API-Key: YOUR_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"message\": \"Find React devs with 3+ years experience\",\n    \"session_id\": \"ses_abc123\"\n  }'",
+            "chat_response": "{\n  \"success\": true,\n  \"data\": {\n    \"answer\": \"Found 3 matching candidates.\",\n    \"candidates\": [\n      {\"candidate_id\": \"cnd_12345\", \"name\": \"Jane Doe\"}\n    ],\n    \"tokens_used\": 180\n  }\n}"
+        }
+    }
+    
+    return JsonResponse(success_response({
+        "locations": locations,
+        "seeker_plans": seeker_plans,
+        "developer_plans": developer_plans,
+        "docs": docs_structure
+    }))
+
+
 
 

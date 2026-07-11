@@ -6,7 +6,7 @@ import {
   Briefcase, FileText, Star, AlertCircle
 } from 'lucide-react';
 import { Header, Footer } from '../../components/user/site-chrome';
-import { seekerAPI } from '../../lib/api';
+import { seekerAPI, dynamicAPI } from '../../lib/api';
 import toast from 'react-hot-toast';
 import { useSeekerAuthStore } from '../../stores/seekerAuthStore';
 
@@ -290,6 +290,7 @@ export default function SeekerBillingPage() {
   const [currentPlan, setCurrentPlan] = useState('free');
   const [loading, setLoading] = useState(null);
   const [loadingPlan, setLoadingPlan] = useState(true);
+  const [plans, setPlans] = useState(PLANS);
 
   useEffect(() => {
     // Load Razorpay script
@@ -302,6 +303,40 @@ export default function SeekerBillingPage() {
 
   useEffect(() => {
     setLoadingPlan(true);
+    
+    // Fetch dynamic plans
+    dynamicAPI.get()
+      .then(res => {
+        if (res.seeker_plans) {
+          const backendPlans = [
+            {
+              id: 'free',
+              name: res.seeker_plans.free.name,
+              label: 'Get started',
+              price: Number(res.seeker_plans.free.price),
+              period: res.seeker_plans.free.period,
+              description: res.seeker_plans.free.quota_description,
+              features: res.seeker_plans.free.features.map(f => ({ text: f, icon: FileText })),
+              cta: 'Current Plan',
+              featured: false,
+            },
+            {
+              id: 'premium',
+              name: res.seeker_plans.pro_monthly.name,
+              label: 'Most popular',
+              price: Number(res.seeker_plans.pro_monthly.price),
+              period: res.seeker_plans.pro_monthly.period,
+              description: res.seeker_plans.pro_monthly.quota_description,
+              features: res.seeker_plans.pro_monthly.features.map(f => ({ text: f, icon: Sparkles })),
+              cta: 'Upgrade to Premium',
+              featured: true,
+            }
+          ];
+          setPlans(backendPlans);
+        }
+      })
+      .catch(err => console.error("Failed to load dynamic plans:", err));
+
     seekerAPI.getBillingCurrent()
       .then(data => setCurrentPlan(data?.plan || 'free'))
       .catch(() => setCurrentPlan(localStorage.getItem('seeker_tier') || 'free'))
@@ -459,7 +494,7 @@ export default function SeekerBillingPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 860, paddingTop: 16, width: '100%' }}>
-            {PLANS.map(plan => (
+            {plans.map(plan => (
               <PlanCard
                 key={plan.id}
                 plan={plan}

@@ -41,6 +41,7 @@ from api.views.developer import (
 urlpatterns = [
     # ── Health Check ──────────────────────────────────────────────────────────
     path('health', recruiter_auth.health_check, name='health-check'),
+    path('api/v1/dynamic-data', recruiter_auth.dynamic_data, name='dynamic-data'),
 
     # ── Recruiter Auth ─────────────────────────────────────────────────────────
     path('api/v1/auth/register', recruiter_auth.register, name='auth-register'),
