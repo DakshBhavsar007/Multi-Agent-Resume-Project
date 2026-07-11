@@ -21,9 +21,14 @@ TIER_ORDER = {"free": 0, "starter": 1, "business": 2, "enterprise": 3}
 JWT_SECRET = os.getenv("JWT_SECRET", "supersecret")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 
-redis_client = redis.from_url(
-  os.getenv("REDIS_URL", "redis://localhost:6379")
-)
+redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+if redis_url.startswith("rediss://") and "ssl_cert_reqs" not in redis_url:
+    if "?" in redis_url:
+        redis_url += "&ssl_cert_reqs=none"
+    else:
+        redis_url += "?ssl_cert_reqs=none"
+
+redis_client = redis.from_url(redis_url)
 
 def verify_api_key_helper(request):
     """

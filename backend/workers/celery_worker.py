@@ -29,10 +29,17 @@ import uuid
 
 from api.models import Candidate, Session as SessionModel, IngestJob, SkillTaxonomy
 
+redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+if redis_url.startswith("rediss://") and "ssl_cert_reqs" not in redis_url:
+    if "?" in redis_url:
+        redis_url += "&ssl_cert_reqs=none"
+    else:
+        redis_url += "?ssl_cert_reqs=none"
+
 celery_app = Celery(
     "vishleshan",
-    broker=os.getenv("REDIS_URL", "redis://localhost:6379"),
-    backend=os.getenv("REDIS_URL", "redis://localhost:6379")
+    broker=redis_url,
+    backend=redis_url
 )
 
 celery_app.conf.update(
