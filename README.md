@@ -361,6 +361,13 @@ curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \
 └── README.md
 ```
 
+## Security & Credentials Rotation Warning
+
+> [!WARNING]
+> **Important Security Practice**: All API keys, passwords, connection URIs, and credentials must be configured strictly through the `.env` configuration file on the server and are excluded from version control via `.gitignore`.
+>
+> If you are migrating this repository or deploying to production, **immediately rotate all previously used API keys (Gemini, Groq, Razorpay, GitHub/Google OAuth)** that might have been logged or used during initial development, as legacy secrets can persist in Git commits history.
+
 ---
 
 ## License & Attributions
