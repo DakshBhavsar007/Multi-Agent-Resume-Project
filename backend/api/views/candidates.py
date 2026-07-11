@@ -117,6 +117,11 @@ def _serialize_candidate_summary(c):
 def list_candidates(request, session_id):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
+        
+    # Verify session ownership to prevent IDOR
+    if not Session.objects.filter(id=session_id, company_id=request.company.id).exists():
+        return JsonResponse(error_response("Session not found or access denied"), status=403)
+        
     try:
         round_index_val = request.GET.get("round_index")
         round_index = int(round_index_val) if round_index_val is not None else None
@@ -196,6 +201,10 @@ def list_candidates(request, session_id):
 @require_api_key
 def get_candidate(request, session_id, cand_id):
     """Handles GET (retrieve) and DELETE (delete) for a single candidate."""
+    # Verify session ownership to prevent IDOR
+    if not Session.objects.filter(id=session_id, company_id=request.company.id).exists():
+        return JsonResponse(error_response("Session not found or access denied"), status=403)
+        
     try:
         candidate = Candidate.objects.filter(id=cand_id, session_id=session_id, deleted_at__isnull=True).first()
         if not candidate:
@@ -265,8 +274,13 @@ def get_candidate(request, session_id, cand_id):
 def candidate_action(request, session_id, cand_id):
     if request.method != "PATCH":
         return JsonResponse(error_response("Method not allowed"), status=405)
+        
+    # Verify session ownership to prevent IDOR
+    if not Session.objects.filter(id=session_id, company_id=request.company.id).exists():
+        return JsonResponse(error_response("Session not found or access denied"), status=403)
+        
     try:
-        session = Session.objects.filter(id=session_id).first()
+        session = Session.objects.filter(id=session_id, company_id=request.company.id).first()
         if not session:
             return JsonResponse(error_response("Session not found"), status=404)
 
@@ -447,6 +461,11 @@ def candidate_action(request, session_id, cand_id):
 def bulk_reject(request, session_id):
     if request.method != "DELETE":
         return JsonResponse(error_response("Method not allowed"), status=405)
+        
+    # Verify session ownership to prevent IDOR
+    if not Session.objects.filter(id=session_id, company_id=request.company.id).exists():
+        return JsonResponse(error_response("Session not found or access denied"), status=403)
+        
     try:
         data = json.loads(request.body)
         candidate_ids = data.get("candidate_ids", [])
@@ -679,9 +698,13 @@ def candidate_clusters(request, session_id):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
 
+    # Verify session ownership to prevent IDOR
+    if not Session.objects.filter(id=session_id, company_id=request.company.id).exists():
+        return JsonResponse(error_response("Session not found or access denied"), status=403)
+
     try:
         # Verify session exists
-        session = Session.objects.filter(id=session_id).first()
+        session = Session.objects.filter(id=session_id, company_id=request.company.id).first()
         if not session:
             return JsonResponse(error_response("Session not found"), status=404)
 
