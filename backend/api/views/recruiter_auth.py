@@ -114,7 +114,7 @@ def register(request):
                 }
             )
         except Exception:
-            logger.warning("Welcome email failed for recruiter %s", email)
+            logger.warning("Welcome email failed for recruiter [REDACTED]")
 
         return resp
     except Exception as e:
@@ -875,6 +875,19 @@ def dynamic_data(request):
         "developer_plans": developer_plans,
         "docs": docs_structure
     }))
+
+
+@csrf_exempt
+@require_recruiter_jwt
+def delete_account(request):
+    if request.method != "DELETE":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        company = request.company
+        company.delete()
+        return JsonResponse(success_response({"message": "Recruiter account deleted successfully"}))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
 
 

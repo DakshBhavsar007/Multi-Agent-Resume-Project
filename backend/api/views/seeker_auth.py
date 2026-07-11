@@ -183,7 +183,7 @@ def register(request):
         try:
             send_welcome_email(user_email=email, user_name=full_name, role="seeker")
         except Exception:
-            logger.warning("Welcome email failed for seeker %s", email)
+            logger.warning("Welcome email failed for seeker [REDACTED]")
 
         return resp
 
@@ -329,6 +329,19 @@ def upload_avatar(request):
         seeker.save(update_fields=["avatar_path"])
 
         return JsonResponse(success_response(_seeker_dict(seeker)))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_seeker_jwt
+def delete_account(request):
+    if request.method != "DELETE":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        seeker = request.seeker
+        seeker.delete()
+        return JsonResponse(success_response({"message": "Seeker account deleted successfully"}))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 

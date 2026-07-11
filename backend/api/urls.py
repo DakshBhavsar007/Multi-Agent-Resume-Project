@@ -53,6 +53,7 @@ urlpatterns = [
     path('api/v1/auth/logout', recruiter_auth.logout, name='auth-logout'),
     path('api/v1/auth/change-password', recruiter_auth.change_password, name='auth-change-password'),
     path('api/v1/auth/update-profile', recruiter_auth.update_profile, name='auth-update-profile'),
+    path('api/v1/auth/delete-account', recruiter_auth.delete_account, name='auth-delete-account'),
     
     # ── User Verification Endpoints ───────────────────────────────────────────
     path('api/v1/auth/verification/send-email-otp', verification.send_email_otp, name='verification-send-email-otp'),
@@ -140,6 +141,7 @@ urlpatterns = [
     path('api/developer/auth/login-github', github_auth.developer_auth_github, name='dev-auth-login-github'),
     path('api/developer/auth/me', dev_auth.get_me, name='dev-auth-me'),
     path('api/developer/auth/profile', dev_auth.patch_me, name='dev-auth-patch-me'),
+    path('api/developer/auth/delete-account', dev_auth.delete_account, name='dev-auth-delete-account'),
     path('api/developer/auth/forgot-password', password_reset.forgot_password_developer, name='dev-auth-forgot-password'),
     path('api/developer/auth/reset-password', password_reset.reset_password_developer, name='dev-auth-reset-password'),
 
@@ -208,6 +210,7 @@ urlpatterns = [
     path('api/v1/seeker/auth/me', seeker_auth.me, name='seeker-auth-me'),
     path('api/v1/seeker/auth/profile', seeker_auth.update_profile, name='seeker-auth-profile'),
     path('api/v1/seeker/auth/upload-avatar', seeker_auth.upload_avatar, name='seeker-auth-upload-avatar'),
+    path('api/v1/seeker/auth/delete-account', seeker_auth.delete_account, name='seeker-auth-delete-account'),
     path('api/v1/seeker/auth/forgot-password', password_reset.forgot_password_seeker, name='seeker-auth-forgot-password'),
     path('api/v1/seeker/auth/reset-password', password_reset.reset_password_seeker, name='seeker-auth-reset-password'),
 

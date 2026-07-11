@@ -106,7 +106,7 @@ def register(request):
                 }
             )
         except Exception:
-            logger.warning("Welcome email failed for developer %s", email)
+            logger.warning("Welcome email failed for developer [REDACTED]")
 
         return resp
     except Exception as e:
@@ -198,5 +198,18 @@ def patch_me(request):
             "website_url": dev.website_url,
             "allowed_domains": dev.allowed_domains
         }))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_developer_jwt
+def delete_account(request):
+    if request.method != "DELETE":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        dev = request.developer
+        dev.delete()
+        return JsonResponse(success_response({"message": "Developer account deleted successfully"}))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
