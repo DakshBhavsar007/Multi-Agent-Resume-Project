@@ -361,6 +361,34 @@ curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \
 └── README.md
 ```
 
+## AI Evaluation & Interview Flow
+
+The platform provides a comprehensive, automated multi-round evaluation pipeline for candidates:
+
+1. **MCQ Round:**
+   * Automatically generates customized Technical, Conceptual, and Aptitude multiple-choice questions matching the job description's skill requirements.
+   * Tracks and grades submissions in real-time, recording scores and attempt durations.
+2. **Coding Round:**
+   * Generates custom programming challenges matching the job's stack (e.g., Python, JavaScript).
+   * Renders a fully functional coding editor in the frontend. Candidates solve challenges and submit code, which is graded based on test cases and correctness.
+3. **AI Voice/Chat Mock Interview Round:**
+   * Conducts a dynamic, two-way conversational mock interview.
+   * Generates AI questions sequentially based on previous candidate answers and resume content.
+   * Grades performance upon completion, providing candidates with structured feedback, key improvements, and confidence scores.
+
+---
+
+## Security Hardening & Attacker Protections
+
+We have implemented a comprehensive security suite to prevent common web application vulnerabilities:
+
+* **IDOR Protection:** All candidate retrieval/modification and chat history views enforce session-owner checks server-side to guarantee Company A cannot access Company B's candidate details.
+* **Token Invalidation:** Integrated a Redis-based blacklist on logout (`blacklist:{token}`). Blacklisted tokens are instantly rejected on API decorators.
+* **Content Injection Protection:** Recipient text inputs in the ReportLab backend PDF generator are recursively escaped with HTML entities, eliminating crashes caused by special markup characters (like `<` or `&`).
+* **Health Check & Error Sanitization:** The public `/api/v1/auth/health` and other API responses mask internal details and query exceptions in production (`DEBUG=False`), returning a generic correlation ID.
+
+---
+
 ## Security & Credentials Rotation Warning
 
 > [!WARNING]

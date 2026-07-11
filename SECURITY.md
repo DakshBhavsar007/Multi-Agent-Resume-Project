@@ -135,13 +135,17 @@ If you are running Vishleshan locally or in your own infrastructure, follow thes
 
 Vishleshan includes the following built-in security controls:
 
-- **API Key Authentication** — All developer API endpoints require a valid `X-API-Key` header
-- **JWT Auth** — Recruiter sessions use short-lived JWT access tokens with refresh rotation
-- **Redis Rate Limiting** — Per-key monthly quota enforcement prevents abuse
-- **Fraud Detection Agent** — Scans uploaded resumes for AI-generated content, plagiarism, and ATS keyword stuffing
+- **IDOR Protection** — Enforces company/seeker ownership checks server-side for all candidate management, results, and chat history views.
+- **JWT Blacklisting** — Revokes tokens instantly upon logout using a Redis-based blacklist (`blacklist:{token}`) with auto-expiration.
+- **ReportLab Paragraph Escaping** — Recursively HTML-escapes all text inputs rendered in backend PDFs to prevent ReportLab XML parser crashes.
+- **API Key Authentication** — All developer API endpoints require a valid `X-API-Key` header.
+- **JWT Auth** — Recruiter and seeker sessions use short-lived JWT access tokens with refresh rotation.
+- **Redis Rate Limiting** — Per-key monthly quota enforcement and IP-based rate limiting on all authentication/OTP endpoints.
+- **Fraud Detection Agent** — Scans uploaded resumes for AI-generated content, plagiarism, and ATS keyword stuffing.
 - **LinkedIn Job Post & Legitimacy Scanner** — Integrates scraping with 6-point AI verification audits (website validation, recruiter email domain checks, salary realism, LinkedIn presence, cloned post templates, and duplicate posting detection) to protect seekers from phishing and recruitment fraud.
-- **LLM Key Rotation** — The `RotateLLMClient` rotates across multiple Gemini API keys to prevent single-key exposure
-- **CORS Configuration** — Restrict allowed origins to your frontend domain in production
+- **LLM Key Rotation** — The `RotateLLMClient` rotates across multiple Gemini API keys to prevent single-key exposure.
+- **CORS Configuration** — Restrict allowed origins to your frontend domain in production, defaulting to restricted localhost urls.
+- **Error Sanitization** — Django middleware and schema utilities suppress internal error traces, hostnames, and database details in production (`DEBUG=False`), returning a generic correlation ID.
 
 ---
 
