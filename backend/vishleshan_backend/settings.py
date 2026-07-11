@@ -120,7 +120,7 @@ allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "")
 if allowed_origins_str:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
 else:
-    CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:3000", "https://between.indevs.in"]
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
