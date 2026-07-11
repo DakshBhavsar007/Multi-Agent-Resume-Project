@@ -313,8 +313,18 @@ def health_check(request):
     # Check LLM API keys
     try:
         import os
-        llm_keys = os.getenv("LLM_API_KEYS", "")
-        key_count = len([k for k in llm_keys.split(",") if k.strip()]) if llm_keys else 0
+        gemini_keys_str = os.getenv("GEMINI_API_KEYS", "")
+        gemini_keys = [k.strip() for k in gemini_keys_str.split(",") if k.strip()]
+        if not gemini_keys and os.getenv("GEMINI_API_KEY"):
+            gemini_keys.append(os.getenv("GEMINI_API_KEY"))
+            
+        openai_key = os.getenv("OPENAI_API_KEY", "")
+        llm_keys_str = os.getenv("LLM_API_KEYS", "")
+        llm_keys = [k.strip() for k in llm_keys_str.split(",") if k.strip()]
+        
+        all_keys = list(set(gemini_keys + llm_keys + ([openai_key] if openai_key else [])))
+        key_count = len(all_keys)
+        
         if key_count > 0:
             checks["llm_api"] = {"status": "ok", "detail": f"{key_count} API key(s) configured"}
         else:

@@ -20,6 +20,7 @@ const SECTIONS = [
      ]
   },
   { id: "candidates", title: "Candidates" },
+  { id: "candidate-clustering", title: "Candidate Clustering" },
   { id: "job-matching", title: "Job Matching" },
   { id: "ai-chatbot", title: "AI Chatbot" },
   { id: "fraud-detection", title: "Fraud Detection" },
@@ -46,6 +47,7 @@ export default function DeveloperDocs() {
   // New playground fields
   const [requestBodyJson, setRequestBodyJson] = useState("");
   const [candidateIdParam, setCandidateIdParam] = useState("cnd_12345");
+  const [sessionIdParam, setSessionIdParam] = useState("ses_abc123");
 
   const { data: keysData } = useQuery({
     queryKey: ["portal-keys"],
@@ -70,7 +72,7 @@ export default function DeveloperDocs() {
     const allIds = [
       "getting-started","authentication","sessions",
       "resume-ingestion","file-upload","gmail-sync","google-drive","ats-import",
-      "candidates","job-matching","ai-chatbot","fraud-detection",
+      "candidates","candidate-clustering","job-matching","ai-chatbot","fraud-detection",
       "webhooks","rate-limits","sdks"
     ];
     const observer = new IntersectionObserver(
@@ -103,6 +105,7 @@ export default function DeveloperDocs() {
      setJobTitle("");
      setJobDescription("");
      setCandidateIdParam("cnd_12345");
+     setSessionIdParam("ses_abc123");
 
      // Pre-populate default bodies based on endpoint
      if (endpoint.path === "/api/v1/sessions" && endpoint.method === "POST") {
@@ -142,12 +145,26 @@ export default function DeveloperDocs() {
     setErrorMsg(null);
 
     try {
-      const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+      const viteApiUrl = import.meta.env?.VITE_API_URL;
+      let rawBase = viteApiUrl || "http://127.0.0.1:8000/api/v1";
+      if (!viteApiUrl && typeof window !== "undefined") {
+        const host = window.location.origin;
+        if (!host.includes("localhost") && !host.includes("127.0.0.1")) {
+          if (host.includes("between.indevs.in")) {
+            rawBase = "https://api.between.indevs.in/api/v1";
+          } else {
+            rawBase = `${host}/api/v1`;
+          }
+        }
+      }
       const domain = rawBase.replace("/api/v1", "");
       
       let path = pgEndpoint?.path || "";
       if (path.includes("/:id")) {
         path = path.replace("/:id", `/${candidateIdParam}`);
+      }
+      if (path.includes("/:session_id")) {
+        path = path.replace("/:session_id", `/${sessionIdParam}`);
       }
       const url = domain + path;
 
@@ -218,26 +235,26 @@ export default function DeveloperDocs() {
   };
 
   return (
-    <div className="w-full flex">
+    <div className="w-full flex text-charcoal dark:text-zinc-100">
       {/* LEFT NAV */}
       <nav className="hidden lg:block w-64 shrink-0 pr-8 sticky top-8 max-h-[calc(100vh-64px)] overflow-y-auto custom-scrollbar">
-         <h2 className="text-xl font-black text-charcoal mb-6">Documentation</h2>
+         <h2 className="text-xl font-black text-charcoal dark:text-zinc-100 mb-6">Documentation</h2>
          <ul className="flex flex-col gap-1.5 text-sm font-semibold">
            {SECTIONS.map(sec => (
              <li key={sec.id}>
                <button 
                  onClick={() => scrollTo(sec.id)} 
-                 className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${activeSection === sec.id ? "bg-accent/10 text-accent" : "text-gray-500 hover:text-charcoal hover:bg-gray-100"}`}
+                 className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${activeSection === sec.id ? "bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent-light" : "text-gray-500 dark:text-zinc-400 hover:text-charcoal dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800/60"}`}
                >
                  {sec.title}
                </button>
                {sec.sub && (
-                 <ul className="flex flex-col gap-1 mt-1 mb-2 ml-4 border-l-2 border-gray-100 pl-2">
+                 <ul className="flex flex-col gap-1 mt-1 mb-2 ml-4 border-l-2 border-gray-100 dark:border-zinc-800 pl-2">
                    {sec.sub.map(subSec => (
                      <li key={subSec.id}>
                         <button 
                           onClick={() => scrollTo(subSec.id)} 
-                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${activeSection === subSec.id ? "text-accent font-bold" : "text-gray-400 hover:text-charcoal"}`}
+                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${activeSection === subSec.id ? "text-accent font-bold dark:text-accent-light" : "text-gray-400 dark:text-zinc-500 hover:text-charcoal dark:hover:text-zinc-200"}`}
                         >
                           {subSec.title}
                         </button>
@@ -255,7 +272,7 @@ export default function DeveloperDocs() {
         <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:0.15}}>
           
           <section id="getting-started" className="mb-16 pt-8">
-            <h1 className="text-4xl font-black text-charcoal mb-4">Getting Started</h1>
+            <h1 className="text-4xl font-black text-charcoal dark:text-zinc-100 mb-4">Getting Started</h1>
             <p className="text-gray-600 font-medium mb-6 leading-relaxed">
               Welcome to the Between Developer API. Our REST API allows you to programmatically ingest resumes, match candidate skills to job descriptions, interact with our AI-powered candidate querying chatbot, and stream structural entity extraction securely into your HR infrastructure.
             </p>
@@ -487,6 +504,54 @@ export default function DeveloperDocs() {
 {`curl "https://api.between.indevs.in/api/v1/candidates/cnd_12345" \
   -H "X-API-Key: YOUR_KEY"`}
             </SyntaxHighlighter>
+          </section>
+
+          <section id="candidate-clustering" className="mb-16 pt-8 border-t border-gray-200">
+            <h2 className="text-3xl font-black text-charcoal mb-4">Candidate Clustering</h2>
+            <p className="text-gray-600 font-medium mb-6 leading-relaxed">
+              Auto-segment candidates within a workspace session into distinct semantic talent pools using unsupervised K-Means clustering.
+            </p>
+            <div className="flex items-center gap-3 mb-4">
+               <span className="bg-green-100 text-green-700 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">GET</span>
+               <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/sessions/:session_id/candidate-clusters</h3>
+               <button onClick={() => openPlayground({method:'GET', path:'/api/v1/sessions/:session_id/candidate-clusters'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
+            </div>
+            <p className="text-gray-600 font-medium text-sm mb-4">Fetch dynamic K-Means clusters for a given session.</p>
+            <div className="grid md:grid-cols-2 gap-4">
+               <div>
+                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Request</span>
+                 <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
+{`curl "https://api.between.indevs.in/api/v1/sessions/ses_abc123/candidate-clusters" \
+  -H "X-API-Key: YOUR_KEY"`}
+                 </SyntaxHighlighter>
+               </div>
+               <div>
+                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1 block">Response</span>
+                 <SyntaxHighlighter language="json" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px" }}>
+{`{
+  "success": true,
+  "data": {
+    "clusters": [
+      {
+        "cluster_id": 0,
+        "cluster_name": "Developer, Python, Backend",
+        "count": 1,
+        "candidates": [
+          {
+            "id": "cnd_12345",
+            "name": "Jane Doe",
+            "match_score": 92,
+            "total_experience_years": 4,
+            "skills": ["Python", "Django", "React"]
+          }
+        ]
+      }
+    ]
+  }
+}`}
+                 </SyntaxHighlighter>
+               </div>
+            </div>
           </section>
 
           <section id="job-matching" className="mb-16 pt-8 border-t border-gray-200">
@@ -835,30 +900,30 @@ console.log(matches.data.matches);`}
       {/* PLAYGROUND MODAL */}
       {playgroundOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/40 backdrop-blur-sm">
-          <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden relative border border-gray-200 flex flex-col md:flex-row h-[550px]">
+          <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden relative border border-gray-200 dark:border-zinc-800 flex flex-col md:flex-row h-[550px]">
              
-             <div className="w-full md:w-1/2 p-6 border-r border-gray-100 flex flex-col relative overflow-y-auto custom-scrollbar">
-               <button onClick={()=>setPlaygroundOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-charcoal transition-colors">✕</button>
-               <h3 className="font-bold text-lg text-charcoal mb-5 flex items-center gap-2"><Play size={16} className="text-accent stroke-[3]" /> Live Playground</h3>
+             <div className="w-full md:w-1/2 p-6 border-r border-gray-100 dark:border-zinc-800 flex flex-col relative overflow-y-auto custom-scrollbar">
+               <button onClick={()=>setPlaygroundOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-charcoal dark:hover:text-white transition-colors">✕</button>
+               <h3 className="font-bold text-lg text-charcoal dark:text-zinc-100 mb-5 flex items-center gap-2"><Play size={16} className="text-accent stroke-[3]" /> Live Playground</h3>
                
                <div className="flex flex-col gap-4 flex-1">
                  <div className="flex flex-col gap-1">
-                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Endpoint</label>
-                   <div className="flex font-mono text-xs border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
-                     <div className="px-3 py-2 bg-blue-50 text-accent font-bold">{pgEndpoint?.method}</div>
-                     <div className="px-3 py-2 text-gray-600 font-medium w-full truncate">{pgEndpoint?.path}</div>
+                   <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Endpoint</label>
+                   <div className="flex font-mono text-xs border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-gray-50 dark:bg-zinc-950">
+                     <div className="px-3 py-2 bg-blue-50 dark:bg-blue-950/40 text-accent dark:text-accent-light font-bold">{pgEndpoint?.method}</div>
+                     <div className="px-3 py-2 text-gray-600 dark:text-zinc-400 font-medium w-full truncate">{pgEndpoint?.path}</div>
                    </div>
                  </div>
                  
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">API Key (X-API-Key)</label>
-                    <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 focus-within:border-accent transition-colors">
+                    <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">API Key (X-API-Key)</label>
+                    <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-3 py-2 focus-within:border-accent transition-colors">
                       <input 
                         type="text" 
                         placeholder="vish_test_..." 
                         value={apiKey}
                         onChange={(e)=>setApiKey(e.target.value)}
-                        className="flex-1 bg-transparent outline-none font-mono text-xs font-bold truncate" 
+                        className="flex-1 bg-transparent outline-none font-mono text-xs font-bold truncate dark:text-zinc-200" 
                       />
                       {apiKey && (
                         <button
@@ -872,41 +937,53 @@ console.log(matches.data.matches);`}
                       )}
                     </div>
                     {!apiKey && (
-                      <p className="text-[10px] text-amber-600 font-semibold pl-1">⚠ No active key found. Go to <a href="/developer/portal/keys" className="underline">API Keys</a> to create one.</p>
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold pl-1">⚠ No active key found. Go to <a href="/developer/portal/keys" className="underline">API Keys</a> to create one.</p>
                     )}
                   </div>
 
                  {pgEndpoint?.path?.includes("/:id") && (
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Candidate ID (:id)</label>
+                      <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Candidate ID (:id)</label>
                       <input 
                         type="text" 
                         value={candidateIdParam}
                         onChange={(e)=>setCandidateIdParam(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:border-accent outline-none text-xs font-semibold" 
+                        className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-semibold dark:text-zinc-200" 
+                      />
+                    </div>
+                 )}
+
+                 {pgEndpoint?.path?.includes("/:session_id") && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Session ID (:session_id)</label>
+                      <input 
+                        type="text" 
+                        value={sessionIdParam}
+                        onChange={(e)=>setSessionIdParam(e.target.value)}
+                        className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-semibold dark:text-zinc-200" 
                       />
                     </div>
                  )}
 
                  {pgEndpoint?.method === "POST" && pgEndpoint?.path !== "/api/v1/parse" && pgEndpoint?.path !== "/api/v1/protection/scan" && (
                     <div className="flex flex-col gap-1 flex-1 min-h-[150px]">
-                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Request Body (JSON)</label>
+                      <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Request Body (JSON)</label>
                       <textarea 
                         rows="8"
                         value={requestBodyJson}
                         onChange={(e)=>setRequestBodyJson(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:border-accent outline-none text-xs font-mono resize-none flex-1 min-h-[140px]" 
+                        className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-mono resize-none flex-1 min-h-[140px] dark:text-zinc-200" 
                       />
                     </div>
                  )}
 
                  {pgEndpoint?.path === "/api/v1/parse" && (
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">File Body</label>
+                      <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">File Body</label>
                       <input 
                         type="file" 
                         onChange={(e)=>setSelectedFile(e.target.files[0])}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl outline-none text-xs text-gray-600" 
+                        className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl outline-none text-xs text-gray-600 dark:text-zinc-400" 
                       />
                     </div>
                  )}
@@ -914,11 +991,11 @@ console.log(matches.data.matches);`}
                  {pgEndpoint?.path === "/api/v1/protection/scan" && (
                    <>
                      <div className="flex flex-col gap-1">
-                       <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Scan Type</label>
+                       <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Scan Type</label>
                        <select 
                          value={scanType} 
                          onChange={(e)=>setScanType(e.target.value)}
-                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl outline-none text-xs text-gray-700 font-bold"
+                         className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl outline-none text-xs text-gray-700 dark:text-zinc-300 font-bold"
                        >
                          <option value="user">User Scan (Resume/Portfolio)</option>
                          <option value="job">Job Scan (Posting Info)</option>
@@ -928,44 +1005,44 @@ console.log(matches.data.matches);`}
                      {scanType === "user" ? (
                        <>
                          <div className="flex flex-col gap-1">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">File Body (Optional)</label>
+                           <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">File Body (Optional)</label>
                            <input 
                              type="file" 
                              onChange={(e)=>setSelectedFile(e.target.files[0])}
-                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl outline-none text-xs text-gray-600" 
+                             className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl outline-none text-xs text-gray-600 dark:text-zinc-400" 
                            />
                          </div>
                          <div className="flex flex-col gap-1">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Portfolio URL (Optional)</label>
+                           <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Portfolio URL (Optional)</label>
                            <input 
                              type="url" 
                              placeholder="https://github.com/..." 
                              value={portfolioUrl}
                              onChange={(e)=>setPortfolioUrl(e.target.value)}
-                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:border-accent outline-none text-xs font-semibold" 
+                             className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-semibold dark:text-zinc-200" 
                            />
                          </div>
                        </>
                      ) : (
                        <>
                          <div className="flex flex-col gap-1">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Job Title</label>
+                           <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Job Title</label>
                            <input 
                              type="text" 
                              placeholder="Frontend Engineer" 
                              value={jobTitle}
                              onChange={(e)=>setJobTitle(e.target.value)}
-                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:border-accent outline-none text-xs font-semibold" 
+                             className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-semibold dark:text-zinc-200" 
                            />
                          </div>
                          <div className="flex flex-col gap-1">
-                           <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">Job Description</label>
+                           <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Job Description</label>
                            <textarea 
                              rows="3"
                              placeholder="We are looking for..." 
                              value={jobDescription}
                              onChange={(e)=>setJobDescription(e.target.value)}
-                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus:border-accent outline-none text-xs font-semibold resize-none" 
+                             className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-semibold resize-none dark:text-zinc-200" 
                            />
                          </div>
                        </>
