@@ -33,9 +33,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("JWT_SECRET", "django-insecure-supersecretkey-change-this")
+SECRET_KEY = os.getenv("JWT_SECRET")
 
-DEBUG = True
+# Validate critical environment variables at startup
+CRITICAL_VARS = ["DATABASE_URL", "JWT_SECRET"]
+# Ensure LLM API Keys are present
+if not os.getenv("GEMINI_API_KEY") and not os.getenv("GEMINI_API_KEYS") and not os.getenv("OPENAI_API_KEY"):
+    raise ValueError(
+        "Critical Error: Missing required LLM API keys. "
+        "Please configure GEMINI_API_KEY, GEMINI_API_KEYS, or OPENAI_API_KEY in your .env file."
+    )
+
+for var in CRITICAL_VARS:
+    if not os.getenv(var):
+        raise ValueError(
+            f"Critical Error: Required environment variable '{var}' is not configured. "
+            f"The application cannot start without this variable. Please set it in your .env file."
+        )
+
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
 
 ALLOWED_HOSTS = ["*"]
 
@@ -48,6 +64,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'api.middleware.SecurityHeadersMiddleware',
+    'api.middleware.ExceptionSanitizationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'api.middleware.UsageLoggerMiddleware',
 ]
@@ -60,16 +78,23 @@ WSGI_APPLICATION = 'vishleshan_backend.wsgi.application'
 ASGI_APPLICATION = 'vishleshan_backend.asgi.application'
 
 # Database configuration
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:password@localhost:5432/vishleshan")
+DATABASE_URL = os.getenv("DATABASE_URL")
 # Convert asyncpg to standard postgresql engine for Django ORM
 SYNC_DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
 
+db_config = dj_database_url.parse(
+    SYNC_DATABASE_URL,
+    conn_max_age=600,
+    conn_health_checks=True,
+)
+if not DEBUG:
+    # Force TLS/SSL database connection in production
+    if db_config.get('ENGINE') == 'django.db.backends.postgresql' or 'postgresql' in SYNC_DATABASE_URL:
+        db_config.setdefault('OPTIONS', {})
+        db_config['OPTIONS']['sslmode'] = 'require'
+
 DATABASES = {
-    'default': dj_database_url.parse(
-        SYNC_DATABASE_URL,
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': db_config
 }
 
 # Use PostgreSQL engine
@@ -88,8 +113,14 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Config
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
+
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_str:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+else:
+    CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',

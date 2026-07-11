@@ -8,7 +8,7 @@ from passlib.context import CryptContext
 from jose import jwt
 
 from api.models import Company, APIKey
-from api.decorators import require_recruiter_jwt, JWT_SECRET, JWT_ALGORITHM, redis_client
+from api.decorators import require_recruiter_jwt, JWT_SECRET, JWT_ALGORITHM, redis_client, rate_limit_ip
 from models.schemas import success_response, error_response
 from api.services.email_service import send_welcome_email
 
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @csrf_exempt
+@rate_limit_ip(5, 60, "recruiter_register")
 def register(request):
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)
@@ -121,6 +122,7 @@ def register(request):
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
 @csrf_exempt
+@rate_limit_ip(5, 60, "recruiter_login")
 def login(request):
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)

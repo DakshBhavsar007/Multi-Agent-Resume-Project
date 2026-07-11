@@ -1072,6 +1072,11 @@ def debug_project_relevance(request):
     POST /api/debug/project-relevance
     Debug endpoint for inspecting the new project relevance scoring logic.
     """
+    from django.conf import settings
+    from django.http import Http404
+    if not settings.DEBUG:
+        raise Http404("Not Found")
+
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)
         

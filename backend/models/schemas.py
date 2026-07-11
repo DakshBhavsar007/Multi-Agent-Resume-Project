@@ -11,7 +11,23 @@ class APIResponse(BaseModel):
 def success_response(data=None) -> dict:
     return {"success": True, "data": data, "error": None}
 
+import logging
+logger = logging.getLogger(__name__)
+
 def error_response(msg: str) -> dict:
+    from django.conf import settings
+    # Mask database and server trace details in production (when DEBUG is False)
+    is_debug = getattr(settings, "DEBUG", False)
+    if not is_debug and ("Server error:" in msg or "database" in msg.lower() or "traceback" in msg.lower() or "line" in msg.lower() or "exception" in msg.lower()):
+        correlation_id = uuid.uuid4().hex[:8]
+        logger.error(f"[Correlation ID: {correlation_id}] Internal server error suppressed: {msg}")
+        return {
+            "success": False,
+            "data": {
+                "correlation_id": correlation_id
+            },
+            "error": "An internal server error occurred. Please contact support."
+        }
     return {"success": False, "data": None, "error": msg}
 
 class BaseResponse(BaseModel):

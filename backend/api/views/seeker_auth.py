@@ -14,7 +14,7 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 
 from api.models import JobSeekerAccount
-from api.decorators import JWT_SECRET, JWT_ALGORITHM
+from api.decorators import JWT_SECRET, JWT_ALGORITHM, rate_limit_ip
 from models.schemas import success_response, error_response
 from api.services.email_service import send_welcome_email
 
@@ -137,6 +137,7 @@ def _seeker_dict(seeker: JobSeekerAccount) -> dict:
 # ── Views ─────────────────────────────────────────────────────────────────────
 
 @csrf_exempt
+@rate_limit_ip(5, 60, "seeker_register")
 def register(request):
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)
@@ -195,6 +196,7 @@ def register(request):
 
 
 @csrf_exempt
+@rate_limit_ip(5, 60, "seeker_login")
 def login(request):
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)

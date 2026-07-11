@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from api.models import Company, JobSeekerAccount, DeveloperAccount
 from api.services.email_service import send_email
+from api.decorators import rate_limit_ip
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ def _build_otp_html(otp, purpose="verification"):
 
 
 @csrf_exempt
+@rate_limit_ip(5, 60, "otp_send")
 def send_email_otp(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
@@ -94,6 +96,7 @@ def send_email_otp(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
+@rate_limit_ip(5, 60, "otp_verify")
 def verify_email_otp(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
@@ -140,6 +143,7 @@ def verify_email_otp(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
+@rate_limit_ip(5, 60, "otp_send")
 def send_phone_otp(request):
     """
     Send phone verification OTP.
@@ -215,6 +219,7 @@ def send_phone_otp(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
+@rate_limit_ip(5, 60, "otp_verify")
 def verify_phone_otp(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)

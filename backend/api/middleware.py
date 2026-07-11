@@ -110,3 +110,51 @@ class UsageLoggerMiddleware:
             pass  # Never let logging crash or disrupt execution
         finally:
             connection.close()
+
+
+import uuid
+from django.conf import settings
+from django.http import JsonResponse
+
+class SecurityHeadersMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        response["X-Content-Type-Options"] = "nosniff"
+        response["X-Frame-Options"] = "DENY"
+        response["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://apis.google.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' http://127.0.0.1:8000 https://api.between.indevs.in http://localhost:8000;"
+        )
+        return response
+
+
+class ExceptionSanitizationMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        correlation_id = uuid.uuid4().hex[:8]
+        logger.exception(f"[Correlation ID: {correlation_id}] Unhandled Exception: {str(exception)}")
+        
+        if getattr(settings, "DEBUG", False):
+            return None
+            
+        return JsonResponse({
+            "success": False,
+            "data": {
+                "correlation_id": correlation_id
+            },
+            "error": "An internal server error occurred. Please contact support."
+        }, status=500)
+

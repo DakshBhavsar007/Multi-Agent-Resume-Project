@@ -13,7 +13,7 @@ from passlib.context import CryptContext
 from jose import jwt
 
 from api.models import Company, JobSeekerAccount
-from api.decorators import JWT_SECRET, JWT_ALGORITHM
+from api.decorators import JWT_SECRET, JWT_ALGORITHM, rate_limit_ip
 from api.services.email_service import send_email
 from models.schemas import success_response, error_response
 
@@ -48,6 +48,7 @@ def _verify_reset_token(token, expected_type):
 
 
 @csrf_exempt
+@rate_limit_ip(3, 3600, "password_reset")
 def forgot_password_recruiter(request):
     """POST /api/v1/auth/forgot-password — Recruiter portal"""
     if request.method != "POST":
@@ -88,6 +89,7 @@ def forgot_password_recruiter(request):
 
 
 @csrf_exempt
+@rate_limit_ip(3, 3600, "password_reset")
 def reset_password_recruiter(request):
     """POST /api/v1/auth/reset-password — Recruiter portal"""
     if request.method != "POST":
@@ -119,6 +121,7 @@ def reset_password_recruiter(request):
 
 
 @csrf_exempt
+@rate_limit_ip(3, 3600, "password_reset")
 def forgot_password_seeker(request):
     """POST /api/v1/seeker/auth/forgot-password"""
     if request.method != "POST":
@@ -158,6 +161,7 @@ def forgot_password_seeker(request):
 
 
 @csrf_exempt
+@rate_limit_ip(3, 3600, "password_reset")
 def reset_password_seeker(request):
     """POST /api/v1/seeker/auth/reset-password"""
     if request.method != "POST":
@@ -189,6 +193,7 @@ def reset_password_seeker(request):
 
 
 @csrf_exempt
+@rate_limit_ip(3, 3600, "password_reset")
 def forgot_password_developer(request):
     """POST /api/developer/auth/forgot-password"""
     if request.method != "POST":
@@ -228,6 +233,7 @@ def forgot_password_developer(request):
 
 
 @csrf_exempt
+@rate_limit_ip(3, 3600, "password_reset")
 def reset_password_developer(request):
     """POST /api/developer/auth/reset-password"""
     if request.method != "POST":

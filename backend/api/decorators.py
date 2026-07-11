@@ -320,3 +320,43 @@ def require_tier(minimum_tier: str):
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     return decorator
+
+
+def rate_limit_ip(limit: int, period_seconds: int, action_name: str):
+    """
+    Decorator to limit requests by client IP.
+    Returns 429 if the request count exceeds 'limit' within 'period_seconds'.
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0].strip()
+            else:
+                ip = request.META.get('REMOTE_ADDR', 'unknown')
+
+            redis_key = f"ip_limit:{action_name}:{ip}"
+            
+            try:
+                current = redis_client.incr(redis_key)
+                if current == 1:
+                    redis_client.expire(redis_key, period_seconds)
+                
+                if current > limit:
+                    return JsonResponse({
+                        "success": False,
+                        "error": "Too many requests. Please try again later.",
+                        "data": {
+                            "action": action_name,
+                            "retry_after_seconds": redis_client.ttl(redis_key)
+                        }
+                    }, status=429)
+            except Exception as e:
+                # Fail open to avoid blocking application if Redis is temporarily offline
+                print(f"[RateLimit] Redis error: {e}", flush=True)
+
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
