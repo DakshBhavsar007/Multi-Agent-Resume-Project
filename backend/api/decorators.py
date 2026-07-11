@@ -85,6 +85,11 @@ def verify_api_key_helper(request):
             
     if token and token != "undefined" and token != "null":
         try:
+            if redis_client.exists(f"blacklist:{token}"):
+                return False
+        except Exception:
+            pass
+        try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             company_id = payload.get("company_id")
             if company_id:
@@ -159,6 +164,16 @@ def require_recruiter_jwt(view_func):
             }, status=401)
             
         try:
+            if redis_client.exists(f"blacklist:{token}"):
+                return JsonResponse({
+                    "success": False,
+                    "data": None,
+                    "error": "Token has been blacklisted (logged out)"
+                }, status=401)
+        except Exception:
+            pass
+
+        try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             company_id = payload.get("company_id")
             if not company_id:
@@ -200,6 +215,16 @@ def require_developer_jwt(view_func):
             }, status=401)
             
         token = auth_header.split(" ")[1]
+        try:
+            if redis_client.exists(f"blacklist:{token}"):
+                return JsonResponse({
+                    "success": False,
+                    "data": None,
+                    "error": "Token has been blacklisted (logged out)"
+                }, status=401)
+        except Exception:
+            pass
+
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             developer_id = payload.get("developer_id")

@@ -40,6 +40,11 @@ def chat(request, session_id):
 def get_chat_history(request, session_id):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
+        
+    # Verify session ownership to prevent IDOR
+    if not Session.objects.filter(id=session_id, company_id=request.company.id).exists():
+        return JsonResponse(error_response("Session not found or access denied"), status=403)
+        
     try:
         limit = int(request.GET.get("limit", 50))
         messages = ChatHistory.objects.filter(session_id=session_id).order_by("created_at")[:limit]
@@ -64,6 +69,11 @@ def get_chat_history(request, session_id):
 def delete_chat_history(request, session_id):
     if request.method != "DELETE":
         return JsonResponse(error_response("Method not allowed"), status=405)
+        
+    # Verify session ownership to prevent IDOR
+    if not Session.objects.filter(id=session_id, company_id=request.company.id).exists():
+        return JsonResponse(error_response("Session not found or access denied"), status=403)
+        
     try:
         ChatHistory.objects.filter(session_id=session_id).delete()
         return JsonResponse(success_response({"deleted": True}))

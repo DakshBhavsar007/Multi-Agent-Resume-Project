@@ -185,11 +185,25 @@ def normalize_resume_content(content: dict) -> dict:
     }
 
 
+import html
+
+def _escape_user_input(val):
+    if isinstance(val, dict):
+        return {k: _escape_user_input(v) for k, v in val.items()}
+    elif isinstance(val, list):
+        return [_escape_user_input(item) for item in val]
+    elif isinstance(val, str):
+        return html.escape(val)
+    return val
+
+
 def render_resume_pdf(content: dict, output_path: str):
     """
     content: ResumeDraft.content (same schema as the React template expects)
     output_path: where to write the generated PDF
     """
+    # Escape user inputs to prevent ReportLab XML parser crashes on chars like '<' or '&'
+    content = _escape_user_input(content)
     content = normalize_resume_content(content)
     styles = _styles()
     doc = SimpleDocTemplate(

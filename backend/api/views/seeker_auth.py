@@ -45,6 +45,13 @@ def require_seeker_jwt(view_func):
             return JsonResponse(error_response("Authentication required"), status=401)
         token = auth_header.split(" ", 1)[1]
         try:
+            from api.decorators import redis_client
+            if redis_client.exists(f"blacklist:{token}"):
+                return JsonResponse(error_response("Token has been blacklisted (logged out)"), status=401)
+        except Exception:
+            pass
+
+        try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         except JWTError:
             return JsonResponse(error_response("Invalid or expired token"), status=401)

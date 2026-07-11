@@ -300,7 +300,9 @@ def health_check(request):
             cursor.execute("SELECT 1")
         checks["database"] = {"status": "ok", "detail": "PostgreSQL connected"}
     except Exception as db_err:
-        checks["database"] = {"status": "error", "detail": str(db_err)}
+        from django.conf import settings
+        detail = "Database connection failed" if not settings.DEBUG else str(db_err)
+        checks["database"] = {"status": "error", "detail": detail}
 
     # Check Redis
     try:
@@ -310,7 +312,9 @@ def health_check(request):
         else:
             checks["redis"] = {"status": "warning", "detail": "Redis client not configured"}
     except Exception as redis_err:
-        checks["redis"] = {"status": "error", "detail": str(redis_err)}
+        from django.conf import settings
+        detail = "Redis connection failed" if not settings.DEBUG else str(redis_err)
+        checks["redis"] = {"status": "error", "detail": detail}
 
     # Check LLM API keys
     try:
@@ -332,7 +336,9 @@ def health_check(request):
         else:
             checks["llm_api"] = {"status": "warning", "detail": "No LLM API keys configured"}
     except Exception as llm_err:
-        checks["llm_api"] = {"status": "error", "detail": str(llm_err)}
+        from django.conf import settings
+        detail = "LLM check failed" if not settings.DEBUG else str(llm_err)
+        checks["llm_api"] = {"status": "error", "detail": detail}
 
     # Check Celery
     try:
@@ -344,7 +350,9 @@ def health_check(request):
         else:
             checks["celery"] = {"status": "warning", "detail": "No workers responding"}
     except Exception as cel_err:
-        checks["celery"] = {"status": "warning", "detail": f"Could not reach Celery: {str(cel_err)}"}
+        from django.conf import settings
+        detail = "Could not reach Celery" if not settings.DEBUG else f"Could not reach Celery: {str(cel_err)}"
+        checks["celery"] = {"status": "warning", "detail": detail}
 
     all_ok = all(v["status"] == "ok" for v in checks.values())
     has_error = any(v["status"] == "error" for v in checks.values())
@@ -361,6 +369,16 @@ def health_check(request):
 def logout(request):
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        from api.decorators import redis_client
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header:
+            auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1]
+            redis_client.setex(f"blacklist:{token}", 7 * 24 * 3600, "blacklisted")
+    except Exception:
+        pass
     return JsonResponse(success_response({"message": "Successfully logged out"}))
 
 @csrf_exempt
