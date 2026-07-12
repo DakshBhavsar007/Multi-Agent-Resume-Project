@@ -62,7 +62,7 @@ def forgot_password_recruiter(request):
         company = Company.objects.filter(email=email).first()
         if company:
             token = _make_reset_token(company.id, "recruiter")
-            frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+            frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/reset-password?token={token}&type=recruiter"
 
             try:
@@ -135,7 +135,7 @@ def forgot_password_seeker(request):
         seeker = JobSeekerAccount.objects.filter(email=email, is_active=True).first()
         if seeker:
             token = _make_reset_token(seeker.id, "seeker")
-            frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+            frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/seeker/reset-password?token={token}&type=seeker"
 
             try:
@@ -207,7 +207,7 @@ def forgot_password_developer(request):
         company = Company.objects.filter(email=email).first()
         if company:
             token = _make_reset_token(company.id, "developer")
-            frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+            frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/developer/reset-password?token={token}&type=developer"
 
             try:
