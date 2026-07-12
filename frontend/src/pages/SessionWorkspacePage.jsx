@@ -89,6 +89,7 @@ export default function SessionWorkspacePage() {
   const [activeRound, setActiveRound] = useState(null);
   const [filters, setFilters] = useState({ search: "", location: "", min_score: 0, skill: "", sort: "Match Score ↓" });
   const [candidatesPage, setCandidatesPage] = useState(1);
+  const [activeDetailCandidate, setActiveDetailCandidate] = useState(null);
   
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [driveUrl, setDriveUrl] = useState("");
@@ -269,7 +270,7 @@ export default function SessionWorkspacePage() {
 
   const { data: allCandidatesData } = useQuery({
     queryKey: ["all_candidates", id],
-    queryFn: () => candidatesAPI.list(id, "?limit=1000"),
+    queryFn: () => candidatesAPI.list(id, "?per_page=1000"),
     enabled: !!id
   });
 
@@ -1267,8 +1268,12 @@ export default function SessionWorkspacePage() {
                       </tr>
                     </thead>
                     <tbody className="cursor-pointer">
-                      {[...candidatesList].sort((a,b) => (b.match_score||0) - (a.match_score||0)).slice(0, 5).map((cand, i) => (
-                        <tr key={cand.id} className="border-b last:border-b-0 border-gray-50 hover:bg-blue-50/30 transition-colors group">
+                      {[...allCandidatesList].sort((a,b) => (b.match_score||0) - (a.match_score||0)).slice(0, 5).map((cand, i) => (
+                        <tr 
+                          key={cand.id} 
+                          onClick={() => setActiveDetailCandidate(cand)}
+                          className="border-b last:border-b-0 border-gray-50 hover:bg-blue-50/30 transition-colors group"
+                        >
                           <td className="p-4 pl-6 text-gray-400">
                             <span className={`inline-block w-6 text-center font-black ${i===0?'text-amber-500':i===1?'text-gray-400':i===2?'text-amber-700':''}`}>{i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`}</span>
                           </td>
@@ -1278,7 +1283,7 @@ export default function SessionWorkspacePage() {
                           <td className="p-4"><span className={`bg-blue-100/50 border border-blue-200 text-blue-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-sm ${cand.status === "hired" ? "bg-green-100 text-green-700 border-green-200" : cand.status === "rejected" ? "bg-red-100 text-red-700 border-red-200" : ""}`}>{cand.status || "Active"}</span></td>
                         </tr>
                       ))}
-                      {candidatesList.length === 0 && (
+                      {allCandidatesList.length === 0 && (
                         <tr><td colSpan="5" className="p-4 text-center text-gray-400 text-xs py-8">No candidates available yet.</td></tr>
                       )}
                     </tbody>
@@ -1516,6 +1521,17 @@ export default function SessionWorkspacePage() {
         </div>
       )}
 
+      {activeDetailCandidate && (
+        <div className="hidden">
+          <CandidateCard 
+            candidate={activeDetailCandidate}
+            sessionId={id}
+            rounds={session?.rounds || []}
+            forceOpenDetails={true}
+            onCloseDetails={() => setActiveDetailCandidate(null)}
+          />
+        </div>
+      )}
 
     </div>
   );

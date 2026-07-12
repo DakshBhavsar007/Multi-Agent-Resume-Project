@@ -19,12 +19,18 @@ const Linkedin = ({ size = 16, className = '' }) => (
 import { toast } from 'react-hot-toast';
 import { candidatesAPI } from '../lib/api';
 
-export default function CandidateCard({ candidate, sessionId, rounds = [], onAction, isHighlighted }) {
+export default function CandidateCard({ candidate, sessionId, rounds = [], onAction, isHighlighted, forceOpenDetails, onCloseDetails }) {
   const [showDetail, setShowDetail] = useState(false);
   const [animatingOut, setAnimatingOut] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [detailedCandidate, setDetailedCandidate] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  useEffect(() => {
+    if (forceOpenDetails) {
+      setShowDetail(true);
+    }
+  }, [forceOpenDetails]);
 
   useEffect(() => {
     if (showDetail && !detailedCandidate && !loadingDetails) {
@@ -396,7 +402,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
           <>
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowDetail(false)}
+              onClick={() => { setShowDetail(false); onCloseDetails?.(); }}
               className="fixed inset-0 bg-[#2A2A2A]/40 backdrop-blur-sm z-50"
             />
             <motion.div 
@@ -414,7 +420,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                     <p className="text-sm text-gray-500 font-medium">{activeCandidate?.current_role || 'Candidate'}</p>
                   </div>
                 </div>
-                <button onClick={() => setShowDetail(false)} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                <button onClick={() => { setShowDetail(false); onCloseDetails?.(); }} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
                   <X size={20} />
                 </button>
               </div>
