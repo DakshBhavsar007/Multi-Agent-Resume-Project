@@ -1,0 +1,5 @@
+name,email,phone,location,skills,experience_years
+Daksh Bhavsar,daksh@vishleshan.com,+91 98765 43210,"Gandhinagar, India",Python;Django;React;HTML;CSS;PostgreSQL;Git,3
+Parul Sharma,parul@vishleshan.com,+91 87654 32109,"Ahmedabad, India",Java;Spring Boot;MySQL;Docker;Kubernetes;REST APIs,5
+John Doe,john.doe@example.com,+1 650 555 0123,"San Francisco, USA",React;Node.js;Express;MongoDB;TailwindCSS;TypeScript,2
+Jane Smith,jane.smith@example.com,+44 20 7946 0958,"London, UK",Python;Pandas;NumPy;Scikit-Learn;Machine Learning;SQL,4

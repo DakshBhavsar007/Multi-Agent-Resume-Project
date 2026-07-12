@@ -198,7 +198,8 @@ export default function MCQRound() {
 
             {!allowBacktrack && (
               <div className="mt-4 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-700 font-semibold flex items-center gap-1.5">
-                ⚠ Sequential Testing: Backtracking is disabled. You cannot return to this question once submitted.
+                <svg className="w-3.5 h-3.5 text-amber-700 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z"/></svg>
+                Sequential Testing: Backtracking is disabled. You cannot return to this question once submitted.
               </div>
             )}
 

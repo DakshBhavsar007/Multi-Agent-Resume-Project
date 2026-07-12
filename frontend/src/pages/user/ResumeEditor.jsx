@@ -2214,8 +2214,8 @@ export default function ResumeEditor() {
                     const labelColor = isBoost ? "text-green-600 dark:text-green-400" : "text-destructive";
                     return (
                       <div className="flex flex-col items-center">
-                        <span className={`text-[10px] font-bold ${labelColor} uppercase tracking-wider mb-2`}>
-                          {isBoost ? "✦ Predicted Enhanced" : "⚠ Predicted Enhanced"}
+                        <span className={`text-[10px] font-bold ${labelColor} uppercase tracking-wider mb-2 flex items-center gap-1`}>
+                          {isBoost ? <Sparkles size={10} /> : <AlertTriangle size={10} />} Predicted Enhanced
                         </span>
                         <div className="relative w-20 h-20 flex items-center justify-center">
                           <svg className="absolute w-full h-full transform -rotate-90">
@@ -2263,10 +2263,11 @@ export default function ResumeEditor() {
                     
                     return (
                       <>
-                        <h4 className={`font-semibold text-sm ${isBoost ? 'text-green-700 dark:text-green-400' : 'text-destructive'}`}>
+                        <h4 className={`font-semibold text-sm ${isBoost ? 'text-green-700 dark:text-green-400' : 'text-destructive'} flex items-center gap-1`}>
+                          {isBoost ? <Sparkles size={14} /> : <AlertTriangle size={14} />}
                           {isBoost
-                            ? `🚀 ATS Score Boosted by +${diff}%! (+${enhancementReport.improvement_percentage || 0}% boost)`
-                            : `⚠ No improvement detected`
+                            ? `ATS Score Boosted by +${diff}%! (+${enhancementReport.improvement_percentage || 0}% boost)`
+                            : `No improvement detected`
                           }
                         </h4>
                         <p className="text-xs text-muted-foreground leading-relaxed">

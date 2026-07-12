@@ -1,0 +1,34 @@
+[
+    {
+        "name": "Daksh Bhavsar",
+        "email": "daksh@vishleshan.com",
+        "phone": "+91 98765 43210",
+        "location": "Gandhinagar, India",
+        "skills": "Python;Django;React;HTML;CSS;PostgreSQL;Git",
+        "experience_years": 3
+    },
+    {
+        "name": "Parul Sharma",
+        "email": "parul@vishleshan.com",
+        "phone": "+91 87654 32109",
+        "location": "Ahmedabad, India",
+        "skills": "Java;Spring Boot;MySQL;Docker;Kubernetes;REST APIs",
+        "experience_years": 5
+    },
+    {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+1 650 555 0123",
+        "location": "San Francisco, USA",
+        "skills": "React;Node.js;Express;MongoDB;TailwindCSS;TypeScript",
+        "experience_years": 2
+    },
+    {
+        "name": "Jane Smith",
+        "email": "jane.smith@example.com",
+        "phone": "+44 20 7946 0958",
+        "location": "London, UK",
+        "skills": "Python;Pandas;NumPy;Scikit-Learn;Machine Learning;SQL",
+        "experience_years": 4
+    }
+]

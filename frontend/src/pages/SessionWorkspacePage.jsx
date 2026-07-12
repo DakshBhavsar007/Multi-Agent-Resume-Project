@@ -1275,7 +1275,7 @@ export default function SessionWorkspacePage() {
                           className="border-b last:border-b-0 border-gray-50 hover:bg-blue-50/30 transition-colors group"
                         >
                           <td className="p-4 pl-6 text-gray-400">
-                            <span className={`inline-block w-6 text-center font-black ${i===0?'text-amber-500':i===1?'text-gray-400':i===2?'text-amber-700':''}`}>{i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`}</span>
+                            <span className={`inline-block w-6 text-center font-black ${i===0?'text-amber-600':i===1?'text-gray-500':i===2?'text-amber-800':''}`}>#{i+1}</span>
                           </td>
                           <td className="p-4 font-bold text-charcoal group-hover:text-amber-600 transition-colors">{cand.name}</td>
                           <td className="p-4"><span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-black">{cand.match_score}%</span></td>
