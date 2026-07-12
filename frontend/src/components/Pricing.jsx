@@ -100,19 +100,34 @@ const PricingCard = ({ plan, isYearly, index, onStart, isLoggedIn, userTier }) =
       <div className="card-inner">
         <span className="plan-name">{plan.name}</span>
         
-        <div className="plan-price">
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={price}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              ₹{price}
-            </motion.span>
-          </AnimatePresence>
-          <span className="price-unit">/mo</span>
+        <div className="plan-price-container">
+          <div className="plan-price">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={price}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                ₹{price}
+              </motion.span>
+            </AnimatePresence>
+            <span className="price-unit">/mo</span>
+          </div>
+          {isYearly && price > 0 ? (
+            <div className="billed-annually-note">
+              Billed annually (₹{price * 12}/yr)
+            </div>
+          ) : price > 0 ? (
+            <div className="billed-annually-note">
+              Billed monthly
+            </div>
+          ) : (
+            <div className="billed-annually-note">
+              Free forever
+            </div>
+          )}
         </div>
 
         <p className="plan-desc">{plan.description}</p>
