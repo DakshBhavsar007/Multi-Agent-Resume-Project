@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { KeyRound, ArrowLeft, CheckCircle2, AlertCircle, Loader2, Mail } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace('/api/v1', '');
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
