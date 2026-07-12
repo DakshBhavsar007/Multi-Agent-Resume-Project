@@ -38,6 +38,27 @@ def _get_skill_name(s):
         return s
     return str(s)
 
+def clean_candidate_name(raw_name):
+    if not raw_name:
+        return "Unknown Candidate"
+    # Replace file extensions
+    name = re.sub(r'\.[a-zA-Z0-9]+$', '', raw_name)
+    # Check if it has a pattern like '_resume_XX_name' or '_resume_name'
+    match = re.search(r'_resume_(?:[0-9]+_)?([a-zA-Z_]+)$', name, re.IGNORECASE)
+    if match:
+        name_part = match.group(1)
+        # Convert 'sara_williams' to 'Sara Williams'
+        return " ".join([word.capitalize() for word in name_part.split("_") if word])
+    # Fallback to general cleaning: strip UUIDs or hash-like parts
+    # e.g., if it starts with 36-char uuid
+    if re.match(r'^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}_', name):
+        name = name[37:]
+    # Replace underscores and hyphens
+    name = name.replace("_", " ").replace("-", " ")
+    # Capitalize words
+    return " ".join([word.capitalize() for word in name.split() if word])
+
+
 def _serialize_candidate_summary(c):
     match_details = c.match_details or {}
     norm_skills = c.normalized_skills or []
@@ -82,7 +103,7 @@ def _serialize_candidate_summary(c):
 
     return {
         "id": str(c.id),
-        "name": c.name,
+        "name": clean_candidate_name(c.name),
         "email": c.email,
         "phone": c.phone,
         "location": c.location,
@@ -759,7 +780,7 @@ def candidate_clusters(request, session_id):
             # Collect short info for response serialization
             candidates_info.append({
                 "id": str(c.id),
-                "name": c.name or "Unknown Candidate",
+                "name": clean_candidate_name(c.name),
                 "email": c.email,
                 "match_score": c.match_score,
                 "recommendation": c.recommendation,
