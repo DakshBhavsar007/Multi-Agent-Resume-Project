@@ -25,6 +25,17 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
     return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
 
+  const handleScrollTo = (e, id) => {
+    if (window.location.pathname === '/') {
+      e.preventDefault();
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.pushState(null, null, `/#${id}`);
+      }
+    }
+  };
+
   return (
     <motion.nav 
       className={`navbar ${scrolled ? 'scrolled' : ''}`}
@@ -88,15 +99,27 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
                   </svg>
                 </button>
                 <div className={`product-dropdown-menu skeuo-dropdown-panel ${productDropdownOpen ? 'open' : ''}`}>
-                  <a href="/#how-it-works" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item skeuo-dropdown-item">
+                  <a 
+                    href="/#how-it-works" 
+                    onClick={(e) => { setProductDropdownOpen(false); handleScrollTo(e, 'how-it-works'); }} 
+                    className="product-dropdown-item skeuo-dropdown-item"
+                  >
                     <span className="product-dropdown-item-title">AI Recruiter</span>
                     <span className="product-dropdown-item-desc">Automated resume ranking & matching</span>
                   </a>
-                  <a href="/#features" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item skeuo-dropdown-item">
+                  <a 
+                    href="/#features" 
+                    onClick={(e) => { setProductDropdownOpen(false); handleScrollTo(e, 'features'); }} 
+                    className="product-dropdown-item skeuo-dropdown-item"
+                  >
                     <span className="product-dropdown-item-title">Smart Analyzer</span>
                     <span className="product-dropdown-item-desc">Deep-dive candidate profiles</span>
                   </a>
-                  <a href="/#detailed-showcase" onClick={() => setProductDropdownOpen(false)} className="product-dropdown-item skeuo-dropdown-item">
+                  <a 
+                    href="/#detailed-showcase" 
+                    onClick={(e) => { setProductDropdownOpen(false); handleScrollTo(e, 'detailed-showcase'); }} 
+                    className="product-dropdown-item skeuo-dropdown-item"
+                  >
                     <span className="product-dropdown-item-title">Fraud Protection</span>
                     <span className="product-dropdown-item-desc">Detect fake resumes & plagiarisms</span>
                   </a>
@@ -109,6 +132,7 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
               key={item}
               href={`/#${item.toLowerCase()}`} 
               className="nav-link"
+              onClick={(e) => handleScrollTo(e, item.toLowerCase())}
               whileHover={{ y: -2 }}
               transition={{ type: "spring", stiffness: 400 }}
             >

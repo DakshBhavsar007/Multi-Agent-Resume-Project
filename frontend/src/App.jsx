@@ -96,6 +96,9 @@ function ScrollToTop() {
   }, []);
 
   useEffect(() => {
+    if (location.hash) {
+      return;
+    }
     // Scroll immediately
     window.scrollTo(0, 0);
     document.documentElement.scrollTo(0, 0);
@@ -117,7 +120,7 @@ function ScrollToTop() {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [location.pathname, location.key]);
+  }, [location.pathname, location.key, location.hash]);
 
   return null;
 }

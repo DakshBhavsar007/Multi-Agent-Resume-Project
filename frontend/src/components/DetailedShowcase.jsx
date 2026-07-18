@@ -111,7 +111,7 @@ const DetailedShowcase = () => {
   const opacity2 = useTransform(scrollYProgress, [0.5, 0.6, 1], [0, 1, 1]);
 
   return (
-    <div className="showcase-horizontal-wrapper" ref={containerRef}>
+    <div className="showcase-horizontal-wrapper" id="detailed-showcase" ref={containerRef}>
       <div className="sticky-container">
         <motion.div className="horizontal-track" style={{ x }}>
           <div className="showcase-slide">

@@ -10,7 +10,7 @@ import Testimonials from '../components/Testimonials'
 import FinalCTA from '../components/FinalCTA'
 import Footer from '../components/Footer'
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
 export default function LandingPage() {
@@ -20,7 +20,21 @@ export default function LandingPage() {
   );
 
   const navigate = useNavigate();
+  const location = useLocation();
   const isLoggedIn = !!localStorage.getItem("vish_jwt");
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const element = document.getElementById(id);
+      if (element) {
+        const timer = setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [location]);
 
   const handleAuth = () => {
     if (localStorage.getItem("vish_jwt")) {
