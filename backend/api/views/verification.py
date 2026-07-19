@@ -147,7 +147,7 @@ def verify_email_otp(request):
 def send_phone_otp(request):
     """
     Send phone verification OTP.
-    Attempts to send via Brevo SMS if enabled. Falls back to simulated OTP on screen for free tier.
+    Attempts to send via 2Factor SMS if configured. Falls back to simulated OTP on screen for free tier.
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
@@ -164,6 +164,39 @@ def send_phone_otp(request):
         if not phone and not email:
             return JsonResponse({'success': False, 'error': 'Phone number or email is required'}, status=400)
 
+        # Normalize phone first for consistent rate limiting and API calls
+        normalized_phone = phone.strip() if phone else ""
+        if normalized_phone and not normalized_phone.startswith("+"):
+            normalized_phone = normalized_phone.lstrip("0")
+            if len(normalized_phone) == 10:
+                normalized_phone = "+91" + normalized_phone
+
+        if not normalized_phone:
+            return JsonResponse({'success': False, 'error': 'Invalid phone number format'}, status=400)
+
+        # Import 2Factor service functions and logging utilities
+        from api.services.twofactor_service import send_otp, mask_phone
+        masked = mask_phone(normalized_phone)
+
+        # Rate Limiting: 1 request per phone number per 60 seconds
+        cache_key_60s = f"phone_otp_limit_60s:{role}:{normalized_phone}"
+        if cache.get(cache_key_60s):
+            logger.warning("OTP request rejected due to 60s rate limit for phone: %s", masked)
+            return JsonResponse({
+                'success': False, 
+                'error': 'Please wait 60 seconds before requesting another verification code.'
+            }, status=429)
+
+        # Rate Limiting: 5 requests per phone number per 24 hours
+        cache_key_daily = f"phone_otp_limit_daily:{role}:{normalized_phone}"
+        daily_count = cache.get(cache_key_daily) or 0
+        if daily_count >= 5:
+            logger.warning("OTP request rejected due to daily rate limit (5/day) for phone: %s", masked)
+            return JsonResponse({
+                'success': False, 
+                'error': 'Maximum daily limit of 5 OTP requests reached for this phone number.'
+            }, status=429)
+
         # Look up user email if missing
         user_email = email
         if not user_email and phone:
@@ -171,33 +204,29 @@ def send_phone_otp(request):
             if user:
                 user_email = user.email
 
-        # Generate 6-digit OTP
-        otp = str(random.randint(100000, 999999))
-        
-        # Cache key is keyed on email if available, else phone
-        key_identifier = user_email or phone
-        cache_key = f"phone_otp:{role}:{key_identifier}"
-        cache.set(cache_key, otp, timeout=300)  # 5 minutes
-
-        # Normalize phone
-        normalized_phone = phone.strip() if phone else ""
-        if normalized_phone and not normalized_phone.startswith("+"):
-            normalized_phone = normalized_phone.lstrip("0")
-            if len(normalized_phone) == 10:
-                normalized_phone = "+91" + normalized_phone
-
         # Attempt to send via real 2Factor SMS
-        from api.services.twofactor_service import send_2factor_otp
         sms_sent = False
-        if normalized_phone:
-            try:
-                res = send_2factor_otp(recipient_phone=normalized_phone)
-                if res.get("status") == "success":
-                    sms_sent = True
-            except Exception as e:
-                logger.warning("2Factor SMS send failed, falling back to simulated screen code: %s", e)
+        session_id = ""
+        try:
+            res = send_otp(phone_number=normalized_phone)
+            if res.get("success"):
+                sms_sent = True
+                session_id = res.get("session_id")
+            else:
+                logger.warning("2Factor API failed to send OTP to %s: %s", masked, res.get("error"))
+        except Exception as e:
+            logger.warning("2Factor SMS send exception, falling back to simulated screen code: %s", e)
 
         if sms_sent:
+            # Store session_id in cache against phone number (with a 5 minute timeout)
+            session_cache_key = f"twofactor_session:{role}:{normalized_phone}"
+            cache.set(session_cache_key, session_id, timeout=300)
+
+            # Apply Rate Limits on successful dispatch
+            cache.set(cache_key_60s, True, timeout=60)
+            cache.set(cache_key_daily, daily_count + 1, timeout=86400)
+
+            logger.info("2Factor OTP verification code dispatched to %s. Session ID: %s", masked, session_id)
             return JsonResponse({
                 'success': True,
                 'data': {
@@ -205,7 +234,17 @@ def send_phone_otp(request):
                 }
             })
         
-        # Fallback to simulated code on screen (free tier/no credits)
+        # Fallback to simulated code on screen (free tier/no credentials/API failure)
+        otp = str(random.randint(100000, 999999))
+        key_identifier = user_email or phone
+        cache_key = f"phone_otp:{role}:{key_identifier}"
+        cache.set(cache_key, otp, timeout=300)  # 5 minutes
+
+        # Apply Rate Limits for simulated OTP as well
+        cache.set(cache_key_60s, True, timeout=60)
+        cache.set(cache_key_daily, daily_count + 1, timeout=86400)
+
+        logger.info("Fallback triggered: Simulated OTP code generated for %s (Demo code: %s)", masked, otp)
         return JsonResponse({
             'success': True,
             'data': {
@@ -254,25 +293,37 @@ def verify_phone_otp(request):
             return JsonResponse({'success': False, 'error': 'Could not locate identifier for verification'}, status=400)
 
         # Attempt to verify via 2Factor API
-        from api.services.twofactor_service import verify_2factor_otp
+        from api.services.twofactor_service import verify_otp, mask_phone
+        masked = mask_phone(normalized_phone)
+        
+        session_cache_key = f"twofactor_session:{role}:{normalized_phone}"
+        session_id = cache.get(session_cache_key)
+
         verified = False
-        if normalized_phone:
+        if session_id:
             try:
-                res = verify_2factor_otp(recipient_phone=normalized_phone, code=otp_submitted)
-                if res.get("status") == "success":
+                res = verify_otp(session_id=session_id, otp_code=otp_submitted)
+                if res.get("success"):
                     verified = True
+                    cache.delete(session_cache_key)
+                    logger.info("2Factor OTP verification successful for %s", masked)
+                else:
+                    logger.warning("2Factor OTP verification failed for %s: %s", masked, res.get("error"))
+                    return JsonResponse({'success': False, 'error': res.get("error") or 'Invalid verification code.'}, status=400)
             except Exception as e:
-                logger.warning("2Factor Verification check failed, trying fallback: %s", e)
+                logger.warning("2Factor Verification check failed for %s, trying fallback: %s", masked, e)
 
         # Fallback to local memory cache check
-        if not verified:
+        if not verified and not session_id:
             cache_key = f"phone_otp:{role}:{key_identifier}"
             saved_otp = cache.get(cache_key)
             if saved_otp and otp_submitted == saved_otp:
                 verified = True
                 cache.delete(cache_key)
+                logger.info("Simulated OTP verification successful for %s", masked)
 
         if not verified:
+            logger.warning("Invalid OTP verification attempt for %s", masked)
             return JsonResponse({'success': False, 'error': 'Invalid or expired verification code.'}, status=400)
         
         # Look up user and mark phone as verified IF they exist
