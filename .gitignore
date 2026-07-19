@@ -60,8 +60,6 @@ htmlcov/
 .antigravity/
 .vite/
 frontend/.vite/
-frontend/dist/
-frontend/node_modules/
 
 # Inspiration / Design References
 inspiration_ui/
@@ -78,3 +76,21 @@ backend/models/ner_resume_parser/
 backend/datasets/Salary.csv
 backend/datasets/DSL-StrongPasswordData.csv
 backend/datasets/Resume/
+
+# ChromaDB local storage
+backend/chroma_db/
+chroma_db/
+
+# Sample data files (not needed in repo)
+sample_candidates.csv
+sample_candidates.json
+sample_candidates.xlsx
+
+# OS-specific
+*.swp
+*.swo
+*~
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini

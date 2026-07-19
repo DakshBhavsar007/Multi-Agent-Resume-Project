@@ -12,9 +12,22 @@
     <a href="#multi-agent-system">Agents</a> •
     <a href="#features">Features</a> •
     <a href="#quick-start">Quick Start</a> •
+    <a href="#admin-dashboard">Admin Panel</a> •
     <a href="#developer-portal">Developer Portal</a> •
     <a href="#api-reference">API Reference</a> •
+    <a href="#security">Security</a> •
     <a href="#license--attributions">License</a>
+  </p>
+
+  <p align="center">
+    <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/Django-5.0-092E20?style=flat-square&logo=django&logoColor=white" alt="Django" />
+    <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
+    <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+    <img src="https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis" />
+    <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    <img src="https://img.shields.io/badge/Gemini_AI-Multi_Key-8E75B2?style=flat-square&logo=google&logoColor=white" alt="Gemini" />
+    <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
   </p>
 </div>
 
@@ -24,25 +37,36 @@
 
 **Vishleshan** is a production-grade, multi-agent AI platform that automates the entire recruitment pipeline — from resume ingestion and skill extraction to candidate ranking, AI-powered interviews, and fraud detection. It uses a coordinated system of specialized LLM agents, vector databases, and asynchronous workers to transform unstructured documents into actionable intelligence.
 
-The platform serves three distinct user groups:
+The platform serves **four** distinct user groups:
 - **Recruiters** — A full-featured Applicant Tracking System (ATS) with AI screening, matching, and analytics
-- **Job Seekers** — A job discovery portal with safety verification and legitimacy checks
+- **Job Seekers** — A job discovery portal with AI resume builder, safety verification, and legitimacy checks
 - **Developers** — A SaaS API portal with subscription billing, rate limiting, and usage dashboards
+- **Administrators** — A dedicated moderation dashboard with ban/unban controls, support ticket management, and audit logging
 
 ---
 
 ## Multi-Agent System
 
-Vishleshan's core intelligence is powered by a coordinated system of **7 specialized AI agents**, each responsible for a distinct task in the recruitment pipeline:
+Vishleshan's core intelligence is powered by a coordinated system of **12+ specialized AI agents**, each responsible for a distinct task in the recruitment pipeline:
 
 | Agent | File | Responsibility |
 |-------|------|---------------|
 | **Resume Parsing Agent** | `agents/parsing_agent.py` | Extracts structured data (skills, experience, education, projects) from PDF/DOCX/TXT files using LLM-guided extraction |
+| **Advanced ATS Parser** | `agents/advanced_ats_parsing_agent.py` | Deep ATS compatibility analysis with section-by-section scoring |
+| **ATS Compatibility Agent** | `agents/ats_compatibility_agent.py` | Scores resume formatting, keywords, and structure against industry ATS standards |
 | **Skill Normalization Agent** | `agents/normalization_agent.py` | Maps raw extracted skills to a canonical taxonomy of 1,000+ technical and soft skills with synonym resolution |
 | **Matching Agent** | `agents/matching_agent.py` | Computes semantic match scores between candidate profiles and job descriptions using vector similarity and weighted criteria |
 | **Inference Agent** | `agents/inference_agent.py` | Infers missing candidate attributes (seniority level, role category, domain expertise) from available resume data |
 | **AI Chatbot Agent** | `agents/chatbot_agent.py` | Powers natural language candidate queries — ask questions like "Find Python developers with 3+ years in fintech" |
 | **Fraud Detection Agent** | `agents/fraud_agent.py` | Scans resumes and job postings for plagiarism, AI-generated content, ATS keyword stuffing, and phishing patterns |
+| **Interview Agent** | `agents/interview_agent.py` | Conducts AI-powered mock interviews with dynamic follow-up questions |
+| **Resume Enhancer Agent** | `agents/resume_enhancer_agent.py` | Suggests improvements to resume content, formatting, and keyword optimization |
+| **Salary Prediction Agent** | `agents/salary_prediction_agent.py` | Predicts compensation ranges using ML models and market data |
+| **Cover Letter Agent** | `agents/cover_letter_agent.py` | Generates tailored cover letters based on resume and job description |
+| **MCQ Paper Parser** | `agents/mcq_paper_parser_agent.py` | Auto-generates MCQ assessments matching job requirements |
+| **Resume Quality Agent** | `agents/resume_quality_agent.py` | Evaluates overall resume quality with actionable improvement scores |
+| **Job Recommendation Agent** | `agents/job_recommendation_agent.py` | Recommends relevant jobs based on seeker profile and preferences |
+| **JD Generator Agent** | `agents/jd_generator_agent.py` | Generates optimized job descriptions from role requirements |
 | **LLM Router** | `agents/llm.py` | Manages API key rotation across multiple Gemini keys with automatic failover, rate-limit recovery, and load balancing |
 
 All agents communicate through the `RotateLLMClient`, which distributes requests across a pool of API keys and automatically handles quota exhaustion, retries, and model selection.
@@ -64,45 +88,56 @@ All agents communicate through the `RotateLLMClient`, which distributes requests
 ### Fraud Detection & Protection
 - **Resume Authenticity Scanning** — Detects AI-generated content, plagiarism, and invisible keyword stuffing
 - **Job Posting Verification** — Flags phishing scams, ghost job indicators, and clone copy-paste listings
-- **AI Fake Job Detection System (Module 1)** — Fully integrated 6-point verification checklist to protect job seekers:
-  1. *Official Website Validation* (Presence of corporate domain and security certificates)
-  2. *Recruiter Email Domain Verification* (Matches registered corporate domain; flags generic public accounts)
-  3. *Salary Realism Evaluation* (Assesses compensation ranges against local market standards)
-  4. *LinkedIn Company Presence Check* (Lookup on professional networking platforms)
-  5. *Suspicious/Copied Description Analysis* (Identifies boilerplate scam templates and high copy signatures)
-  6. *Duplicate/Repeated Posting Detection* (Scans mass automation patterns in public listings)
-- **Legitimacy Score Output Suite** — Real-time Trust Score (/100), Risk Level (Low/Medium/High), Verified Company status, and Approved/Suspicious classification for every scan
-- **Scan History** — Recruiter & Job Seeker audit trail of all safety checks with dynamic interactive breakdowns
+- **AI Fake Job Detection System** — Fully integrated 6-point verification checklist:
+  1. *Official Website Validation* (corporate domain and security certificates)
+  2. *Recruiter Email Domain Verification* (matches registered corporate domain)
+  3. *Salary Realism Evaluation* (compensation vs. local market standards)
+  4. *LinkedIn Company Presence Check* (professional networking platform lookup)
+  5. *Suspicious/Copied Description Analysis* (boilerplate scam template detection)
+  6. *Duplicate/Repeated Posting Detection* (mass automation pattern scanning)
+- **Legitimacy Score Output** — Real-time Trust Score (/100), Risk Level, Verified Company status, and Approved/Suspicious classification
+- **Scan History** — Full audit trail with dynamic interactive breakdowns
 
 ### Job Seeker Portal
-- **Dedicated Seeker Accounts** — Separate login and registration flows for job seekers, redirecting directly to `/jobs` as the unified landing hub & dashboard.
-- **AI Resume Builder & Editor** — Create, edit, and export resumes using 7 professional, high-fidelity templates (Modern, Classic, Minimal, Executive, Creative, Compact, ATS Optimized).
-- **High-Fidelity Actual Template Previews** — Replaced all generic/AI-generated placeholder preview cards in the template gallery with exact, high-quality rendered images matching the actual template structures and styling.
-- **Dynamic Columns Selector** — Seamlessly toggle between 1-column and 2-column layouts on any template with automatic sections splitting/collapsing.
-- **ReportLab 2-Column PDF Exporter** — Backend PDF generator utilizing height-based wrapping and dummy canvas measurements to dynamically paginate 2-column documents across multiple pages without overflow.
-- **Active Profile Details Auto-Sync** — Setting a resume draft as the "Active Resume" automatically extracts and syncs experience, education, projects, skills, certifications, and languages directly to the seeker profile.
-- **Direct Subview Navigation** — Dynamic navbar links (Home, Dashboard, Find Jobs, AI Resume Enhancer, My Applications, Notifications, Market Trends, Hiring Safety) for unified, simplified routing without nested dashboard page overlays.
-- **Single-Line Responsive Navbar** — Streamlined layout with Home button to return to the platform landing page (`/`), seeker Dashboard button, and `whitespace-nowrap` layout to ensure smooth mobile-first presentation.
-- **Double-Input Job Search** — Search bar supporting both keyword queries and location searches (with Indian city-to-state mapping and live autocomplete suggestions) separated by a clean vertical divider.
-- **Real-time Notifications** — In-app notification center and automated email alerts notifying seekers when application status changes (e.g. Shortlisted, Hired)
-- **Hiring Safety Checker** — Company domain authenticity scanner; checks scam likelihood and job legitimacy before applying
-- **Salary Trends & Analytics** — Interactive charts displaying sector salary growth and high-demand competencies with a global modern blue color palette.
-- **Google OAuth Integration** — One-click Google Sign-In & Sign-Up (OAuth 2.0) across all user portals with seamless custom buttons.
-- **Cross-Portal Session Sync** — Logging out from the Recruiter/Company dashboard automatically invalidates and terminates sessions across other active Seeker and Developer portal tabs.
+- **Dedicated Seeker Accounts** — Separate login/registration with OTP verification (SMS via 2Factor + Email via Brevo)
+- **AI Resume Builder & Editor** — 7 professional templates (Modern, Classic, Minimal, Executive, Creative, Compact, ATS Optimized)
+- **High-Fidelity Template Previews** — Exact rendered images matching actual template structures
+- **Dynamic Column Selector** — Toggle between 1-column and 2-column layouts
+- **ReportLab PDF Exporter** — Multi-page 2-column PDF generation with dynamic pagination
+- **Profile Auto-Sync** — Setting a resume as "Active" syncs skills, experience, and education to the seeker profile
+- **Double-Input Job Search** — Keyword + location search with Indian city-to-state autocomplete
+- **Real-time Notifications** — In-app notification center and email alerts on application status changes
+- **Hiring Safety Checker** — Company domain authenticity scanner before applying
+- **Salary Trends & Analytics** — Interactive sector salary and demand charts
+- **Google & GitHub OAuth** — One-click social sign-in across all portals
+- **Mock Interview Practice** — AI-powered voice/chat interview simulation with scoring and feedback
+- **Company Discovery** — Browse, follow, and explore company profiles and open positions
+- **Applications Pipeline** — Track application status with visual pipeline stages
 
-### Recruiter & Premium Features
-- **Premium Feature Indication** — Shows product design thinking for monetization with a `👑 Premium` plan lock badge on bulk upload (ZIP, PDF, DOCX) buttons.
-- **Batch Resume Ingestion** — Mocked and protected under the Premium tier to optimize resource consumption.
+### Admin Dashboard
+- **Dedicated Admin Login** — Separate `/admin/login` page with Combined (IP + Email) rate limiting
+- **User Moderation** — Ban/unban any seeker, recruiter, or developer with atomic Redis cache invalidation
+- **Self-Ban Prevention** — Admin email matching blocks accidental self-banning
+- **Support Ticket Management** — View, resolve, and respond to user support requests
+- **Audit Logging** — Every ban/unban action is recorded in `AdminBanLog` with timestamp and admin email
+- **Banned User Enforcement** — Banned users are immediately blocked on all API calls (Redis-cached, DB-fallback)
+- **Session Invalidation** — Active JWT tokens are rejected mid-session when a user is banned
+- **Short Token Expiry** — Admin JWT tokens expire in 20 minutes
 
 ### Developer Portal (SaaS API)
 - **REST API** — Programmatic access to resume parsing, matching, chatbot, and fraud scanning
 - **API Key Management** — Generate, rotate, and revoke production/test keys
-- **Subscription Billing** — Razorpay-integrated plans (Free, Starter, Business) with monthly quotas
+- **Subscription Billing** — Razorpay-integrated plans (Free, Starter, Business, Enterprise) with monthly quotas
 - **Rate Limiting** — Redis-backed per-key monthly quotas for parse, match, chat, and scan operations
 - **Usage Analytics** — Real-time traffic charts, endpoint latency, and monthly usage breakdowns
 - **Webhooks** — Configure HTTP callbacks for async parsing completion events
 - **Embed Widget** — Generate secure tokens to mount Vishleshan UI in external applications
 - **API Documentation** — Interactive playground with request/response examples
+
+### Candidate Assessment Rounds
+- **MCQ Round** — Auto-generated Technical, Conceptual, and Aptitude questions matching job requirements
+- **Coding Round** — Custom programming challenges with in-browser code editor and test-case grading
+- **AI Interview Round** — Dynamic conversational interview with sequential follow-up questions, scoring, and feedback
 
 ---
 
@@ -112,27 +147,31 @@ The platform is built as a monorepo with two primary pillars:
 
 ### `backend/` — The AI Engine
 - **Framework**: Django 5 + Django REST
-- **Database**: PostgreSQL (via Supabase)
-- **Cache & Rate Limiting**: Redis
+- **Database**: PostgreSQL (Neon serverless / Supabase)
+- **Cache & Rate Limiting**: Redis (ban status caching, JWT blacklisting, rate limiting)
 - **Vector Store**: ChromaDB for semantic similarity search
 - **Task Queue**: Celery with threaded pool for async resume processing
 - **LLM Provider**: Google Gemini (multi-key rotation with automatic failover)
-- **Authentication**: JWT tokens (recruiter) + API keys (developer)
+- **Authentication**: JWT tokens (recruiter/seeker/admin) + API keys (developer)
+- **SMS**: 2Factor Gateway for OTP delivery
+- **Email**: Brevo (Sendinblue) for transactional emails, verification codes, and notifications
 
 ### `frontend/` — The React SPA
-- **Framework**: React 18 + Vite
-- **Styling**: Tailwind CSS
+- **Framework**: React 18 + Vite 8
+- **Styling**: Tailwind CSS 3
 - **State Management**: Zustand
 - **Data Fetching**: TanStack React Query
 - **Charts**: Recharts
 - **Animations**: Framer Motion + GSAP
-- **Routing**: React Router v6 with nested layouts
+- **UI Components**: Radix UI primitives
+- **Routing**: React Router v7 with nested layouts
 
-The frontend hosts all three portals (Recruiter ATS, Job Seeker, Developer) as a single SPA with path-based routing:
+The frontend hosts all four portals as a single SPA with path-based routing:
 - `/` — Recruiter landing page
 - `/dashboard/*` — Recruiter ATS dashboard
 - `/jobs/*` — Job seeker portal
 - `/developer/*` — Developer API portal
+- `/admin/*` — Admin moderation dashboard
 
 ---
 
@@ -193,7 +232,7 @@ Interactive wage trajectories, hiring velocity index, and region-wise job openin
 
 ### One-Click Development Start (Windows)
 
-For Windows environments, you can boot the entire local workspace (Vite Frontend, Django Backend, Redis, and Celery worker) using the provided batch script. It automatically cleans up old ports (`5173` & `8000`), verifies/runs Redis, and spawns the services in separate command windows:
+For Windows environments, you can boot the entire local workspace (Vite Frontend, Django Backend, Redis, and Celery worker) using the provided batch script:
 
 ```cmd
 run.bat
@@ -217,13 +256,19 @@ cp .env.example .env
 pip install -r requirements.txt
 
 # Configure environment variables in .env:
-# Set GEMINI_API_KEYS with a comma-separated list of your Gemini API keys
-# Set GEMINI_MODEL=gemini-2.5-flash for optimized free tier quota usage
-# Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET for Google authentication
-# Set BREVO_API_KEY, BREVO_MA_KEY, and MAIL_FROM for email, SMS, and CRM tracking
+# GEMINI_API_KEYS — comma-separated list of Gemini API keys
+# GEMINI_MODEL — e.g. gemini-2.5-flash
+# GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET — Google OAuth
+# GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET — GitHub OAuth
+# BREVO_API_KEY — Email & SMS service
+# TWOFACTOR_API_KEY — SMS OTP gateway
+# RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET — Payment gateway
+# ADMIN_EMAIL, ADMIN_PASSWORD — Admin panel credentials
+# DATABASE_URL — PostgreSQL connection string
+# REDIS_URL — Redis connection string
 
 # Run Database Migrations
-python manage.py migrate --fake-initial
+python manage.py migrate
 
 # Seed the Skill Taxonomy table (one-time)
 python manage.py seed_skills
@@ -231,7 +276,7 @@ python manage.py seed_skills
 # Run the Django Dev Server
 python manage.py runserver 8000
 
-# Run the Celery Worker (using multi-threaded pool on Windows)
+# Run the Celery Worker (multi-threaded pool on Windows)
 celery -A workers.celery_worker worker --loglevel=info --pool=threads --concurrency=4
 ```
 
@@ -240,12 +285,11 @@ celery -A workers.celery_worker worker --loglevel=info --pool=threads --concurre
 cd frontend
 npm install
 cp .env.local.example .env.local
-# Set NEXT_PUBLIC_API_URL, VITE_GOOGLE_CLIENT_ID, VITE_GITHUB_CLIENT_ID, and VITE_BREVO_MA_KEY in .env.local
+# Configure VITE_GOOGLE_CLIENT_ID, VITE_GITHUB_CLIENT_ID, VITE_BREVO_MA_KEY
 npm run dev
-
 ```
 
-The frontend runs on port `5173` by default and serves all three portals (Recruiter, Job Seeker, Developer) from a single Vite dev server.
+The frontend runs on port `5173` by default and serves all four portals (Recruiter, Job Seeker, Developer, Admin) from a single Vite dev server.
 
 ---
 
@@ -321,12 +365,13 @@ curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18, Vite, Tailwind CSS, Zustand, Recharts, Framer Motion, GSAP |
-| Backend | Django 5, Celery, PostgreSQL (Supabase), Redis, ChromaDB |
-| AI/LLM | Google Gemini (multi-key rotation), Custom multi-agent pipeline |
+| Frontend | React 18, Vite 8, Tailwind CSS 3, Zustand, Recharts, Framer Motion, GSAP, Radix UI |
+| Backend | Django 5, Celery, PostgreSQL (Neon), Redis, ChromaDB |
+| AI/LLM | Google Gemini (multi-key rotation), Custom 12+ agent pipeline |
 | Payments | Razorpay |
-| Auth | JWT + API Key authentication |
-| Deployment | Docker-ready, CI/CD compatible |
+| SMS & Email | 2Factor (OTP), Brevo/Sendinblue (Transactional Email) |
+| Auth | JWT + API Key + Google OAuth + GitHub OAuth |
+| Deployment | Render (Backend), Vercel (Frontend), Neon (Database) |
 
 ---
 
@@ -335,74 +380,94 @@ curl -X POST "https://api.vishleshan.ai/api/v1/protection/scan" \
 ```
 .
 ├── backend/
-│   ├── agents/            # Multi-agent LLM system (7 agents)
+│   ├── agents/               # Multi-agent LLM system (12+ agents)
+│   │   ├── parsing_agent.py
+│   │   ├── normalization_agent.py
+│   │   ├── matching_agent.py
+│   │   ├── fraud_agent.py
+│   │   ├── interview_agent.py
+│   │   ├── resume_enhancer_agent.py
+│   │   ├── salary_prediction_agent.py
+│   │   └── llm.py            # LLM Router with multi-key rotation
 │   ├── api/
-│   │   ├── models.py      # Django ORM models
-│   │   ├── views/         # REST API endpoints
-│   │   │   ├── developer/ # Developer portal APIs
-│   │   │   ├── protection.py  # Fraud detection endpoints
-│   │   │   ├── sessions.py    # Session management
+│   │   ├── models.py          # Django ORM models
+│   │   ├── views/
+│   │   │   ├── admin_views.py     # Admin dashboard & moderation
+│   │   │   ├── recruiter_auth.py  # Recruiter auth & profile
+│   │   │   ├── seeker_auth.py     # Job seeker auth & profile
+│   │   │   ├── seeker_jobs.py     # Job search & applications
+│   │   │   ├── seeker_resume.py   # Resume management
+│   │   │   ├── seeker_resume_builder.py  # AI resume builder
+│   │   │   ├── protection.py     # Fraud detection endpoints
+│   │   │   ├── round_views.py    # MCQ/Coding/Interview rounds
+│   │   │   ├── sessions.py       # Recruitment session management
+│   │   │   ├── developer/        # Developer portal APIs
+│   │   │   ├── verification.py   # OTP & email verification
 │   │   │   └── ...
-│   │   ├── decorators.py  # Auth & rate limiting
-│   │   └── middleware.py  # Usage logging
-│   ├── workers/           # Celery async task workers
+│   │   ├── services/
+│   │   │   ├── email_service.py       # Brevo email templates
+│   │   │   ├── twofactor_service.py   # SMS OTP via 2Factor
+│   │   │   ├── brevo_service.py       # Brevo CRM & tracking
+│   │   │   └── notification_service.py
+│   │   ├── decorators.py      # Auth, rate limiting, ban checks
+│   │   ├── middleware.py      # CORS, usage logging
+│   │   └── urls.py            # URL routing (25+ route groups)
+│   ├── workers/               # Celery async task workers
+│   ├── tests/                 # Unit & integration tests
+│   ├── models/                # ML models & schemas
 │   └── requirements.txt
 ├── frontend/
 │   └── src/
-│       ├── components/    # Shared UI components
+│       ├── components/        # 47+ shared UI components
 │       ├── pages/
-│       │   ├── developer/ # Developer portal pages
-│       │   ├── FraudDetectionPage.jsx
-│       │   ├── JobSeekerSafetyPage.jsx
-│       │   ├── JobsSearchPage.jsx
-│       │   └── ...
-│       ├── stores/        # Zustand state management
-│       └── lib/           # API clients
+│       │   ├── admin/         # Admin dashboard & login
+│       │   ├── developer/     # Developer portal (12 pages)
+│       │   ├── seeker/        # Seeker-specific pages
+│       │   ├── user/          # Job seeker user pages (14 pages)
+│       │   ├── test/          # Assessment round pages
+│       │   ├── public/        # About, Terms, Contact, Refund
+│       │   └── ...            # Landing, Auth, Dashboard, etc.
+│       ├── stores/            # Zustand state management
+│       └── lib/               # API clients & utilities
+├── assets/                    # Screenshots & design assets
+├── SECURITY.md                # Security policy & disclosure
+├── CONTRIBUTING.md            # Contribution guidelines
+├── LICENSE                    # MIT License
 └── README.md
 ```
 
-## AI Evaluation & Interview Flow
-
-The platform provides a comprehensive, automated multi-round evaluation pipeline for candidates:
-
-1. **MCQ Round:**
-   * Automatically generates customized Technical, Conceptual, and Aptitude multiple-choice questions matching the job description's skill requirements.
-   * Tracks and grades submissions in real-time, recording scores and attempt durations.
-2. **Coding Round:**
-   * Generates custom programming challenges matching the job's stack (e.g., Python, JavaScript).
-   * Renders a fully functional coding editor in the frontend. Candidates solve challenges and submit code, which is graded based on test cases and correctness.
-3. **AI Voice/Chat Mock Interview Round:**
-   * Conducts a dynamic, two-way conversational mock interview.
-   * Generates AI questions sequentially based on previous candidate answers and resume content.
-   * Grades performance upon completion, providing candidates with structured feedback, key improvements, and confidence scores.
-
 ---
 
-## Security Hardening & Attacker Protections
+## Security
 
-We have implemented a comprehensive security suite to prevent common web application vulnerabilities:
+Vishleshan includes comprehensive security controls:
 
-* **IDOR Protection:** All candidate retrieval/modification and chat history views enforce session-owner checks server-side to guarantee Company A cannot access Company B's candidate details.
-* **Token Invalidation:** Integrated a Redis-based blacklist on logout (`blacklist:{token}`). Blacklisted tokens are instantly rejected on API decorators.
-* **Content Injection Protection:** Recipient text inputs in the ReportLab backend PDF generator are recursively escaped with HTML entities, eliminating crashes caused by special markup characters (like `<` or `&`).
-* **Health Check & Error Sanitization:** The public `/api/v1/auth/health` and other API responses mask internal details and query exceptions in production (`DEBUG=False`), returning a generic correlation ID.
-
----
-
-## Security & Credentials Rotation Warning
+- **IDOR Protection** — Enforces company/seeker ownership checks on all candidate management views
+- **JWT Blacklisting** — Revokes tokens instantly upon logout using Redis-based blacklist with auto-expiration
+- **Redis Ban Status Caching** — 300s TTL cache with graceful DB fallback when Redis is unavailable
+- **Atomic Cache Invalidation** — Ban/unban operations clear Redis cache via `transaction.on_commit()` to prevent stale windows
+- **Combined Rate Limiting** — IP + Email rate limiting on admin login and support ticket endpoints with masked identifiers in 429 responses
+- **Admin Self-Ban Prevention** — Case-insensitive email matching against `ADMIN_EMAIL` prevents accidental admin lockout
+- **Short Admin Token Expiry** — Admin JWT tokens expire in 20 minutes
+- **Audit Logging** — `AdminBanLog` records every moderation action with admin email, target, and timestamp
+- **XSS Protection** — HTML template variables escaped at render-time (not storage) using `django.utils.html.escape`
+- **Content Injection Protection** — ReportLab PDF text inputs recursively HTML-escaped
+- **Error Sanitization** — Production responses mask internal details, returning generic correlation IDs
+- **LLM Key Rotation** — `RotateLLMClient` distributes across multiple Gemini API keys to prevent single-key exposure
+- **CORS Configuration** — Restricted allowed origins in production
 
 > [!WARNING]
-> **Important Security Practice**: All API keys, passwords, connection URIs, and credentials must be configured strictly through the `.env` configuration file on the server and are excluded from version control via `.gitignore`.
->
-> If you are migrating this repository or deploying to production, **immediately rotate all previously used API keys (Gemini, Groq, Razorpay, GitHub/Google OAuth)** that might have been logged or used during initial development, as legacy secrets can persist in Git commits history.
+> **Credential Rotation**: All API keys, passwords, and connection URIs must be configured through `.env` files and are excluded from version control. If deploying to production, **immediately rotate all previously used API keys** that may persist in Git commit history.
+
+For the full security policy, vulnerability reporting instructions, and severity classifications, see [SECURITY.md](SECURITY.md).
 
 ---
 
 ## License & Attributions
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ### Academic Context
-**Built as a Sem-IV Project** | *Multi-Agent Recruitment Intelligence Platform*
+**Built as a Sem-IV Project at DAIICT** | *Multi-Agent Recruitment Intelligence Platform*
 
 Engineered for optimal performance, zero-downtime operation, and seamless enterprise integration.

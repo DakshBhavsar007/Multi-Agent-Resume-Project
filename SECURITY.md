@@ -24,17 +24,19 @@ The following components are in scope for security reports:
 | Component | Description |
 |-----------|-------------|
 | **Django REST Backend** | All API endpoints under `/api/v1/` |
-| **Authentication** | JWT token flow (recruiter), Token authentication (seeker), and API Key auth (`X-API-Key`) |
-| **Multi-Agent Pipeline** | Resume parsing, matching, fraud detection, and chatbot agents |
+| **Authentication** | JWT token flow (recruiter/seeker/admin), API Key auth (`X-API-Key`), Google OAuth, GitHub OAuth |
+| **Admin Dashboard** | Dedicated admin login, ban/unban moderation, support ticket management |
+| **Multi-Agent Pipeline** | Resume parsing, matching, fraud detection, interview, and chatbot agents |
 | **Developer Portal APIs** | Key management, subscription billing, rate limiting, webhooks |
 | **Fraud Detection Engine** | Resume and job posting scanning endpoints |
+| **OTP & Verification** | SMS OTP (2Factor), Email verification (Brevo) |
 | **LLM Router** | Gemini API key rotation and failover logic |
 | **File Upload Handling** | PDF/DOCX/TXT resume ingestion via Celery workers |
-| **Redis Rate Limiter** | Per-key monthly quota enforcement |
+| **Redis Layer** | Rate limiting, JWT blacklisting, ban status caching |
 
 The following are **out of scope**:
 
-- Third-party services (Supabase, Razorpay, Google Gemini API)
+- Third-party services (Neon, Razorpay, Google Gemini API, 2Factor, Brevo)
 - Social engineering attacks against team members
 - Denial-of-service attacks on the dev server
 - Issues found only in unsupported / pre-release versions
@@ -48,10 +50,12 @@ Vishleshan processes and stores the following sensitive information. Any vulnera
 - **PII** — Candidate names, email addresses, phone numbers, LinkedIn/GitHub profiles
 - **Resume Contents** — Employment history, education records, project details
 - **API Keys** — Developer-issued `vish_live_*` and `vish_test_*` keys
-- **JWT Tokens & Seeker Tokens** — Recruiter session JWTs and seeker session tokens (`vish_seeker_token`)
-- **Fraud Analysis Audits** — Detailed scan logs, website validation outcomes, and recruiter email verification metadata stored in the audit trail database
+- **JWT Tokens** — Recruiter, seeker, and admin session tokens
+- **Admin Credentials** — Admin email and password stored exclusively in environment variables
+- **Fraud Analysis Audits** — Detailed scan logs, website validation outcomes, recruiter email verification metadata
 - **Payment Data** — Razorpay subscription metadata (no raw card data stored)
-- **LLM API Keys & Google OAuth Credentials** — Gemini API keys, Google client ID, and Google client secret stored in the environment configuration
+- **LLM API Keys & OAuth Credentials** — Gemini API keys, Google/GitHub client IDs and secrets stored in `.env`
+- **OTP Codes** — Time-limited verification codes for SMS and email
 
 ---
 
@@ -63,12 +67,12 @@ If you discover a security vulnerability in Vishleshan, **please do not open a p
 Use GitHub's built-in [Private Vulnerability Reporting](https://github.com/DakshBhavsar007/Multi-Agent-Resume-Project/security/advisories/new) to submit a confidential advisory directly to the maintainers.
 
 ### Option 2 — Email
-Send a detailed report to the project maintainers. Include the following information in your report:
+Send a detailed report to the project maintainers. Include the following information:
 
 ```
 Subject: [SECURITY] Vishleshan — <brief description>
 
-- Component affected (e.g., "Resume Upload endpoint", "API Key auth")
+- Component affected (e.g., "Admin login endpoint", "API Key auth")
 - Steps to reproduce the vulnerability
 - Potential impact (data exposure, privilege escalation, etc.)
 - Proof of concept (code, curl commands, screenshots — if available)
@@ -96,9 +100,9 @@ We use the following severity levels to prioritise reported issues:
 
 | Severity | Examples |
 |----------|---------|
-| **Critical** | Unauthenticated access to candidate PII, API key leakage, RCE via file upload |
-| **High** | Broken authentication, IDOR exposing other recruiters' data, JWT forgery |
-| **Medium** | Rate limit bypass, excessive data exposure in API responses, SSRF |
+| **Critical** | Unauthenticated access to candidate PII, API key leakage, RCE via file upload, admin credential exposure |
+| **High** | Broken authentication, IDOR exposing other recruiters' data, JWT forgery, ban bypass |
+| **Medium** | Rate limit bypass, excessive data exposure in API responses, SSRF, stale cache exploitation |
 | **Low** | Missing security headers, verbose error messages, minor info disclosure |
 
 ---
@@ -107,18 +111,22 @@ We use the following severity levels to prioritise reported issues:
 
 If you are running Vishleshan locally or in your own infrastructure, follow these guidelines:
 
-- **Never commit `.env` or `.env.local` to version control** — they contain Gemini API keys, DB credentials, JWT secrets, and Google Client IDs/Secrets.
+### Environment & Secrets
+- **Never commit `.env` or `.env.local` to version control** — they contain Gemini API keys, DB credentials, JWT secrets, OAuth credentials, and admin passwords.
 - Use `.env.example` and `.env.local.example` as templates and populate secrets securely.
-- Rotate `GEMINI_API_KEYS` and `GOOGLE_OAUTH_CLIENT_SECRET` regularly and revoke any compromised credentials immediately.
+- Rotate `GEMINI_API_KEYS`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `ADMIN_PASSWORD` regularly.
+- Wrap `.env` values containing `#` in double quotes (e.g., `ADMIN_PASSWORD="Pass#word"`) to prevent comment truncation.
 
 ### API Keys
 - Generate separate `vish_test_*` keys for development — never use production keys in testing.
 - Revoke unused developer API keys from the Developer Portal dashboard.
 - Set appropriate monthly quotas on all API keys to limit blast radius.
 
-### Authentication
-- Set a strong, unique `SECRET_KEY` in Django settings (minimum 50 random characters).
-- Ensure JWT tokens have a short expiry (`ACCESS_TOKEN_LIFETIME`).
+### Authentication & Admin
+- Set a strong, unique `JWT_SECRET` (minimum 50 random characters).
+- Ensure JWT tokens have short expiry — admin tokens are set to 20 minutes.
+- Use a strong `ADMIN_PASSWORD` — avoid defaults; change immediately after first deployment.
+- Admin login is rate-limited (5 attempts/min per IP+email combination) with structured `[SECURITY_ALERT]` logs on failures.
 - Enable HTTPS in production — do not run with `DEBUG=True`.
 
 ### File Uploads
@@ -128,6 +136,7 @@ If you are running Vishleshan locally or in your own infrastructure, follow thes
 ### Database & Redis
 - Restrict PostgreSQL and Redis access to internal network only — do not expose ports publicly.
 - Use strong credentials for both services and rotate them periodically.
+- Redis ban status cache has a 300s TTL; if Redis goes down, the system falls back to DB checks (fail-closed, not fail-open).
 
 ---
 
@@ -135,17 +144,25 @@ If you are running Vishleshan locally or in your own infrastructure, follow thes
 
 Vishleshan includes the following built-in security controls:
 
-- **IDOR Protection** — Enforces company/seeker ownership checks server-side for all candidate management, results, and chat history views.
-- **JWT Blacklisting** — Revokes tokens instantly upon logout using a Redis-based blacklist (`blacklist:{token}`) with auto-expiration.
-- **ReportLab Paragraph Escaping** — Recursively HTML-escapes all text inputs rendered in backend PDFs to prevent ReportLab XML parser crashes.
-- **API Key Authentication** — All developer API endpoints require a valid `X-API-Key` header.
-- **JWT Auth** — Recruiter and seeker sessions use short-lived JWT access tokens with refresh rotation.
-- **Redis Rate Limiting** — Per-key monthly quota enforcement and IP-based rate limiting on all authentication/OTP endpoints.
-- **Fraud Detection Agent** — Scans uploaded resumes for AI-generated content, plagiarism, and ATS keyword stuffing.
-- **LinkedIn Job Post & Legitimacy Scanner** — Integrates scraping with 6-point AI verification audits (website validation, recruiter email domain checks, salary realism, LinkedIn presence, cloned post templates, and duplicate posting detection) to protect seekers from phishing and recruitment fraud.
-- **LLM Key Rotation** — The `RotateLLMClient` rotates across multiple Gemini API keys to prevent single-key exposure.
-- **CORS Configuration** — Restrict allowed origins to your frontend domain in production, defaulting to restricted localhost urls.
-- **Error Sanitization** — Django middleware and schema utilities suppress internal error traces, hostnames, and database details in production (`DEBUG=False`), returning a generic correlation ID.
+| Feature | Description |
+|---------|-------------|
+| **IDOR Protection** | Enforces company/seeker ownership checks on all candidate management, results, and chat views |
+| **JWT Blacklisting** | Revokes tokens instantly on logout via Redis-based blacklist (`blacklist:{token}`) with auto-expiration |
+| **Redis Ban Cache** | Caches ban status per user type with 300s TTL; graceful DB fallback when Redis is unavailable |
+| **Atomic Cache Invalidation** | Ban/unban clears Redis via `transaction.on_commit()` to prevent stale windows; logged if Redis delete fails |
+| **Combined Rate Limiting** | IP + Email rate limiting on admin login and support ticket creation; returns masked identifiers in 429 responses |
+| **Admin Self-Ban Prevention** | Case-insensitive email comparison (`.strip().lower()`) against `ADMIN_EMAIL` blocks self-banning |
+| **Audit Logging** | `AdminBanLog` records every moderation action with admin email, target type/ID, action, and timestamp |
+| **XSS Protection** | HTML template variables escaped at render-time (email templates) using `django.utils.html.escape` |
+| **Content Injection Protection** | ReportLab PDF text inputs recursively HTML-escaped to prevent XML parser crashes |
+| **API Key Authentication** | All developer endpoints require valid `X-API-Key` header |
+| **Short Admin Token Expiry** | Admin JWT tokens expire in 20 minutes |
+| **Fraud Detection Agent** | Scans resumes for AI-generated content, plagiarism, and ATS keyword stuffing |
+| **Job Legitimacy Scanner** | 6-point AI verification (website, email domain, salary, LinkedIn, copy detection, duplicates) |
+| **LLM Key Rotation** | `RotateLLMClient` distributes across multiple Gemini API keys to prevent single-key exposure |
+| **CORS Configuration** | Restricted allowed origins to frontend domain in production |
+| **Error Sanitization** | Production responses suppress internal traces, hostnames, and DB details; return generic correlation IDs |
+| **Cross-Portal Session Sync** | Logging out from one portal invalidates sessions across all active portal tabs |
 
 ---
 
@@ -155,4 +172,4 @@ We are grateful to security researchers who help make Vishleshan safer. Responsi
 
 ---
 
-*Built as a Sem-IV Project — Multi-Agent Recruitment Intelligence Platform*
+*Built as a Sem-IV Project at DAIICT — Multi-Agent Recruitment Intelligence Platform*

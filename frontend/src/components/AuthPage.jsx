@@ -219,6 +219,15 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   const [showTestSecret, setShowTestSecret] = useState(false);
   const [showLiveSecret, setShowLiveSecret] = useState(false);
 
+  // Ban & Support Modal State
+  const [banned, setBanned] = useState(false);
+  const [bannedEmail, setBannedEmail] = useState('');
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportName, setSupportName] = useState('');
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportSubject, setSupportSubject] = useState('Banned Account Appeal');
+  const [supportMessage, setSupportMessage] = useState('');
+
   const recruiterAuth = useAuthStore();
   const developerAuth = usePortalAuthStore();
   const seekerAuth = useSeekerAuthStore();
@@ -537,7 +546,47 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         }
       }
     } catch (err) {
-      toast.error(err.message || "Authentication failed");
+      const status = err?.response?.status || err?.status;
+      const errMsg = err?.response?.data?.error || err?.message || 'Authentication failed';
+      if (status === 403 && errMsg.toLowerCase().includes('banned')) {
+        setBanned(true);
+        setBannedEmail(email);
+      } else {
+        toast.error(errMsg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Support Ticket Submit (ban appeal)
+  const handleSupportSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_BASE}/api/v1/support/ticket`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: supportName,
+          email: supportEmail,
+          subject: supportSubject,
+          message: supportMessage
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Support ticket submitted! We will review your appeal shortly.');
+        setShowSupportModal(false);
+        setSupportName('');
+        setSupportSubject('Banned Account Appeal');
+        setSupportMessage('');
+      } else {
+        toast.error(data.error || 'Failed to submit ticket. Please try again.');
+      }
+    } catch (err) {
+      toast.error('Network error. Please try again later.');
     } finally {
       setLoading(false);
     }
