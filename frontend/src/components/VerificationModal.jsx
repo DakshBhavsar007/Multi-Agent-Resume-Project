@@ -66,7 +66,7 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
       const res = await axios.post(endpoint, payload);
       if (res.data.success) {
         setSuccess(res.data.data.message || `OTP sent successfully to your ${type}.`);
-        setCountdown(30);
+        setCountdown(type === 'email' ? 30 : 60);
       } else {
         setError(res.data.error || 'Failed to send verification code.');
       }
@@ -80,8 +80,9 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    if (!otp || otp.length < 6) {
-      setError('Please enter a valid 6-digit verification code.');
+    const requiredLength = type === 'email' ? 6 : 4;
+    if (!otp || otp.length < requiredLength) {
+      setError(`Please enter a valid ${requiredLength}-digit verification code.`);
       return;
     }
     
@@ -165,10 +166,10 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
             </label>
             <input
               type="text"
-              maxLength={6}
+              maxLength={type === 'email' ? 6 : 4}
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
+              placeholder={type === 'email' ? "000000" : "0000"}
               className="w-full text-center text-2xl font-bold tracking-[8px] py-3 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 text-charcoal dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               required
             />
