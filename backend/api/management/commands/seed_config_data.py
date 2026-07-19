@@ -28,9 +28,9 @@ class Command(BaseCommand):
             {
                 "id": "seeker_pro_monthly",
                 "name": "Pro Monthly",
-                "price": 49.0,
+                "price": 299.0,
                 "period": "month",
-                "currency": "USD",
+                "currency": "INR",
                 "limits": {"resumes": -1, "applications": -1},
                 "features": [
                     "Unlimited dynamic AI resumes",

@@ -769,7 +769,7 @@ def dynamic_data(request):
         },
         "pro_monthly": {
             "name": "Pro Monthly",
-            "price": "49",
+            "price": "299",
             "period": "month",
             "features": [
                 "Unlimited dynamic AI resumes",
