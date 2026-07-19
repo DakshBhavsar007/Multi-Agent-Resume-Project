@@ -61,8 +61,7 @@ def send_otp(phone_number: str, method: str = "sms") -> dict:
     if method == "voice":
         url = f"https://2factor.in/API/V1/{TWOFACTOR_API_KEY}/VOICE/{phone}/AUTOGEN"
     else:
-        template_name = "Between_OTP_Verification"
-        url = f"https://2factor.in/API/V1/{TWOFACTOR_API_KEY}/SMS/{phone}/AUTOGEN3/{template_name}"
+        url = f"https://2factor.in/API/V1/{TWOFACTOR_API_KEY}/SMS/{phone}/AUTOGEN"
     
     logger.info("Attempting to send 2Factor OTP via %s to %s...", method.upper(), masked)
     try:
