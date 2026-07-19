@@ -186,16 +186,16 @@ def send_phone_otp(request):
             if len(normalized_phone) == 10:
                 normalized_phone = "+91" + normalized_phone
 
-        # Attempt to send via real Twilio Verify SMS
-        from api.services.twilio_service import send_twilio_verify_otp
+        # Attempt to send via real 2Factor SMS
+        from api.services.twofactor_service import send_2factor_otp
         sms_sent = False
         if normalized_phone:
             try:
-                res = send_twilio_verify_otp(recipient_phone=normalized_phone)
+                res = send_2factor_otp(recipient_phone=normalized_phone)
                 if res.get("status") == "success":
                     sms_sent = True
             except Exception as e:
-                logger.warning("Twilio Verify SMS send failed, falling back to simulated screen code: %s", e)
+                logger.warning("2Factor SMS send failed, falling back to simulated screen code: %s", e)
 
         if sms_sent:
             return JsonResponse({
@@ -253,16 +253,16 @@ def verify_phone_otp(request):
         if not key_identifier:
             return JsonResponse({'success': False, 'error': 'Could not locate identifier for verification'}, status=400)
 
-        # Attempt to verify via Twilio Verify API
-        from api.services.twilio_service import check_twilio_verify_otp
+        # Attempt to verify via 2Factor API
+        from api.services.twofactor_service import verify_2factor_otp
         verified = False
         if normalized_phone:
             try:
-                res = check_twilio_verify_otp(recipient_phone=normalized_phone, code=otp_submitted)
+                res = verify_2factor_otp(recipient_phone=normalized_phone, code=otp_submitted)
                 if res.get("status") == "success":
                     verified = True
             except Exception as e:
-                logger.warning("Twilio Verification check failed, trying fallback: %s", e)
+                logger.warning("2Factor Verification check failed, trying fallback: %s", e)
 
         # Fallback to local memory cache check
         if not verified:
