@@ -186,17 +186,16 @@ def send_phone_otp(request):
             if len(normalized_phone) == 10:
                 normalized_phone = "+91" + normalized_phone
 
-        # Attempt to send via real Brevo SMS if enabled
-        from api.services.brevo_service import send_sms
+        # Attempt to send via real Twilio Verify SMS
+        from api.services.twilio_service import send_twilio_verify_otp
         sms_sent = False
         if normalized_phone:
             try:
-                sms_msg = f"Your Between AI verification code is: {otp}. Valid for 5 minutes."
-                res = send_sms(recipient_phone=normalized_phone, message_content=sms_msg)
-                if res.get("status") not in ("error", "skipped") and "messageId" in res:
+                res = send_twilio_verify_otp(recipient_phone=normalized_phone)
+                if res.get("status") == "success":
                     sms_sent = True
             except Exception as e:
-                logger.warning("Brevo SMS send failed, falling back to simulated screen code: %s", e)
+                logger.warning("Twilio Verify SMS send failed, falling back to simulated screen code: %s", e)
 
         if sms_sent:
             return JsonResponse({
@@ -236,6 +235,13 @@ def verify_phone_otp(request):
         if not phone and not email:
             return JsonResponse({'success': False, 'error': 'Phone or email is required'}, status=400)
         
+        # Normalize phone
+        normalized_phone = phone.strip() if phone else ""
+        if normalized_phone and not normalized_phone.startswith("+"):
+            normalized_phone = normalized_phone.lstrip("0")
+            if len(normalized_phone) == 10:
+                normalized_phone = "+91" + normalized_phone
+
         # Determine the cache key
         user_email = email
         if not user_email and phone:
@@ -247,14 +253,27 @@ def verify_phone_otp(request):
         if not key_identifier:
             return JsonResponse({'success': False, 'error': 'Could not locate identifier for verification'}, status=400)
 
-        cache_key = f"phone_otp:{role}:{key_identifier}"
-        saved_otp = cache.get(cache_key)
+        # Attempt to verify via Twilio Verify API
+        from api.services.twilio_service import check_twilio_verify_otp
+        verified = False
+        if normalized_phone:
+            try:
+                res = check_twilio_verify_otp(recipient_phone=normalized_phone, code=otp_submitted)
+                if res.get("status") == "success":
+                    verified = True
+            except Exception as e:
+                logger.warning("Twilio Verification check failed, trying fallback: %s", e)
 
-        if not saved_otp:
-            return JsonResponse({'success': False, 'error': 'Verification code has expired. Please request a new one.'}, status=400)
-        
-        if otp_submitted != saved_otp:
-            return JsonResponse({'success': False, 'error': 'Invalid verification code.'}, status=400)
+        # Fallback to local memory cache check
+        if not verified:
+            cache_key = f"phone_otp:{role}:{key_identifier}"
+            saved_otp = cache.get(cache_key)
+            if saved_otp and otp_submitted == saved_otp:
+                verified = True
+                cache.delete(cache_key)
+
+        if not verified:
+            return JsonResponse({'success': False, 'error': 'Invalid or expired verification code.'}, status=400)
         
         # Look up user and mark phone as verified IF they exist
         user = get_user_by_role_and_email(role, user_email) if user_email else None
@@ -266,8 +285,6 @@ def verify_phone_otp(request):
             if phone and hasattr(user, 'phone'):
                 user.phone = phone
             user.save()
-
-        cache.delete(cache_key)
         
         return JsonResponse({
             'success': True,
