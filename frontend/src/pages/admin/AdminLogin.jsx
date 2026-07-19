@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { Shield, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
+import { API_HOST } from '../../lib/api';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function AdminLogin() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/admin/auth/login', {
+      const response = await fetch(`${API_HOST}/api/v1/admin/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

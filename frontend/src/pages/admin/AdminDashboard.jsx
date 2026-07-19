@@ -16,6 +16,7 @@ import {
   Sun
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
+import { API_HOST } from '../../lib/api';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const token = localStorage.getItem('vish_jwt');
-      const response = await fetch('/api/v1/admin/dashboard', {
+      const response = await fetch(`${API_HOST}/api/v1/admin/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -91,7 +92,7 @@ export default function AdminDashboard() {
     const action = currentBanStatus ? 'unban' : 'ban';
     try {
       const token = localStorage.getItem('vish_jwt');
-      const response = await fetch('/api/v1/admin/users/ban', {
+      const response = await fetch(`${API_HOST}/api/v1/admin/users/ban`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
   const handleResolveTicket = async (ticketId) => {
     try {
       const token = localStorage.getItem('vish_jwt');
-      const response = await fetch('/api/v1/admin/tickets/resolve', {
+      const response = await fetch(`${API_HOST}/api/v1/admin/tickets/resolve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
