@@ -362,3 +362,68 @@ If you have any questions, reply to this email or contact our support team.
         logger.warning("Brevo welcome sync failed for %s: %s", user_email, err)
 
     return email_sent
+
+
+def send_support_ticket_confirmation(user_email: str, user_name: str, ticket_id: str, subject_text: str, message_text: str) -> bool:
+    """
+    Send a beautifully styled, Between-branded confirmation email when a support ticket is created.
+    """
+    from django.utils.html import escape
+    safe_name = escape(user_name)
+    safe_subject = escape(subject_text)
+    safe_message = escape(message_text)
+
+    subject = f"[Support Ticket #{str(ticket_id)[:8]}] - We have received your query"
+    text_body = f"""
+Hi {user_name},
+
+Thank you for reaching out to Between AI support. We have received your support ticket.
+
+Ticket ID: {ticket_id}
+Subject: {subject_text}
+Message: {message_text}
+
+Our admin team is reviewing your ticket and we will get back to you shortly.
+
+If you have any updates, please reply to this email.
+
+— The Between AI Team
+"""
+    html_body = f"""
+    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 550px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 32px 24px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
+                Support Ticket Received
+            </h1>
+            <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">
+                Ticket ID: #{str(ticket_id)[:8]}
+            </p>
+        </div>
+        <div style="padding: 32px 24px;">
+            <p style="color: #1f2937; font-size: 16px; line-height: 1.6; margin: 0 0 16px;">
+                Hi <strong>{safe_name}</strong>,
+            </p>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
+                We have received your support query. Our admin team will review it and get back to you as soon as possible. Here is a summary of your ticket:
+            </p>
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
+                <p style="color: #1e293b; font-size: 13px; margin: 0 0 8px; line-height: 1.5;">
+                    <strong style="color: #475569;">Subject:</strong> {safe_subject}
+                </p>
+                <p style="color: #1e293b; font-size: 13px; margin: 0; line-height: 1.5;">
+                    <strong style="color: #475569;">Message:</strong> {safe_message}
+                </p>
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; line-height: 1.5;">
+                If you have any questions or additional details, reply to this email directly.
+            </p>
+        </div>
+        <div style="background: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #f3f4f6;">
+            <p style="color: #9ca3af; font-size: 11px; margin: 0;">
+                Between AI — Vishleshan Platform
+            </p>
+        </div>
+    </div>
+    """
+    return send_email(to_email=user_email, subject=subject, html_body=html_body, text_body=text_body)
+

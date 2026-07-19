@@ -125,12 +125,18 @@ def login(request):
         if not email or not password:
             return JsonResponse(error_response("Email and password are required"), status=400)
 
+
+
         dev = DeveloperAccount.objects.filter(email=email).first()
         if not dev:
             return JsonResponse(error_response("Invalid credentials"), status=401)
 
         if not pwd_context.verify(password[:72], dev.password_hash):
             return JsonResponse(error_response("Invalid credentials"), status=401)
+
+        comp = Company.objects.filter(email=email).first()
+        if comp and comp.is_banned:
+            return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
 
         payload = {
             "developer_id": str(dev.id),

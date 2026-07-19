@@ -2,7 +2,7 @@ from django.contrib import admin
 from api.models import (
     SubscriptionPlan, MarketRegionConfig, SalaryTimelineConfig,
     GrowthSkillFallback, LocationLookup, Company, JobSeekerAccount,
-    Candidate, Session
+    Candidate, Session, SupportTicket
 )
 
 @admin.register(SubscriptionPlan)
@@ -33,3 +33,21 @@ class GrowthSkillFallbackAdmin(admin.ModelAdmin):
 class LocationLookupAdmin(admin.ModelAdmin):
     list_display = ('country', 'state', 'created_at')
     search_fields = ('country', 'state')
+
+@admin.register(Company)
+class CompanyAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'email', 'tier', 'is_active', 'is_banned', 'created_at')
+    list_filter = ('tier', 'is_active', 'is_banned')
+    search_fields = ('name', 'email')
+
+@admin.register(JobSeekerAccount)
+class JobSeekerAccountAdmin(admin.ModelAdmin):
+    list_display = ('id', 'full_name', 'email', 'tier', 'is_active', 'is_banned', 'created_at')
+    list_filter = ('tier', 'is_active', 'is_banned')
+    search_fields = ('full_name', 'email')
+
+@admin.register(SupportTicket)
+class SupportTicketAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'email', 'subject', 'status', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('name', 'email', 'subject')

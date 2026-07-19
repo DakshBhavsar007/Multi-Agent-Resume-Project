@@ -194,6 +194,19 @@ def require_recruiter_jwt(view_func):
                 "error": "Invalid or expired token"
             }, status=401)
 
+        # Check Redis Cache for ban status
+        ban_status_key = f"ban_status:recruiter:{company_id}"
+        try:
+            ban_cached = redis_client.get(ban_status_key)
+            if ban_cached == b"true":
+                return JsonResponse({
+                    "success": False,
+                    "data": None,
+                    "error": "You are banned by admin. Please contact support."
+                }, status=403)
+        except Exception:
+            ban_cached = None
+
         company = Company.objects.filter(id=company_id, is_active=True).first()
         if not company:
             return JsonResponse({
@@ -201,6 +214,23 @@ def require_recruiter_jwt(view_func):
                 "data": None,
                 "error": "Company not found or inactive"
             }, status=401)
+
+        if company.is_banned:
+            try:
+                redis_client.setex(ban_status_key, 300, "true")
+            except Exception:
+                pass
+            return JsonResponse({
+                "success": False,
+                "data": None,
+                "error": "You are banned by admin. Please contact support."
+            }, status=403)
+        else:
+            if ban_cached is None:
+                try:
+                    redis_client.setex(ban_status_key, 300, "false")
+                except Exception:
+                    pass
 
         request.company = company
         return view_func(request, *args, **kwargs)
@@ -246,6 +276,19 @@ def require_developer_jwt(view_func):
                 "error": "Invalid or expired token"
             }, status=401)
 
+        # Check Redis Cache for ban status
+        ban_status_key = f"ban_status:developer:{developer_id}"
+        try:
+            ban_cached = redis_client.get(ban_status_key)
+            if ban_cached == b"true":
+                return JsonResponse({
+                    "success": False,
+                    "data": None,
+                    "error": "You are banned by admin. Please contact support."
+                }, status=403)
+        except Exception:
+            ban_cached = None
+
         developer = DeveloperAccount.objects.filter(id=developer_id).first()
         if not developer:
             return JsonResponse({
@@ -253,6 +296,23 @@ def require_developer_jwt(view_func):
                 "data": None,
                 "error": "Developer not found"
             }, status=401)
+
+        if developer.is_banned:
+            try:
+                redis_client.setex(ban_status_key, 300, "true")
+            except Exception:
+                pass
+            return JsonResponse({
+                "success": False,
+                "data": None,
+                "error": "You are banned by admin. Please contact support."
+            }, status=403)
+        else:
+            if ban_cached is None:
+                try:
+                    redis_client.setex(ban_status_key, 300, "false")
+                except Exception:
+                    pass
 
         request.developer = developer
         return view_func(request, *args, **kwargs)
@@ -389,4 +449,45 @@ def rate_limit_ip(limit: int, period_seconds: int, action_name: str):
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     return decorator
+
+
+def require_admin_jwt(view_func):
+    """Decorator to enforce Admin JWT token."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        token = ""
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+        else:
+            token = request.GET.get("token", "")
+            if not token:
+                token = request.GET.get("jwt", "")
+                
+        if not token or token == "undefined" or token == "null":
+            return JsonResponse({
+                "success": False,
+                "data": None,
+                "error": "Authentication required"
+            }, status=401)
+            
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            if not payload.get("is_admin"):
+                return JsonResponse({
+                    "success": False,
+                    "data": None,
+                    "error": "Admin access required"
+                }, status=403)
+            request.admin_email = payload.get("email")
+        except JWTError:
+            return JsonResponse({
+                "success": False,
+                "data": None,
+                "error": "Invalid or expired token"
+            }, status=401)
+            
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
 

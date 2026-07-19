@@ -60,9 +60,31 @@ def require_seeker_jwt(view_func):
         if not seeker_id:
             return JsonResponse(error_response("Invalid token type"), status=401)
 
+        # Check Redis Cache for ban status
+        ban_status_key = f"ban_status:seeker:{seeker_id}"
+        try:
+            ban_cached = redis_client.get(ban_status_key)
+            if ban_cached == b"true":
+                return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
+        except Exception:
+            ban_cached = None
+
         seeker = JobSeekerAccount.objects.filter(id=seeker_id, is_active=True).first()
         if not seeker:
             return JsonResponse(error_response("Account not found"), status=401)
+
+        if seeker.is_banned:
+            try:
+                redis_client.setex(ban_status_key, 300, "true")
+            except Exception:
+                pass
+            return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
+        else:
+            if ban_cached is None:
+                try:
+                    redis_client.setex(ban_status_key, 300, "false")
+                except Exception:
+                    pass
 
         request.seeker = seeker
         return view_func(request, *args, **kwargs)
@@ -215,9 +237,14 @@ def login(request):
         if not email or not password:
             return JsonResponse(error_response("Email and password are required"), status=400)
 
+
+
         seeker = JobSeekerAccount.objects.filter(email=email, is_active=True).first()
         if not seeker or not pwd_context.verify(password[:72], seeker.password_hash):
             return JsonResponse(error_response("Invalid email or password"), status=401)
+
+        if seeker.is_banned:
+            return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
 
         token = _make_seeker_token(seeker)
         return JsonResponse(success_response({

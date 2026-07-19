@@ -133,12 +133,17 @@ def login(request):
         if not email or not password:
             return JsonResponse(error_response("Email and password are required"), status=400)
 
+
+
         company = Company.objects.filter(email=email).first()
         if not company:
             return JsonResponse(error_response("Invalid credentials"), status=401)
 
         if not pwd_context.verify(password[:72], company.password_hash):
             return JsonResponse(error_response("Invalid credentials"), status=401)
+
+        if company.is_banned:
+            return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
 
         api_key_obj = APIKey.objects.filter(company_id=company.id, is_active=True).first()
         masked_secret = None

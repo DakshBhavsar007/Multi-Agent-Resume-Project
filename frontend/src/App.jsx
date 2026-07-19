@@ -78,6 +78,8 @@ const UserApplications = lazy(() => import('./pages/user/UserApplications'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const CompleteProfilePage = lazy(() => import('./pages/CompleteProfilePage'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 
 const ApplicantResultsPage = lazy(() => import('./pages/ApplicantResultsPage'));
 const TestEntry = lazy(() => import('./pages/test/TestEntry'));
@@ -296,6 +298,10 @@ export default function App() {
             <Route path="protection" element={<FraudDetectionPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
+
+          {/* Admin Dashboard */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
           {/* Candidate Assessment Rounds */}
           <Route path="/test/entry" element={<TestEntry />} />

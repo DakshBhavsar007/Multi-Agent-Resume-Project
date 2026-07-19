@@ -19,7 +19,8 @@ import {
   Sparkles,
   MapPin,
   FileText,
-  User
+  User,
+  Mail
 } from 'lucide-react';
 import { authAPI, seekerAPI } from '../lib/api';
 import { portalAuth, portalBilling } from '../lib/portalApi';
@@ -467,7 +468,7 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
     setLoading(true);
     try {
       if (isLogin) {
-        // Sign In Flow
+
         if (role === 'recruiter') {
           const data = await authAPI.login(email, password);
           recruiterAuth.setAuth(data);
@@ -630,7 +631,38 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.21, 0.45, 0.32, 0.9] }}
       >
-        {/* Role tabs (Only visible in Step 1) */}
+        {banned ? (
+          <div className="p-6 bg-red-950/20 border border-red-900/60 rounded-2xl text-center flex flex-col items-center gap-4 my-8" style={{ transform: "translateZ(40px)" }}>
+            <div className="w-12 h-12 rounded-full bg-red-950/50 border border-red-900 flex items-center justify-center text-red-500 shadow-lg">
+              <ShieldAlert className="w-6 h-6 animate-pulse" />
+            </div>
+            <h3 className="text-lg font-bold text-red-400">Account Deactivated</h3>
+            <p className="text-sm text-zinc-400 max-w-sm">
+              You are banned by admin. If you believe this is a mistake, please appeal by contacting support.
+            </p>
+            <div className="flex gap-3 w-full mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setSupportEmail(bannedEmail);
+                  setShowSupportModal(true);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-zinc-100 text-zinc-950 hover:bg-white font-bold text-sm transition shadow-md"
+              >
+                Contact Support
+              </button>
+              <button
+                type="button"
+                onClick={() => setBanned(false)}
+                className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 font-bold text-sm transition"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Role tabs (Only visible in Step 1) */}
         {step === 1 && (
           <div className="auth-tabs" style={{ transform: "translateZ(40px)" }}>
             <button 
@@ -1321,8 +1353,93 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
           <ArrowLeft size={14} />
           Return to home
         </button>
+          </>
+        )}
 
       </motion.div>
+      <AnimatePresence>
+        {showSupportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-[#0d0d11] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl p-6 flex flex-col gap-5 text-zinc-100"
+            >
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-zinc-400" />
+                  Contact Support / Appeal
+                </h3>
+                <button 
+                  onClick={() => setShowSupportModal(false)}
+                  className="p-1 rounded-lg text-zinc-500 hover:text-white transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSupportSubmit} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-semibold uppercase">Your Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="John Doe"
+                    value={supportName}
+                    onChange={e => setSupportName(e.target.value)}
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-semibold uppercase">Email Address</label>
+                  <input 
+                    type="email" 
+                    placeholder="name@company.com"
+                    value={supportEmail}
+                    onChange={e => setSupportEmail(e.target.value)}
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-semibold uppercase">Subject</label>
+                  <input 
+                    type="text" 
+                    placeholder="Banned Account Appeal"
+                    value={supportSubject}
+                    onChange={e => setSupportSubject(e.target.value)}
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-semibold uppercase">Message / Appeal Details</label>
+                  <textarea 
+                    rows={4}
+                    placeholder="Please explain why your account should be unbanned..."
+                    value={supportMessage}
+                    onChange={e => setSupportMessage(e.target.value)}
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition resize-none"
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full py-2.5 rounded-xl bg-zinc-100 text-zinc-950 hover:bg-white font-bold text-sm transition flex items-center justify-center gap-2"
+                >
+                  {loading ? 'Submitting appeal...' : 'Submit Appeal'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {verifyTarget && (
         <VerificationModal
           isOpen={true}

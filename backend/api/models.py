@@ -9,6 +9,7 @@ class Company(models.Model):
     password_hash = models.CharField(max_length=500)
     tier = models.CharField(max_length=50, default="free")
     is_active = models.BooleanField(default=True, db_index=True)
+    is_banned = models.BooleanField(default=False, db_index=True)
     email_verified = models.BooleanField(default=False)
     phone_verified = models.BooleanField(default=False)
     industry = models.CharField(max_length=255, null=True, blank=True)
@@ -134,6 +135,7 @@ class DeveloperAccount(models.Model):
     billing_customer_id = models.CharField(max_length=255, null=True, blank=True)
     website_url = models.CharField(max_length=500, null=True, blank=True)
     allowed_domains = models.JSONField(default=list)
+    is_banned = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -272,6 +274,7 @@ class JobSeekerAccount(models.Model):
     open_to           = models.JSONField(default=dict)    # preferences (workTypes, roles, locations)
     tier              = models.CharField(max_length=50, default="free")  # free | premium
     is_active         = models.BooleanField(default=True)
+    is_banned         = models.BooleanField(default=False, db_index=True)
     email_verified    = models.BooleanField(default=False)
     phone_verified    = models.BooleanField(default=False)
     created_at        = models.DateTimeField(default=timezone.now)
@@ -599,6 +602,34 @@ class LocationLookup(models.Model):
 
     class Meta:
         db_table = "location_lookups"
+
+
+class SupportTicket(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    email = models.CharField(max_length=255)
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    status = models.CharField(max_length=50, default="open")  # "open", "resolved"
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.CharField(max_length=255, null=True, blank=True)
+    user_email = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "support_tickets"
+
+
+class AdminBanLog(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    admin_email = models.CharField(max_length=255)
+    target_type = models.CharField(max_length=50)  # "seeker", "recruiter", "developer"
+    target_id = models.UUIDField()
+    action = models.CharField(max_length=50)  # "ban", "unban"
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "admin_ban_logs"
 
 
 from django.db.models.signals import post_save, post_delete
