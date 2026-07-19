@@ -10,30 +10,7 @@ from api.models import JobSeekerAccount, SeekerBillingSubscription
 from api.views.seeker_auth import require_seeker_jwt
 from models.schemas import success_response, error_response
 
-PLAN_DETAILS = {
-    "free": {
-        "price_monthly": 0,
-        "currency": "INR",
-        "limits": {"applications": 3, "drafts": 1},
-        "features": [
-            "3 job applications/month",
-            "1 active resume draft",
-            "Standard templates"
-        ]
-    },
-    "premium": {
-        "price_monthly": 199,
-        "currency": "INR",
-        "limits": {"applications": -1, "drafts": -1},
-        "features": [
-            "Unlimited applications",
-            "Unlimited resume drafts",
-            "Premium templates",
-            "AI resume enhancer",
-            "Priority visibility"
-        ]
-    }
-}
+from api.models import JobSeekerAccount, SeekerBillingSubscription, SubscriptionPlan
 
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
@@ -42,13 +19,16 @@ RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 def get_plans(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
+    
+    db_plans = SubscriptionPlan.objects.filter(target_portal="seeker", is_active=True)
     formatted_plans = []
-    for plan_id, details in PLAN_DETAILS.items():
+    for plan in db_plans:
+        plan_key = plan.id.replace("seeker_", "")
         formatted_plans.append({
-            "id": plan_id,
-            "name": plan_id.capitalize() + " Plan" if plan_id != "free" else "Free Plan",
-            "price": details["price_monthly"],
-            "features": details["features"]
+            "id": plan_key,
+            "name": plan.name,
+            "price": int(plan.price),
+            "features": plan.features
         })
     return JsonResponse(success_response(formatted_plans))
 
@@ -61,11 +41,13 @@ def subscribe(request):
     try:
         data = json.loads(request.body)
         plan = data.get("plan")
-        if plan not in PLAN_DETAILS or plan == "free":
+        
+        plan_id = f"seeker_{plan.replace('seeker_', '')}"
+        plan_db = SubscriptionPlan.objects.filter(id=plan_id, is_active=True).first()
+        if not plan_db or plan == "free":
             return JsonResponse(error_response("Invalid plan. Choose premium"), status=400)
 
-        plan_info = PLAN_DETAILS[plan]
-        amount = plan_info["price_monthly"] * 100  # paise
+        amount = int(plan_db.price) * 100  # paise
 
         # Fallback to mock order if Razorpay keys are not set
         if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
@@ -185,12 +167,20 @@ def current_subscription(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
     seeker = request.seeker
     try:
+        # Helper to resolve plan limits from DB
+        def get_plan_limits(plan_id):
+            p_id = f"seeker_{plan_id.replace('seeker_', '')}"
+            p = SubscriptionPlan.objects.filter(id=p_id).first()
+            if p:
+                return p.limits
+            return {"applications": 3, "drafts": 1}
+
         sub = SeekerBillingSubscription.objects.filter(seeker_id=seeker.id).first()
         if not sub:
             return JsonResponse(success_response({
                 "plan": seeker.tier,
                 "status": "active",
-                "limits": PLAN_DETAILS.get(seeker.tier, PLAN_DETAILS["free"])["limits"],
+                "limits": get_plan_limits(seeker.tier),
                 "days_remaining": None
             }))
 
@@ -205,7 +195,7 @@ def current_subscription(request):
             "plan": sub.plan,
             "status": sub.status,
             "payment_id": sub.payment_id,
-            "limits": PLAN_DETAILS.get(sub.plan, PLAN_DETAILS["free"])["limits"],
+            "limits": get_plan_limits(sub.plan),
             "days_remaining": days_remaining,
             "created_at": sub.created_at.isoformat() if sub.created_at else None
         }))

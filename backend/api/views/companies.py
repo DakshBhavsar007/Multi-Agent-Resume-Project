@@ -401,36 +401,32 @@ def public_market_trends(request):
             "time_to_offer": time_to_offer
         }
 
-        # 3. Market Trends Dashboard stats
-        regions = ["Bengaluru", "San Francisco", "Zurich", "London"]
-        region_distribution = []
-        
-        base_counts = {
-            "Bengaluru": 450,
-            "San Francisco": 380,
-            "Zurich": 180,
-            "London": 240
-        }
-        
-        colors = {
-            "Bengaluru": "#2563EB",
-            "San Francisco": "#0F56B3",
-            "Zurich": "#22C55E",
-            "London": "#8b5cf6"
-        }
+        # 3. Market Trends Dashboard stats - Fetch dynamically from DB
+        from api.models import MarketRegionConfig, SalaryTimelineConfig, GrowthSkillFallback
 
-        for r in regions:
+        region_configs = MarketRegionConfig.objects.filter(is_active=True)
+        region_distribution = []
+        for rc in region_configs:
+            r = rc.name
             count = Session.objects.filter(status="active").filter(
                 Q(criteria__preferred_locations__icontains=r) |
                 Q(job_description__icontains=r) |
                 Q(job_title__icontains=r)
             ).count()
-            val = (count if active_sessions_count > 0 else base_counts[r] + count)
+            val = (count if active_sessions_count > 0 else rc.fallback_value + count)
             region_distribution.append({
                 "name": r,
                 "value": val,
-                "color": colors[r]
+                "color": rc.color_hex
             })
+
+        if not region_distribution:
+            region_distribution = [
+                {"name": "Bengaluru", "value": 450, "color": "#2563EB"},
+                {"name": "San Francisco", "value": 380, "color": "#0F56B3"},
+                {"name": "Zurich", "value": 180, "color": "#22C55E"},
+                {"name": "London", "value": 240, "color": "#8b5cf6"}
+            ]
 
         top_region = max(region_distribution, key=lambda x: x["value"])
         total_val = sum(x["value"] for x in region_distribution)
@@ -444,12 +440,25 @@ def public_market_trends(request):
 
         active_jds = active_sessions_count if active_sessions_count > 0 else 2450
 
-        salary_timeline = [
-            { "year": "2023", "salary": 112 },
-            { "year": "2024", "salary": 124 },
-            { "year": "2025", "salary": 138 },
-            { "year": "2026 (Est)", "salary": int(138 + (base_salary / 10000)) }
-        ]
+        # Salary Timeline - Fetch dynamically from DB
+        timeline_configs = SalaryTimelineConfig.objects.all().order_by('year')
+        salary_timeline = []
+        for tc in timeline_configs:
+            salary_val = tc.salary_k
+            if tc.is_projection:
+                salary_val = int(tc.salary_k + (base_salary / 10000))
+            salary_timeline.append({
+                "year": tc.year,
+                "salary": salary_val
+            })
+
+        if not salary_timeline:
+            salary_timeline = [
+                { "year": "2023", "salary": 112 },
+                { "year": "2024", "salary": 124 },
+                { "year": "2025", "salary": 138 },
+                { "year": "2026 (Est)", "salary": int(138 + (base_salary / 10000)) }
+            ]
 
         # Dynamic high growth domains from active jobs
         from collections import Counter
@@ -461,11 +470,15 @@ def public_market_trends(request):
         
         top_skills = Counter(all_skills).most_common(3)
         
-        default_skills = [
-            ("Prompt Engineering", 48, 185000, "Highest request growth this quarter"),
-            ("Design Systems", 14, 140000, "Steady enterprise adoption indices"),
-            ("Rust / Go Backend", 22, 165000, "High throughput performance demand")
-        ]
+        # High Growth Skills Fallback - Fetch dynamically from DB
+        growth_skills = GrowthSkillFallback.objects.filter(is_active=True)
+        default_skills = [(gs.name, gs.growth_percentage, gs.median_salary, gs.description) for gs in growth_skills]
+        if not default_skills:
+            default_skills = [
+                ("Prompt Engineering", 48, 185000, "Highest request growth this quarter"),
+                ("Design Systems", 14, 140000, "Steady enterprise adoption indices"),
+                ("Rust / Go Backend", 22, 165000, "High throughput performance demand")
+            ]
         
         high_growth_domains = []
         for i, (name, pct, pay, desc) in enumerate(default_skills):

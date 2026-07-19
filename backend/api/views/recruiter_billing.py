@@ -6,45 +6,9 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from api.models import Company, CompanyBillingSubscription
+from api.models import Company, CompanyBillingSubscription, SubscriptionPlan
 from api.decorators import require_recruiter_jwt
 from models.schemas import success_response, error_response
-
-PLAN_DETAILS = {
-    "free": {
-        "price_monthly": 0,
-        "currency": "INR",
-        "limits": {"sessions": 1, "resumes": 100},
-        "features": [
-            "One active session",
-            "Up to 100 resumes",
-            "Basic AI screening",
-            "Standard support"
-        ]
-    },
-    "business": {
-        "price_monthly": 1499,
-        "currency": "INR",
-        "limits": {"sessions": 5, "resumes": 2000},
-        "features": [
-            "Five active sessions",
-            "Up to 2,000 resumes",
-            "Advanced matching",
-            "API access"
-        ]
-    },
-    "enterprise": {
-        "price_monthly": 3999,
-        "currency": "INR",
-        "limits": {"sessions": -1, "resumes": -1},
-        "features": [
-            "Unlimited sessions",
-            "Priority VIP support",
-            "Custom integrations",
-            "Advanced analytics"
-        ]
-    }
-}
 
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
@@ -53,13 +17,16 @@ RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 def get_plans(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
+    
+    db_plans = SubscriptionPlan.objects.filter(target_portal="recruiter", is_active=True)
     formatted_plans = []
-    for plan_id, details in PLAN_DETAILS.items():
+    for plan in db_plans:
+        plan_key = plan.id.replace("recruiter_", "")
         formatted_plans.append({
-            "id": plan_id,
-            "name": plan_id.capitalize() + " Plan" if plan_id != "free" else "Starter Plan",
-            "price": details["price_monthly"],
-            "features": details["features"]
+            "id": plan_key,
+            "name": plan.name,
+            "price": int(plan.price),
+            "features": plan.features
         })
     return JsonResponse(success_response(formatted_plans))
 
@@ -72,11 +39,13 @@ def subscribe(request):
     try:
         data = json.loads(request.body)
         plan = data.get("plan")
-        if plan not in PLAN_DETAILS or plan == "free":
+        
+        plan_id = f"recruiter_{plan.replace('recruiter_', '')}"
+        plan_db = SubscriptionPlan.objects.filter(id=plan_id, is_active=True).first()
+        if not plan_db or plan == "free":
             return JsonResponse(error_response("Invalid plan. Choose business or enterprise"), status=400)
 
-        plan_info = PLAN_DETAILS[plan]
-        amount = plan_info["price_monthly"] * 100  # paise
+        amount = int(plan_db.price) * 100  # paise
 
         # Fallback to mock order if Razorpay keys are not set
         if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
@@ -196,12 +165,20 @@ def current_subscription(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
     company = request.company
     try:
+        # Helper to resolve plan limits from DB
+        def get_plan_limits(plan_id):
+            p_id = f"recruiter_{plan_id.replace('recruiter_', '')}"
+            p = SubscriptionPlan.objects.filter(id=p_id).first()
+            if p:
+                return p.limits
+            return {"sessions": 1, "resumes": 100}
+
         sub = CompanyBillingSubscription.objects.filter(company_id=company.id).first()
         if not sub:
             return JsonResponse(success_response({
                 "plan": company.tier,
                 "status": "active",
-                "limits": PLAN_DETAILS.get(company.tier, PLAN_DETAILS["free"])["limits"],
+                "limits": get_plan_limits(company.tier),
                 "days_remaining": None
             }))
 
@@ -216,7 +193,7 @@ def current_subscription(request):
             "plan": sub.plan,
             "status": sub.status,
             "payment_id": sub.payment_id,
-            "limits": PLAN_DETAILS.get(sub.plan, PLAN_DETAILS["free"])["limits"],
+            "limits": get_plan_limits(sub.plan),
             "days_remaining": days_remaining,
             "created_at": sub.created_at.isoformat() if sub.created_at else None
         }))

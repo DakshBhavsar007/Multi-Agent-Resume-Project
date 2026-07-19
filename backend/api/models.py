@@ -540,3 +540,62 @@ class SeekerMockAttempt(models.Model):
         db_table = "seeker_mock_attempts"
 
 
+class SubscriptionPlan(models.Model):
+    id = models.CharField(primary_key=True, max_length=50) # e.g. "free", "business", "enterprise", "pro_monthly", "pro_yearly"
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    period = models.CharField(max_length=20, default="month") # "month", "year", "forever"
+    currency = models.CharField(max_length=10, default="INR")
+    limits = models.JSONField(default=dict)
+    features = models.JSONField(default=list)
+    target_portal = models.CharField(max_length=50, default="recruiter") # "recruiter", "seeker", "developer"
+    quota_description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "subscription_plans"
+
+
+class MarketRegionConfig(models.Model):
+    name = models.CharField(primary_key=True, max_length=100) # e.g. "Bengaluru"
+    fallback_value = models.IntegerField(default=100)
+    color_hex = models.CharField(max_length=7, default="#2563EB")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "market_trend_regions"
+
+
+class SalaryTimelineConfig(models.Model):
+    year = models.CharField(max_length=20, primary_key=True) # e.g. "2023"
+    salary_k = models.IntegerField()
+    is_projection = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "historical_salary_timeline"
+
+
+class GrowthSkillFallback(models.Model):
+    name = models.CharField(max_length=100, primary_key=True) # e.g. "Prompt Engineering"
+    growth_percentage = models.IntegerField(default=10)
+    median_salary = models.IntegerField(default=120000)
+    description = models.TextField()
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "high_growth_skill_fallbacks"
+
+
+class LocationLookup(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    country = models.CharField(max_length=100, db_index=True)
+    state = models.CharField(max_length=100, db_index=True)
+    cities = models.JSONField(default=list)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "location_lookups"
+
+
+
