@@ -1,5 +1,6 @@
 import os
 import json
+from unittest.mock import patch, MagicMock
 from django.test import TestCase, Client
 from django.urls import reverse
 from jose import jwt
@@ -294,3 +295,71 @@ class AdminViewsTest(TestCase):
         self.assertFalse(res_data["success"])
         self.assertIn("too many requests", res_data["error"].lower())
         self.assertIn("retry_after_seconds", res_data["data"])
+        # Change 3: assert masked identifier is present and is not the full email
+        self.assertIn("identifier", res_data["data"])
+        identifier = res_data["data"]["identifier"]
+        self.assertNotEqual(identifier, "attacker@example.com")  # must be masked
+        self.assertIn("***", identifier)
+
+    def test_rate_limit_create_ticket_response_structure(self):
+        """Change 4: create_support_ticket 429 must have identical structure to admin_login 429."""
+        url = reverse("support-ticket-create")
+        data = {
+            "name": "Spam User",
+            "email": "spammer@example.com",
+            "subject": "Flood test",
+            "message": "message body"
+        }
+
+        try:
+            redis_client.delete("rl:create_ticket:127.0.0.1:spammer@example.com")
+        except Exception:
+            pass
+
+        # 5 attempts within limit
+        for _ in range(5):
+            self.client.post(url, data=json.dumps(data), content_type="application/json")
+
+        # 6th attempt should be 429
+        response = self.client.post(url, data=json.dumps(data), content_type="application/json")
+        self.assertEqual(response.status_code, 429)
+        res_data = response.json()
+        # Exact same structure as admin_login 429
+        self.assertFalse(res_data["success"])
+        self.assertIn("too many requests", res_data["error"].lower())
+        self.assertIn("data", res_data)
+        self.assertIn("action", res_data["data"])
+        self.assertIn("retry_after_seconds", res_data["data"])
+        self.assertIn("identifier", res_data["data"])
+        self.assertNotEqual(res_data["data"]["identifier"], "spammer@example.com")
+        self.assertIn("***", res_data["data"]["identifier"])
+
+    def test_redis_down_banned_user_db_fallback_403(self):
+        """Change 2a: When Redis is unavailable, banned user must still get 403 from DB fallback."""
+        self.seeker.is_banned = True
+        self.seeker.save()
+
+        # Simulate Redis raising a connection error on every call
+        redis_error = Exception("Redis connection refused")
+        with patch("api.decorators.redis_client.get", side_effect=redis_error):
+            url = reverse("seeker-billing-current")
+            response = self.client.get(url, **self.seeker_headers)
+
+        self.assertEqual(response.status_code, 403)
+        res_data = response.json()
+        self.assertIn("banned by admin", res_data["error"].lower())
+
+    def test_redis_down_non_banned_user_db_fallback_allows(self):
+        """Change 2b: When Redis is unavailable, non-banned user must proceed normally (200)."""
+        self.seeker.is_banned = False
+        self.seeker.save()
+
+        # Simulate Redis raising a connection error on every call
+        redis_error = Exception("Redis connection refused")
+        with patch("api.decorators.redis_client.get", side_effect=redis_error):
+            url = reverse("seeker-billing-current")
+            response = self.client.get(url, **self.seeker_headers)
+
+        # Should not be blocked — fallback to DB where is_banned=False
+        self.assertNotEqual(response.status_code, 403)
+        self.assertNotEqual(response.status_code, 500)

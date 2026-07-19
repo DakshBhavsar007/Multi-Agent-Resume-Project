@@ -38,12 +38,16 @@ def admin_login(request):
             if current == 1:
                 redis_client.expire(redis_key, 60)
             if current > 5:
+                # Mask email for safe logging/debugging: show first 2 chars + domain
+                parts = email.split('@') if '@' in email else [email, '']
+                masked_email = parts[0][:2] + '***@' + parts[1] if parts[1] else parts[0][:2] + '***'
                 return JsonResponse({
                     "success": False,
                     "error": "Too many requests. Please try again later.",
                     "data": {
                         "action": "admin_login",
-                        "retry_after_seconds": redis_client.ttl(redis_key)
+                        "retry_after_seconds": redis_client.ttl(redis_key),
+                        "identifier": masked_email
                     }
                 }, status=429)
         except Exception as rl_err:
@@ -188,12 +192,28 @@ def ban_unban_user(request):
             else:
                 return JsonResponse(error_response("Invalid user type"), status=400)
 
-            # Clear Redis ban cache safely after transaction commit to prevent race conditions
+            # NOTE: This is NOT a distributed transaction.
+            # The DB save and Redis delete are sequential, independent operations:
+            #   1. DB is saved inside transaction.atomic() above.
+            #   2. Redis delete fires via transaction.on_commit() — only after the DB commit succeeds.
+            # If Redis delete fails (network hiccup etc.), the ban still persists in DB.
+            # Worst-case window: stale "false" cache serves for up to 300s TTL.
+            # This is logged explicitly so monitoring can detect Redis issues.
             try:
                 from api.decorators import redis_client
-                transaction.on_commit(lambda: redis_client.delete(f"ban_status:{user_type}:{user_id}"))
+                cache_key = f"ban_status:{user_type}:{user_id}"
+                def _clear_ban_cache():
+                    try:
+                        redis_client.delete(cache_key)
+                    except Exception as inner_err:
+                        logger.warning(
+                            "[REDIS_CACHE] Failed to delete ban cache key '%s' after DB commit. "
+                            "Stale cache may serve for up to 300s TTL. Error: %s",
+                            cache_key, inner_err
+                        )
+                transaction.on_commit(_clear_ban_cache)
             except Exception as cache_err:
-                logger.warning("Failed to clear Redis ban cache: %s", cache_err)
+                logger.warning("Failed to register Redis cache clear on commit: %s", cache_err)
 
         # Audit Log
         AdminBanLog.objects.create(
@@ -266,12 +286,16 @@ def create_support_ticket(request):
             if current == 1:
                 redis_client.expire(redis_key, 60)
             if current > 5:
+                # Mask email for safe logging/debugging: show first 2 chars + domain
+                parts = email.split('@') if '@' in email else [email, '']
+                masked_email = parts[0][:2] + '***@' + parts[1] if parts[1] else parts[0][:2] + '***'
                 return JsonResponse({
                     "success": False,
                     "error": "Too many requests. Please try again later.",
                     "data": {
                         "action": "create_support_ticket",
-                        "retry_after_seconds": redis_client.ttl(redis_key)
+                        "retry_after_seconds": redis_client.ttl(redis_key),
+                        "identifier": masked_email
                     }
                 }, status=429)
         except Exception as rl_err:

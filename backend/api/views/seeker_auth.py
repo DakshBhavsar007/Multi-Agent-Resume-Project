@@ -14,7 +14,7 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 
 from api.models import JobSeekerAccount
-from api.decorators import JWT_SECRET, JWT_ALGORITHM, rate_limit_ip
+from api.decorators import JWT_SECRET, JWT_ALGORITHM, rate_limit_ip, redis_client
 from models.schemas import success_response, error_response
 from api.services.email_service import send_welcome_email
 
@@ -45,7 +45,6 @@ def require_seeker_jwt(view_func):
             return JsonResponse(error_response("Authentication required"), status=401)
         token = auth_header.split(" ", 1)[1]
         try:
-            from api.decorators import redis_client
             if redis_client.exists(f"blacklist:{token}"):
                 return JsonResponse(error_response("Token has been blacklisted (logged out)"), status=401)
         except Exception:
