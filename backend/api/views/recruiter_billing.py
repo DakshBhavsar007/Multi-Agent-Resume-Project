@@ -13,22 +13,80 @@ from models.schemas import success_response, error_response
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 
+FALLBACK_RECRUITER_PLANS = {
+    "free": {
+        "name": "Starter Plan",
+        "price": 0.0,
+        "currency": "INR",
+        "limits": {"sessions": 1, "resumes": 100},
+        "features": [
+            "One active session",
+            "Up to 100 resumes",
+            "Basic AI screening",
+            "Standard support"
+        ]
+    },
+    "business": {
+        "name": "Business Plan",
+        "price": 1499.0,
+        "currency": "INR",
+        "limits": {"sessions": 5, "resumes": 2000},
+        "features": [
+            "Five active sessions",
+            "Up to 2,000 resumes",
+            "Advanced matching",
+            "API access"
+        ]
+    },
+    "enterprise": {
+        "name": "Enterprise Plan",
+        "price": 3999.0,
+        "currency": "INR",
+        "limits": {"sessions": -1, "resumes": -1},
+        "features": [
+            "Unlimited sessions",
+            "Priority VIP support",
+            "Custom integrations",
+            "Advanced analytics"
+        ]
+    }
+}
+
 @csrf_exempt
 def get_plans(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
     
-    db_plans = SubscriptionPlan.objects.filter(target_portal="recruiter", is_active=True)
-    formatted_plans = []
-    for plan in db_plans:
-        plan_key = plan.id.replace("recruiter_", "")
-        formatted_plans.append({
-            "id": plan_key,
-            "name": plan.name,
-            "price": int(plan.price),
-            "features": plan.features
-        })
-    return JsonResponse(success_response(formatted_plans))
+    from django.core.cache import cache
+    
+    def load_recruiter_plans():
+        try:
+            db_plans = SubscriptionPlan.objects.filter(target_portal="recruiter", is_active=True)
+            formatted = []
+            for plan in db_plans:
+                plan_key = plan.id.replace("recruiter_", "")
+                formatted.append({
+                    "id": plan_key,
+                    "name": plan.name,
+                    "price": int(plan.price),
+                    "features": plan.features
+                })
+            if formatted:
+                return formatted
+        except Exception:
+            pass
+        return [
+            {
+                "id": k,
+                "name": v["name"],
+                "price": int(v["price"]),
+                "features": v["features"]
+            }
+            for k, v in FALLBACK_RECRUITER_PLANS.items()
+        ]
+
+    plans_list = cache.get_or_set('recruiter_billing_plans', load_recruiter_plans, 300)
+    return JsonResponse(success_response(plans_list))
 
 @csrf_exempt
 @require_recruiter_jwt
@@ -42,10 +100,17 @@ def subscribe(request):
         
         plan_id = f"recruiter_{plan.replace('recruiter_', '')}"
         plan_db = SubscriptionPlan.objects.filter(id=plan_id, is_active=True).first()
-        if not plan_db or plan == "free":
+        
+        price = None
+        if plan_db:
+            price = plan_db.price
+        elif plan in FALLBACK_RECRUITER_PLANS:
+            price = FALLBACK_RECRUITER_PLANS[plan]["price"]
+            
+        if price is None or plan == "free":
             return JsonResponse(error_response("Invalid plan. Choose business or enterprise"), status=400)
 
-        amount = int(plan_db.price) * 100  # paise
+        amount = int(price) * 100  # paise
 
         # Fallback to mock order if Razorpay keys are not set
         if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
@@ -104,7 +169,7 @@ def verify_payment(request):
         # Allow bypass signature verification only for mock orders in testing if key is not configured
         if razorpay_order_id.startswith("order_mock_") or not RAZORPAY_KEY_SECRET:
             print("[Razorpay Recruiter] Skipping signature check: mock order or missing key secret", flush=True)
-            pass
+            verified = True
         else:
             verified = False
             try:
@@ -136,6 +201,29 @@ def verify_payment(request):
             if not verified:
                 return JsonResponse(error_response("Invalid payment signature"), status=400)
 
+        # Resolve plan details for historical snapshot saving
+        plan_id = f"recruiter_{plan.replace('recruiter_', '')}"
+        plan_db = SubscriptionPlan.objects.filter(id=plan_id, is_active=True).first()
+        if plan_db:
+            snapshot = {
+                "id": plan_db.id,
+                "name": plan_db.name,
+                "price": float(plan_db.price),
+                "currency": plan_db.currency,
+                "limits": plan_db.limits,
+                "features": plan_db.features
+            }
+        else:
+            fb = FALLBACK_RECRUITER_PLANS.get(plan, FALLBACK_RECRUITER_PLANS["free"])
+            snapshot = {
+                "id": f"recruiter_{plan}",
+                "name": fb["name"],
+                "price": float(fb["price"]),
+                "currency": fb["currency"],
+                "limits": fb["limits"],
+                "features": fb["features"]
+            }
+
         company.tier = plan
         company.save(update_fields=['tier'])
 
@@ -145,13 +233,15 @@ def verify_payment(request):
             sub.plan = plan
             sub.status = "active"
             sub.payment_id = razorpay_payment_id
+            sub.plan_snapshot = snapshot
             sub.save()
         else:
             CompanyBillingSubscription.objects.create(
                 company=company,
                 plan=plan,
                 status="active",
-                payment_id=razorpay_payment_id
+                payment_id=razorpay_payment_id,
+                plan_snapshot=snapshot
             )
 
         return JsonResponse(success_response({"new_tier": plan, "message": "Subscription activated"}))
@@ -171,7 +261,7 @@ def current_subscription(request):
             p = SubscriptionPlan.objects.filter(id=p_id).first()
             if p:
                 return p.limits
-            return {"sessions": 1, "resumes": 100}
+            return FALLBACK_RECRUITER_PLANS.get(plan_id, FALLBACK_RECRUITER_PLANS["free"])["limits"]
 
         sub = CompanyBillingSubscription.objects.filter(company_id=company.id).first()
         if not sub:
@@ -189,11 +279,13 @@ def current_subscription(request):
             delta = sub.current_period_end - now
             days_remaining = max(0, delta.days)
 
+        limits = sub.plan_snapshot.get("limits") if (sub.plan_snapshot and isinstance(sub.plan_snapshot, dict)) else get_plan_limits(sub.plan)
+
         return JsonResponse(success_response({
             "plan": sub.plan,
             "status": sub.status,
             "payment_id": sub.payment_id,
-            "limits": get_plan_limits(sub.plan),
+            "limits": limits,
             "days_remaining": days_remaining,
             "created_at": sub.created_at.isoformat() if sub.created_at else None
         }))

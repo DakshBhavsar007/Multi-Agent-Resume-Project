@@ -401,23 +401,40 @@ def public_market_trends(request):
             "time_to_offer": time_to_offer
         }
 
-        # 3. Market Trends Dashboard stats - Fetch dynamically from DB
+        # 3. Market Trends Dashboard stats - Fetch dynamically from DB with caching & fallbacks
+        from django.core.cache import cache
         from api.models import MarketRegionConfig, SalaryTimelineConfig, GrowthSkillFallback
 
-        region_configs = MarketRegionConfig.objects.filter(is_active=True)
+        def load_base_regions():
+            try:
+                configs = MarketRegionConfig.objects.filter(is_active=True)
+                res = [{"name": rc.name, "fallback_value": rc.fallback_value, "color_hex": rc.color_hex} for rc in configs]
+                if res:
+                    return res
+            except Exception:
+                pass
+            return [
+                {"name": "Bengaluru", "fallback_value": 450, "color_hex": "#2563EB"},
+                {"name": "San Francisco", "fallback_value": 380, "color_hex": "#0F56B3"},
+                {"name": "Zurich", "fallback_value": 180, "color_hex": "#22C55E"},
+                {"name": "London", "fallback_value": 240, "color_hex": "#8b5cf6"}
+            ]
+
+        region_configs = cache.get_or_set('market_trends_region_configs', load_base_regions, 300)
+
         region_distribution = []
         for rc in region_configs:
-            r = rc.name
+            r = rc["name"]
             count = Session.objects.filter(status="active").filter(
                 Q(criteria__preferred_locations__icontains=r) |
                 Q(job_description__icontains=r) |
                 Q(job_title__icontains=r)
             ).count()
-            val = (count if active_sessions_count > 0 else rc.fallback_value + count)
+            val = (count if active_sessions_count > 0 else rc["fallback_value"] + count)
             region_distribution.append({
                 "name": r,
                 "value": val,
-                "color": rc.color_hex
+                "color": rc["color_hex"]
             })
 
         if not region_distribution:
@@ -440,25 +457,33 @@ def public_market_trends(request):
 
         active_jds = active_sessions_count if active_sessions_count > 0 else 2450
 
-        # Salary Timeline - Fetch dynamically from DB
-        timeline_configs = SalaryTimelineConfig.objects.all().order_by('year')
+        # Salary Timeline - Fetch from DB with caching & fallbacks
+        def load_timeline_configs():
+            try:
+                configs = SalaryTimelineConfig.objects.all().order_by('year')
+                res = [{"year": tc.year, "salary_k": tc.salary_k, "is_projection": tc.is_projection} for tc in configs]
+                if res:
+                    return res
+            except Exception:
+                pass
+            return [
+                {"year": "2023", "salary_k": 112, "is_projection": False},
+                {"year": "2024", "salary_k": 124, "is_projection": False},
+                {"year": "2025", "salary_k": 138, "is_projection": False},
+                {"year": "2026 (Est)", "salary_k": 138, "is_projection": True}
+            ]
+
+        timeline_configs = cache.get_or_set('market_trends_timeline_configs', load_timeline_configs, 300)
+
         salary_timeline = []
         for tc in timeline_configs:
-            salary_val = tc.salary_k
-            if tc.is_projection:
-                salary_val = int(tc.salary_k + (base_salary / 10000))
+            salary_val = tc["salary_k"]
+            if tc["is_projection"]:
+                salary_val = int(tc["salary_k"] + (base_salary / 10000))
             salary_timeline.append({
-                "year": tc.year,
+                "year": tc["year"],
                 "salary": salary_val
             })
-
-        if not salary_timeline:
-            salary_timeline = [
-                { "year": "2023", "salary": 112 },
-                { "year": "2024", "salary": 124 },
-                { "year": "2025", "salary": 138 },
-                { "year": "2026 (Est)", "salary": int(138 + (base_salary / 10000)) }
-            ]
 
         # Dynamic high growth domains from active jobs
         from collections import Counter
@@ -470,15 +495,22 @@ def public_market_trends(request):
         
         top_skills = Counter(all_skills).most_common(3)
         
-        # High Growth Skills Fallback - Fetch dynamically from DB
-        growth_skills = GrowthSkillFallback.objects.filter(is_active=True)
-        default_skills = [(gs.name, gs.growth_percentage, gs.median_salary, gs.description) for gs in growth_skills]
-        if not default_skills:
-            default_skills = [
+        # High Growth Skills Fallback - Fetch from DB with caching & fallbacks
+        def load_growth_skills():
+            try:
+                configs = GrowthSkillFallback.objects.filter(is_active=True)
+                res = [(gs.name, gs.growth_percentage, gs.median_salary, gs.description) for gs in configs]
+                if res:
+                    return res
+            except Exception:
+                pass
+            return [
                 ("Prompt Engineering", 48, 185000, "Highest request growth this quarter"),
                 ("Design Systems", 14, 140000, "Steady enterprise adoption indices"),
                 ("Rust / Go Backend", 22, 165000, "High throughput performance demand")
             ]
+
+        default_skills = cache.get_or_set('market_trends_growth_skills', load_growth_skills, 300)
         
         high_growth_domains = []
         for i, (name, pct, pay, desc) in enumerate(default_skills):

@@ -217,6 +217,7 @@ class BillingSubscription(models.Model):
     status = models.CharField(max_length=50, default="active")
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
+    plan_snapshot = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -396,6 +397,7 @@ class CompanyBillingSubscription(models.Model):
     status = models.CharField(max_length=50, default="active")
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
+    plan_snapshot = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -413,6 +415,7 @@ class SeekerBillingSubscription(models.Model):
     status = models.CharField(max_length=50, default="active")
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
+    plan_snapshot = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -596,6 +599,25 @@ class LocationLookup(models.Model):
 
     class Meta:
         db_table = "location_lookups"
+
+
+from django.db.models.signals import post_save, post_delete
+
+def clear_config_cache(sender, **kwargs):
+    from django.core.cache import cache
+    cache.delete_many([
+        'dynamic_data_locations',
+        'dynamic_data_seeker_plans',
+        'dynamic_data_developer_plans',
+        'recruiter_billing_plans',
+        'seeker_billing_plans',
+        'public_market_trends_data'
+    ])
+
+for model_cls in [SubscriptionPlan, MarketRegionConfig, SalaryTimelineConfig, GrowthSkillFallback, LocationLookup]:
+    post_save.connect(clear_config_cache, sender=model_cls)
+    post_delete.connect(clear_config_cache, sender=model_cls)
+
 
 
 

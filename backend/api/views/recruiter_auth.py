@@ -724,40 +724,189 @@ def dynamic_data(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
         
+    from django.core.cache import cache
     from api.models import LocationLookup, SubscriptionPlan
 
-    # 1. Fetch Location hierarchy dynamically from DB
-    locations = {}
-    lookups = LocationLookup.objects.all()
-    for item in lookups:
-        if item.country not in locations:
-            locations[item.country] = {}
-        locations[item.country][item.state] = item.cities
-
-    # 2. Fetch Seeker Plans dynamically from DB
-    seeker_db_plans = SubscriptionPlan.objects.filter(target_portal="seeker", is_active=True)
-    seeker_plans = {}
-    for plan in seeker_db_plans:
-        plan_key = plan.id.replace("seeker_", "")
-        seeker_plans[plan_key] = {
-            "name": plan.name,
-            "price": str(int(plan.price)) if plan.price == plan.price.to_integral_value() else str(plan.price),
-            "period": plan.period,
-            "features": plan.features,
-            "quota_description": plan.quota_description
+    # Robust Fallbacks for Locations
+    FALLBACK_LOCATIONS = {
+        "India": {
+            "Gujarat": ["Ahmedabad", "Gandhinagar", "Surat", "Vadodara", "Rajkot"],
+            "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik"],
+            "Karnataka": ["Bengaluru", "Mysore", "Hubli", "Mangalore"],
+            "Delhi": ["New Delhi", "Delhi Cantt"],
+            "Telangana": ["Hyderabad", "Warangal"],
+            "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"],
+            "Uttar Pradesh": ["Noida", "Lucknow", "Kanpur", "Agra"],
+            "Haryana": ["Gurugram", "Faridabad", "Panipat"]
+        },
+        "United States": {
+            "California": ["San Francisco", "Los Angeles", "San Diego", "San Jose"],
+            "New York": ["New York City", "Buffalo", "Rochester"],
+            "Texas": ["Austin", "Houston", "Dallas", "San Antonio"],
+            "Washington": ["Seattle", "Bellevue", "Redmond"],
+            "Massachusetts": ["Boston", "Cambridge", "Worcester"]
         }
+    }
 
-    # 3. Fetch Developer Plans dynamically from DB
-    dev_db_plans = SubscriptionPlan.objects.filter(target_portal="developer", is_active=True)
-    developer_plans = {}
-    for plan in dev_db_plans:
-        plan_key = plan.id.replace("developer_", "")
-        developer_plans[plan_key] = {
-            "name": plan.name,
-            "price": str(int(plan.price)) if plan.price == plan.price.to_integral_value() else str(plan.price),
-            "features": plan.features,
-            "limits": plan.limits
+    # Robust Fallbacks for Seeker Plans
+    FALLBACK_SEEKER_PLANS = {
+        "free": {
+            "name": "Free Forever",
+            "price": "0",
+            "period": "forever",
+            "features": [
+                "1 dynamic AI resume builder resume",
+                "Basic resume safety analysis",
+                "Up to 5 job applications per month",
+                "Keystroke telemetry protection (1 profile)"
+            ],
+            "quota_description": "Perfect for casual seekers looking to secure their identity."
+        },
+        "pro_monthly": {
+            "name": "Pro Monthly",
+            "price": "49",
+            "period": "month",
+            "features": [
+                "Unlimited dynamic AI resumes",
+                "Deep safety analysis & fraud alerts",
+                "Unlimited job applications",
+                "Priority matching bypass queue",
+                "Comprehensive keystroke telemetry profiling (unlimited)"
+            ],
+            "quota_description": "For serious candidates searching actively."
+        },
+        "pro_yearly": {
+            "name": "Pro Yearly",
+            "price": "399",
+            "period": "year",
+            "features": [
+                "Everything in Pro Monthly",
+                "Save 32% compared to monthly plan",
+                "Direct API access to portfolio protection scanner",
+                "VIP email support & resume audit checks"
+            ],
+            "quota_description": "Best value for long-term career safety."
+        },
+        "premium": {
+            "name": "Premium Plan",
+            "price": "199",
+            "period": "month",
+            "features": [
+                "Unlimited applications",
+                "Unlimited resume drafts",
+                "Premium templates",
+                "AI resume enhancer",
+                "Priority visibility"
+            ],
+            "quota_description": "Premium access for job seekers."
         }
+    }
+
+    # Robust Fallbacks for Developer Plans
+    FALLBACK_DEVELOPER_PLANS = {
+        "free": {
+            "name": "Free",
+            "price": "0",
+            "features": [
+                "100 resume parses/mo",
+                "500 candidate matching operations/mo",
+                "100 AI chatbot queries/mo",
+                "0 safety scans/mo (upgrade required)"
+            ],
+            "limits": {
+                "parses": 100,
+                "matches": 500,
+                "chat": 100,
+                "safety": 0
+            }
+        },
+        "starter": {
+            "name": "Starter",
+            "price": "79",
+            "features": [
+                "1,000 resume parses/mo",
+                "10,000 candidate matching operations/mo",
+                "2,000 AI chatbot queries/mo",
+                "100 safety scans/mo included"
+            ],
+            "limits": {
+                "parses": 1000,
+                "matches": 10000,
+                "chat": 2000,
+                "safety": 100
+            }
+        },
+        "business": {
+            "name": "Business",
+            "price": "299",
+            "features": [
+                "10,000 resume parses/mo",
+                "Unlimited candidate matching operations/mo",
+                "Unlimited AI chatbot queries/mo",
+                "1,000 safety scans/mo included"
+            ],
+            "limits": {
+                "parses": 10000,
+                "matches": -1,
+                "chat": -1,
+                "safety": 1000
+            }
+        }
+    }
+
+    # 1. Fetch Locations
+    def load_locations():
+        locs = {}
+        try:
+            lookups = LocationLookup.objects.all()
+            for item in lookups:
+                if item.country not in locs:
+                    locs[item.country] = {}
+                locs[item.country][item.state] = item.cities
+        except Exception:
+            pass
+        return locs if locs else FALLBACK_LOCATIONS
+
+    locations = cache.get_or_set('dynamic_data_locations', load_locations, 300)
+
+    # 2. Fetch Seeker Plans
+    def load_seeker_plans():
+        res = {}
+        try:
+            plans_qs = SubscriptionPlan.objects.filter(target_portal="seeker", is_active=True)
+            for plan in plans_qs:
+                plan_key = plan.id.replace("seeker_", "")
+                res[plan_key] = {
+                    "name": plan.name,
+                    "price": str(int(plan.price)) if plan.price == plan.price.to_integral_value() else str(plan.price),
+                    "period": plan.period,
+                    "features": plan.features,
+                    "quota_description": plan.quota_description
+                }
+        except Exception:
+            pass
+        return res if res else FALLBACK_SEEKER_PLANS
+
+    seeker_plans = cache.get_or_set('dynamic_data_seeker_plans', load_seeker_plans, 300)
+
+    # 3. Fetch Developer Plans
+    def load_developer_plans():
+        res = {}
+        try:
+            plans_qs = SubscriptionPlan.objects.filter(target_portal="developer", is_active=True)
+            for plan in plans_qs:
+                plan_key = plan.id.replace("developer_", "")
+                res[plan_key] = {
+                    "name": plan.name,
+                    "price": str(int(plan.price)) if plan.price == plan.price.to_integral_value() else str(plan.price),
+                    "features": plan.features,
+                    "limits": plan.limits
+                }
+        except Exception:
+            pass
+        return res if res else FALLBACK_DEVELOPER_PLANS
+
+    developer_plans = cache.get_or_set('dynamic_data_developer_plans', load_developer_plans, 300)
     
     docs_structure = {
         "sections": [
