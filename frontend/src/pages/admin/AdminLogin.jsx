@@ -14,11 +14,16 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Background particle animation effect
+  // Background particle animation effect and auth check
   useEffect(() => {
     // Force dark mode for admin pages
     document.documentElement.classList.add('dark');
-  }, []);
+
+    // Auto-redirect if already logged in as admin
+    if (recruiterAuth.jwt && recruiterAuth.company?.is_admin) {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [recruiterAuth.jwt, recruiterAuth.company, navigate]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();

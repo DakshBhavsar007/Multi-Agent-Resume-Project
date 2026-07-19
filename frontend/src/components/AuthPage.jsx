@@ -220,8 +220,14 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   const [showLiveSecret, setShowLiveSecret] = useState(false);
 
   // Ban & Support Modal State
-  const [banned, setBanned] = useState(false);
-  const [bannedEmail, setBannedEmail] = useState('');
+  const [banned, setBanned] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('banned') === 'true';
+  });
+  const [bannedEmail, setBannedEmail] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('email') || '';
+  });
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [supportName, setSupportName] = useState('');
   const [supportEmail, setSupportEmail] = useState('');
@@ -448,14 +454,18 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   useEffect(() => {
     if (isLogin) {
       if (role === 'recruiter' && recruiterAuth.jwt) {
-        navigate('/dashboard', { replace: true });
+        if (recruiterAuth.company?.is_admin) {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       } else if (role === 'developer' && developerAuth.jwt) {
         navigate('/developer/portal/dashboard', { replace: true });
       } else if (role === 'seeker' && seekerAuth.seekerToken) {
         navigate('/jobs/dashboard', { replace: true });
       }
     }
-  }, [role, isLogin, recruiterAuth.jwt, developerAuth.jwt, seekerAuth.seekerToken, navigate]);
+  }, [role, isLogin, recruiterAuth.jwt, recruiterAuth.company, developerAuth.jwt, seekerAuth.seekerToken, navigate]);
 
   const handleGoogleLogin = () => {
     if (googleClientRef.current) {

@@ -47,6 +47,21 @@ async function req(method, path, body=null, isFile=false) {
     window.location.href = "/login"
     throw new Error("Session expired")
   }
+  if (res.status === 403 && data.error && (data.error.toLowerCase().includes("banned") || data.error.toLowerCase().includes("deactivated"))) {
+    let email = "";
+    try {
+      const u = localStorage.getItem("between_user");
+      if (u) email = JSON.parse(u).email || "";
+    } catch(e) {}
+    
+    localStorage.clear();
+    const isSeeker = typeof window !== "undefined" && (window.location.pathname.startsWith('/jobs') || window.location.pathname.startsWith('/seeker'));
+    const targetUrl = isSeeker 
+      ? `/jobs/login?banned=true&email=${encodeURIComponent(email)}`
+      : `/login?banned=true&email=${encodeURIComponent(email)}`;
+    window.location.href = targetUrl;
+    throw new Error(data.error);
+  }
   if (res.status === 429) {
     const e = new Error("Rate limit exceeded")
     e.isRateLimit = true

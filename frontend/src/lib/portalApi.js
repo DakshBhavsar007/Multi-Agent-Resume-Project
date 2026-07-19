@@ -30,6 +30,18 @@ async function req(method, path, body=null, auth=true) {
     }
     throw new Error("Session expired")
   }
+  if (res.status === 403 && data.error && (data.error.toLowerCase().includes("banned") || data.error.toLowerCase().includes("deactivated"))) {
+    if (typeof window !== "undefined") {
+      let email = "";
+      try {
+        const d = localStorage.getItem("portal_dev");
+        if (d) email = JSON.parse(d).email || "";
+      } catch(e) {}
+      localStorage.clear();
+      window.location.href = `/developer/login?banned=true&email=${encodeURIComponent(email)}`;
+    }
+    throw new Error(data.error);
+  }
   if (!data.success) {
     throw new Error(data.error || "Request failed")
   }
