@@ -32,7 +32,7 @@ const PLANS = [
     id: 'premium',
     name: 'Premium',
     label: 'Most popular',
-    price: 199,
+    price: 299,
     period: 'per month',
     description: 'Everything you need to land your dream job, faster.',
     features: [
@@ -125,7 +125,7 @@ function PlanCard({ plan, isActive, onUpgrade, onCancelSubscription, loading }) 
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 8 }}>
           <span style={{ fontSize: 15, fontWeight: 600, color: plan.featured ? 'rgba(255,255,255,0.6)' : 'var(--text-secondary)', paddingBottom: 8 }}>
-            Rs
+            ₹
           </span>
           <AnimatePresence mode="wait">
             <motion.span
@@ -476,7 +476,7 @@ export default function SeekerBillingPage() {
           transition={{ delay: 0.14 }}
           style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.65 }}
         >
-          Unlock AI-powered resume tools, unlimited applications, and priority visibility — all for just Rs 199/month.
+          Unlock AI-powered resume tools, unlimited applications, and priority visibility — all for just ₹299/month.
         </motion.p>
       </section>
 

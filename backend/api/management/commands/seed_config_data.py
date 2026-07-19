@@ -61,7 +61,7 @@ class Command(BaseCommand):
             {
                 "id": "seeker_premium",
                 "name": "Premium Plan",
-                "price": 199.0,
+                "price": 299.0,
                 "period": "month",
                 "currency": "INR",
                 "limits": {"applications": -1, "drafts": -1},

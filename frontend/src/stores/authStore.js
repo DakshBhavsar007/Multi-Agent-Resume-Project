@@ -12,7 +12,9 @@ export const useAuthStore = create((set) => ({
         user_id: data.id || data.company_id,
         email: data.email,
         name: data.name || data.email?.split("@")[0] || "User",
-        tier: data.tier || "free"
+        tier: data.tier || "free",
+        role: data.role || (data.is_admin ? "admin" : "recruiter"),
+        is_admin: data.is_admin || false
       }));
     }
     set({
@@ -44,7 +46,9 @@ export const useAuthStore = create((set) => ({
           user_id: company.id || company.company_id,
           email: company.email,
           name: company.name || company.email?.split("@")[0] || "User",
-          tier: company.tier || "free"
+          tier: company.tier || "free",
+          role: company.role || (company.is_admin ? "admin" : "recruiter"),
+          is_admin: company.is_admin || false
         }));
       }
     }

@@ -29,7 +29,7 @@ FALLBACK_SEEKER_PLANS = {
     },
     "premium": {
         "name": "Premium Plan",
-        "price": 199.0,
+        "price": 299.0,
         "currency": "INR",
         "limits": {"applications": -1, "drafts": -1},
         "features": [

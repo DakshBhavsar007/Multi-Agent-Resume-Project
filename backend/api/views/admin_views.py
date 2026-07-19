@@ -69,6 +69,7 @@ def admin_login(request):
                 "jwt_token": token,
                 "company_id": "admin",
                 "is_admin": True,
+                "role": "admin",
                 "name": "Between Admin",
                 "email": admin_email,
                 "tier": "enterprise"
