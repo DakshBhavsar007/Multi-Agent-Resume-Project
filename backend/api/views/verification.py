@@ -147,7 +147,7 @@ def verify_email_otp(request):
 def send_phone_otp(request):
     """
     Send phone verification OTP.
-    Attempts to send via 2Factor SMS if configured. Falls back to simulated OTP on screen for free tier.
+    Attempts to send via 2Factor SMS/Voice if configured. Falls back to simulated OTP on screen for free tier.
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
@@ -157,6 +157,9 @@ def send_phone_otp(request):
         phone = body.get('phone')
         role = body.get('role')
         email = body.get('email')  # Used to locate the user account if they exist
+        method = body.get('method', 'sms')  # 'sms' or 'voice'
+        if method not in ('sms', 'voice'):
+            method = 'sms'
         
         if not role:
             return JsonResponse({'success': False, 'error': 'Role is required'}, status=400)
@@ -204,18 +207,18 @@ def send_phone_otp(request):
             if user:
                 user_email = user.email
 
-        # Attempt to send via real 2Factor SMS
+        # Attempt to send via real 2Factor SMS/Voice
         sms_sent = False
         session_id = ""
         try:
-            res = send_otp(phone_number=normalized_phone)
+            res = send_otp(phone_number=normalized_phone, method=method)
             if res.get("success"):
                 sms_sent = True
                 session_id = res.get("session_id")
             else:
-                logger.warning("2Factor API failed to send OTP to %s: %s", masked, res.get("error"))
+                logger.warning("2Factor API failed to send OTP (%s) to %s: %s", method, masked, res.get("error"))
         except Exception as e:
-            logger.warning("2Factor SMS send exception, falling back to simulated screen code: %s", e)
+            logger.warning("2Factor send exception (%s), falling back to simulated screen code: %s", method, e)
 
         if sms_sent:
             # Store session_id in cache against phone number (with a 5 minute timeout)
@@ -226,11 +229,12 @@ def send_phone_otp(request):
             cache.set(cache_key_60s, True, timeout=60)
             cache.set(cache_key_daily, daily_count + 1, timeout=86400)
 
-            logger.info("2Factor OTP verification code dispatched to %s. Session ID: %s", masked, session_id)
+            logger.info("2Factor OTP verification code dispatched to %s via %s. Session ID: %s", masked, method.upper(), session_id)
+            channel_name = "SMS" if method == "sms" else "Voice Call"
             return JsonResponse({
                 'success': True,
                 'data': {
-                    'message': f'Verification code sent successfully to {normalized_phone} via SMS.',
+                    'message': f'Verification code sent successfully to {normalized_phone} via {channel_name}.',
                 }
             })
         

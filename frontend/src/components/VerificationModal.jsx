@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, X, ShieldCheck, Loader2 } from 'lucide-react';
+import { Mail, Phone, X, ShieldCheck, Loader2, MessageSquare, PhoneCall } from 'lucide-react';
 import axios from 'axios';
 
 const getApiBase = () => {
@@ -45,7 +45,7 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
 
   if (!isOpen) return null;
 
-  const sendOtp = async () => {
+  const sendOtp = async (method = 'sms') => {
     setIsSending(true);
     setError('');
     setSuccess('');
@@ -61,6 +61,7 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
         endpoint = `${API_BASE_URL}/api/v1/auth/verification/send-phone-otp`;
         payload.phone = value;
         payload.email = userEmail || '';
+        payload.method = method;
       }
 
       const res = await axios.post(endpoint, payload);
@@ -196,19 +197,56 @@ export default function VerificationModal({ isOpen, onClose, type, value, role, 
 
         {/* Resend Logic */}
         <div className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
-          Didn't receive the code?{' '}
-          {countdown > 0 ? (
-            <span className="font-semibold text-blue-600 dark:text-blue-400">
-              Resend in {countdown}s
-            </span>
+          {type === 'phone' ? (
+            <div className="space-y-3">
+              <p className="text-xs text-gray-400 dark:text-zinc-500">Didn't receive the code?</p>
+              <div className="flex items-center justify-center gap-4">
+                {countdown > 0 ? (
+                  <span className="text-xs font-medium text-gray-400 dark:text-zinc-500 bg-gray-50 dark:bg-zinc-900/50 px-3 py-1.5 rounded-full border border-gray-100 dark:border-zinc-800/40">
+                    Resend in {countdown}s
+                  </span>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => sendOtp('sms')}
+                      disabled={isSending || isLoading}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors focus:outline-none bg-blue-50/50 dark:bg-blue-950/20 px-3 py-1.5 rounded-lg border border-blue-100/30 dark:border-blue-900/30"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Resend SMS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => sendOtp('voice')}
+                      disabled={isSending || isLoading}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors focus:outline-none bg-emerald-50/50 dark:bg-emerald-950/20 px-3 py-1.5 rounded-lg border border-emerald-100/30 dark:border-emerald-900/30"
+                    >
+                      <PhoneCall className="w-3.5 h-3.5" />
+                      Get via Call
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
           ) : (
-            <button
-              onClick={sendOtp}
-              disabled={isSending || isLoading}
-              className="font-semibold text-blue-600 dark:text-blue-400 hover:underline focus:outline-none"
-            >
-              Resend Code
-            </button>
+            <div>
+              Didn't receive the code?{' '}
+              {countdown > 0 ? (
+                <span className="font-semibold text-blue-600 dark:text-blue-400">
+                  Resend in {countdown}s
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => sendOtp('sms')}
+                  disabled={isSending || isLoading}
+                  className="font-semibold text-blue-600 dark:text-blue-400 hover:underline focus:outline-none"
+                >
+                  Resend Code
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

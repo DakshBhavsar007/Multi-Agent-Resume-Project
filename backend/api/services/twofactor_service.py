@@ -31,14 +31,16 @@ def clean_phone_for_2factor(phone: str) -> str:
         cleaned = "91" + cleaned
     return cleaned
 
-def send_otp(phone_number: str) -> dict:
+def send_otp(phone_number: str, method: str = "sms") -> dict:
     """
-    Send OTP via 2Factor.in SMS Gateway using AUTOGEN3 route and Between_OTP_Verification template.
+    Send OTP via 2Factor.in SMS Gateway using AUTOGEN3 (SMS) or VOICE (Call) route.
     
     Parameters
     ----------
     phone_number : str
         Recipient phone number
+    method : str, optional
+        The transmission method, either 'sms' or 'voice'. Defaults to 'sms'.
         
     Returns
     -------
@@ -55,17 +57,21 @@ def send_otp(phone_number: str) -> dict:
         }
 
     phone = clean_phone_for_2factor(phone_number)
-    template_name = "Between_OTP_Verification"
-    url = f"https://2factor.in/API/V1/{TWOFACTOR_API_KEY}/SMS/{phone}/AUTOGEN3/{template_name}"
     
-    logger.info("Attempting to send 2Factor OTP to %s...", masked)
+    if method == "voice":
+        url = f"https://2factor.in/API/V1/{TWOFACTOR_API_KEY}/VOICE/{phone}/AUTOGEN"
+    else:
+        template_name = "Between_OTP_Verification"
+        url = f"https://2factor.in/API/V1/{TWOFACTOR_API_KEY}/SMS/{phone}/AUTOGEN3/{template_name}"
+    
+    logger.info("Attempting to send 2Factor OTP via %s to %s...", method.upper(), masked)
     try:
         response = httpx.get(url, timeout=10.0)
         if response.status_code == 200:
             res_data = response.json()
             if res_data.get("Status") == "Success":
                 session_id = res_data.get("Details")
-                logger.info("2Factor OTP sent successfully to %s. Session ID: %s", masked, session_id)
+                logger.info("2Factor OTP sent successfully via %s to %s. Session ID: %s", method.upper(), masked, session_id)
                 return {
                     "success": True,
                     "session_id": session_id,

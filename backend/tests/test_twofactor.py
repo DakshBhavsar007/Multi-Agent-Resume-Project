@@ -36,6 +36,25 @@ class TwoFactorTest(TestCase):
         self.assertIsNone(res["error"])
 
     @patch("httpx.get")
+    def test_send_voice_otp_success(self, mock_get):
+        # Successful API response for voice call
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "Status": "Success",
+            "Details": "voice-session-abc"
+        }
+        mock_get.return_value = mock_response
+
+        res = twofactor_service.send_otp("+918849538117", method="voice")
+        self.assertTrue(res["success"])
+        self.assertEqual(res["session_id"], "voice-session-abc")
+        self.assertIsNone(res["error"])
+        # Ensure it called the voice URL structure
+        args, kwargs = mock_get.call_args
+        self.assertIn("/VOICE/", args[0])
+
+    @patch("httpx.get")
     def test_verify_otp_success(self, mock_get):
         # Successful Verification response
         mock_response = MagicMock()
