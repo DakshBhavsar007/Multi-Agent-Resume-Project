@@ -92,6 +92,7 @@ async function req(method, path, body=null, isFile=false) {
 // AUTH
 export const authAPI = {
   register: (b) => req("POST","/auth/register",b),
+  createSupportTicket: (ticketData) => req("POST", "/support/ticket", ticketData),
   login: async (email,password) => {
     const d = await req("POST","/auth/login",
                          {email,password})

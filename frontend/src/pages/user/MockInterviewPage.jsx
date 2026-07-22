@@ -749,10 +749,8 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => {
-                    if (window.confirm("Are you sure you want to exit? Your progress won't be saved.")) {
-                      setViewMode("dashboard");
-                      fetchDashboardData();
-                    }
+                    setViewMode("dashboard");
+                    fetchDashboardData();
                   }}
                   className="p-1.5 hover:bg-muted rounded-lg transition"
                 >
@@ -882,13 +880,22 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
                         >
                           Previous
                         </button>
-                        <button
-                          disabled={currentQIndex === activeAttempt.questions.length - 1}
-                          onClick={() => setCurrentQIndex(prev => prev + 1)}
-                          className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border rounded-lg text-xs font-semibold disabled:opacity-40 transition"
-                        >
-                          Next Question
-                        </button>
+                        {currentQIndex === activeAttempt.questions.length - 1 ? (
+                          <button
+                            onClick={() => handleSubmitMock()}
+                            disabled={submitting}
+                            className="py-2.5 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5"
+                          >
+                            {submitting ? "Evaluating test..." : "Submit & Finalize Test ➔"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setCurrentQIndex(prev => prev + 1)}
+                            className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border rounded-lg text-xs font-semibold transition"
+                          >
+                            Next Question ➔
+                          </button>
+                        )}
                       </div>
                     </div>
 
