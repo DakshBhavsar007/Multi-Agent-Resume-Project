@@ -541,7 +541,7 @@ def admin_unban_from_ticket(request):
         system_msg = {
             "sender": "system",
             "sender_name": "System",
-            "text": "✅ User account has been successfully UNBANNED by Admin.",
+            "text": "User account has been successfully UNBANNED by Admin.",
             "timestamp": timezone.now().isoformat()
         }
         current_msgs.append(system_msg)

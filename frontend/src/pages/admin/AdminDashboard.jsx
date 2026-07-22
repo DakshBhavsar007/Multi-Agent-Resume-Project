@@ -576,8 +576,14 @@ export default function AdminDashboard() {
                       className={`flex flex-col ${isAdmin ? "items-end" : "items-start"}`}
                     >
                       <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-400">
-                        <span className="font-bold text-slate-300">
-                          {isAdmin ? "🛡️ Admin Support" : m.sender_name || "User"}
+                        <span className="font-bold text-slate-300 flex items-center gap-1">
+                          {isAdmin ? (
+                            <>
+                              <ShieldCheck size={12} className="text-blue-400" /> Admin Support
+                            </>
+                          ) : (
+                            m.sender_name || "User"
+                          )}
                         </span>
                         <span>·</span>
                         <span>{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

@@ -310,10 +310,10 @@ export default function SupportPortalPage() {
                   onChange={(e) => setSubject(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
                 >
-                  <option value="Banned Account Appeal">⚠️ Banned Account Appeal</option>
-                  <option value="Technical Support">🛠️ Technical Support & Bug Report</option>
-                  <option value="Billing & Refund Request">💳 Billing & Refund Request</option>
-                  <option value="General Inquiry">💬 General Inquiry</option>
+                  <option value="Banned Account Appeal">Banned Account Appeal</option>
+                  <option value="Technical Support">Technical Support & Bug Report</option>
+                  <option value="Billing & Refund Request">Billing & Refund Request</option>
+                  <option value="General Inquiry">General Inquiry</option>
                 </select>
               </div>
 
@@ -477,8 +477,14 @@ export default function SupportPortalPage() {
                             className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
                           >
                             <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-400">
-                              <span className="font-bold text-slate-300">
-                                {isUser ? m.sender_name || "You" : "🛡️ Admin Support"}
+                              <span className="font-bold text-slate-300 flex items-center gap-1">
+                                {isUser ? (
+                                  m.sender_name || "You"
+                                ) : (
+                                  <>
+                                    <ShieldCheck size={12} className="text-blue-400" /> Admin Support
+                                  </>
+                                )}
                               </span>
                               <span>·</span>
                               <span>{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
