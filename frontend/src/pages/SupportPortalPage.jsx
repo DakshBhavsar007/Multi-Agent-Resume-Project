@@ -28,6 +28,9 @@ export default function SupportPortalPage() {
   const initialBanned = searchParams.get("banned") === "true";
   const initialTicketId = searchParams.get("ticket_id") || "";
 
+  const storedEmail = typeof window !== "undefined" ? localStorage.getItem("between_support_email") || "" : "";
+  const storedTicketId = typeof window !== "undefined" ? localStorage.getItem("between_support_ticket_id") || "" : "";
+
   const recruiterAuth = useAuthStore();
   const seekerAuth = useSeekerAuthStore();
   const developerAuth = usePortalAuthStore();
@@ -36,9 +39,10 @@ export default function SupportPortalPage() {
     seekerAuth.seeker?.email ||
     recruiterAuth.user?.email ||
     developerAuth.developer?.email ||
-    initialEmail;
+    initialEmail ||
+    storedEmail;
 
-  const [activeTab, setActiveTab] = useState(initialTicketId ? "chat" : "submit");
+  const [activeTab, setActiveTab] = useState(initialTicketId || storedTicketId ? "chat" : "submit");
 
   // Form State
   const [name, setName] = useState(
@@ -53,7 +57,7 @@ export default function SupportPortalPage() {
 
   // Chat / Tracking State
   const [searchEmail, setSearchEmail] = useState(loggedInEmail);
-  const [searchTicketId, setSearchTicketId] = useState(initialTicketId);
+  const [searchTicketId, setSearchTicketId] = useState(initialTicketId || storedTicketId);
   const [tickets, setTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [isUserBanned, setIsUserBanned] = useState(false);
@@ -73,10 +77,12 @@ export default function SupportPortalPage() {
     }
   }, [selectedTicket?.messages]);
 
-  // Initial lookup if ticket_id or email provided
+  // Initial lookup if ticket_id or email provided or saved in localStorage
   useEffect(() => {
-    if (initialEmail || initialTicketId || loggedInEmail) {
-      handleLookup(loggedInEmail || initialEmail, initialTicketId);
+    const targetEmail = loggedInEmail || initialEmail || storedEmail;
+    const targetTicketId = initialTicketId || storedTicketId;
+    if (targetEmail || targetTicketId) {
+      handleLookup(targetEmail, targetTicketId);
     }
   }, []);
 
@@ -109,6 +115,12 @@ export default function SupportPortalPage() {
         message: message.trim()
       });
 
+      // Save email and ticket ID to localStorage so ticket persists across navigation
+      localStorage.setItem("between_support_email", email.trim());
+      if (res?.id) {
+        localStorage.setItem("between_support_ticket_id", res.id);
+      }
+
       toast.success("Support ticket submitted! Connecting to live chat...");
       setMessage("");
       
@@ -129,23 +141,37 @@ export default function SupportPortalPage() {
   };
 
   const handleLookup = async (targetEmail = searchEmail, targetTicketId = searchTicketId, silent = false) => {
+    const emailToSearch = (targetEmail || searchEmail || localStorage.getItem("between_support_email") || "").trim();
+    const ticketIdToSearch = (targetTicketId || searchTicketId || localStorage.getItem("between_support_ticket_id") || "").trim();
+
+    if (!emailToSearch && !ticketIdToSearch) {
+      if (!silent) setLoadingTickets(false);
+      return;
+    }
+
     if (!silent) setLoadingTickets(true);
     try {
       const res = await authAPI.lookupSupportTickets({
-        email: targetEmail.trim(),
-        ticket_id: targetTicketId.trim()
+        email: emailToSearch,
+        ticket_id: ticketIdToSearch
       });
 
       const ticketList = res?.tickets || [];
       setTickets(ticketList);
       setIsUserBanned(res?.is_user_banned || false);
 
-      if (targetTicketId && ticketList.length > 0) {
-        const found = ticketList.find(t => t.id === targetTicketId) || ticketList[0];
+      if (emailToSearch) {
+        localStorage.setItem("between_support_email", emailToSearch);
+      }
+
+      if (ticketIdToSearch && ticketList.length > 0) {
+        const found = ticketList.find(t => t.id === ticketIdToSearch) || ticketList[0];
         setSelectedTicket(found);
+        if (found?.id) localStorage.setItem("between_support_ticket_id", found.id);
       } else if (ticketList.length > 0) {
         if (!selectedTicket || !ticketList.find(t => t.id === selectedTicket.id)) {
           setSelectedTicket(ticketList[0]);
+          if (ticketList[0]?.id) localStorage.setItem("between_support_ticket_id", ticketList[0].id);
         } else {
           // Update existing selected ticket with fresh messages
           const updated = ticketList.find(t => t.id === selectedTicket.id);
