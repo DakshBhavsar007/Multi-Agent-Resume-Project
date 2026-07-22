@@ -25,6 +25,7 @@ const Footer = () => {
     "Sign In": "/login",
     "Careers": "/jobs",
     "About": "/about",
+    "Support & Appeals": "/support",
     "Documentation": "/developer",
     "API Reference": "/developer",
     "Terms of Service": "/terms",
@@ -80,7 +81,7 @@ const Footer = () => {
         {[
           { title: "Product", links: ["For Developers", "Board", "Pricing", "Sign In"] },
           { title: "Company", links: ["About", "Careers"] },
-          { title: "Resources", links: ["Documentation", "API Reference"] },
+          { title: "Resources & Support", links: ["Support & Appeals", "Documentation", "API Reference"] },
           { title: "Legal", links: ["Terms of Service", "Privacy Policy", "Refund Policy"] }
         ].map((column, i) => (
           <motion.div key={i} className="footer-column" variants={itemVariants}>

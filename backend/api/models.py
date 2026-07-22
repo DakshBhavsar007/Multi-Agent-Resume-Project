@@ -611,6 +611,7 @@ class SupportTicket(models.Model):
     subject = models.CharField(max_length=255)
     message = models.TextField()
     status = models.CharField(max_length=50, default="open")  # "open", "resolved"
+    messages = models.JSONField(default=list)
     resolved_at = models.DateTimeField(null=True, blank=True)
     resolved_by = models.CharField(max_length=255, null=True, blank=True)
     user_email = models.CharField(max_length=255, null=True, blank=True)

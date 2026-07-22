@@ -118,6 +118,11 @@ def admin_dashboard(request):
         tickets_qs = SupportTicket.objects.all().order_by('-created_at')
         tickets_list = []
         for t in tickets_qs:
+            seeker_banned = JobSeekerAccount.objects.filter(email=t.email, is_banned=True).exists()
+            company_banned = Company.objects.filter(email=t.email, is_banned=True).exists()
+            dev_banned = DeveloperAccount.objects.filter(email=t.email, is_banned=True).exists()
+            is_banned = seeker_banned or company_banned or dev_banned
+
             tickets_list.append({
                 "id": str(t.id),
                 "name": t.name,
@@ -125,6 +130,8 @@ def admin_dashboard(request):
                 "subject": t.subject,
                 "message": t.message,
                 "status": t.status,
+                "messages": t.messages or [],
+                "is_user_banned": is_banned,
                 "created_at": t.created_at.isoformat() if t.created_at else None
             })
 
@@ -302,12 +309,20 @@ def create_support_ticket(request):
         except Exception as rl_err:
             logger.warning("Redis rate limit error: %s", rl_err)
 
+        initial_msg = {
+            "sender": "user",
+            "sender_name": name,
+            "text": message,
+            "timestamp": timezone.now().isoformat()
+        }
+
         ticket = SupportTicket.objects.create(
             name=name,
             email=email,
             subject=subject,
             message=message,
             status="open",
+            messages=[initial_msg],
             user_email=email
         )
 
@@ -325,8 +340,223 @@ def create_support_ticket(request):
 
         return JsonResponse(success_response({
             "id": str(ticket.id),
+            "ticket": {
+                "id": str(ticket.id),
+                "name": ticket.name,
+                "email": ticket.email,
+                "subject": ticket.subject,
+                "status": ticket.status,
+                "messages": ticket.messages or [],
+                "created_at": ticket.created_at.isoformat()
+            },
             "message": "Support ticket created successfully"
         }))
     except Exception as e:
         logger.error("Support ticket creation error: %s", e)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+def public_ticket_lookup(request):
+    """
+    GET /api/v1/support/lookup?email=...&ticket_id=...
+    Public endpoint: Anyone (guest, user, banned account) can look up ticket thread.
+    """
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        email = (request.GET.get("email") or "").strip().lower()
+        ticket_id = (request.GET.get("ticket_id") or "").strip()
+
+        if not email and not ticket_id:
+            return JsonResponse(error_response("Email or Ticket ID is required"), status=400)
+
+        query = SupportTicket.objects.all()
+        if ticket_id:
+            query = query.filter(id=ticket_id)
+        elif email:
+            query = query.filter(email=email)
+
+        tickets_qs = query.order_by("-created_at")
+        
+        target_email = email
+        if not target_email and tickets_qs.exists():
+            target_email = tickets_qs.first().email
+
+        seeker_banned = JobSeekerAccount.objects.filter(email=target_email, is_banned=True).exists() if target_email else False
+        company_banned = Company.objects.filter(email=target_email, is_banned=True).exists() if target_email else False
+        dev_banned = DeveloperAccount.objects.filter(email=target_email, is_banned=True).exists() if target_email else False
+        is_user_banned = seeker_banned or company_banned or dev_banned
+
+        data = []
+        for t in tickets_qs:
+            msgs = t.messages or []
+            if not msgs and t.message:
+                msgs = [{
+                    "sender": "user",
+                    "sender_name": t.name,
+                    "text": t.message,
+                    "timestamp": t.created_at.isoformat() if t.created_at else timezone.now().isoformat()
+                }]
+            data.append({
+                "id": str(t.id),
+                "name": t.name,
+                "email": t.email,
+                "subject": t.subject,
+                "status": t.status,
+                "messages": msgs,
+                "is_user_banned": is_user_banned,
+                "created_at": t.created_at.isoformat() if t.created_at else None
+            })
+
+        return JsonResponse(success_response({"tickets": data, "is_user_banned": is_user_banned}))
+    except Exception as e:
+        logger.error("Public ticket lookup error: %s", e)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+def public_ticket_reply(request, ticket_id):
+    """
+    POST /api/v1/support/ticket/<ticket_id>/reply
+    Public endpoint: User replies on a ticket thread.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        data = json.loads(request.body)
+        message = (data.get("message") or "").strip()
+        sender_name = (data.get("sender_name") or "").strip()
+
+        if not message:
+            return JsonResponse(error_response("Message text is required"), status=400)
+
+        ticket = SupportTicket.objects.filter(id=ticket_id).first()
+        if not ticket:
+            return JsonResponse(error_response("Ticket not found"), status=404)
+
+        current_msgs = list(ticket.messages or [])
+        new_msg = {
+            "sender": "user",
+            "sender_name": sender_name or ticket.name,
+            "text": message,
+            "timestamp": timezone.now().isoformat()
+        }
+        current_msgs.append(new_msg)
+
+        ticket.messages = current_msgs
+        if ticket.status == "resolved":
+            ticket.status = "open"  # Re-open on new reply
+        ticket.save()
+
+        return JsonResponse(success_response({"messages": ticket.messages, "status": ticket.status}))
+    except Exception as e:
+        logger.error("Public ticket reply error: %s", e)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_admin_jwt
+def admin_ticket_reply(request):
+    """
+    POST /api/v1/admin/tickets/reply
+    Admin endpoint: Admin posts a reply on a support ticket thread.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        data = json.loads(request.body)
+        ticket_id = data.get("ticket_id")
+        message = (data.get("message") or "").strip()
+
+        if not all([ticket_id, message]):
+            return JsonResponse(error_response("Missing ticket_id or message"), status=400)
+
+        ticket = SupportTicket.objects.filter(id=ticket_id).first()
+        if not ticket:
+            return JsonResponse(error_response("Ticket not found"), status=404)
+
+        current_msgs = list(ticket.messages or [])
+        admin_name = getattr(request, 'admin_email', 'Admin Support')
+        new_msg = {
+            "sender": "admin",
+            "sender_name": admin_name,
+            "text": message,
+            "timestamp": timezone.now().isoformat()
+        }
+        current_msgs.append(new_msg)
+
+        ticket.messages = current_msgs
+        ticket.save()
+
+        return JsonResponse(success_response({"messages": ticket.messages, "status": ticket.status}))
+    except Exception as e:
+        logger.error("Admin ticket reply error: %s", e)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_admin_jwt
+def admin_unban_from_ticket(request):
+    """
+    POST /api/v1/admin/tickets/unban
+    Admin endpoint: Unbans the user associated with a support ticket and marks ticket resolved.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        data = json.loads(request.body)
+        ticket_id = data.get("ticket_id")
+        if not ticket_id:
+            return JsonResponse(error_response("Missing ticket_id"), status=400)
+
+        ticket = SupportTicket.objects.filter(id=ticket_id).first()
+        if not ticket:
+            return JsonResponse(error_response("Ticket not found"), status=404)
+
+        email = ticket.email
+        unbanned_any = False
+
+        # Unban across all account types
+        seekers = JobSeekerAccount.objects.filter(email=email, is_banned=True)
+        for s in seekers:
+            s.is_banned = False
+            s.save(update_fields=['is_banned'])
+            unbanned_any = True
+
+        companies = Company.objects.filter(email=email, is_banned=True)
+        for c in companies:
+            c.is_banned = False
+            c.save(update_fields=['is_banned'])
+            unbanned_any = True
+
+        devs = DeveloperAccount.objects.filter(email=email, is_banned=True)
+        for d in devs:
+            d.is_banned = False
+            d.save(update_fields=['is_banned'])
+            unbanned_any = True
+
+        # Append system message
+        current_msgs = list(ticket.messages or [])
+        system_msg = {
+            "sender": "system",
+            "sender_name": "System",
+            "text": "✅ User account has been successfully UNBANNED by Admin.",
+            "timestamp": timezone.now().isoformat()
+        }
+        current_msgs.append(system_msg)
+
+        ticket.messages = current_msgs
+        ticket.status = "resolved"
+        ticket.resolved_at = timezone.now()
+        ticket.resolved_by = getattr(request, 'admin_email', 'admin@between.com')
+        ticket.save()
+
+        return JsonResponse(success_response({
+            "message": f"User {email} has been unbanned and ticket resolved",
+            "status": "resolved",
+            "messages": ticket.messages
+        }))
+    except Exception as e:
+        logger.error("Admin ticket unban error: %s", e)
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

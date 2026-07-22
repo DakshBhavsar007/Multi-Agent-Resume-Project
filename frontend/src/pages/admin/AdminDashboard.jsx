@@ -13,7 +13,11 @@ import {
   Info,
   Layers,
   Moon,
-  Sun
+  Sun,
+  MessageSquare,
+  Send,
+  ShieldCheck,
+  X
 } from 'lucide-react';
 import { useAdminAuthStore } from '../../stores/adminAuthStore';
 import { API_HOST } from '../../lib/api';
@@ -32,6 +36,9 @@ export default function AdminDashboard() {
   const [seekers, setSeekers] = useState([]);
   const [recruiters, setRecruiters] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [adminReplyText, setAdminReplyText] = useState('');
+  const [replying, setReplying] = useState(false);
   
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,6 +163,72 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       toast.error('Network error during ticket resolution');
+    }
+  };
+
+  const handleAdminReply = async (ticketId, messageText) => {
+    if (!messageText.trim()) return;
+    setReplying(true);
+    try {
+      const token = getAdminToken();
+      const response = await fetch(`${API_HOST}/api/v1/admin/tickets/reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ticket_id: ticketId, message: messageText.trim() })
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Admin reply sent to user!');
+        setAdminReplyText('');
+        if (selectedTicket?.id === ticketId) {
+          setSelectedTicket(prev => ({
+            ...prev,
+            messages: data.data.messages || prev.messages
+          }));
+        }
+        setTickets(tickets.map(t => t.id === ticketId ? { ...t, messages: data.data.messages || t.messages } : t));
+      } else {
+        toast.error(data.error || 'Failed to send reply');
+      }
+    } catch (err) {
+      toast.error('Network error while sending reply');
+    } finally {
+      setReplying(false);
+    }
+  };
+
+  const handleAdminUnbanFromTicket = async (ticketId) => {
+    try {
+      const token = getAdminToken();
+      const response = await fetch(`${API_HOST}/api/v1/admin/tickets/unban`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ticket_id: ticketId })
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success('User account unbanned & ticket marked resolved!');
+        if (selectedTicket?.id === ticketId) {
+          setSelectedTicket(prev => ({
+            ...prev,
+            status: 'resolved',
+            is_user_banned: false,
+            messages: data.data.messages || prev.messages
+          }));
+        }
+        setTickets(tickets.map(t => t.id === ticketId ? { ...t, status: 'resolved', is_user_banned: false, messages: data.data.messages || t.messages } : t));
+        fetchDashboardData();
+      } else {
+        toast.error(data.error || 'Failed to unban user');
+      }
+    } catch (err) {
+      toast.error('Network error while unbanning user');
     }
   };
 
@@ -369,13 +442,29 @@ export default function AdminDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className="py-4 px-4 text-right">
+                          <td className="py-4 px-4 text-right flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setSelectedTicket(item)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition flex items-center gap-1 shadow-sm"
+                            >
+                              <MessageSquare size={13} /> Chat / Reply
+                            </button>
+
+                            {item.is_user_banned && (
+                              <button
+                                onClick={() => handleAdminUnbanFromTicket(item.id)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-sm"
+                              >
+                                Unban User
+                              </button>
+                            )}
+
                             {item.status === 'open' && (
                               <button 
                                 onClick={() => handleResolveTicket(item.id)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-950 transition"
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
                               >
-                                Mark Resolved
+                                Resolve
                               </button>
                             )}
                           </td>
@@ -429,6 +518,134 @@ export default function AdminDashboard() {
           )}
         </section>
       </main>
+
+      {/* ADMIN TICKET LIVE CHAT & UNBAN MODAL */}
+      {selectedTicket && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl h-[650px] flex flex-col justify-between shadow-2xl overflow-hidden text-slate-100">
+            
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-sm text-white">{selectedTicket.subject}</h3>
+                  {selectedTicket.is_user_banned ? (
+                    <span className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-bold px-2 py-0.5 rounded">
+                      User Banned
+                    </span>
+                  ) : (
+                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded">
+                      Active User
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-slate-400">
+                  User: <strong className="text-slate-200">{selectedTicket.name}</strong> ({selectedTicket.email}) · Ticket #{selectedTicket.id.slice(0, 8)}
+                </span>
+              </div>
+
+              <button
+                onClick={() => setSelectedTicket(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Messages Thread Stream */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950/40 text-xs">
+              {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
+                selectedTicket.messages.map((m, idx) => {
+                  const isAdmin = m.sender === "admin";
+                  const isSystem = m.sender === "system";
+
+                  if (isSystem) {
+                    return (
+                      <div key={idx} className="flex justify-center my-2">
+                        <div className="bg-emerald-950/80 border border-emerald-600/40 text-emerald-300 text-[11px] font-semibold px-3 py-1.5 rounded-full shadow flex items-center gap-2">
+                          <ShieldCheck size={14} className="text-emerald-400" />
+                          <span>{m.text}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex flex-col ${isAdmin ? "items-end" : "items-start"}`}
+                    >
+                      <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-400">
+                        <span className="font-bold text-slate-300">
+                          {isAdmin ? "🛡️ Admin Support" : m.sender_name || "User"}
+                        </span>
+                        <span>·</span>
+                        <span>{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+
+                      <div
+                        className={`max-w-[80%] p-3 rounded-xl text-xs leading-relaxed ${
+                          isAdmin
+                            ? "bg-blue-600 text-white rounded-br-none shadow-md"
+                            : "bg-slate-800 border border-slate-700 text-slate-100 rounded-bl-none shadow-md"
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap">{m.text}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl text-slate-300">
+                  <p className="font-semibold">{selectedTicket.message}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Bottom Actions & Reply Box */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/80 space-y-3">
+              {selectedTicket.is_user_banned && (
+                <div className="flex items-center justify-between bg-red-950/40 border border-red-900/60 p-3 rounded-xl">
+                  <div className="text-xs">
+                    <span className="font-bold text-red-300 block">User is currently BANNED</span>
+                    <span className="text-[11px] text-red-400">Clicking unban will restore account access and mark ticket resolved.</span>
+                  </div>
+                  <button
+                    onClick={() => handleAdminUnbanFromTicket(selectedTicket.id)}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow transition flex items-center gap-1 shrink-0"
+                  >
+                    <ShieldCheck size={14} /> Unban User Account
+                  </button>
+                </div>
+              )}
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAdminReply(selectedTicket.id, adminReplyText);
+                }}
+                className="flex gap-2"
+              >
+                <input
+                  type="text"
+                  value={adminReplyText}
+                  onChange={(e) => setAdminReplyText(e.target.value)}
+                  placeholder="Type an official admin response to user..."
+                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
+                />
+                <button
+                  type="submit"
+                  disabled={replying || !adminReplyText.trim()}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 shrink-0"
+                >
+                  <Send size={14} /> Send Reply
+                </button>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-zinc-900 py-6 text-center text-xs text-slate-400 dark:text-zinc-600 font-mono mt-auto bg-white/50 dark:bg-transparent">

@@ -493,8 +493,9 @@ export function Footer() {
               ] 
             },
             { 
-              t: "Resources", 
+              t: "Resources & Support", 
               items: [
+                { label: "Support & Appeals", to: "/support" },
                 { label: "Terms & Privacy", to: "/terms" },
                 { label: "Refund Policy", to: "/refund-policy" }
               ] 

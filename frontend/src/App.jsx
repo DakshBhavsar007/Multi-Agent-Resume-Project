@@ -35,6 +35,7 @@ const AboutPage = lazy(() => import('./pages/public/AboutPage'));
 const ContactPage = lazy(() => import('./pages/public/ContactPage'));
 const TermsPage = lazy(() => import('./pages/public/TermsPage'));
 const RefundPolicyPage = lazy(() => import('./pages/public/RefundPolicyPage'));
+const SupportPortalPage = lazy(() => import('./pages/SupportPortalPage'));
 
 // Seeker Pages
 const UserHome = lazy(() => import('./pages/user/UserHome'));
@@ -231,7 +232,8 @@ export default function App() {
           <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
           <Route path="/auth/complete-profile" element={<CompleteProfilePage />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/contact" element={<SupportPortalPage />} />
+          <Route path="/support" element={<SupportPortalPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/refund-policy" element={<RefundPolicyPage />} />
           <Route path="/forgot-password" element={<ResetPasswordPage />} />

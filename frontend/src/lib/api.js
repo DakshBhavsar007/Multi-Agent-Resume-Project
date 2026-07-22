@@ -103,6 +103,25 @@ export const authAPI = {
       return data.data;
     });
   },
+  lookupSupportTickets: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return fetch(`${API_HOST}/api/v1/support/lookup${qs ? '?' + qs : ''}`).then(async (res) => {
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to fetch tickets");
+      return data.data;
+    });
+  },
+  replySupportTicket: (ticketId, payload) => {
+    return fetch(`${API_HOST}/api/v1/support/ticket/${ticketId}/reply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(async (res) => {
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to send reply");
+      return data.data;
+    });
+  },
   login: async (email,password) => {
     const d = await req("POST","/auth/login",
                          {email,password})
