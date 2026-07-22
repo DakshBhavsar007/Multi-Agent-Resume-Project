@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock } from "lucide-react";
+import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock, Grid3x3, Home, LayoutDashboard, Bot, HelpCircle } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { portalBilling, portalAuth } from "../../lib/portalApi";
@@ -25,6 +25,19 @@ export default function DeveloperLandingPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState("Python");
+  
+  const [appsOpen, setAppsOpen] = useState(false);
+  const appsDropdownRef = React.useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (appsDropdownRef.current && !appsDropdownRef.current.contains(event.target)) {
+        setAppsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const [plans, setPlans] = useState([
     { id: "free", name: "Free", price: 0, features: ["100 free parses/month", "Community support", "Basic formatting", "No SLA"] },
     { id: "starter", name: "Starter", price: 2999, features: ["1000 parses/month", "Email support", "All output formats", "99% uptime"] },
@@ -160,6 +173,55 @@ const response = await fetch(
             )}
             <Link to="/developer/register" className="px-5 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-dark transition-colors shadow-sm">Get API Key</Link>
             <ThemeToggle />
+
+            {/* 9-Box App Switcher Dropdown */}
+            <div className="relative" ref={appsDropdownRef}>
+              <button
+                onClick={() => setAppsOpen(!appsOpen)}
+                aria-label="App Switcher"
+                className="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-gray-600 dark:text-zinc-300 transition shrink-0"
+                title="App Switcher"
+              >
+                <Grid3x3 size={20} />
+              </button>
+
+              {appsOpen && (
+                <div className="absolute right-0 mt-2 w-52 rounded-xl p-1.5 z-50 flex flex-col gap-0.5 shadow-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
+                  <a
+                    href="/developer"
+                    onClick={() => setAppsOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
+                  >
+                    <Bot size={14} className="text-blue-500 shrink-0" />
+                    <span>Between Developer</span>
+                  </a>
+                  <a
+                    href="/jobs"
+                    onClick={() => setAppsOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
+                  >
+                    <Home size={14} className="text-gray-400 shrink-0" />
+                    <span>Between Jobs</span>
+                  </a>
+                  <a
+                    href="/dashboard"
+                    onClick={() => setAppsOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
+                  >
+                    <LayoutDashboard size={14} className="text-gray-400 shrink-0" />
+                    <span>Between Recruiter</span>
+                  </a>
+                  <a
+                    href="/support"
+                    onClick={() => setAppsOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition border-t border-gray-200 dark:border-zinc-800 mt-1 pt-2"
+                  >
+                    <HelpCircle size={14} className="text-gray-400 shrink-0" />
+                    <span>Support & Appeals</span>
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex md:hidden items-center gap-2">
             <ThemeToggle />

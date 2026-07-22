@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
-import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, PanelLeftClose, PanelLeftOpen, Grid3x3, Home, Bot } from "lucide-react";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { portalAuth } from "../../lib/portalApi";
 import { motion } from "framer-motion";
@@ -77,6 +77,19 @@ export default function DeveloperPortalLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { isOpen: tourOpen, startTour, closeTour } = useTour('developer_portal');
 
+  const [appsOpen, setAppsOpen] = useState(false);
+  const appsDropdownRef = React.useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (appsDropdownRef.current && !appsDropdownRef.current.contains(event.target)) {
+        setAppsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     initFromStorage();
     setMounted(true);
@@ -151,6 +164,55 @@ export default function DeveloperPortalLayout() {
         </div>
         <div className="flex-1" />
         <ThemeToggle />
+
+        {/* 9-Box App Switcher Dropdown */}
+        <div className="relative" ref={appsDropdownRef}>
+          <button
+            onClick={() => setAppsOpen(!appsOpen)}
+            aria-label="Apps"
+            className="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-gray-500 dark:text-zinc-400 transition shrink-0"
+            title="App Switcher"
+          >
+            <Grid3x3 size={20} />
+          </button>
+
+          {appsOpen && (
+            <div className="absolute right-0 mt-2 w-52 rounded-xl p-1.5 z-50 flex flex-col gap-0.5 shadow-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
+              <a
+                href="/developer"
+                onClick={() => setAppsOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
+              >
+                <Bot size={14} className="text-blue-500 shrink-0" />
+                <span>Between Developer</span>
+              </a>
+              <a
+                href="/jobs"
+                onClick={() => setAppsOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
+              >
+                <Home size={14} className="text-gray-400 shrink-0" />
+                <span>Between Jobs</span>
+              </a>
+              <a
+                href="/dashboard"
+                onClick={() => setAppsOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
+              >
+                <LayoutDashboard size={14} className="text-gray-400 shrink-0" />
+                <span>Between Recruiter</span>
+              </a>
+              <a
+                href="/support"
+                onClick={() => setAppsOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition border-t border-gray-200 dark:border-zinc-800 mt-1 pt-2"
+              >
+                <HelpCircle size={14} className="text-gray-400 shrink-0" />
+                <span>Support & Appeals</span>
+              </a>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* Sidebar */}
