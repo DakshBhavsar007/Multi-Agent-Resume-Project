@@ -281,11 +281,11 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3">
             <button
               onClick={fetchDashboardData}
-              className="px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-semibold text-xs transition flex items-center gap-1.5 shadow-sm"
+              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-md shrink-0 border border-blue-500/30"
               title="Refresh Database"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh DB</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh DB</span>
             </button>
             <div className="text-right">
               <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">Admin Account</p>

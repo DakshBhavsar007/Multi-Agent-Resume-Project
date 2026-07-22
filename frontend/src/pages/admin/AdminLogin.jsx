@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -75,173 +76,76 @@ export default function AdminLogin() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'radial-gradient(circle at top right, #1e1b4b, #09090b 70%)',
-      fontFamily: "'Inter', -apple-system, sans-serif",
-      color: '#f4f4f5',
-      padding: '20px',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex items-center justify-center p-6 relative overflow-hidden transition-colors duration-200">
+      
       {/* Theme Toggle Button */}
       <button 
         onClick={toggleTheme} 
-        className="absolute top-6 right-6 p-3 rounded-full bg-slate-200/80 dark:bg-zinc-800/80 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 backdrop-blur-md border border-slate-300 dark:border-zinc-700 transition z-20"
+        className="absolute top-6 right-6 p-3 rounded-full bg-slate-200/80 hover:bg-slate-300 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 backdrop-blur-md border border-slate-300 dark:border-zinc-700 transition z-20 shadow-sm"
         title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
       >
         {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
       </button>
 
       {/* Decorative background glows */}
-      <div style={{
-        position: 'absolute',
-        width: '400px',
-        height: '400px',
-        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%)',
-        top: '10%',
-        left: '20%',
-        zIndex: 0
-      }} />
-      <div style={{
-        position: 'absolute',
-        width: '500px',
-        height: '500px',
-        background: 'radial-gradient(circle, rgba(236, 72, 153, 0.08) 0%, rgba(236, 72, 153, 0) 70%)',
-        bottom: '10%',
-        right: '10%',
-        zIndex: 0
-      }} />
+      <div className="absolute w-[400px] h-[400px] bg-blue-500/10 dark:bg-indigo-500/15 rounded-full blur-3xl top-[10%] left-[20%] pointer-events-none" />
+      <div className="absolute w-[500px] h-[500px] bg-indigo-500/10 dark:bg-pink-500/10 rounded-full blur-3xl bottom-[10%] right-[10%] pointer-events-none" />
 
-      {/* Glassmorphic Card Container */}
-      <div style={{
-        width: '100%',
-        maxWidth: '440px',
-        background: 'rgba(24, 24, 27, 0.7)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(63, 63, 70, 0.4)',
-        borderRadius: '24px',
-        padding: '40px 32px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        zIndex: 1,
-        animation: 'fadeIn 0.6s ease-out'
-      }}>
+      {/* Card Container */}
+      <div className="w-full max-w-[440px] bg-white/90 dark:bg-zinc-900/80 backdrop-blur-xl border border-slate-200 dark:border-zinc-800 rounded-3xl p-8 shadow-2xl z-10 transition-colors">
+        
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '64px',
-            height: '64px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #4f46e5 0%, #c084fc 100%)',
-            boxShadow: '0 8px 24px rgba(79, 70, 229, 0.3)',
-            marginBottom: '16px'
-          }}>
-            <Shield size={32} color="#ffffff" />
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg shadow-blue-500/30 mb-4">
+            <Shield className="w-8 h-8 text-white" />
           </div>
-          <h2 style={{
-            fontSize: '28px',
-            fontWeight: '800',
-            letterSpacing: '-0.75px',
-            margin: '0 0 8px',
-            background: 'linear-gradient(to right, #f4f4f5, #a1a1aa)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">
             Between Admin
           </h2>
-          <p style={{ color: '#71717a', fontSize: '14px', margin: 0 }}>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">
             Enter your credentials to access the moderation console.
           </p>
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form onSubmit={handleLoginSubmit} className="space-y-5">
           {/* Email field */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#a1a1aa' }}>Admin Email</label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={18} color="#52525b" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-400">
+              Admin Email
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-400 dark:text-zinc-500 absolute left-4 top-3.5" />
               <input
                 type="email"
                 placeholder="admin@between.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'rgba(9, 9, 11, 0.5)',
-                  border: '1px solid rgba(63, 63, 70, 0.8)',
-                  borderRadius: '12px',
-                  padding: '14px 16px 14px 48px',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  transition: 'border-color 0.2s, box-shadow 0.2s'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#6366f1';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.2)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'rgba(63, 63, 70, 0.8)';
-                  e.target.style.boxShadow = 'none';
-                }}
+                className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 transition"
               />
             </div>
           </div>
 
           {/* Password field */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#a1a1aa' }}>Admin Password</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} color="#52525b" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-400">
+              Admin Password
+            </label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-slate-400 dark:text-zinc-500 absolute left-4 top-3.5" />
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'rgba(9, 9, 11, 0.5)',
-                  border: '1px solid rgba(63, 63, 70, 0.8)',
-                  borderRadius: '12px',
-                  padding: '14px 44px 14px 48px',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  transition: 'border-color 0.2s, box-shadow 0.2s'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#6366f1';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.2)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'rgba(63, 63, 70, 0.8)';
-                  e.target.style.boxShadow = 'none';
-                }}
+                className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 rounded-xl pl-11 pr-11 py-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 transition"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '16px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#52525b',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
+                className="absolute right-4 top-3.5 text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 transition"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
@@ -250,34 +154,16 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px',
-              color: '#ffffff',
-              fontSize: '15px',
-              fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              marginTop: '8px',
-              transition: 'transform 0.1s, opacity 0.2s'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2 mt-2"
           >
             {loading ? (
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               "Sign In to Console"
             )}
           </button>
         </form>
+
       </div>
     </div>
   );
