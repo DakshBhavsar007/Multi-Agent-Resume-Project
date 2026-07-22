@@ -194,13 +194,7 @@ class ResumeEnhancerAgent:
 
             # Compute enhanced score using AtsCompatibilityAgent on virtual enhanced resume
             enhanced_report = self.ats_agent.analyze(None, enhanced_resume, jd_text)
-            raw_enhanced_score = enhanced_report.get("overallScore", base_score)
-
-            # Guarantee score boost: AI enhancement MUST always improve score above base_score
-            keywords_count = len(result.get("missing_keywords", []))
-            target_boost = max(10, min(22, 10 + keywords_count))
-            ats_score_enhanced = max(raw_enhanced_score, base_score + target_boost)
-            ats_score_enhanced = min(98, ats_score_enhanced)
+            ats_score_enhanced = int(enhanced_report.get("overallScore", base_score))
 
             result["ats_score_original"] = base_score
             result["ats_score_enhanced"] = ats_score_enhanced

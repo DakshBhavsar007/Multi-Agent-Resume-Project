@@ -231,9 +231,9 @@ class AtsCompatibilityAgent:
         deg = str(degree_str).lower()
         if any(x in deg for x in ["phd", "doctorate", "ph.d"]):
             return 4
-        if any(x in deg for x in ["master", "ms", "mtech", "m.tech", "mba", "m.s."]):
+        if any(x in deg for x in ["master", "ms", "mtech", "m.tech", "mba", "m.s.", "m.a.", "mca"]):
             return 3
-        if any(x in deg for x in ["bachelor", "bs", "btech", "b.tech", "ba", "b.s.", "b.a."]):
+        if any(x in deg for x in ["bachelor", "bs", "btech", "b.tech", "ba", "b.s.", "b.a.", "b.e", "be", "bca", "b.c.a", "b.sc", "bsc", "engineering"]):
             return 2
         if any(x in deg for x in ["associate", "diploma"]):
             return 1
@@ -476,8 +476,22 @@ class AtsCompatibilityAgent:
         # Candidate Experience Years and Degree details
         cand_years = self._calculate_experience_years(parsed_data)
         
-        # Extract candidate skills for matching
-        candidate_skills = list(set(str(s).lower().strip() for s in parsed_data.get("skills", []) if s))
+        # Extract candidate skills for matching (splitting comma/slash/bullet separated skill strings)
+        raw_skills = parsed_data.get("skills", []) or []
+        candidate_skills_set = set()
+        for item in raw_skills:
+            if isinstance(item, str):
+                for sub in re.split(r'[,;\n/|•·]', item):
+                    cleaned = sub.strip().lower()
+                    if cleaned and len(cleaned) > 1:
+                        candidate_skills_set.add(cleaned)
+            elif isinstance(item, dict):
+                name = item.get("canonical_skill") or item.get("skill") or item.get("raw_skill") or str(item)
+                for sub in re.split(r'[,;\n/|•·]', str(name)):
+                    cleaned = sub.strip().lower()
+                    if cleaned and len(cleaned) > 1:
+                        candidate_skills_set.add(cleaned)
+        candidate_skills = list(candidate_skills_set)
         
         # Extract projects and populate diagnostic variables early
         parsed_projects = []
@@ -621,11 +635,17 @@ class AtsCompatibilityAgent:
                 
             cand_bullets = []
             for exp in parsed_data.get("experience", []):
-                bullets = exp.get("bullets", []) or exp.get("responsibilities", []) or []
+                bullets = exp.get("bullets") or exp.get("responsibilities") or []
                 if isinstance(bullets, list):
-                    cand_bullets.extend([b.strip() for b in bullets if b.strip()])
+                    cand_bullets.extend([str(b).strip() for b in bullets if str(b).strip()])
                 elif isinstance(bullets, str) and bullets.strip():
                     cand_bullets.append(bullets.strip())
+                desc = exp.get("description", "")
+                if isinstance(desc, str) and desc.strip():
+                    cand_bullets.append(desc.strip())
+                role = exp.get("title") or exp.get("role") or ""
+                if role:
+                    cand_bullets.append(str(role).strip())
                     
             if not jd_responsibilities or not cand_bullets:
                 semantic_exp_score = 70.0
