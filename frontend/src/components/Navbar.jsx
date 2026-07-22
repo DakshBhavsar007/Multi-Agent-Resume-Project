@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll } from 'framer-motion';
+import { Grid3x3, Home, LayoutDashboard, Bot, HelpCircle } from 'lucide-react';
 import './Navbar.css';
 import ThemeToggle from './ThemeToggle';
 
 const Navbar = ({ onSignIn, isLoggedIn }) => {
   const [scrolled, setScrolled] = useState(false);
   const [productDropdownOpen, setProductDropdownOpen] = useState(false);
+  const [appsOpen, setAppsOpen] = useState(false);
+  const appsDropdownRef = useRef(null);
+
   const { scrollY } = useScroll();
 
   useEffect(() => {
@@ -19,6 +23,9 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
     const handleOutsideClick = (e) => {
       if (!e.target.closest('.product-dropdown-container')) {
         setProductDropdownOpen(false);
+      }
+      if (appsDropdownRef.current && !appsDropdownRef.current.contains(e.target)) {
+        setAppsOpen(false);
       }
     };
     document.addEventListener('click', handleOutsideClick);
@@ -144,6 +151,56 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
 
       <div className="nav-right" style={{ gap: '8px' }}>
         <ThemeToggle />
+
+        {/* 9-Box App Switcher Dropdown */}
+        <div className="relative" ref={appsDropdownRef}>
+          <button
+            onClick={() => setAppsOpen(!appsOpen)}
+            aria-label="App Switcher"
+            className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-700 dark:text-zinc-300 transition shrink-0 border border-slate-200/60 dark:border-zinc-800"
+            title="App Switcher"
+          >
+            <Grid3x3 size={18} />
+          </button>
+
+          {appsOpen && (
+            <div className="absolute right-0 mt-2 w-52 rounded-xl p-1.5 z-50 flex flex-col gap-0.5 shadow-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
+              <a
+                href="/jobs"
+                onClick={() => setAppsOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
+              >
+                <Home size={14} className="text-blue-500 shrink-0" />
+                <span>Between Jobs</span>
+              </a>
+              <a
+                href="/dashboard"
+                onClick={() => setAppsOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
+              >
+                <LayoutDashboard size={14} className="text-slate-400 shrink-0" />
+                <span>Between Recruiter</span>
+              </a>
+              <a
+                href="/developer"
+                onClick={() => setAppsOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
+              >
+                <Bot size={14} className="text-slate-400 shrink-0" />
+                <span>Between Developer</span>
+              </a>
+              <a
+                href="/support"
+                onClick={() => setAppsOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition border-t border-slate-200 dark:border-zinc-800 mt-1 pt-2"
+              >
+                <HelpCircle size={14} className="text-slate-400 shrink-0" />
+                <span>Support & Appeals</span>
+              </a>
+            </div>
+          )}
+        </div>
+
         <motion.button 
           className="sign-in-btn"
           whileHover={{ scale: 1.05 }}
