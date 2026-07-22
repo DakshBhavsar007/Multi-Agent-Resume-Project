@@ -368,18 +368,18 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
   };
 
   const proceedToNextInterviewQuestion = (currentTrans = transcript) => {
-    setShowQuestionFeedback(false);
-    setFeedbackData(null);
-    setSpokenAnswer("");
-
     if (currentQIndex + 1 < activeAttempt.questions.length) {
+      setShowQuestionFeedback(false);
+      setFeedbackData(null);
+      setSpokenAnswer("");
       const nextIdx = currentQIndex + 1;
       setCurrentQIndex(nextIdx);
       if (!isMuted) {
         speakAIHost(activeAttempt.questions[nextIdx].q);
       }
     } else {
-      // Finalize mock submission
+      // Finalize mock submission cleanly with loading overlay
+      setSubmitting(true);
       handleSubmitMock(currentTrans);
     }
   };
@@ -468,11 +468,12 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
 
       const res = await seekerAPI.submitMockAttempt(activeAttempt.attempt_id, submitBody);
       
-      // Load details for result
-      const attemptDetails = await seekerAPI.getMockAttempt(activeAttempt.attempt_id);
-      setSelectedResult(attemptDetails);
+      setSelectedResult(res);
       setViewMode("result");
-      toast.success("Mock practice submitted successfully!");
+      setShowQuestionFeedback(false);
+      setFeedbackData(null);
+      setSpokenAnswer("");
+      toast.success("Mock attempt submitted successfully!");
       fetchDashboardData();
     } catch (err) {
       console.error(err);
@@ -980,7 +981,16 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
                     {/* Interview question flow & text panel OR AI Feedback Card */}
                     <div className="col-span-12 md:col-span-7 bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col justify-between h-[500px] relative overflow-hidden">
                       
-                      {showQuestionFeedback && feedbackData ? (
+                      {submitting ? (
+                        /* SUBMISSION EVALUATION OVERLAY */
+                        <div className="flex flex-col items-center justify-center h-full py-16 gap-4 text-center animate-in fade-in duration-300">
+                          <div className="w-12 h-12 rounded-full border-4 border-t-blue-600 border-r-transparent border-b-blue-600 border-l-transparent animate-spin" />
+                          <div>
+                            <h4 className="font-bold text-base text-foreground">Evaluating Mock Interview...</h4>
+                            <p className="text-xs text-muted-foreground mt-1">AI Recruiting Agent is compiling your final scorecard report.</p>
+                          </div>
+                        </div>
+                      ) : showQuestionFeedback && feedbackData ? (
                         /* AI ANSWER EVALUATION & FEEDBACK REVIEW CARD */
                         <div className="flex flex-col justify-between h-full space-y-4 overflow-y-auto animate-in fade-in duration-300">
                           

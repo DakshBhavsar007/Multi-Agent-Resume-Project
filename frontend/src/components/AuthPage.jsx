@@ -580,8 +580,7 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${API_BASE}/api/v1/support/ticket`, {
+      const res = await fetch(`${API_HOST}/api/v1/support/ticket`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -697,12 +696,12 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         transition={{ duration: 0.8, ease: [0.21, 0.45, 0.32, 0.9] }}
       >
         {banned ? (
-          <div className="p-6 bg-red-950/20 border border-red-900/60 rounded-2xl text-center flex flex-col items-center gap-4 my-8" style={{ transform: "translateZ(40px)" }}>
-            <div className="w-12 h-12 rounded-full bg-red-950/50 border border-red-900 flex items-center justify-center text-red-500 shadow-lg">
+          <div className="p-6 bg-red-50 dark:bg-red-950/80 border border-red-200 dark:border-red-800/80 rounded-2xl text-center flex flex-col items-center gap-4 my-8 shadow-xl" style={{ transform: "translateZ(40px)" }}>
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/60 border border-red-300 dark:border-red-700 flex items-center justify-center text-red-600 dark:text-red-400 shadow-md">
               <ShieldAlert className="w-6 h-6 animate-pulse" />
             </div>
-            <h3 className="text-lg font-bold text-red-400">Account Deactivated</h3>
-            <p className="text-sm text-zinc-400 max-w-sm">
+            <h3 className="text-xl font-extrabold text-red-700 dark:text-red-400 tracking-tight">Account Deactivated</h3>
+            <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200 max-w-sm leading-relaxed">
               You are banned by admin. If you believe this is a mistake, please appeal by contacting support.
             </p>
             <div className="flex gap-3 w-full mt-4">
@@ -712,14 +711,14 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                   setSupportEmail(bannedEmail);
                   setShowSupportModal(true);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-zinc-100 text-zinc-950 hover:bg-white font-bold text-sm transition shadow-md"
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition shadow-md"
               >
                 Contact Support
               </button>
               <button
                 type="button"
                 onClick={() => setBanned(false)}
-                className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 font-bold text-sm transition"
+                className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 font-bold text-sm transition"
               >
                 Back
               </button>
