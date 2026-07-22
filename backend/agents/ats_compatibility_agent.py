@@ -884,8 +884,9 @@ class AtsCompatibilityAgent:
             "computedAt": datetime.now(timezone.utc).isoformat() + "Z",
             "explanations": explanations,
             
-            # Upgraded detailed sub-scores
+            # Upgraded detailed sub-scores with Option 2 Hybrid Unification
             "detailed_breakdown": {
+                "matching_engine": "SemanticMatchingAgent + AtsCompatibilityAgent (Option 2 Hybrid Unification)",
                 "keyword_match": {
                     "score": keyword_match_score,
                     "matched": matched_keywords[:15],
