@@ -115,25 +115,37 @@ def admin_dashboard(request):
             })
 
         # Support Tickets
-        tickets_qs = SupportTicket.objects.all().order_by('-created_at')
         tickets_list = []
-        for t in tickets_qs:
-            seeker_banned = JobSeekerAccount.objects.filter(email=t.email, is_banned=True).exists()
-            company_banned = Company.objects.filter(email=t.email, is_banned=True).exists()
-            dev_banned = DeveloperAccount.objects.filter(email=t.email, is_banned=True).exists()
-            is_banned = seeker_banned or company_banned or dev_banned
+        try:
+            tickets_qs = SupportTicket.objects.all().order_by('-created_at')
+            for t in tickets_qs:
+                seeker_banned = JobSeekerAccount.objects.filter(email=t.email, is_banned=True).exists()
+                company_banned = Company.objects.filter(email=t.email, is_banned=True).exists()
+                dev_banned = DeveloperAccount.objects.filter(email=t.email, is_banned=True).exists()
+                is_banned = seeker_banned or company_banned or dev_banned
 
-            tickets_list.append({
-                "id": str(t.id),
-                "name": t.name,
-                "email": t.email,
-                "subject": t.subject,
-                "message": t.message,
-                "status": t.status,
-                "messages": t.messages or [],
-                "is_user_banned": is_banned,
-                "created_at": t.created_at.isoformat() if t.created_at else None
-            })
+                msgs = getattr(t, 'messages', None) or []
+                if not msgs and getattr(t, 'message', None):
+                    msgs = [{
+                        "sender": "user",
+                        "sender_name": t.name,
+                        "text": t.message,
+                        "timestamp": t.created_at.isoformat() if t.created_at else timezone.now().isoformat()
+                    }]
+
+                tickets_list.append({
+                    "id": str(t.id),
+                    "name": t.name,
+                    "email": t.email,
+                    "subject": t.subject,
+                    "message": t.message,
+                    "status": t.status,
+                    "messages": msgs,
+                    "is_user_banned": is_banned,
+                    "created_at": t.created_at.isoformat() if t.created_at else None
+                })
+        except Exception as ticket_err:
+            logger.warning("Error fetching support tickets for admin dashboard: %s", ticket_err)
 
         stats = {
             "total_seekers": len(seekers_list),
@@ -390,8 +402,8 @@ def public_ticket_lookup(request):
 
         data = []
         for t in tickets_qs:
-            msgs = t.messages or []
-            if not msgs and t.message:
+            msgs = getattr(t, 'messages', None) or []
+            if not msgs and getattr(t, 'message', None):
                 msgs = [{
                     "sender": "user",
                     "sender_name": t.name,
