@@ -27,7 +27,7 @@ def _calculate_match_score(candidate, session):
         if isinstance(s, dict) else str(s).lower()
         for s in norm_skills if s
     }
-    matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
+    matched_list = [r for r in required_skills if any(r.lower().strip() in s or s in r.lower().strip() for s in cand_skill_names)]
     missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
     matched = len(matched_list)
     
