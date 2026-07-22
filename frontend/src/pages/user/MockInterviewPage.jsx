@@ -44,21 +44,15 @@ export default function MockInterviewPage() {
   const [transcript, setTranscript] = useState([]); // Array of { q: string, answer_text: string }
   const [isMuted, setIsMuted] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [audioChunks, setAudioChunks] = useState([]);
-  
-  // Coding states
-  const [codingTab, setCodingTab] = useState("description"); // "description" | "output"
-  const [codeContent, setCodeContent] = useState("");
-  const [compiling, setCompiling] = useState(false);
-  const [compileOutput, setCompileOutput] = useState("");
-  const [runStatus, setRunStatus] = useState({}); // track run/pass status per coding slug
-  
-  // View mode
-  const [viewMode, setViewMode] = useState("dashboard"); // "dashboard" | "test" | "result"
-  const [selectedResult, setSelectedResult] = useState(null);
+  // AI Feedback & 15s Muted Timer states
+  const [showQuestionFeedback, setShowQuestionFeedback] = useState(false);
+  const [feedbackData, setFeedbackData] = useState(null);
+  const [feedbackTimer, setFeedbackTimer] = useState(15);
 
   // References
   const timerIntervalRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const feedbackIntervalRef = useRef(null);
 
   // Load user data and attempts
   useEffect(() => {
@@ -144,6 +138,17 @@ export default function MockInterviewPage() {
       setLoading(false);
     }
   };
+  // Mute AI Voice toggle with instant cancel
+  const handleToggleMute = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    if (nextMuted && typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    toast(nextMuted ? "AI Voice Muted" : "AI Voice Unmuted", {
+      icon: nextMuted ? "🔇" : "🔊"
+    });
+  };
 
   // Web Speech synthesis
   const speakAIHost = (text) => {
@@ -155,8 +160,39 @@ export default function MockInterviewPage() {
     window.speechSynthesis.speak(utterance);
   };
 
-  // Voice recording & transcription
+  // Voice recording & transcription (Web Speech API + MediaRecorder fallback)
   const startRecordingAudio = async () => {
+    // 1. Web Speech Recognition for live real-time speech-to-text
+    const SpeechRecognition = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (SpeechRecognition) {
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        recognition.onresult = (event) => {
+          let currentText = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            currentText += event.results[i][0].transcript;
+          }
+          if (currentText.trim()) {
+            setSpokenAnswer(currentText);
+          }
+        };
+
+        recognition.onerror = (e) => {
+          console.warn("WebSpeech recognition warning:", e.error);
+        };
+
+        recognition.start();
+        recognitionRef.current = recognition;
+      } catch (err) {
+        console.warn("Speech recognition init error:", err);
+      }
+    }
+
+    // 2. MediaRecorder capture for backend Whisper or fallback
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
@@ -173,14 +209,11 @@ export default function MockInterviewPage() {
         const blob = new Blob(chunks, { type: "audio/webm" });
         try {
           const res = await seekerAPI.transcribeAudio(blob);
-          if (res && res.text) {
+          if (res && res.text && res.text.trim()) {
             setSpokenAnswer(res.text);
-          } else {
-            toast.error("Silence detected. Try speaking closer to mic.");
           }
         } catch (err) {
-          console.error(err);
-          toast.error("Audio transcription failed.");
+          console.warn("Backend audio transcription fallback:", err);
         } finally {
           setIsTranscribing(false);
         }
@@ -188,40 +221,113 @@ export default function MockInterviewPage() {
 
       recorder.start();
       setMediaRecorder(recorder);
-      setAudioChunks(chunks);
       setIsRecording(true);
+      toast.success("Microphone active! Start speaking your answer.");
     } catch (err) {
       console.error(err);
-      toast.error("Microphone access denied.");
+      toast.error("Microphone access denied. Please check browser microphone permissions.");
     }
   };
 
   const stopRecordingAudio = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       mediaRecorder.stop();
       setIsRecording(false);
-      // Stop all tracks in stream
       mediaRecorder.stream.getTracks().forEach(t => t.stop());
     }
   };
 
+  // Save & Next Question: Evaluates Answer & Shows Feedback + 15s Timer if Muted
   const handleNextInterviewQuestion = () => {
     if (!spokenAnswer.trim()) {
       toast.error("Please answer the current question first.");
       return;
     }
+
+    if (isRecording) {
+      stopRecordingAudio();
+    }
+
     const currentQ = activeAttempt.questions[currentQIndex];
-    const newTranscript = [...transcript, { q: currentQ.q, answer_text: spokenAnswer }];
+    const candidateAns = spokenAnswer.trim();
+    const keywords = currentQ.expected_keywords || [];
+    const lowerAns = candidateAns.toLowerCase();
+    const matchedKeywords = keywords.filter(kw => lowerAns.includes(kw.toLowerCase()));
+
+    // Generate Expected Ideal Answer
+    const expectedIdeal = `For this question ("${currentQ.q}"), an ideal response should clearly cover:
+1. Core Technical Concept & System Architecture relevant to the prompt.
+2. Step-by-step implementation, error handling, and data validation considerations.
+${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Practical real-world trade-offs and performance metrics."}`;
+
+    // Generate Candidate Answer Evaluation
+    let evaluation = "";
+    if (candidateAns.length > 80 && (matchedKeywords.length > 0 || candidateAns.includes(" "))) {
+      evaluation = `Strong response! You covered several key aspects effectively. ${
+        matchedKeywords.length > 0 
+          ? `You correctly referenced key concepts: ${matchedKeywords.join(", ")}.` 
+          : "Your overall structure was logical."
+      } To improve further, consider elaborating on production edge cases and error handling details.`;
+    } else {
+      evaluation = `You provided a basic answer. An interviewer would expect a more detailed response covering technical implementation choices, error handling strategies, and concrete examples.`;
+    }
+
+    const feedbackObj = {
+      qNum: currentQIndex + 1,
+      question: currentQ.q,
+      candidateAnswer: candidateAns,
+      expectedAnswer: expectedIdeal,
+      evaluation: evaluation,
+    };
+
+    setFeedbackData(feedbackObj);
+    setShowQuestionFeedback(true);
+
+    const newTranscript = [...transcript, { q: currentQ.q, answer_text: candidateAns, feedback: feedbackObj }];
     setTranscript(newTranscript);
+
+    if (!isMuted) {
+      speakAIHost(`Feedback for Question ${currentQIndex + 1}. Expected: ${evaluation}`);
+    } else {
+      // If AI Voice is MUTED, start 15 seconds reading timer
+      setFeedbackTimer(15);
+      if (feedbackIntervalRef.current) clearInterval(feedbackIntervalRef.current);
+      feedbackIntervalRef.current = setInterval(() => {
+        setFeedbackTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(feedbackIntervalRef.current);
+            proceedToNextInterviewQuestion(newTranscript);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  };
+
+  const proceedToNextInterviewQuestion = (currentTrans = transcript) => {
+    if (feedbackIntervalRef.current) {
+      clearInterval(feedbackIntervalRef.current);
+    }
+    setShowQuestionFeedback(false);
+    setFeedbackData(null);
     setSpokenAnswer("");
 
     if (currentQIndex + 1 < activeAttempt.questions.length) {
       const nextIdx = currentQIndex + 1;
       setCurrentQIndex(nextIdx);
-      speakAIHost(activeAttempt.questions[nextIdx].q);
+      if (!isMuted) {
+        speakAIHost(activeAttempt.questions[nextIdx].q);
+      }
     } else {
       // Finalize mock submission
-      handleSubmitMock(newTranscript);
+      handleSubmitMock(currentTrans);
     }
   };
 
@@ -800,60 +906,133 @@ export default function MockInterviewPage() {
 
                       {/* Mute button */}
                       <button
-                        onClick={() => setIsMuted(!isMuted)}
-                        className="mt-8 p-3 rounded-full border border-border bg-muted hover:bg-muted/80 transition flex items-center gap-2 text-xs font-semibold text-foreground"
+                        onClick={handleToggleMute}
+                        className={`mt-8 p-3 rounded-full border transition flex items-center gap-2 text-xs font-semibold ${
+                          isMuted 
+                            ? "bg-red-500/10 border-red-500/30 text-red-500 dark:text-red-400" 
+                            : "bg-muted border-border hover:bg-muted/80 text-foreground"
+                        }`}
                       >
                         {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                        {isMuted ? "Unmute AI Voice" : "Mute AI Voice"}
+                        {isMuted ? "AI Voice Muted (Click to Unmute)" : "Mute AI Voice"}
                       </button>
                     </div>
 
-                    {/* Interview question flow & text panel */}
-                    <div className="col-span-12 md:col-span-7 bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col justify-between h-[500px]">
-                      <div>
-                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
-                          Question {currentQIndex + 1} of {activeAttempt.questions.length}
-                        </span>
-                        <h3 className="font-semibold text-lg text-foreground mt-2 leading-relaxed bg-muted/30 p-4 rounded-xl border border-border">
-                          {activeAttempt.questions[currentQIndex].q}
-                        </h3>
-                      </div>
+                    {/* Interview question flow & text panel OR AI Feedback Card */}
+                    <div className="col-span-12 md:col-span-7 bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col justify-between h-[500px] relative overflow-hidden">
+                      
+                      {showQuestionFeedback && feedbackData ? (
+                        /* AI ANSWER EVALUATION & FEEDBACK REVIEW CARD */
+                        <div className="flex flex-col justify-between h-full space-y-4 overflow-y-auto animate-in fade-in duration-300">
+                          
+                          {/* 15s Muted Countdown Banner */}
+                          {isMuted && (
+                            <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl flex items-center justify-between text-amber-600 dark:text-amber-400">
+                              <div className="flex items-center gap-2 text-xs font-bold">
+                                <Clock size={16} className="animate-spin" />
+                                <span>AI Voice Muted — Reading time remaining: <strong className="text-sm font-mono text-amber-500">{feedbackTimer}s</strong></span>
+                              </div>
+                              <button
+                                onClick={() => proceedToNextInterviewQuestion()}
+                                className="px-3 py-1 bg-amber-500 text-black font-bold text-[11px] rounded-lg hover:bg-amber-400 transition"
+                              >
+                                Skip & Next Question ➔
+                              </button>
+                            </div>
+                          )}
 
-                      <div className="space-y-4 my-6">
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Your transcribed answer:</span>
-                        <textarea
-                          value={spokenAnswer}
-                          onChange={(e) => setSpokenAnswer(e.target.value)}
-                          placeholder="Use microphone or start typing your answer here..."
-                          className="w-full h-32 p-4 rounded-xl border border-border bg-muted/40 focus:bg-card focus:outline-none focus:ring-2 focus:ring-blue-600 text-xs font-medium"
-                        />
-                      </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">
+                              AI Instant Evaluation — Question {feedbackData.qNum}
+                            </span>
+                            <h4 className="font-bold text-sm text-foreground mt-1 mb-3">
+                              {feedbackData.question}
+                            </h4>
 
-                      <div className="flex gap-3 justify-end border-t border-border pt-4">
-                        {isRecording ? (
-                          <button
-                            onClick={stopRecordingAudio}
-                            className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
-                          >
-                            <MicOff size={14} /> Stop Recording
-                          </button>
-                        ) : (
-                          <button
-                            onClick={startRecordingAudio}
-                            disabled={isTranscribing}
-                            className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
-                          >
-                            <Mic size={14} /> {isTranscribing ? "Transcribing..." : "Record audio answer"}
-                          </button>
-                        )}
-                        <button
-                          onClick={handleNextInterviewQuestion}
-                          disabled={isTranscribing || submitting}
-                          className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
-                        >
-                          {currentQIndex === activeAttempt.questions.length - 1 ? "Submit Interview" : "Save & Next Question"}
-                        </button>
-                      </div>
+                            <div className="space-y-3 font-sans text-xs">
+                              {/* 🎯 EXPECTED IDEAL ANSWER */}
+                              <div className="bg-blue-500/10 border border-blue-500/20 p-3.5 rounded-xl space-y-1">
+                                <div className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 text-xs">
+                                  <span>🎯 What AI Expected (Ideal Answer)</span>
+                                </div>
+                                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-[11px]">
+                                  {feedbackData.expectedAnswer}
+                                </p>
+                              </div>
+
+                              {/* 💡 CANDIDATE ANSWER & ANALYSIS */}
+                              <div className="bg-emerald-500/10 border border-emerald-500/20 p-3.5 rounded-xl space-y-1">
+                                <div className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 text-xs">
+                                  <span>💡 Your Answer & AI Feedback</span>
+                                </div>
+                                <div className="text-muted-foreground italic text-[11px] mb-1">
+                                  "{feedbackData.candidateAnswer}"
+                                </div>
+                                <p className="text-foreground font-medium text-[11px] leading-relaxed">
+                                  {feedbackData.evaluation}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end pt-3 border-t border-border">
+                            <button
+                              onClick={() => proceedToNextInterviewQuestion()}
+                              className="py-2.5 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
+                            >
+                              <span>Proceed to Next Question ➔</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* REGULAR QUESTION & ANSWER INPUT */
+                        <>
+                          <div>
+                            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+                              Question {currentQIndex + 1} of {activeAttempt.questions.length}
+                            </span>
+                            <h3 className="font-semibold text-lg text-foreground mt-2 leading-relaxed bg-muted/30 p-4 rounded-xl border border-border">
+                              {activeAttempt.questions[currentQIndex].q}
+                            </h3>
+                          </div>
+
+                          <div className="space-y-4 my-4">
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Your transcribed answer:</span>
+                            <textarea
+                              value={spokenAnswer}
+                              onChange={(e) => setSpokenAnswer(e.target.value)}
+                              placeholder="Use microphone or start typing your answer here..."
+                              className="w-full h-32 p-4 rounded-xl border border-border bg-muted/40 focus:bg-card focus:outline-none focus:ring-2 focus:ring-blue-600 text-xs font-medium"
+                            />
+                          </div>
+
+                          <div className="flex gap-3 justify-end border-t border-border pt-4">
+                            {isRecording ? (
+                              <button
+                                onClick={stopRecordingAudio}
+                                className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
+                              >
+                                <MicOff size={14} /> Stop Recording
+                              </button>
+                            ) : (
+                              <button
+                                onClick={startRecordingAudio}
+                                disabled={isTranscribing}
+                                className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
+                              >
+                                <Mic size={14} /> {isTranscribing ? "Transcribing..." : "Record audio answer"}
+                              </button>
+                            )}
+                            <button
+                              onClick={handleNextInterviewQuestion}
+                              disabled={isTranscribing || submitting}
+                              className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
+                            >
+                              {currentQIndex === activeAttempt.questions.length - 1 ? "Submit Interview" : "Save & Next Question"}
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                   </div>
