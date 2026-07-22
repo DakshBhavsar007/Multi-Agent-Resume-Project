@@ -92,7 +92,17 @@ async function req(method, path, body=null, isFile=false) {
 // AUTH
 export const authAPI = {
   register: (b) => req("POST","/auth/register",b),
-  createSupportTicket: (ticketData) => req("POST", "/support/ticket", ticketData),
+  createSupportTicket: (ticketData) => {
+    return fetch(`${API_HOST}/api/v1/support/ticket`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(ticketData)
+    }).then(async (res) => {
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to submit ticket");
+      return data.data;
+    });
+  },
   login: async (email,password) => {
     const d = await req("POST","/auth/login",
                          {email,password})

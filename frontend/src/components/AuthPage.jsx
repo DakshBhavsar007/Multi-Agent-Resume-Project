@@ -580,21 +580,17 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = await authAPI.createSupportTicket({
+      await authAPI.createSupportTicket({
         name: supportName,
         email: supportEmail,
         subject: supportSubject,
         message: supportMessage
       });
-      if (data && data.success) {
-        toast.success('Support ticket submitted! We will review your appeal shortly.');
-        setShowSupportModal(false);
-        setSupportName('');
-        setSupportSubject('Banned Account Appeal');
-        setSupportMessage('');
-      } else {
-        toast.error(data?.error || 'Failed to submit ticket. Please try again.');
-      }
+      toast.success('Support ticket submitted! We will review your appeal shortly.');
+      setShowSupportModal(false);
+      setSupportName('');
+      setSupportSubject('Banned Account Appeal');
+      setSupportMessage('');
     } catch (err) {
       toast.error(err.message || 'Failed to submit appeal. Please try again.');
     } finally {
