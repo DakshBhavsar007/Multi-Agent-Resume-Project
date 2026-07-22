@@ -44,6 +44,18 @@ export default function MockInterviewPage() {
   const [transcript, setTranscript] = useState([]); // Array of { q: string, answer_text: string }
   const [isMuted, setIsMuted] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
+  
+  // Coding states
+  const [codingTab, setCodingTab] = useState("description"); // "description" | "output"
+  const [codeContent, setCodeContent] = useState("");
+  const [compiling, setCompiling] = useState(false);
+  const [compileOutput, setCompileOutput] = useState("");
+  const [runStatus, setRunStatus] = useState({}); // track run/pass status per coding slug
+  
+  // View mode & selected result
+  const [viewMode, setViewMode] = useState("dashboard"); // "dashboard" | "test" | "result"
+  const [selectedResult, setSelectedResult] = useState(null);
+
   // AI Feedback & 15s Muted Timer states
   const [showQuestionFeedback, setShowQuestionFeedback] = useState(false);
   const [feedbackData, setFeedbackData] = useState(null);
