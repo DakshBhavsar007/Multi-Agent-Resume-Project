@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Shield, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
+import { Shield, Eye, EyeOff, Loader2, Lock, Mail, Sun, Moon } from 'lucide-react';
 import { useAdminAuthStore } from '../../stores/adminAuthStore';
 import { API_HOST } from '../../lib/api';
 
@@ -13,12 +13,25 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
 
-  // Background particle animation effect and auth check
+  // Sync theme with document.documentElement.classList
   useEffect(() => {
-    // Force dark mode for admin pages
-    document.documentElement.classList.add('dark');
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  useEffect(() => {
     // Auto-redirect if already logged in as admin
     if (adminAuth.adminToken) {
       navigate('/admin/dashboard', { replace: true });
@@ -74,6 +87,15 @@ export default function AdminLogin() {
       position: 'relative',
       overflow: 'hidden'
     }}>
+      {/* Theme Toggle Button */}
+      <button 
+        onClick={toggleTheme} 
+        className="absolute top-6 right-6 p-3 rounded-full bg-slate-200/80 dark:bg-zinc-800/80 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 backdrop-blur-md border border-slate-300 dark:border-zinc-700 transition z-20"
+        title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      >
+        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+
       {/* Decorative background glows */}
       <div style={{
         position: 'absolute',

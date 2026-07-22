@@ -35,18 +35,23 @@ export default function AdminDashboard() {
   
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
 
-  // Toggle Dark Mode
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('theme', nextTheme);
-    if (nextTheme === 'dark') {
+  // Sync theme with document.documentElement.classList
+  useEffect(() => {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // Toggle Dark / Light Mode
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
   const getAdminToken = () => {
@@ -175,38 +180,38 @@ export default function AdminDashboard() {
   const filteredItems = getFilteredItems();
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans flex flex-col transition-colors duration-200 dark:bg-[#09090b] dark:text-zinc-100 light:bg-white light:text-zinc-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 font-sans flex flex-col transition-colors duration-200">
       {/* Header */}
-      <header className="border-b border-zinc-800 bg-[#0d0d11]/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-[#0d0d11]/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-zinc-100 flex items-center justify-center shadow-md">
-            <span className="text-zinc-900 font-extrabold text-lg">B</span>
+          <div className="w-9 h-9 rounded-lg bg-slate-900 dark:bg-zinc-100 flex items-center justify-center shadow-md">
+            <span className="text-white dark:text-zinc-900 font-extrabold text-lg">B</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">Between AI Control Deck</h1>
-            <p className="text-xs text-zinc-400 font-mono">System Administrator</p>
+            <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Between AI Control Deck</h1>
+            <p className="text-xs text-slate-500 dark:text-zinc-400 font-mono">System Administrator</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
           <button 
             onClick={toggleTheme} 
-            className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
-            title="Toggle theme"
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-400 dark:hover:text-white transition shadow-sm"
+            title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           
-          <div className="h-5 w-[1px] bg-zinc-800" />
+          <div className="h-5 w-[1px] bg-slate-200 dark:bg-zinc-800" />
           
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-sm font-semibold text-zinc-200">Admin Account</p>
-              <p className="text-xs text-zinc-500">admin@between.com</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">Admin Account</p>
+              <p className="text-xs text-slate-500 dark:text-zinc-500">admin@between.com</p>
             </div>
             <button 
               onClick={handleLogout} 
-              className="p-2 rounded-lg bg-red-950/40 border border-red-900/60 hover:bg-red-900/60 text-red-400 hover:text-white transition"
+              className="p-2 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 dark:bg-red-950/40 dark:border-red-900/60 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 dark:hover:text-white transition"
               title="Logout"
             >
               <LogOut className="w-5 h-5" />
@@ -220,66 +225,66 @@ export default function AdminDashboard() {
         
         {/* Stats Grid */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-[#121217] border border-zinc-800/80 rounded-xl p-5 flex items-center justify-between shadow-lg">
+          <div className="bg-white dark:bg-[#121217] border border-slate-200/80 dark:border-zinc-800/80 rounded-xl p-5 flex items-center justify-between shadow-sm dark:shadow-lg transition-colors">
             <div>
-              <p className="text-xs text-zinc-500 font-medium tracking-wider uppercase">Job Seekers</p>
-              <h3 className="text-2xl font-bold mt-1 text-white">{stats.total_seekers}</h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium tracking-wider uppercase">Job Seekers</p>
+              <h3 className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{stats.total_seekers}</h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
-              <Users className="w-6 h-6 text-zinc-400" />
+            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-900 flex items-center justify-center border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400">
+              <Users className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-[#121217] border border-zinc-800/80 rounded-xl p-5 flex items-center justify-between shadow-lg">
+          <div className="bg-white dark:bg-[#121217] border border-slate-200/80 dark:border-zinc-800/80 rounded-xl p-5 flex items-center justify-between shadow-sm dark:shadow-lg transition-colors">
             <div>
-              <p className="text-xs text-zinc-500 font-medium tracking-wider uppercase">Recruiters</p>
-              <h3 className="text-2xl font-bold mt-1 text-white">{stats.total_recruiters}</h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium tracking-wider uppercase">Recruiters</p>
+              <h3 className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{stats.total_recruiters}</h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
-              <Briefcase className="w-6 h-6 text-zinc-400" />
+            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-900 flex items-center justify-center border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400">
+              <Briefcase className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-[#121217] border border-zinc-800/80 rounded-xl p-5 flex items-center justify-between shadow-lg">
+          <div className="bg-white dark:bg-[#121217] border border-slate-200/80 dark:border-zinc-800/80 rounded-xl p-5 flex items-center justify-between shadow-sm dark:shadow-lg transition-colors">
             <div>
-              <p className="text-xs text-zinc-500 font-medium tracking-wider uppercase">Active Sessions</p>
-              <h3 className="text-2xl font-bold mt-1 text-white">{stats.total_sessions}</h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium tracking-wider uppercase">Active Sessions</p>
+              <h3 className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{stats.total_sessions}</h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
-              <Layers className="w-6 h-6 text-zinc-400" />
+            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-900 flex items-center justify-center border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400">
+              <Layers className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-[#121217] border border-zinc-800/80 rounded-xl p-5 flex items-center justify-between shadow-lg">
+          <div className="bg-white dark:bg-[#121217] border border-slate-200/80 dark:border-zinc-800/80 rounded-xl p-5 flex items-center justify-between shadow-sm dark:shadow-lg transition-colors">
             <div>
-              <p className="text-xs text-zinc-500 font-medium tracking-wider uppercase">Open Tickets</p>
-              <h3 className="text-2xl font-bold mt-1 text-white">{stats.open_tickets}</h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium tracking-wider uppercase">Open Tickets</p>
+              <h3 className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{stats.open_tickets}</h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
-              <Mail className="w-6 h-6 text-zinc-400" />
+            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-900 flex items-center justify-center border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400">
+              <Mail className="w-6 h-6" />
             </div>
           </div>
         </section>
 
         {/* Tabs and Controls */}
-        <section className="bg-[#121217] border border-zinc-800/80 rounded-2xl p-6 shadow-xl flex flex-col gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/60 pb-6">
-            <div className="flex gap-2 p-1 rounded-xl bg-zinc-900 border border-zinc-800 self-start">
+        <section className="bg-white dark:bg-[#121217] border border-slate-200/80 dark:border-zinc-800/80 rounded-2xl p-6 shadow-sm dark:shadow-xl flex flex-col gap-6 transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 dark:border-zinc-800/60 pb-6">
+            <div className="flex gap-2 p-1 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 self-start">
               <button 
                 onClick={() => { setActiveTab('seekers'); setSearchQuery(''); }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'seekers' ? 'bg-zinc-100 text-zinc-950 shadow-md' : 'text-zinc-400 hover:text-zinc-200'}`}
+                className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'seekers' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
               >
                 Job Seekers
               </button>
               <button 
                 onClick={() => { setActiveTab('recruiters'); setSearchQuery(''); }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'recruiters' ? 'bg-zinc-100 text-zinc-950 shadow-md' : 'text-zinc-400 hover:text-zinc-200'}`}
+                className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'recruiters' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
               >
                 Recruiters
               </button>
               <button 
                 onClick={() => { setActiveTab('tickets'); setSearchQuery(''); }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'tickets' ? 'bg-zinc-100 text-zinc-950 shadow-md' : 'text-zinc-400 hover:text-zinc-200'}`}
+                className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'tickets' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
               >
                 Support Tickets
                 {stats.open_tickets > 0 && (
@@ -291,7 +296,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="relative w-full sm:max-w-xs">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-zinc-500">
                 <Search className="w-4 h-4" />
               </span>
               <input 
@@ -299,7 +304,7 @@ export default function AdminDashboard() {
                 placeholder={`Search ${activeTab}...`} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2 pl-9 pr-4 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition"
+                className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl py-2 pl-9 pr-4 text-sm text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-700 transition"
               />
             </div>
           </div>
@@ -307,20 +312,20 @@ export default function AdminDashboard() {
           {/* Table / List View */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-8 h-8 rounded-full border-2 border-t-zinc-400 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-              <p className="text-zinc-500 text-sm font-medium">Fetching database records...</p>
+              <div className="w-8 h-8 rounded-full border-2 border-t-slate-600 dark:border-t-zinc-400 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+              <p className="text-slate-500 dark:text-zinc-500 text-sm font-medium">Fetching database records...</p>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="text-center py-20 border border-dashed border-zinc-800 rounded-xl">
-              <Info className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-              <h4 className="text-zinc-400 font-semibold text-sm">No records found</h4>
-              <p className="text-zinc-600 text-xs mt-1">Try tweaking your search filter criteria.</p>
+            <div className="text-center py-20 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
+              <Info className="w-10 h-10 text-slate-400 dark:text-zinc-600 mx-auto mb-3" />
+              <h4 className="text-slate-600 dark:text-zinc-400 font-semibold text-sm">No records found</h4>
+              <p className="text-slate-400 dark:text-zinc-600 text-xs mt-1">Try tweaking your search filter criteria.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-800/80 text-zinc-400 text-xs font-semibold uppercase tracking-wider">
+                  <tr className="border-b border-slate-200 dark:border-zinc-800/80 text-slate-500 dark:text-zinc-400 text-xs font-semibold uppercase tracking-wider bg-slate-50/50 dark:bg-transparent">
                     {activeTab === 'tickets' ? (
                       <>
                         <th className="py-4 px-4">Ticket details</th>
@@ -340,26 +345,26 @@ export default function AdminDashboard() {
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/40 text-sm">
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/40 text-sm">
                   {filteredItems.map((item) => (
-                    <tr key={item.id} className="hover:bg-zinc-900/30 transition duration-150">
+                    <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition duration-150">
                       {activeTab === 'tickets' ? (
                         <>
                           <td className="py-4 px-4">
-                            <div className="font-semibold text-zinc-200">{item.name}</div>
-                            <div className="text-xs text-zinc-500">{item.email}</div>
+                            <div className="font-semibold text-slate-900 dark:text-zinc-200">{item.name}</div>
+                            <div className="text-xs text-slate-500 dark:text-zinc-500">{item.email}</div>
                           </td>
-                          <td className="py-4 px-4 text-zinc-300 font-medium">{item.subject}</td>
-                          <td className="py-4 px-4 max-w-xs truncate text-zinc-400" title={item.message}>
+                          <td className="py-4 px-4 text-slate-700 dark:text-zinc-300 font-medium">{item.subject}</td>
+                          <td className="py-4 px-4 max-w-xs truncate text-slate-500 dark:text-zinc-400" title={item.message}>
                             {item.message}
                           </td>
                           <td className="py-4 px-4">
                             {item.status === 'open' ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold bg-amber-950/40 border border-amber-900/60 text-amber-400">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-400">
                                 <AlertTriangle className="w-3 h-3" /> Open
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold bg-emerald-950/40 border border-emerald-900/60 text-emerald-400">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-400">
                                 <CheckCircle className="w-3 h-3" /> Resolved
                               </span>
                             )}
@@ -368,7 +373,7 @@ export default function AdminDashboard() {
                             {item.status === 'open' && (
                               <button 
                                 onClick={() => handleResolveTicket(item.id)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 hover:bg-white text-zinc-950 transition"
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-950 transition"
                               >
                                 Mark Resolved
                               </button>
@@ -378,22 +383,26 @@ export default function AdminDashboard() {
                       ) : (
                         <>
                           <td className="py-4 px-4">
-                            <div className="font-semibold text-zinc-200">{item.name}</div>
-                            <div className="text-xs text-zinc-500 font-mono">ID: {item.id.slice(0,8)}</div>
+                            <div className="font-semibold text-slate-900 dark:text-zinc-200">{item.name}</div>
+                            <div className="text-xs text-slate-500 dark:text-zinc-500 font-mono">ID: {item.id.slice(0,8)}</div>
                           </td>
-                          <td className="py-4 px-4 text-zinc-300 font-mono">{item.email}</td>
+                          <td className="py-4 px-4 text-slate-700 dark:text-zinc-300 font-mono">{item.email}</td>
                           <td className="py-4 px-4">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${item.tier === 'premium' || item.tier === 'business' || item.tier === 'enterprise' ? 'bg-indigo-950 text-indigo-300 border border-indigo-900' : 'bg-zinc-800 text-zinc-400'}`}>
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${
+                              item.tier === 'premium' || item.tier === 'business' || item.tier === 'enterprise' 
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-900' 
+                                : 'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
+                            }`}>
                               {item.tier}
                             </span>
                           </td>
                           <td className="py-4 px-4">
                             {item.is_banned ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-950/60 border border-red-900 text-red-400 text-xs font-semibold">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/60 dark:border-red-900 dark:text-red-400 text-xs font-semibold">
                                 <ShieldAlert className="w-3 h-3" /> Banned
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-900 text-emerald-400 text-xs font-semibold">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:border-emerald-900 dark:text-emerald-400 text-xs font-semibold">
                                 Active
                               </span>
                             )}
@@ -403,8 +412,8 @@ export default function AdminDashboard() {
                               onClick={() => handleBanToggle(activeTab === 'seekers' ? 'seeker' : 'recruiter', item.id, item.is_banned)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition border ${
                                 item.is_banned 
-                                  ? 'bg-emerald-950/40 border-emerald-900/60 text-emerald-400 hover:bg-emerald-900/60' 
-                                  : 'bg-red-950/40 border-red-900/60 text-red-400 hover:bg-red-900/60'
+                                  ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-400 dark:hover:bg-emerald-900/60' 
+                                  : 'bg-red-50 hover:bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-900/60'
                               }`}
                             >
                               {item.is_banned ? 'Unban User' : 'Ban User'}
@@ -422,7 +431,7 @@ export default function AdminDashboard() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-900 py-6 text-center text-xs text-zinc-600 font-mono mt-auto">
+      <footer className="border-t border-slate-200 dark:border-zinc-900 py-6 text-center text-xs text-slate-400 dark:text-zinc-600 font-mono mt-auto bg-white/50 dark:bg-transparent">
         &copy; 2026 Between AI. Dedicated System Console. All activities logged.
       </footer>
     </div>
