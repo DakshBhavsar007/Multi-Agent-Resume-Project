@@ -447,6 +447,7 @@ export const seekerAPI = {
   createMockAttempt: (attemptType) => seekerReq('POST', '/api/v1/seeker/mock-interview/create', { attempt_type: attemptType }),
   listMockAttempts: () => seekerReq('GET', '/api/v1/seeker/mock-interview/list'),
   getMockAttempt: (id) => seekerReq('GET', `/api/v1/seeker/mock-interview/${id}`),
+  saveMockProgress: (id, payload) => seekerReq('POST', `/api/v1/seeker/mock-interview/${id}/progress`, payload),
   submitMockAttempt: (id, payload) => seekerReq('POST', `/api/v1/seeker/mock-interview/${id}/submit`, payload),
   transcribeAudio: (audioBlob) => {
     const fd = new FormData();

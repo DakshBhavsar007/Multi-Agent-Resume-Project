@@ -1907,6 +1907,10 @@ def get_mock_attempt(request, attempt_id):
         if not attempt:
             return JsonResponse(error_response("Mock attempt not found"), status=404)
             
+        transcript = []
+        if isinstance(attempt.answers, dict) and "transcript" in attempt.answers:
+            transcript = attempt.answers.get("transcript", [])
+
         return JsonResponse(success_response({
             "attempt_id": str(attempt.id),
             "attempt_type": attempt.attempt_type,
@@ -1914,10 +1918,48 @@ def get_mock_attempt(request, attempt_id):
             "score": attempt.score,
             "questions": attempt.questions,
             "answers": attempt.answers,
+            "transcript": transcript,
             "feedback": attempt.feedback,
             "created_at": attempt.created_at.isoformat(),
             "submitted_at": attempt.submitted_at.isoformat() if attempt.submitted_at else None
         }))
+    return _inner(request)
+
+
+@csrf_exempt
+def save_mock_progress(request, attempt_id):
+    """
+    POST /api/v1/seeker/mock-interview/<attempt_id>/progress
+    Body: { "answers": {...}, "transcript": [...] }
+    """
+    from api.views.seeker_auth import require_seeker_jwt
+    @require_seeker_jwt
+    def _inner(request):
+        if request.method != "POST":
+            return JsonResponse(error_response("Method not allowed"), status=405)
+            
+        seeker = request.seeker
+        from api.models import SeekerMockAttempt
+        attempt = SeekerMockAttempt.objects.filter(id=attempt_id, seeker=seeker).first()
+        if not attempt:
+            return JsonResponse(error_response("Mock attempt not found"), status=404)
+            
+        try:
+            data = json.loads(request.body)
+            answers = data.get("answers")
+            transcript = data.get("transcript")
+            
+            if answers is not None:
+                attempt.answers = answers
+            if transcript is not None:
+                if not isinstance(attempt.answers, dict):
+                    attempt.answers = {}
+                attempt.answers["transcript"] = transcript
+                
+            attempt.save()
+            return JsonResponse(success_response({"status": "saved"}))
+        except Exception as e:
+            return JsonResponse(error_response(str(e)), status=400)
     return _inner(request)
 
 

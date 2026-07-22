@@ -183,21 +183,46 @@ export default function MockInterviewPage() {
       const attemptData = res.attempt || res;
       setActiveAttempt(attemptData);
 
-      const savedTranscript = attemptData.transcript || attemptData.answers_data || [];
+      const savedAnswers = attemptData.answers || {};
+      setAnswers(savedAnswers);
+
+      const savedTranscript = attemptData.transcript || savedAnswers.transcript || [];
       setTranscript(savedTranscript);
-      setAnswers(attemptData.answers || {});
 
       let resumeIdx = 0;
-      if (savedTranscript && savedTranscript.length > 0) {
-        resumeIdx = Math.min(savedTranscript.length, (attemptData.questions?.length || 1) - 1);
+      const totalQ = attemptData.questions?.length || 1;
+
+      if (attemptData.attempt_type === "interview") {
+        resumeIdx = Math.min(savedTranscript.length, totalQ - 1);
+      } else if (attemptData.attempt_type === "aptitude" || attemptData.attempt_type === "mcq") {
+        for (let i = 0; i < totalQ; i++) {
+          if (savedAnswers[String(i)] === undefined && savedAnswers[i] === undefined) {
+            resumeIdx = i;
+            break;
+          }
+        }
+      } else if (attemptData.attempt_type === "coding") {
+        for (let i = 0; i < totalQ; i++) {
+          const slug = attemptData.questions[i]?.slug;
+          if (!slug || !savedAnswers[slug]) {
+            resumeIdx = i;
+            break;
+          }
+        }
+        const currentSlug = attemptData.questions[resumeIdx]?.slug;
+        const savedCode = savedAnswers[currentSlug]?.code;
+        const startCode = attemptData.questions[resumeIdx]?.starter_code;
+        const codeText = savedCode || (typeof startCode === "object" ? (startCode?.python || startCode?.javascript || "") : (startCode || ""));
+        setCodeContent(codeText || "// Write your code here");
       }
+
       setCurrentQIndex(resumeIdx);
       setSpokenAnswer("");
       setShowQuestionFeedback(false);
       setFeedbackData(null);
 
       setViewMode("test");
-      toast.success(`Resumed ${attemptData.attempt_type} mock attempt!`);
+      toast.success(`Resumed ${attemptData.attempt_type} mock practice from Question ${resumeIdx + 1}!`);
 
       if (attemptData.attempt_type === "interview" && attemptData.questions?.[resumeIdx]) {
         speakAIHost(attemptData.questions[resumeIdx].q);
@@ -361,6 +386,9 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
 
     const newTranscript = [...transcript, { q: currentQ.q, answer_text: candidateAns, feedback: feedbackObj }];
     setTranscript(newTranscript);
+    if (activeAttempt?.attempt_id) {
+      seekerAPI.saveMockProgress(activeAttempt.attempt_id, { transcript: newTranscript }).catch(() => {});
+    }
 
     if (!isMuted) {
       speakAIHost(`Feedback for Question ${currentQIndex + 1}. Expected: ${evaluation}`);
@@ -440,6 +468,9 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
       }
     };
     setAnswers(newAnswers);
+    if (activeAttempt?.attempt_id) {
+      seekerAPI.saveMockProgress(activeAttempt.attempt_id, { answers: newAnswers }).catch(() => {});
+    }
 
     if (currentQIndex + 1 < activeAttempt.questions.length) {
       const nextIdx = currentQIndex + 1;
@@ -798,7 +829,13 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
                             return (
                               <button
                                 key={optKey}
-                                onClick={() => setAnswers({ ...answers, [currentQIndex.toString()]: optKey })}
+                                onClick={() => {
+                                  const newAns = { ...answers, [currentQIndex.toString()]: optKey };
+                                  setAnswers(newAns);
+                                  if (activeAttempt?.attempt_id) {
+                                    seekerAPI.saveMockProgress(activeAttempt.attempt_id, { answers: newAns }).catch(() => {});
+                                  }
+                                }}
                                 className={`w-full p-4 rounded-xl text-left border text-sm font-medium transition flex justify-between items-center ${
                                   isSelected
                                     ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-sky-400"
