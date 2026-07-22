@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, ChevronDown, Info, Heart } from "lucide-react";
+import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, ChevronDown, Info, Heart, Grid3x3, Bot } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { OnboardingTour, useTour } from "../OnboardingTour";
 import { SocialTooltip } from "../ui/social-media";
@@ -134,10 +134,16 @@ export function Header() {
   const [toolsOpen, setToolsOpen] = useState(false);
   const toolsDropdownRef = useRef(null);
 
+  const [appsOpen, setAppsOpen] = useState(false);
+  const appsDropdownRef = useRef(null);
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(event.target)) {
         setToolsOpen(false);
+      }
+      if (appsDropdownRef.current && !appsDropdownRef.current.contains(event.target)) {
+        setAppsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -276,6 +282,55 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
+
+          {/* 9-Box App Switcher Dropdown */}
+          <div className="relative" ref={appsDropdownRef}>
+            <button
+              onClick={() => setAppsOpen(!appsOpen)}
+              aria-label="Between Applications"
+              className="pill p-2 text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-center transition shrink-0 rounded-full"
+              title="Between Applications"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </button>
+
+            {appsOpen && (
+              <div className="absolute right-0 mt-2 w-52 rounded-xl p-1.5 z-50 flex flex-col gap-0.5 shadow-2xl border border-border bg-popover text-popover-foreground">
+                <Link
+                  to="/jobs"
+                  onClick={() => setAppsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item font-semibold text-foreground hover:bg-muted/80 transition"
+                >
+                  <Home size={14} className="text-blue-500 shrink-0" />
+                  <span>Between Jobs</span>
+                </Link>
+                <a
+                  href="/dashboard"
+                  onClick={() => setAppsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item text-muted-foreground hover:bg-muted/80 hover:text-foreground transition"
+                >
+                  <LayoutDashboard size={14} className="text-muted-foreground shrink-0" />
+                  <span>Between Recruiter</span>
+                </a>
+                <a
+                  href="/developer"
+                  onClick={() => setAppsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item text-muted-foreground hover:bg-muted/80 hover:text-foreground transition"
+                >
+                  <Bot size={14} className="text-muted-foreground shrink-0" />
+                  <span>Between Developer</span>
+                </a>
+                <Link
+                  to="/support"
+                  onClick={() => setAppsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item text-muted-foreground hover:bg-muted/80 hover:text-foreground transition border-t border-border/50 mt-1 pt-2"
+                >
+                  <HelpCircle size={14} className="text-muted-foreground shrink-0" />
+                  <span>Support & Appeals</span>
+                </Link>
+              </div>
+            )}
+          </div>
           {isLoggedIn && (
             <button
               data-tour="seeker-help-btn"
