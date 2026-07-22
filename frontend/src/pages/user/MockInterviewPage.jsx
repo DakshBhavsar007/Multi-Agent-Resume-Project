@@ -21,7 +21,9 @@ import {
   CheckCircle2,
   XCircle,
   Cpu,
-  Bookmark
+  Bookmark,
+  Target,
+  Lightbulb
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -150,6 +152,64 @@ export default function MockInterviewPage() {
       setLoading(false);
     }
   };
+  // 15-Second Muted Reading Countdown Timer
+  useEffect(() => {
+    let timerId = null;
+    if (showQuestionFeedback && isMuted) {
+      setFeedbackTimer(15);
+      timerId = setInterval(() => {
+        setFeedbackTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerId);
+            proceedToNextInterviewQuestion();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setFeedbackTimer(15);
+    }
+    return () => {
+      if (timerId) clearInterval(timerId);
+    };
+  }, [showQuestionFeedback, isMuted]);
+
+  // Resume In-Progress Attempt
+  const handleResumeAttempt = async (attemptObj) => {
+    setLoading(true);
+    try {
+      const res = await seekerAPI.getMockAttempt(attemptObj.attempt_id || attemptObj.id);
+      const attemptData = res.attempt || res;
+      setActiveAttempt(attemptData);
+
+      const savedTranscript = attemptData.transcript || attemptData.answers_data || [];
+      setTranscript(savedTranscript);
+      setAnswers(attemptData.answers || {});
+
+      let resumeIdx = 0;
+      if (savedTranscript && savedTranscript.length > 0) {
+        resumeIdx = Math.min(savedTranscript.length, (attemptData.questions?.length || 1) - 1);
+      }
+      setCurrentQIndex(resumeIdx);
+      setSpokenAnswer("");
+      setShowQuestionFeedback(false);
+      setFeedbackData(null);
+
+      setViewMode("test");
+      toast.success(`Resumed ${attemptData.attempt_type} mock attempt!`);
+
+      if (attemptData.attempt_type === "interview" && attemptData.questions?.[resumeIdx]) {
+        speakAIHost(attemptData.questions[resumeIdx].q);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to resume mock attempt");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Mute AI Voice toggle with instant cancel
   const handleToggleMute = () => {
     const nextMuted = !isMuted;
@@ -157,9 +217,7 @@ export default function MockInterviewPage() {
     if (nextMuted && typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
-    toast(nextMuted ? "AI Voice Muted" : "AI Voice Unmuted", {
-      icon: nextMuted ? "🔇" : "🔊"
-    });
+    toast.success(nextMuted ? "AI Voice Muted" : "AI Voice Unmuted");
   };
 
   // Web Speech synthesis
@@ -255,7 +313,7 @@ export default function MockInterviewPage() {
     }
   };
 
-  // Save & Next Question: Evaluates Answer & Shows Feedback + 15s Timer if Muted
+  // Save & Next Question: Evaluates Answer & Shows Feedback
   const handleNextInterviewQuestion = () => {
     if (!spokenAnswer.trim()) {
       toast.error("Please answer the current question first.");
@@ -306,27 +364,10 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
 
     if (!isMuted) {
       speakAIHost(`Feedback for Question ${currentQIndex + 1}. Expected: ${evaluation}`);
-    } else {
-      // If AI Voice is MUTED, start 15 seconds reading timer
-      setFeedbackTimer(15);
-      if (feedbackIntervalRef.current) clearInterval(feedbackIntervalRef.current);
-      feedbackIntervalRef.current = setInterval(() => {
-        setFeedbackTimer(prev => {
-          if (prev <= 1) {
-            clearInterval(feedbackIntervalRef.current);
-            proceedToNextInterviewQuestion(newTranscript);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     }
   };
 
   const proceedToNextInterviewQuestion = (currentTrans = transcript) => {
-    if (feedbackIntervalRef.current) {
-      clearInterval(feedbackIntervalRef.current);
-    }
     setShowQuestionFeedback(false);
     setFeedbackData(null);
     setSpokenAnswer("");
@@ -598,7 +639,13 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
                   {attempts.map((att) => (
                     <div
                       key={att.attempt_id}
-                      onClick={() => handleViewResult(att.attempt_id)}
+                      onClick={() => {
+                        if (att.status === "in_progress") {
+                          handleResumeAttempt(att);
+                        } else {
+                          handleViewResult(att.attempt_id);
+                        }
+                      }}
                       className="p-4 flex items-center justify-between hover:bg-muted/30 cursor-pointer transition"
                     >
                       <div className="flex items-center gap-4">
@@ -948,34 +995,36 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
                                 onClick={() => proceedToNextInterviewQuestion()}
                                 className="px-3 py-1 bg-amber-500 text-black font-bold text-[11px] rounded-lg hover:bg-amber-400 transition"
                               >
-                                Skip & Next Question ➔
+                                {currentQIndex === activeAttempt.questions.length - 1 ? "Finish & Submit Interview ➔" : "Skip & Next Question ➔"}
                               </button>
                             </div>
                           )}
 
                           <div>
                             <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">
-                              AI Instant Evaluation — Question {feedbackData.qNum}
+                              AI Instant Evaluation — Question {feedbackData.qNum} of {activeAttempt.questions.length}
                             </span>
                             <h4 className="font-bold text-sm text-foreground mt-1 mb-3">
                               {feedbackData.question}
                             </h4>
 
                             <div className="space-y-3 font-sans text-xs">
-                              {/* 🎯 EXPECTED IDEAL ANSWER */}
+                              {/* EXPECTED IDEAL ANSWER */}
                               <div className="bg-blue-500/10 border border-blue-500/20 p-3.5 rounded-xl space-y-1">
                                 <div className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 text-xs">
-                                  <span>🎯 What AI Expected (Ideal Answer)</span>
+                                  <Target size={15} className="text-blue-500" />
+                                  <span>What AI Expected (Ideal Answer)</span>
                                 </div>
                                 <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-[11px]">
                                   {feedbackData.expectedAnswer}
                                 </p>
                               </div>
 
-                              {/* 💡 CANDIDATE ANSWER & ANALYSIS */}
+                              {/* CANDIDATE ANSWER & ANALYSIS */}
                               <div className="bg-emerald-500/10 border border-emerald-500/20 p-3.5 rounded-xl space-y-1">
                                 <div className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 text-xs">
-                                  <span>💡 Your Answer & AI Feedback</span>
+                                  <Lightbulb size={15} className="text-emerald-500" />
+                                  <span>Your Answer & AI Feedback</span>
                                 </div>
                                 <div className="text-muted-foreground italic text-[11px] mb-1">
                                   "{feedbackData.candidateAnswer}"
@@ -992,7 +1041,7 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
                               onClick={() => proceedToNextInterviewQuestion()}
                               className="py-2.5 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
                             >
-                              <span>Proceed to Next Question ➔</span>
+                              <span>{currentQIndex === activeAttempt.questions.length - 1 ? "Finish & Submit Interview ➔" : "Proceed to Next Question ➔"}</span>
                             </button>
                           </div>
                         </div>

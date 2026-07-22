@@ -47,11 +47,11 @@ async function req(method, path, body=null, isFile=false) {
     window.location.href = "/login"
     throw new Error("Session expired")
   }
-  if (res.status === 403 && data.error && (
+  if (res.status === 403 || (data && !data.success && data.error && (
     data.error.toLowerCase().includes("banned") || 
     data.error.toLowerCase().includes("deactivated") ||
     data.error.toLowerCase().includes("contact support")
-  )) {
+  ))) {
     let email = "";
     try {
       const u = localStorage.getItem("between_user");
@@ -72,7 +72,7 @@ async function req(method, path, body=null, isFile=false) {
       ? `/jobs/login?banned=true&email=${encodeURIComponent(email)}`
       : `/login?banned=true&email=${encodeURIComponent(email)}`;
     window.location.href = targetUrl;
-    throw new Error(data.error);
+    throw new Error(data.error || "Account banned");
   }
   if (res.status === 429) {
     const e = new Error("Rate limit exceeded")
@@ -320,6 +320,20 @@ async function seekerReq(method, path, body = null, isFile = false) {
     localStorage.removeItem('vish_seeker_data');
     window.location.href = '/jobs/login';
     throw new Error('Session expired');
+  }
+  if (res.status === 403 || (!data.success && data.error && (
+    data.error.toLowerCase().includes("banned") ||
+    data.error.toLowerCase().includes("deactivated")
+  ))) {
+    let email = "";
+    try {
+      const s = localStorage.getItem("vish_seeker_data");
+      if (s) email = JSON.parse(s).email || "";
+    } catch(e) {}
+    localStorage.removeItem('vish_seeker_token');
+    localStorage.removeItem('vish_seeker_data');
+    window.location.href = `/jobs/login?banned=true&email=${encodeURIComponent(email)}`;
+    throw new Error(data.error || "Account banned");
   }
   if (!data.success) throw new Error(data.error || 'Request failed');
   return data.data;
