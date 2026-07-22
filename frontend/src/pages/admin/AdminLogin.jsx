@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { Shield, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
+import { useAdminAuthStore } from '../../stores/adminAuthStore';
 import { API_HOST } from '../../lib/api';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const recruiterAuth = useAuthStore();
+  const adminAuth = useAdminAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,10 +20,10 @@ export default function AdminLogin() {
     document.documentElement.classList.add('dark');
 
     // Auto-redirect if already logged in as admin
-    if (recruiterAuth.jwt && recruiterAuth.company?.is_admin) {
+    if (adminAuth.adminToken) {
       navigate('/admin/dashboard', { replace: true });
     }
-  }, [recruiterAuth.jwt, recruiterAuth.company, navigate]);
+  }, [adminAuth.adminToken, navigate]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -48,7 +48,7 @@ export default function AdminLogin() {
         return;
       }
       if (resData.success) {
-        recruiterAuth.setAuth(resData.data);
+        adminAuth.setAdminAuth(resData.data);
         toast.success("Welcome back, Administrator!");
         navigate('/admin/dashboard');
       } else {

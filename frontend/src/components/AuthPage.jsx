@@ -454,18 +454,14 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   useEffect(() => {
     if (isLogin) {
       if (role === 'recruiter' && recruiterAuth.jwt) {
-        if (recruiterAuth.company?.is_admin) {
-          navigate('/admin/dashboard', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+        navigate('/dashboard', { replace: true });
       } else if (role === 'developer' && developerAuth.jwt) {
         navigate('/developer/portal/dashboard', { replace: true });
       } else if (role === 'seeker' && seekerAuth.seekerToken) {
         navigate('/jobs/dashboard', { replace: true });
       }
     }
-  }, [role, isLogin, recruiterAuth.jwt, recruiterAuth.company, developerAuth.jwt, seekerAuth.seekerToken, navigate]);
+  }, [role, isLogin, recruiterAuth.jwt, developerAuth.jwt, seekerAuth.seekerToken, navigate]);
 
   const handleGoogleLogin = () => {
     if (googleClientRef.current) {

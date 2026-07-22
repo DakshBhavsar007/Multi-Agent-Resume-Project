@@ -20,9 +20,29 @@ export default function ProtectedRoute({ children }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem("between_user");
-    if (user) {
-      setAuthorized(true);
+    const userRaw = localStorage.getItem("between_user");
+    const jwt = localStorage.getItem("vish_jwt");
+
+    if (userRaw && jwt) {
+      try {
+        const user = JSON.parse(userRaw);
+        // Block admin user or admin token from entering recruiter dashboard
+        if (user.role === "admin" || user.is_admin || user.id === "admin") {
+          // If logged in as admin, redirect to admin dashboard, else to recruiter login
+          const adminJwt = localStorage.getItem("admin_jwt");
+          if (adminJwt) {
+            navigate("/admin/dashboard", { replace: true });
+          } else {
+            localStorage.removeItem("between_user");
+            localStorage.removeItem("vish_jwt");
+            navigate("/login", { replace: true });
+          }
+          return;
+        }
+        setAuthorized(true);
+      } catch (e) {
+        navigate("/login", { replace: true });
+      }
     } else {
       navigate("/login", { replace: true });
     }

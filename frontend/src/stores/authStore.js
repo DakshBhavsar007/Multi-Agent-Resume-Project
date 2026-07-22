@@ -13,8 +13,7 @@ export const useAuthStore = create((set) => ({
         email: data.email,
         name: data.name || data.email?.split("@")[0] || "User",
         tier: data.tier || "free",
-        role: data.role || (data.is_admin ? "admin" : "recruiter"),
-        is_admin: data.is_admin || false
+        role: "recruiter"
       }));
     }
     set({
@@ -26,7 +25,10 @@ export const useAuthStore = create((set) => ({
   },
   
   clearAuth: () => {
-    localStorage.clear()
+    localStorage.removeItem("vish_jwt");
+    localStorage.removeItem("vish_api_key");
+    localStorage.removeItem("vish_company");
+    localStorage.removeItem("between_user");
     set({company:null,apiKey:"",jwt:"",tier:"free"})
     window.location.href="/login"
   },
@@ -47,8 +49,7 @@ export const useAuthStore = create((set) => ({
           email: company.email,
           name: company.name || company.email?.split("@")[0] || "User",
           tier: company.tier || "free",
-          role: company.role || (company.is_admin ? "admin" : "recruiter"),
-          is_admin: company.is_admin || false
+          role: "recruiter"
         }));
       }
     }

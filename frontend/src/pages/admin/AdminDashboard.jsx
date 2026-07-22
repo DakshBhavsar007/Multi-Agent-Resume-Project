@@ -15,12 +15,12 @@ import {
   Moon,
   Sun
 } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
+import { useAdminAuthStore } from '../../stores/adminAuthStore';
 import { API_HOST } from '../../lib/api';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const recruiterAuth = useAuthStore();
+  const adminAuth = useAdminAuthStore();
   
   const [activeTab, setActiveTab] = useState('seekers');
   const [stats, setStats] = useState({
@@ -49,10 +49,14 @@ export default function AdminDashboard() {
     }
   };
 
+  const getAdminToken = () => {
+    return adminAuth.adminToken || localStorage.getItem('admin_jwt') || '';
+  };
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('vish_jwt');
+      const token = getAdminToken();
       const response = await fetch(`${API_HOST}/api/v1/admin/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -66,9 +70,9 @@ export default function AdminDashboard() {
         setTickets(resData.data.tickets);
       } else {
         toast.error(resData.error || 'Failed to load dashboard data');
-        // If unauthorized, redirect
         if (response.status === 401 || response.status === 403) {
-          navigate('/login');
+          adminAuth.clearAdminAuth();
+          navigate('/admin/login');
         }
       }
     } catch (err) {
@@ -79,10 +83,9 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    // Check if token contains admin claims
-    const token = localStorage.getItem('vish_jwt');
+    const token = getAdminToken();
     if (!token) {
-      navigate('/login');
+      navigate('/admin/login');
       return;
     }
     fetchDashboardData();
@@ -91,7 +94,7 @@ export default function AdminDashboard() {
   const handleBanToggle = async (userType, userId, currentBanStatus) => {
     const action = currentBanStatus ? 'unban' : 'ban';
     try {
-      const token = localStorage.getItem('vish_jwt');
+      const token = getAdminToken();
       const response = await fetch(`${API_HOST}/api/v1/admin/users/ban`, {
         method: 'POST',
         headers: {
@@ -107,7 +110,6 @@ export default function AdminDashboard() {
       const data = await response.json();
       if (data.success) {
         toast.success(`Successfully ${action}ned user!`);
-        // Update local list
         if (userType === 'seeker') {
           setSeekers(seekers.map(s => s.id === userId ? { ...s, is_banned: !currentBanStatus } : s));
           setStats(prev => ({
@@ -127,7 +129,7 @@ export default function AdminDashboard() {
 
   const handleResolveTicket = async (ticketId) => {
     try {
-      const token = localStorage.getItem('vish_jwt');
+      const token = getAdminToken();
       const response = await fetch(`${API_HOST}/api/v1/admin/tickets/resolve`, {
         method: 'POST',
         headers: {
@@ -153,9 +155,9 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    recruiterAuth.clearAuth();
+    adminAuth.clearAdminAuth();
     toast.success('Logged out from admin panel');
-    navigate('/login');
+    navigate('/admin/login');
   };
 
   // Filter items based on search query

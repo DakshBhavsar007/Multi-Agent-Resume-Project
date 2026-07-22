@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
 import { useSeekerAuthStore } from './stores/seekerAuthStore';
 import { usePortalAuthStore } from './stores/portalAuthStore';
+import { useAdminAuthStore } from './stores/adminAuthStore';
 
 import LandingPage from './pages/LandingPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -152,17 +153,21 @@ export default function App() {
   useEffect(() => {
     const handleStorageChange = (e) => {
       // e.key is null when localStorage.clear() is called
-      if (e.key === null || e.key === 'vish_jwt') {
+      if (e.key === null || e.key === 'vish_jwt' || e.key === 'admin_jwt') {
         // Clear recruiter/company auth
         useAuthStore.getState().setAuth(null);
         // Clear seeker auth
         useSeekerAuthStore.getState().setAuth({ seeker_token: '', seeker: null });
         // Clear developer auth
         usePortalAuthStore.getState().setAuth(null);
+        // Clear admin auth
+        useAdminAuthStore.getState().clearAdminAuth();
 
         // Redirect current tab depending on pathname
         const path = window.location.pathname;
-        if (path.startsWith('/developer/portal')) {
+        if (path.startsWith('/admin/dashboard')) {
+          window.location.href = '/admin/login';
+        } else if (path.startsWith('/developer/portal')) {
           window.location.href = '/developer/login';
         } else if (path.startsWith('/jobs/applications') || path.startsWith('/jobs/resume') || path.startsWith('/jobs/notifications') || path.startsWith('/jobs')) {
           // If they are on a seeker page, go back to jobs login
