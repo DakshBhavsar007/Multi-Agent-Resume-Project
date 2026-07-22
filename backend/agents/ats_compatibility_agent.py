@@ -239,6 +239,14 @@ class AtsCompatibilityAgent:
             return 1
         return 0
 
+    def _is_partial_match(self, term1: str, term2: str) -> bool:
+        """Case-insensitive substring match helper."""
+        t1 = str(term1).lower().strip()
+        t2 = str(term2).lower().strip()
+        if not t1 or not t2:
+            return False
+        return t1 in t2 or t2 in t1
+
     def _check_formatting(self, resume_text: str) -> tuple:
         score = 100
         issues = []
