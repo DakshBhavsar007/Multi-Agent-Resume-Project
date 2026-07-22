@@ -1,25 +1,43 @@
 import sys
 from types import ModuleType
 
-# Mock pkg_resources to prevent ModuleNotFoundError in Python 3.12+ environments (e.g. for razorpay)
+# Polyfill/mock pkg_resources to prevent AttributeError in Python 3.12+ environments (e.g. for razorpay)
 try:
     import pkg_resources
-except ImportError:
+    if not hasattr(pkg_resources, 'require'):
+        class MockRequirement:
+            version = "1.4.1"
+        def _mock_require(name):
+            return [MockRequirement()]
+        pkg_resources.require = _mock_require
+    if not hasattr(pkg_resources, 'get_distribution'):
+        class MockDist:
+            version = "1.4.1"
+        def _mock_get_dist(name):
+            return MockDist()
+        pkg_resources.get_distribution = _mock_get_dist
+except Exception:
     class DistributionNotFound(Exception):
         pass
 
+    class MockRequirement:
+        version = "1.4.1"
+
     class MockDistribution:
         def __init__(self):
-            self.version = "1.0.0"
-            
+            self.version = "1.4.1"
+
     class MockPkgResources(ModuleType):
         def __init__(self, name):
             super().__init__(name)
             self.DistributionNotFound = DistributionNotFound
-            
+
         def get_distribution(self, name):
             return MockDistribution()
-            
+
+        def require(self, name):
+            return [MockRequirement()]
+
     mock_pkg = MockPkgResources("pkg_resources")
     sys.modules["pkg_resources"] = mock_pkg
 
