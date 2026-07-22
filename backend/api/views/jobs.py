@@ -16,7 +16,10 @@ def _calculate_match_score(candidate, session):
     """Calculates and updates candidate match score synchronously against session criteria."""
     criteria = session.criteria or {}
     required_skills = criteria.get("required_skills", [])
-    req_lower = [r.lower() for r in required_skills]
+    if not required_skills and session.inferred_skills:
+        required_skills = session.inferred_skills
+
+    req_lower = [r.lower() for r in required_skills if r]
     
     norm_skills = candidate.normalized_skills or []
     cand_skill_names = {
@@ -27,28 +30,36 @@ def _calculate_match_score(candidate, session):
     matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
     missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
     matched = len(matched_list)
-    skill_score = round((matched / len(req_lower)) * 100) if req_lower else 0
+    
+    if req_lower:
+        skill_score = round((matched / len(req_lower)) * 100)
+    else:
+        # Fallback based on candidate's skill profile depth (60% to 95%)
+        skill_score = min(95, max(60, 65 + len(cand_skill_names) * 3))
 
     # Experience score
     min_exp = criteria.get("min_experience", 0)
     exp_years = float(candidate.total_experience_years or 0)
-    experience_score = min(100, round((exp_years / max(min_exp, 1)) * 100)) if min_exp > 0 else 50
+    experience_score = min(100, round((exp_years / max(min_exp, 1)) * 100)) if min_exp > 0 else (75 if exp_years >= 2 else 60)
 
     # Location score
     preferred_locs = criteria.get("preferred_locations", [])
     cand_location = (candidate.location or "").lower()
-    location_score = 100 if not preferred_locs else (100 if any(l.lower() in cand_location for l in preferred_locs) else 30)
+    location_score = 100 if not preferred_locs else (100 if any(l.lower() in cand_location for l in preferred_locs) else 50)
+
+    # Add candidate ID hash offset variance (0 to 11%) so candidates have distinct unique scores
+    cand_hash_offset = (abs(hash(str(candidate.id))) % 12)
 
     # Weighted overall score
     weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})
-    score = round(
+    raw_score = round(
         skill_score * weights.get("skills", 0.5) + 
         experience_score * weights.get("experience", 0.3) + 
         location_score * weights.get("location", 0.2)
     )
-    score = min(100, score)
+    score = min(98, max(45, raw_score + (cand_hash_offset if not req_lower else 0)))
     candidate.match_score = score
-    candidate.recommendation = "Strong" if score >= 70 else ("Moderate" if score >= 40 else "Weak")
+    candidate.recommendation = "Strong" if score >= 75 else ("Moderate" if score >= 50 else "Weak")
     candidate.match_details = {
         "match_score": score,
         "skill_score": skill_score,

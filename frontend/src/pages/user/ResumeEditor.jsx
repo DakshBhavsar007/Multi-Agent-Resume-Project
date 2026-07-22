@@ -469,6 +469,9 @@ export default function ResumeEditor() {
       clearInterval(interval);
       const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
       setEnhancementReport(response);
+      if (response && response.target_job_description && !targetJobDescription) {
+        setTargetJobDescription(response.target_job_description);
+      }
       setShowEnhanceModal(true);
       toast.success(`AI Enhancement analysis completed! (Took ${elapsedSeconds} seconds)`, { id: toastId });
     } catch (err) {
@@ -487,7 +490,7 @@ export default function ResumeEditor() {
         templateId,
         content: updatedContent
       });
-      // Re-evaluate compatibility immediately!
+      // Re-evaluate compatibility immediately using active target JD!
       runAtsCheck(updatedContent);
     } catch (err) {
       console.error("Auto-saving AI changes failed:", err);
