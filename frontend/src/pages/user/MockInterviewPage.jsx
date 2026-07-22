@@ -499,12 +499,31 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
 
       const res = await seekerAPI.submitMockAttempt(activeAttempt.attempt_id, submitBody);
       
-      setSelectedResult(res);
+      // Fetch full updated attempt details (with questions, answers, attempt_type & feedback)
+      try {
+        const fullRes = await seekerAPI.getMockAttempt(activeAttempt.attempt_id);
+        const fullAttempt = fullRes?.attempt || fullRes;
+        setSelectedResult({
+          ...activeAttempt,
+          ...fullAttempt,
+          status: "submitted",
+          score: res.score !== undefined ? res.score : fullAttempt.score,
+          feedback: res.feedback || fullAttempt.feedback
+        });
+      } catch (e) {
+        setSelectedResult({
+          ...activeAttempt,
+          status: "submitted",
+          score: res.score,
+          feedback: res.feedback
+        });
+      }
+
       setViewMode("result");
       setShowQuestionFeedback(false);
       setFeedbackData(null);
       setSpokenAnswer("");
-      toast.success("Mock attempt submitted successfully!");
+      toast.success("Mock practice submitted successfully!");
       fetchDashboardData();
     } catch (err) {
       console.error(err);

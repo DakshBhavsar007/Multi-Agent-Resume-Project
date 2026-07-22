@@ -378,6 +378,7 @@ export const seekerAPI = {
   enhanceResume: (jobDescription = '') =>
     seekerReq('POST', '/api/v1/seeker/resume/enhance', { job_description: jobDescription }),
 
+  createSupportTicket: (ticketData) => req('POST', '/support/ticket', ticketData),
   // Resume Builder Drafts & ATS Agent
   getDrafts: () => seekerReq('GET', '/api/v1/seeker/resume/drafts'),
   getDraft: (id) => seekerReq('GET', `/api/v1/seeker/resume/drafts/${id}`),
