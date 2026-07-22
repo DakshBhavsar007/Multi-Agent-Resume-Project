@@ -278,6 +278,14 @@ export default function AdminDashboard() {
           <div className="h-5 w-[1px] bg-slate-200 dark:bg-zinc-800" />
           
           <div className="flex items-center gap-3">
+            <button
+              onClick={fetchDashboardData}
+              className="px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-semibold text-xs transition flex items-center gap-1.5 shadow-sm"
+              title="Refresh Database"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh DB</span>
+            </button>
             <div className="text-right">
               <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">Admin Account</p>
               <p className="text-xs text-slate-500 dark:text-zinc-500">admin@between.com</p>
@@ -544,12 +552,26 @@ export default function AdminDashboard() {
                 </span>
               </div>
 
-              <button
-                onClick={() => setSelectedTicket(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white transition"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    await fetchDashboardData();
+                    const updated = tickets.find(t => t.id === selectedTicket.id);
+                    if (updated) setSelectedTicket(updated);
+                    toast.success("Chat thread refreshed!");
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center gap-1 transition border border-slate-700"
+                  title="Refresh Chat"
+                >
+                  <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Refresh Chat
+                </button>
+                <button
+                  onClick={() => setSelectedTicket(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white transition"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Messages Thread Stream */}
@@ -625,28 +647,35 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAdminReply(selectedTicket.id, adminReplyText);
-                }}
-                className="flex gap-2"
-              >
-                <input
-                  type="text"
-                  value={adminReplyText}
-                  onChange={(e) => setAdminReplyText(e.target.value)}
-                  placeholder="Type an official admin response to user..."
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
-                />
-                <button
-                  type="submit"
-                  disabled={replying || !adminReplyText.trim()}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 shrink-0"
+              {selectedTicket.status === "resolved" ? (
+                <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-center text-xs text-slate-400 flex items-center justify-center gap-2 shadow-inner">
+                  <CheckCircle size={15} className="text-emerald-500 shrink-0" />
+                  <span>This ticket is marked as <strong className="text-emerald-400">Resolved</strong>. Chat is closed for both Admin and User (Read-Only).</span>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleAdminReply(selectedTicket.id, adminReplyText);
+                  }}
+                  className="flex gap-2"
                 >
-                  <Send size={14} /> Send Reply
-                </button>
-              </form>
+                  <input
+                    type="text"
+                    value={adminReplyText}
+                    onChange={(e) => setAdminReplyText(e.target.value)}
+                    placeholder="Type an official admin response to user..."
+                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
+                  />
+                  <button
+                    type="submit"
+                    disabled={replying || !adminReplyText.trim()}
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 shrink-0"
+                  >
+                    <Send size={14} /> Send Reply
+                  </button>
+                </form>
+              )}
             </div>
 
           </div>
