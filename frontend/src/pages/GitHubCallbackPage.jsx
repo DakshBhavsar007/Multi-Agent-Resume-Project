@@ -80,7 +80,14 @@ export default function GitHubCallbackPage() {
         }
       } catch (err) {
         console.error('GitHub auth error:', err);
-        setError(err.message || 'Authentication failed');
+        const errMsg = err.message || '';
+        if (errMsg.toLowerCase().includes('banned') || errMsg.toLowerCase().includes('deactivated') || errMsg.toLowerCase().includes('contact support')) {
+          const isSeeker = state === 'seeker';
+          const targetUrl = isSeeker ? '/jobs/login?banned=true' : '/login?banned=true';
+          navigate(targetUrl, { replace: true });
+          return;
+        }
+        setError(errMsg || 'Authentication failed');
         setLoading(false);
       }
     };

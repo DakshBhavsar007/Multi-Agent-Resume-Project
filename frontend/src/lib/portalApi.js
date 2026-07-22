@@ -30,7 +30,11 @@ async function req(method, path, body=null, auth=true) {
     }
     throw new Error("Session expired")
   }
-  if (res.status === 403 && data.error && (data.error.toLowerCase().includes("banned") || data.error.toLowerCase().includes("deactivated"))) {
+  if (res.status === 403 && data.error && (
+    data.error.toLowerCase().includes("banned") || 
+    data.error.toLowerCase().includes("deactivated") ||
+    data.error.toLowerCase().includes("contact support")
+  )) {
     if (typeof window !== "undefined") {
       let email = "";
       try {

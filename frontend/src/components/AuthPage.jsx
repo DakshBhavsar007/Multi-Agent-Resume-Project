@@ -423,7 +423,15 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                   navigate('/jobs/dashboard');
                 }
               } catch (err) {
-                toast.error(err.message || "Google Authentication failed");
+                const errMsg = err?.response?.data?.error || err?.message || '';
+                const isBannedErr = errMsg.toLowerCase().includes('banned') || 
+                                    errMsg.toLowerCase().includes('deactivated') || 
+                                    errMsg.toLowerCase().includes('contact support');
+                if (isBannedErr) {
+                  setBanned(true);
+                } else {
+                  toast.error(errMsg || "Google Authentication failed");
+                }
               } finally {
                 setLoading(false);
               }
@@ -552,9 +560,11 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
         }
       }
     } catch (err) {
-      const status = err?.response?.status || err?.status;
       const errMsg = err?.response?.data?.error || err?.message || 'Authentication failed';
-      if (status === 403 && errMsg.toLowerCase().includes('banned')) {
+      const isBannedErr = errMsg.toLowerCase().includes('banned') || 
+                          errMsg.toLowerCase().includes('deactivated') || 
+                          errMsg.toLowerCase().includes('contact support');
+      if (isBannedErr) {
         setBanned(true);
         setBannedEmail(email);
       } else {

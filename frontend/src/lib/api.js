@@ -47,14 +47,26 @@ async function req(method, path, body=null, isFile=false) {
     window.location.href = "/login"
     throw new Error("Session expired")
   }
-  if (res.status === 403 && data.error && (data.error.toLowerCase().includes("banned") || data.error.toLowerCase().includes("deactivated"))) {
+  if (res.status === 403 && data.error && (
+    data.error.toLowerCase().includes("banned") || 
+    data.error.toLowerCase().includes("deactivated") ||
+    data.error.toLowerCase().includes("contact support")
+  )) {
     let email = "";
     try {
       const u = localStorage.getItem("between_user");
+      const s = localStorage.getItem("vish_seeker_data");
       if (u) email = JSON.parse(u).email || "";
+      else if (s) email = JSON.parse(s).email || "";
     } catch(e) {}
     
-    localStorage.clear();
+    localStorage.removeItem("vish_jwt");
+    localStorage.removeItem("vish_api_key");
+    localStorage.removeItem("vish_company");
+    localStorage.removeItem("between_user");
+    localStorage.removeItem("vish_seeker_token");
+    localStorage.removeItem("vish_seeker_data");
+
     const isSeeker = typeof window !== "undefined" && (window.location.pathname.startsWith('/jobs') || window.location.pathname.startsWith('/seeker'));
     const targetUrl = isSeeker 
       ? `/jobs/login?banned=true&email=${encodeURIComponent(email)}`

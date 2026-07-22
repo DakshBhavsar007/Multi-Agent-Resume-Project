@@ -107,6 +107,8 @@ def recruiter_auth_github(request):
         name = user_info["name"]
 
         company = Company.objects.filter(email=email).first()
+        if company and company.is_banned:
+            return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
         if not company:
             # Auto register
             company = Company.objects.create(
@@ -174,6 +176,8 @@ def seeker_auth_github(request):
         name = user_info["name"]
 
         seeker = JobSeekerAccount.objects.filter(email=email, is_active=True).first()
+        if seeker and seeker.is_banned:
+            return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
         if not seeker:
             # Auto register
             seeker = JobSeekerAccount.objects.create(
@@ -237,6 +241,8 @@ def developer_auth_github(request):
         name = user_info["name"]
 
         dev = DeveloperAccount.objects.filter(email=email).first()
+        if dev and dev.is_banned:
+            return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
         is_new = False
         test_secret = None
         test_public = None
