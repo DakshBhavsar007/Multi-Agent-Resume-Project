@@ -1,3 +1,6 @@
+import React from 'react';
+import { toast } from 'react-hot-toast';
+
 const getApiBase = () => {
   if (typeof window !== "undefined") {
     // If we have a custom API URL in Vite env (for development or specific staging)
@@ -47,11 +50,10 @@ async function req(method, path, body=null, isFile=false) {
     window.location.href = "/login"
     throw new Error("Session expired")
   }
-  if (res.status === 403 || (data && !data.success && data.error && (
-    data.error.toLowerCase().includes("banned") || 
-    data.error.toLowerCase().includes("deactivated") ||
-    data.error.toLowerCase().includes("contact support")
-  ))) {
+  const errText = (data && data.error) ? String(data.error).toLowerCase() : "";
+  const isAccountBanned = errText.includes("banned") || errText.includes("deactivated") || errText.includes("account suspended");
+
+  if (isAccountBanned) {
     let email = "";
     try {
       const u = localStorage.getItem("between_user");
@@ -84,7 +86,33 @@ async function req(method, path, body=null, isFile=false) {
     throw e
   }
   if (!data.success) {
-    throw new Error(data.error || "Request failed")
+    const errorMsg = data.error || "Request failed";
+    const lowerMsg = errorMsg.toLowerCase();
+    if (lowerMsg.includes("limit") || lowerMsg.includes("upgrade") || lowerMsg.includes("plan") || lowerMsg.includes("parses") || lowerMsg.includes("quota")) {
+      const isRecruiter = typeof window !== "undefined" && window.location.pathname.startsWith('/dashboard');
+      if (isRecruiter) {
+        toast.error(
+          (t) => React.createElement(
+            'div',
+            { className: 'flex items-center gap-3' },
+            React.createElement('span', null, errorMsg),
+            React.createElement(
+              'button',
+              {
+                onClick: () => {
+                  toast.dismiss(t.id);
+                  window.location.href = '/dashboard/settings?tab=billing';
+                },
+                className: 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-2.5 py-1 rounded-md transition shadow-sm whitespace-nowrap'
+              },
+              'Upgrade Plan →'
+            )
+          ),
+          { duration: 6000 }
+        );
+      }
+    }
+    throw new Error(errorMsg)
   }
   return data.data
 }
@@ -355,10 +383,10 @@ async function seekerReq(method, path, body = null, isFile = false) {
     window.location.href = '/jobs/login';
     throw new Error('Session expired');
   }
-  if (res.status === 403 || (!data.success && data.error && (
-    data.error.toLowerCase().includes("banned") ||
-    data.error.toLowerCase().includes("deactivated")
-  ))) {
+  const errText = (data && data.error) ? String(data.error).toLowerCase() : "";
+  const isAccountBanned = errText.includes("banned") || errText.includes("deactivated");
+
+  if (isAccountBanned) {
     let email = "";
     try {
       const s = localStorage.getItem("vish_seeker_data");
@@ -369,7 +397,33 @@ async function seekerReq(method, path, body = null, isFile = false) {
     window.location.href = `/jobs/login?banned=true&email=${encodeURIComponent(email)}`;
     throw new Error(data.error || "Account banned");
   }
-  if (!data.success) throw new Error(data.error || 'Request failed');
+
+  if (!data.success) {
+    const errorMsg = data.error || "Request failed";
+    const lowerMsg = errorMsg.toLowerCase();
+    if (lowerMsg.includes("limit") || lowerMsg.includes("upgrade") || lowerMsg.includes("plan") || lowerMsg.includes("quota")) {
+      toast.error(
+        (t) => React.createElement(
+          'div',
+          { className: 'flex items-center gap-3' },
+          React.createElement('span', null, errorMsg),
+          React.createElement(
+            'button',
+            {
+              onClick: () => {
+                toast.dismiss(t.id);
+                window.location.href = '/jobs/billing';
+              },
+              className: 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-2.5 py-1 rounded-md transition shadow-sm whitespace-nowrap'
+            },
+            'Upgrade Plan →'
+          )
+        ),
+        { duration: 6000 }
+      );
+    }
+    throw new Error(errorMsg);
+  }
   return data.data;
 }
 
