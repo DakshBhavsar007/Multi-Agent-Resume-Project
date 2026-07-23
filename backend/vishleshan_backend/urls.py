@@ -64,7 +64,14 @@ def custom_serve_uploads(request, path, document_root=None, **kwargs):
             except Exception as e:
                 logger.error("Dynamic Candidate PDF regeneration failed: %s", e)
 
-    return serve(request, path, document_root=document_root, **kwargs)
+    from django.http import Http404
+    try:
+        return serve(request, path, document_root=document_root, **kwargs)
+    except Http404:
+        raise
+    except Exception as e:
+        logger.warning("Upload serve failed for %s: %s", path, e)
+        raise Http404("Upload file not found")
 
 urlpatterns = [
     # Route static/media uploads and photos

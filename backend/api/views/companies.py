@@ -368,14 +368,17 @@ def public_market_trends(request):
         # 1. Dynamic Salary Calculation from DB
         db_salaries = []
         for s in all_sessions:
-            if s.max_budget and s.max_budget > 0:
-                db_salaries.append(s.max_budget)
-            elif s.min_budget and s.min_budget > 0:
-                db_salaries.append(s.min_budget)
-            elif isinstance(s.criteria, dict):
-                sal_max = s.criteria.get("salary_max") or s.criteria.get("max_salary")
-                if sal_max and isinstance(sal_max, (int, float)) and sal_max > 0:
-                    db_salaries.append(sal_max)
+            crit = s.criteria if isinstance(s.criteria, dict) else {}
+            sal_val = (
+                crit.get("max_budget") or crit.get("salary_max") or 
+                crit.get("max_salary") or crit.get("budget") or 
+                crit.get("min_budget") or crit.get("salary_min") or 
+                crit.get("min_salary")
+            )
+            if isinstance(sal_val, (int, float)) and sal_val > 0:
+                db_salaries.append(sal_val)
+            elif isinstance(sal_val, str) and sal_val.isdigit() and int(sal_val) > 0:
+                db_salaries.append(int(sal_val))
 
         if db_salaries:
             avg_db_salary = int(sum(db_salaries) / len(db_salaries))
@@ -388,18 +391,16 @@ def public_market_trends(request):
         # 2. Dynamic Location Distribution from DB
         location_counts = Counter()
         for s in all_sessions:
-            loc = s.location.strip() if s.location else None
-            if loc and loc.lower() != "unknown" and loc.lower() != "none":
-                clean_loc = loc.split(",")[0].strip().title()
+            crit = s.criteria if isinstance(s.criteria, dict) else {}
+            loc_val = crit.get("location") or crit.get("preferred_locations") or crit.get("locations")
+            if isinstance(loc_val, str) and loc_val.strip() and loc_val.lower() not in ("unknown", "none"):
+                clean_loc = loc_val.split(",")[0].strip().title()
                 location_counts[clean_loc] += 1
-            
-            if isinstance(s.criteria, dict):
-                pref_locs = s.criteria.get("preferred_locations", [])
-                if isinstance(pref_locs, list):
-                    for pl in pref_locs:
-                        if isinstance(pl, str) and pl.strip():
-                            clean_pl = pl.split(",")[0].strip().title()
-                            location_counts[clean_pl] += 1
+            elif isinstance(loc_val, list):
+                for pl in loc_val:
+                    if isinstance(pl, str) and pl.strip():
+                        clean_pl = pl.split(",")[0].strip().title()
+                        location_counts[clean_pl] += 1
 
         db_regions = list(MarketRegionConfig.objects.filter(is_active=True))
         region_color_map = {rc.name: rc.color_hex for rc in db_regions}
@@ -465,13 +466,17 @@ def public_market_trends(request):
         for s in all_sessions:
             if isinstance(s.criteria, dict):
                 skills = s.criteria.get("skills", [])
+                sal_val = (
+                    s.criteria.get("max_budget") or s.criteria.get("salary_max") or 
+                    s.criteria.get("max_salary") or s.criteria.get("budget")
+                )
                 if isinstance(skills, list):
                     for sk in skills:
                         if isinstance(sk, str) and sk.strip():
                             clean_sk = sk.strip().title()
                             skill_counts[clean_sk] += 1
-                            if s.max_budget and s.max_budget > 0:
-                                skill_salaries.setdefault(clean_sk, []).append(s.max_budget)
+                            if isinstance(sal_val, (int, float)) and sal_val > 0:
+                                skill_salaries.setdefault(clean_sk, []).append(sal_val)
 
         db_growth_configs = list(GrowthSkillFallback.objects.filter(is_active=True))
         high_growth_domains = []
