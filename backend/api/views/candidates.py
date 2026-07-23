@@ -484,7 +484,7 @@ def candidate_action(request, session_id, cand_id):
                             new_status=notify_status,
                             match_score=match_val,
                             current_round_name=current_round_name,
-                            location=session.location if session.location else None,
+                            location=(session.criteria.get("location") if (isinstance(session.criteria, dict) and session.criteria.get("location")) else None),
                             test_link=test_link,
                         )
         except Exception as notify_err:

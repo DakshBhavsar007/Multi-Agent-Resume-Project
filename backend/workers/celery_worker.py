@@ -990,7 +990,7 @@ def release_round_results(application_id: str, notify_status: str):
             new_status=notify_status,
             match_score=match_val,
             current_round_name=current_round_name,
-            location=app.session.location if app.session and app.session.location else None,
+            location=(app.session.criteria.get("location") if (app.session and isinstance(app.session.criteria, dict) and app.session.criteria.get("location")) else None),
             test_link=test_link,
         )
         logger.info(f"release_round_results: Released status {notify_status} for app {application_id}")

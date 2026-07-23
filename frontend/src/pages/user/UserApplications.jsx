@@ -499,10 +499,19 @@ export default function UserApplications() {
                                         </span>
                                       )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Status: <span className={statusColor}>{roundStatus}</span>
+                                    <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5">
+                                      <span>Status: <span className={statusColor}>{roundStatus}</span></span>
+                                      {round.score !== undefined && round.score !== null && (
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                          round.score >= 50
+                                            ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                                            : "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+                                        }`}>
+                                          {round.score >= 50 ? `Passed (${round.score}%)` : `Failed (${round.score}%)`}
+                                        </span>
+                                      )}
                                       {round.interviewer && round.interviewer.trim() !== "" && round.interviewer.trim().toLowerCase() !== "not assigned" && (
-                                        <span className="ml-3 border-l border-border pl-3 text-muted-foreground/75">
+                                        <span className="border-l border-border pl-2 text-muted-foreground/75">
                                           Interviewer: <span className="font-medium text-foreground/80">{round.interviewer}</span>
                                         </span>
                                       )}

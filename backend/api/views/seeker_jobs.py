@@ -608,7 +608,7 @@ def release_due_results_for_seeker(seeker):
                         new_status=target_app_status,
                         match_score=match_val,
                         current_round_name=current_round_name,
-                        location=session.location if session.location else None,
+                        location=(session.criteria.get("location") if (isinstance(session.criteria, dict) and session.criteria.get("location")) else None),
                         test_link=test_link,
                     )
                     logger.info(f"Released pending result on-the-fly: {target_app_status} for app {app.id}")
@@ -691,14 +691,26 @@ def my_applications(request):
             if match_score is None:
                 match_score = _compute_match_score(seeker.skills, session.inferred_skills, session_id=str(session.id), seeker=seeker, session=session)
 
-            # Format rounds
+            # Format rounds with candidate score & attempt status
             ui_rounds = []
             for r in sorted_rounds:
+                r_order = int(r.get("order", 1))
+                r_score = None
+                r_status = None
+                if candidate:
+                    sr_obj = SessionRound.objects.filter(session=session, round_number=r_order).first()
+                    if sr_obj:
+                        att = ApplicantRoundAttempt.objects.filter(candidate=candidate, round=sr_obj).first()
+                        if att:
+                            r_score = att.overall_score if att.overall_score is not None else (att.mcq_score or att.coding_score or att.interview_score)
+                            r_status = att.status
                 ui_rounds.append({
                     "name": r.get("name"),
                     "interviewer": r.get("interviewer"),
                     "order": r.get("order"),
-                    "result_announcement_date": r.get("result_announcement_date")
+                    "result_announcement_date": r.get("result_announcement_date"),
+                    "score": r_score,
+                    "attempt_status": r_status,
                 })
 
             # Compute offer letter URL relative path if present
