@@ -7,6 +7,7 @@ import { useAuthStore } from '../stores/authStore';
 import PageTransition from '../components/PageTransition';
 import VerificationModal from '../components/VerificationModal';
 import { LocationSelector } from '../components/ui/LocationSelector';
+import { IndustrySelector } from '../components/ui/IndustrySelector';
 import { 
   Building, 
   Key, 
@@ -412,12 +413,10 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block pl-0.5">Industry</label>
-                  <input 
-                    type="text" 
-                    value={industry} 
-                    placeholder="e.g. Technology, Healthcare, Finance"
-                    onChange={(e) => setIndustry(e.target.value)} 
-                    className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 
+                  <IndustrySelector
+                    value={industry}
+                    onChange={setIndustry}
+                    isLight={true}
                   />
                 </div>
                 <div>

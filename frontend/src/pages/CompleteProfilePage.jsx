@@ -8,6 +8,7 @@ import { portalAuth } from '../lib/portalApi';
 import { toast } from 'react-hot-toast';
 import { Loader2, ShieldCheck, Mail, User, Phone, MapPin, Briefcase, Globe, Landmark, Users, ArrowRight } from 'lucide-react';
 import { LocationSelector } from '../components/ui/LocationSelector';
+import { IndustrySelector } from '../components/ui/IndustrySelector';
 import VerificationModal from '../components/VerificationModal';
 
 export default function CompleteProfilePage() {
@@ -339,17 +340,11 @@ export default function CompleteProfilePage() {
               {/* Industry */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Industry Segment*</label>
-                <div className="relative">
-                  <Landmark className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Information Technology, FinTech"
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none transition-colors"
-                  />
-                </div>
+                <IndustrySelector
+                  value={industry}
+                  onChange={setIndustry}
+                  isLight={false}
+                />
               </div>
 
               {/* HQ Location */}
