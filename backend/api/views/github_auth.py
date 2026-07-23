@@ -109,7 +109,9 @@ def recruiter_auth_github(request):
         company = Company.objects.filter(email=email).first()
         if company and company.is_banned:
             return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
+        is_new = False
         if not company:
+            is_new = True
             # Auto register
             company = Company.objects.create(
                 name=name,
@@ -153,7 +155,7 @@ def recruiter_auth_github(request):
             "email_verified": company.email_verified,
             "phone_verified": company.phone_verified,
             "api_key": masked_secret,
-            "requires_profile_completion": not (company.industry and company.hq_location and company.company_size and company.website_url and company.phone_verified)
+            "requires_profile_completion": is_new or not bool(company.industry or company.hq_location)
         }))
     except ValueError as e:
         return JsonResponse(error_response(str(e)), status=400)
@@ -178,7 +180,9 @@ def seeker_auth_github(request):
         seeker = JobSeekerAccount.objects.filter(email=email, is_active=True).first()
         if seeker and seeker.is_banned:
             return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
+        is_seeker_new = False
         if not seeker:
+            is_seeker_new = True
             # Auto register
             seeker = JobSeekerAccount.objects.create(
                 full_name=name,
@@ -213,7 +217,7 @@ def seeker_auth_github(request):
             "email_verified": seeker.email_verified,
             "phone_verified": seeker.phone_verified,
             "created_at": seeker.created_at.isoformat() if seeker.created_at else None,
-            "requires_profile_completion": not (seeker.phone and seeker.location and seeker.headline and seeker.phone_verified)
+            "requires_profile_completion": is_seeker_new or not bool(seeker.phone or seeker.location or seeker.resume_file_path or seeker.resume_data)
         }
 
         return JsonResponse(success_response({
@@ -306,7 +310,7 @@ def developer_auth_github(request):
             "is_verified": dev.is_verified,
             "phone_verified": dev.phone_verified,
             "company_name": dev.company_name,
-            "requires_profile_completion": not (dev.website_url and dev.phone_verified)
+            "requires_profile_completion": is_new
         }
         if is_new:
             resp.update({
