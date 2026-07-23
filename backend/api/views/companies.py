@@ -387,9 +387,14 @@ def public_market_trends(request):
                 crit.get("min_salary")
             )
             if isinstance(sal_val, (int, float)) and sal_val > 0:
-                db_salaries.append(sal_val)
-            elif isinstance(sal_val, str) and sal_val.isdigit() and int(sal_val) > 0:
-                db_salaries.append(int(sal_val))
+                db_salaries.append(float(sal_val))
+            elif isinstance(sal_val, str):
+                try:
+                    f_val = float(sal_val.replace(",", "").strip())
+                    if f_val > 0:
+                        db_salaries.append(f_val)
+                except Exception:
+                    pass
 
         if db_salaries:
             avg_db_salary = int(sum(db_salaries) / len(db_salaries))
@@ -400,18 +405,23 @@ def public_market_trends(request):
         salary_change = round(8.5 + (hired_count * 0.1), 1)
 
         # 2. Dynamic Location Distribution from DB
+        INVALID_LOCS = {"Ca", "Ny", "Tx", "Fl", "In", "Up", "Mh", "Gj", "Dl", "Ka", "Tn", "Unknown", "None", "Remote"}
         location_counts = Counter()
         for s in all_sessions:
             crit = s.criteria if isinstance(s.criteria, dict) else {}
             loc_val = crit.get("location") or crit.get("preferred_locations") or crit.get("locations")
-            if isinstance(loc_val, str) and loc_val.strip() and loc_val.lower() not in ("unknown", "none"):
-                clean_loc = loc_val.split(",")[0].strip().title()
-                location_counts[clean_loc] += 1
+            if isinstance(loc_val, str) and loc_val.strip():
+                parts = [p.strip().title() for p in loc_val.split(",") if p.strip()]
+                for clean_loc in parts:
+                    if clean_loc not in INVALID_LOCS and len(clean_loc) > 2:
+                        location_counts[clean_loc] += 1
             elif isinstance(loc_val, list):
                 for pl in loc_val:
                     if isinstance(pl, str) and pl.strip():
-                        clean_pl = pl.split(",")[0].strip().title()
-                        location_counts[clean_pl] += 1
+                        parts = [p.strip().title() for p in pl.split(",") if p.strip()]
+                        for clean_pl in parts:
+                            if clean_pl not in INVALID_LOCS and len(clean_pl) > 2:
+                                location_counts[clean_pl] += 1
 
         db_regions = list(MarketRegionConfig.objects.filter(is_active=True))
         region_color_map = {rc.name: rc.color_hex for rc in db_regions}

@@ -67,12 +67,12 @@ class InterviewAgent:
         job_description: str,
         candidate_resume: dict,
         manual_questions: list,
-        total_questions: int = 5
+        total_questions: int = 5,
+        interview_mode: str = "technical"
     ) -> list:
         """
         Merges company's manual questions with AI-generated resume-aware questions.
-        Manual questions always come first.
-        AI fills remaining slots with resume-specific questions.
+        Supports interview_mode: 'technical', 'hr', or 'screening'.
         """
         manual_count = len(manual_questions)
         ai_needed = max(0, total_questions - manual_count)
@@ -95,8 +95,26 @@ class InterviewAgent:
                 for e in parsed_resume.get('experience', []) if e.get('title')
             ]
 
+            mode_lower = (interview_mode or "technical").lower()
+            if "hr" in mode_lower or "behavioral" in mode_lower:
+                role_prompt = "You are an experienced HR Manager and Behavioral Interviewer conducting a professional HR Round."
+                guidelines = """Rules:
+1. Ask realistic HR & behavioral questions (situational judgment, teamwork, handling pressure/tight deadlines).
+2. Ask about notice period, CTC expectations, career goals, and work culture fit.
+3. Keep tone supportive, encouraging yet evaluating."""
+            elif "screening" in mode_lower:
+                role_prompt = "You are a Talent Acquisition Specialist conducting an initial screening interview."
+                guidelines = """Rules:
+1. Ask questions validating key claims on candidate's resume and project experience.
+2. Verify candidate motivation and basic eligibility for the role."""
+            else:
+                role_prompt = "You are a Senior Technical Lead conducting a deep technical interview."
+                guidelines = """Rules:
+1. Make questions SPECIFIC to technical architecture, coding paradigms, and listed skills.
+2. Vary difficulty: 1 easy warmup, rest medium-hard."""
+
             prompt = f"""
-You are a senior technical interviewer conducting a job interview.
+{role_prompt}
 Generate exactly {ai_needed} interview questions for this candidate.
 
 Job Title: {job_title}
@@ -110,13 +128,7 @@ Candidate Profile:
 Already planned questions (do NOT repeat these topics):
 {json.dumps(manual_questions)}
 
-Rules:
-1. Make questions SPECIFIC to their actual projects and listed skills
-   (e.g. "In SkillVerse, how did you handle concurrent WebSocket connections?")
-2. Ask naturally like a real interviewer would in a conversation
-3. Include exactly 1 behavioral question (STAR format expected)
-4. Vary difficulty: 1 easy warmup, rest medium-hard
-5. Do NOT ask generic questions like "What are your strengths?"
+{guidelines}
 
 Return ONLY valid JSON (no markdown block):
 {{

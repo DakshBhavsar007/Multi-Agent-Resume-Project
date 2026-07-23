@@ -1121,12 +1121,30 @@ def get_interview_questions(request):
     # Generate questions dynamically on-demand if not already generated
     if not sr.interview_questions:
         agent = InterviewAgent()
+        
+        # Determine mode
+        interview_mode = getattr(sr, "interview_mode", None)
+        if not interview_mode:
+            for r in (sr.session.rounds or []):
+                if int(r.get("order", 0)) == sr.round_number:
+                    interview_mode = r.get("interview_mode")
+                    break
+        if not interview_mode:
+            r_name = (sr.name or "").lower()
+            if "hr" in r_name or "behavioral" in r_name:
+                interview_mode = "hr"
+            elif "screening" in r_name:
+                interview_mode = "screening"
+            else:
+                interview_mode = "technical"
+
         questions = agent.generate_questions(
             job_title=sr.session.job_title,
             job_description=sr.session.job_description,
             candidate_resume=attempt.candidate.raw_resume_data or {},
             manual_questions=[],
-            total_questions=sr.mcq_question_count or 5  # default/suggested questions count
+            total_questions=sr.mcq_question_count or 5,
+            interview_mode=interview_mode
         )
         sr.interview_questions = questions
         sr.save()

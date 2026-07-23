@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2, ArrowLeft, Network } from 'lucide-react';
+import { Upload, Archive, Mail, Link as LinkIcon, Download, Zap, Settings, RefreshCw, X, ChevronDown, Check, Trash2, Building, Users, BarChart3, Search, Loader2, ArrowLeft, Network, Lock, Calendar, Sparkles, Clock, UserCheck } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -151,20 +151,24 @@ export default function SessionWorkspacePage() {
         toast.error(`Please provide a name for Round ${i + 1}`);
         return;
       }
-      if (!r.result_announcement_date) {
-        toast.error(`Result declaration date & time is compulsory for round: ${r.name}`);
-        return;
-      }
-      const announcementDate = new Date(r.result_announcement_date);
-      if (announcementDate < now) {
-        toast.error(`Result declaration date & time for round "${r.name}" cannot be in the past`);
-        return;
+      
+      const isPastDeclared = r.result_announcement_date && new Date(r.result_announcement_date) < now;
+      if (!isPastDeclared) {
+        if (!r.result_announcement_date) {
+          toast.error(`Result declaration date & time is compulsory for round: ${r.name}`);
+          return;
+        }
+        const announcementDate = new Date(r.result_announcement_date);
+        if (announcementDate < now) {
+          toast.error(`Result declaration date & time for round "${r.name}" cannot be in the past`);
+          return;
+        }
       }
     }
 
     setIsSaving(true);
     try {
-      // 1. Update session details
+      // 1. Update session details & rounds
       await sessionsAPI.update(id, {
         name: editName,
         job_title: editJobTitle,
@@ -173,7 +177,9 @@ export default function SessionWorkspacePage() {
           name: r.name,
           interviewer: r.interviewer,
           order: r.order,
-          result_announcement_date: r.result_announcement_date
+          result_announcement_date: r.result_announcement_date,
+          round_type: r.round_type || (r.name.toLowerCase().includes("aptitude") || r.name.toLowerCase().includes("mcq") ? "mcq" : r.name.toLowerCase().includes("coding") ? "coding" : "interview"),
+          interview_mode: r.interview_mode || (r.name.toLowerCase().includes("hr") || r.name.toLowerCase().includes("behavioral") ? "hr" : r.name.toLowerCase().includes("screening") ? "screening" : "technical")
         }))
       });
 
@@ -1446,54 +1452,101 @@ export default function SessionWorkspacePage() {
 
               {/* Interview Rounds */}
               <div className="space-y-2 border-t border-gray-100 pt-4">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Interview Rounds</label>
-                {editRounds.map((round, idx) => (
-                  <div key={idx} className="flex flex-col gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <div className="flex gap-4 items-center">
-                      <span className="text-xs font-bold text-gray-400 w-16">Round {round.order}</span>
-                      <input 
-                        type="text" 
-                        value={round.name}
-                        onChange={e => {
-                          const updated = [...editRounds];
-                          updated[idx].name = e.target.value;
-                          setEditRounds(updated);
-                        }}
-                        className="flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold"
-                        placeholder="Round Name"
-                      />
-                      <input 
-                        type="text" 
-                        value={round.interviewer || ""}
-                        onChange={e => {
-                          const updated = [...editRounds];
-                          updated[idx].interviewer = e.target.value;
-                          setEditRounds(updated);
-                        }}
-                        className="flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold"
-                        placeholder="Interviewer Name"
-                      />
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Interview Rounds Configuration</label>
+                {editRounds.map((round, idx) => {
+                  const isDeclared = round.result_announcement_date && new Date(round.result_announcement_date) < new Date();
+                  const rType = round.round_type || (round.name.toLowerCase().includes("aptitude") || round.name.toLowerCase().includes("mcq") ? "mcq" : round.name.toLowerCase().includes("coding") ? "coding" : "interview");
+                  return (
+                    <div key={idx} className="flex flex-col gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200/70 relative">
+                      <div className="flex gap-3 items-center flex-wrap">
+                        <span className="text-xs font-black text-gray-500 w-16 flex items-center gap-1">
+                          Round {round.order}
+                        </span>
+                        
+                        <input 
+                          type="text" 
+                          value={round.name}
+                          disabled={isDeclared}
+                          onChange={e => {
+                            const updated = [...editRounds];
+                            updated[idx].name = e.target.value;
+                            setEditRounds(updated);
+                          }}
+                          className={`flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold ${isDeclared ? 'bg-gray-100 text-gray-500' : ''}`}
+                          placeholder="Round Name"
+                        />
+                        
+                        <input 
+                          type="text" 
+                          value={round.interviewer || ""}
+                          disabled={isDeclared}
+                          onChange={e => {
+                            const updated = [...editRounds];
+                            updated[idx].interviewer = e.target.value;
+                            setEditRounds(updated);
+                          }}
+                          className={`flex-1 text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold ${isDeclared ? 'bg-gray-100 text-gray-500' : ''}`}
+                          placeholder="Interviewer Name"
+                        />
+
+                        {isDeclared ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-1 rounded-md">
+                            <Check className="w-3 h-3 text-emerald-600" /> Declared
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 border border-blue-200 px-2 py-1 rounded-md">
+                            <Clock className="w-3 h-3 text-blue-600" /> Active
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Mode selection for AI Interview rounds */}
+                      {rType === "interview" && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-gray-200/50">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-purple-600" /> AI Interview Mode:
+                          </label>
+                          <select
+                            disabled={isDeclared}
+                            value={round.interview_mode || (round.name.toLowerCase().includes("hr") || round.name.toLowerCase().includes("behavioral") ? "hr" : round.name.toLowerCase().includes("screening") ? "screening" : "technical")}
+                            onChange={e => {
+                              const updated = [...editRounds];
+                              updated[idx].interview_mode = e.target.value;
+                              setEditRounds(updated);
+                            }}
+                            className={`text-xs p-1.5 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-semibold flex-1 ${isDeclared ? 'bg-gray-100 text-gray-500' : ''}`}
+                          >
+                            <option value="technical">Technical AI Interview (Architecture & Coding)</option>
+                            <option value="hr">HR & Behavioral AI Interview (Culture Fit, Soft Skills, CTC)</option>
+                            <option value="screening">General Screening AI Interview (Resume & Background Validation)</option>
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-gray-400" /> Result Declaration Time*:
+                        </label>
+                        <input
+                          type="datetime-local"
+                          disabled={isDeclared}
+                          value={round.result_announcement_date || ""}
+                          min={(() => {
+                            const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+                            return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+                          })()}
+                          onChange={e => {
+                            const updated = [...editRounds];
+                            updated[idx].result_announcement_date = e.target.value;
+                            setEditRounds(updated);
+                          }}
+                          className={`text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold flex-1 ${isDeclared ? 'bg-gray-100 text-gray-500' : ''}`}
+                          required
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 pl-20">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Result Declaration Time*:</label>
-                      <input
-                        type="datetime-local"
-                        value={round.result_announcement_date || ""}
-                        min={(() => {
-                          const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-                          return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
-                        })()}
-                        onChange={e => {
-                          const updated = [...editRounds];
-                          updated[idx].result_announcement_date = e.target.value;
-                          setEditRounds(updated);
-                        }}
-                        className="text-xs p-2 border border-gray-200 bg-white rounded-lg focus:border-accent focus:outline-none font-bold flex-1"
-                        required
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
             </div>

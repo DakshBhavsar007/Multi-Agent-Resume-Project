@@ -452,6 +452,16 @@ def apply_job(request, session_id):
             link=f"/jobs/applications?app_id={application.id}",
         )
 
+        min_score = session.criteria.get("min_match_score", 50) if isinstance(session.criteria, dict) else 50
+        if match_val is not None and match_val >= min_score:
+            Notification.objects.create(
+                seeker=seeker,
+                type="shortlisted",
+                title=f"Application Shortlisted 🌟",
+                message=f"Congratulations! Your profile matched for {session.job_title} at {company_name} ({match_score_str} Match). Your application is currently under screening.",
+                link=f"/jobs/applications?app_id={application.id}",
+            )
+
         # Notification for company
         if session.company:
             Notification.objects.create(
