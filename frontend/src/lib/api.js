@@ -51,7 +51,13 @@ async function req(method, path, body=null, isFile=false) {
     throw new Error("Session expired")
   }
   const errText = (data && data.error) ? String(data.error).toLowerCase() : "";
-  const isAccountBanned = errText.includes("banned") || errText.includes("deactivated") || errText.includes("account suspended");
+  const isAccountBanned = (res.status === 403 || res.status === 401) && (
+    errText.includes("banned") || 
+    errText.includes("deactivated") || 
+    errText.includes("suspended") ||
+    errText.includes("contact support") ||
+    errText.includes("account disabled")
+  );
 
   if (isAccountBanned) {
     let email = "";
@@ -384,7 +390,13 @@ async function seekerReq(method, path, body = null, isFile = false) {
     throw new Error('Session expired');
   }
   const errText = (data && data.error) ? String(data.error).toLowerCase() : "";
-  const isAccountBanned = errText.includes("banned") || errText.includes("deactivated");
+  const isAccountBanned = (res.status === 403 || res.status === 401) && (
+    errText.includes("banned") || 
+    errText.includes("deactivated") || 
+    errText.includes("suspended") ||
+    errText.includes("contact support") ||
+    errText.includes("account disabled")
+  );
 
   if (isAccountBanned) {
     let email = "";
