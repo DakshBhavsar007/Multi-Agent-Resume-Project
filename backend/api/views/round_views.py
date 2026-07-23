@@ -21,6 +21,10 @@ from models.schemas import success_response, error_response
 from agents.round_recommendation_agent import RoundRecommendationAgent
 from agents.interview_agent import InterviewAgent
 from openai import OpenAI
+from api.services.email_service import (
+    send_round_completed_to_recruiter,
+    send_round_score_to_seeker,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -737,6 +741,46 @@ def submit_mcq(request):
     # Automatically evaluate candidate pipeline progression
     auto_progress_candidate(attempt.candidate, attempt.round.session, score)
 
+    # R1: Notify recruiter that candidate submitted this round
+    try:
+        cand = attempt.candidate
+        sess = attempt.round.session
+        company = sess.company
+        if company and company.email:
+            send_round_completed_to_recruiter(
+                recruiter_email=company.email,
+                company_name=company.name,
+                candidate_name=cand.name,
+                job_title=sess.job_title,
+                round_name=attempt.round.name,
+                round_type=attempt.round.round_type or 'mcq',
+                score=score,
+                session_id=str(sess.id),
+            )
+    except Exception as r1_err:
+        logger.warning('R1 MCQ recruiter email failed: %s', r1_err)
+
+    # S2: Send score result email to seeker
+    try:
+        app = JobApplication.objects.filter(candidate=attempt.candidate).select_related('seeker').first()
+        if app and app.seeker and app.seeker.email:
+            seeker = app.seeker
+            sess = attempt.round.session
+            company_name = sess.company.name if sess.company else 'Between Partner'
+            send_round_score_to_seeker(
+                seeker_email=seeker.email,
+                seeker_name=seeker.full_name,
+                job_title=sess.job_title,
+                company_name=company_name,
+                round_name=attempt.round.name,
+                round_type='mcq',
+                score=score,
+                correct_count=correct_count,
+                total_count=total_count,
+            )
+    except Exception as s2_err:
+        logger.warning('S2 MCQ score email to seeker failed: %s', s2_err)
+
     return JsonResponse(success_response({
         "score": score,
         "correct_count": correct_count,
@@ -1096,6 +1140,46 @@ def submit_coding(request):
     # Automatically evaluate candidate pipeline progression
     auto_progress_candidate(attempt.candidate, attempt.round.session, score)
 
+    # R1: Notify recruiter that candidate submitted coding round
+    try:
+        cand = attempt.candidate
+        sess = attempt.round.session
+        company = sess.company
+        if company and company.email:
+            send_round_completed_to_recruiter(
+                recruiter_email=company.email,
+                company_name=company.name,
+                candidate_name=cand.name,
+                job_title=sess.job_title,
+                round_name=attempt.round.name,
+                round_type=attempt.round.round_type or 'coding',
+                score=score,
+                session_id=str(sess.id),
+            )
+    except Exception as r1_err:
+        logger.warning('R1 Coding recruiter email failed: %s', r1_err)
+
+    # S2: Send score result email to seeker
+    try:
+        app = JobApplication.objects.filter(candidate=attempt.candidate).select_related('seeker').first()
+        if app and app.seeker and app.seeker.email:
+            seeker = app.seeker
+            sess = attempt.round.session
+            company_name = sess.company.name if sess.company else 'Between Partner'
+            send_round_score_to_seeker(
+                seeker_email=seeker.email,
+                seeker_name=seeker.full_name,
+                job_title=sess.job_title,
+                company_name=company_name,
+                round_name=attempt.round.name,
+                round_type='coding',
+                score=score,
+                passed_count=passed_count,
+                total_problems=total_problems,
+            )
+    except Exception as s2_err:
+        logger.warning('S2 Coding score email to seeker failed: %s', s2_err)
+
     return JsonResponse(success_response({
         "score": score,
         "passed_count": passed_count,
@@ -1268,6 +1352,24 @@ def finalize_interview(request):
     if score == 0 and ("proceed" in rec or "hire" in rec):
         score = 70.0
     # auto_progress_candidate is skipped here to let recruiter decide manually
+
+    # R1: Notify recruiter that candidate submitted the interview round
+    try:
+        sess = attempt.round.session
+        company = sess.company
+        if company and company.email:
+            send_round_completed_to_recruiter(
+                recruiter_email=company.email,
+                company_name=company.name,
+                candidate_name=cand.name,
+                job_title=sess.job_title,
+                round_name=attempt.round.name,
+                round_type=attempt.round.round_type or 'interview',
+                score=None,  # interview score requires manual review
+                session_id=str(sess.id),
+            )
+    except Exception as r1_err:
+        logger.warning('R1 Interview recruiter email failed: %s', r1_err)
 
     return JsonResponse(success_response(summary))
 

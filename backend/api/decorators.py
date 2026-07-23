@@ -370,7 +370,29 @@ def check_rate_limit(action: str):
                         "upgrade_url": "/developer/portal/billing"
                     }
                 }, status=429)
-                
+
+            # R4: Send 80% quota warning email to recruiter (only once, at exactly 80%)
+            if action == "parse" and action_limit > 0:
+                warning_threshold = int(action_limit * 0.8)
+                if used == warning_threshold:
+                    try:
+                        from api.services.email_service import send_parse_quota_warning_to_recruiter
+                        recruiter_email = getattr(company, 'email', None)
+                        if recruiter_email:
+                            last_day = calendar.monthrange(now.year, now.month)[1]
+                            resets_on = f"{now.strftime('%B')} {last_day}, {now.year}"
+                            send_parse_quota_warning_to_recruiter(
+                                recruiter_email=recruiter_email,
+                                company_name=company.name,
+                                used=used,
+                                limit=action_limit,
+                                tier=tier,
+                                resets_on=resets_on,
+                            )
+                    except Exception as r4_err:
+                        import logging as _log
+                        _log.getLogger(__name__).warning("R4 quota warning email failed: %s", r4_err)
+
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     return decorator

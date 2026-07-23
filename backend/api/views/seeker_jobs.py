@@ -22,6 +22,7 @@ from api.services.email_service import (
     send_application_received_to_company,
     send_application_confirmation_to_seeker,
     send_status_update_to_seeker,
+    send_high_match_alert_to_recruiter,
 )
 from models.schemas import success_response, error_response
 
@@ -484,6 +485,20 @@ def apply_job(request, session_id):
                     session_id=session_id,
                     match_score=match_val,
                 )
+                # R2: High-match alert if candidate scores 80%+
+                if match_val is not None and match_val >= 80:
+                    try:
+                        send_high_match_alert_to_recruiter(
+                            recruiter_email=session.company.email,
+                            company_name=company_name,
+                            seeker_name=seeker.full_name,
+                            job_title=session.job_title,
+                            match_score=match_val,
+                            session_id=str(session_id),
+                            seeker_skills=seeker.skills if seeker.skills else [],
+                        )
+                    except Exception as r2_err:
+                        logger.warning("R2 high-match alert email failed: %s", r2_err)
             if seeker.email:
                 send_application_confirmation_to_seeker(
                     seeker_email=seeker.email,

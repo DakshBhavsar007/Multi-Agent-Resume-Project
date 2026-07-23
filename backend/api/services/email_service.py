@@ -651,3 +651,424 @@ def send_support_ticket_confirmation(user_email: str, user_name: str, ticket_id:
     )
 
     return send_email(to_email=user_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# S1 — Round Unlocked: Notify seeker that a new assessment round has been opened
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_round_unlocked_to_seeker(
+    seeker_email: str,
+    seeker_name: str,
+    job_title: str,
+    company_name: str,
+    round_name: str,
+    round_type: str,
+    test_link: str = None,
+    result_date: str = None,
+) -> bool:
+    """
+    Notify a job seeker that a new assessment round has been unlocked for them.
+    Triggered when a recruiter forwards them to the next round.
+    """
+    subject = f"New Assessment Unlocked — {round_name} for {job_title}"
+    title = "Assessment Round Unlocked"
+    subtitle = f"{job_title} at {company_name}"
+    badge = "New Round"
+    cta_url = test_link if (test_link and test_link.startswith("http")) else f"{FRONTEND_URL}{test_link}" if test_link else f"{FRONTEND_URL}/jobs/applications"
+    cta_text = "Start Assessment" if test_link else "View Application"
+
+    round_type_labels = {
+        "mcq": "Multiple Choice Quiz",
+        "coding": "Technical Coding Challenge",
+        "interview": "AI Video Interview",
+    }
+    round_type_display = round_type_labels.get(round_type, round_type.title() if round_type else "Assessment")
+
+    result_date_html = f"""
+    <tr>
+        <td colspan="2" style="padding-bottom: 12px;">
+            <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Result Announcement</p>
+            <p style="margin: 0; font-size: 13px; font-weight: 600; color: #475569;">{result_date}</p>
+        </td>
+    </tr>
+    """ if result_date else ""
+
+    body_html = f"""
+    <p>Hi <strong>{seeker_name}</strong>,</p>
+    <p>Congratulations! You have been shortlisted and a new assessment round has just been unlocked for your application to <strong>{job_title}</strong> at <strong>{company_name}</strong>.</p>
+
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Round Name</p>
+                    <p style="margin: 0; font-size: 15px; font-weight: 800; color: #1d4ed8;">{round_name}</p>
+                </td>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Round Type</p>
+                    <p style="margin: 0; font-size: 13px; font-weight: 700; color: #1e40af;">{round_type_display}</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 12px;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Position</p>
+                    <p style="margin: 0; font-size: 13px; font-weight: 600; color: #2563eb;">{job_title} &bull; {company_name}</p>
+                </td>
+            </tr>
+            {result_date_html}
+        </table>
+    </div>
+
+    <p>Please log in to your Between Seeker Dashboard or click the button below to start your assessment. Complete it before the deadline to stay in the running.</p>
+    """
+
+    text_body = f"Hi {seeker_name},\n\nYour new assessment round '{round_name}' for {job_title} at {company_name} has been unlocked!\n\nStart now: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text=cta_text,
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=seeker_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# R1 — Round Completed: Notify recruiter that a candidate has submitted a round
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_round_completed_to_recruiter(
+    recruiter_email: str,
+    company_name: str,
+    candidate_name: str,
+    job_title: str,
+    round_name: str,
+    round_type: str,
+    score: float = None,
+    session_id: str = None,
+) -> bool:
+    """
+    Notify a recruiter that a candidate has completed a round submission.
+    Triggered after submit_mcq, submit_coding, or finalize_interview.
+    """
+    subject = f"Round Submitted — {candidate_name} completed {round_name} for {job_title}"
+    title = "Candidate Round Submitted"
+    subtitle = f"{round_name} — {job_title}"
+    badge = "Round Complete"
+    cta_url = f"{FRONTEND_URL}/dashboard/sessions/{session_id}" if session_id else f"{FRONTEND_URL}/dashboard"
+
+    round_type_labels = {
+        "mcq": "Multiple Choice Quiz",
+        "coding": "Technical Coding Challenge",
+        "interview": "AI Video Interview",
+    }
+    round_type_display = round_type_labels.get(round_type, round_type.title() if round_type else "Assessment")
+
+    score_html = f"""
+    <tr>
+        <td style="padding-bottom: 12px;">
+            <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Score</p>
+            <p style="margin: 0; font-size: 16px; font-weight: 800; color: #059669;">{int(score)}%</p>
+        </td>
+    </tr>
+    """ if score is not None else ""
+
+    body_html = f"""
+    <p>Hi <strong>{company_name}</strong>,</p>
+    <p>A candidate has just completed their assessment round for the <strong>{job_title}</strong> position. Their submission is ready for your review.</p>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Candidate</p>
+                    <p style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">{candidate_name}</p>
+                </td>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Position</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: #2563eb;">{job_title}</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 12px;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Round</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b;">{round_name} &bull; {round_type_display}</p>
+                </td>
+            </tr>
+            {score_html}
+        </table>
+    </div>
+
+    <p>Log in to your Between Recruiter Dashboard to review the full submission, scores, and decide whether to advance or reject this candidate.</p>
+    """
+
+    text_body = f"Hi {company_name},\n\n{candidate_name} has submitted their {round_name} for {job_title}.\n\nReview now: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Review Submission",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=recruiter_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# R2 — High-Match Alert: Notify recruiter when a 80%+ match candidate applies
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_high_match_alert_to_recruiter(
+    recruiter_email: str,
+    company_name: str,
+    seeker_name: str,
+    job_title: str,
+    match_score: float,
+    session_id: str,
+    seeker_skills: list = None,
+) -> bool:
+    """
+    Special premium email to recruiter when a candidate with >= 80% match score applies.
+    Highlights skills match and prompts urgent review.
+    """
+    subject = f"High-Match Candidate Alert — {seeker_name} ({int(match_score)}% Match) for {job_title}"
+    title = "High-Match Candidate Applied"
+    subtitle = f"{int(match_score)}% Compatibility Score — {job_title}"
+    badge = "Top Candidate"
+    cta_url = f"{FRONTEND_URL}/dashboard/sessions/{session_id}"
+
+    top_skills = seeker_skills[:8] if seeker_skills else []
+    skills_html = "".join([
+        f'<span style="display: inline-block; background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 20px; padding: 3px 12px; margin: 3px; font-size: 12px; font-weight: 600; color: #1d4ed8;">{s}</span>'
+        for s in top_skills
+    ]) if top_skills else '<p style="color: #64748b; font-size: 13px;">Skills info available in the candidate profile.</p>'
+
+    body_html = f"""
+    <p>Hi <strong>{company_name}</strong>,</p>
+    <p>A <strong>top-tier candidate</strong> just applied for the <strong>{job_title}</strong> position with an exceptional compatibility score. We recommend reviewing this candidate as a priority.</p>
+
+    <div style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border: 1.5px solid #bfdbfe; border-radius: 16px; padding: 24px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 14px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Candidate</p>
+                    <p style="margin: 0; font-size: 18px; font-weight: 900; color: #0f172a;">{seeker_name}</p>
+                </td>
+                <td style="padding-bottom: 14px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase;">Match Score</p>
+                    <p style="margin: 0; font-size: 28px; font-weight: 900; color: #059669;">{int(match_score)}%</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-bottom: 14px;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Applied For</p>
+                    <p style="margin: 0; font-size: 15px; font-weight: 700; color: #2563eb;">{job_title}</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p style="margin: 0 0 8px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Matched Skills</p>
+                    <div style="line-height: 2;">{skills_html}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <p>This candidate's profile is highly aligned with your job requirements. Log in to review their full resume, ATS score breakdown, and take action immediately.</p>
+    """
+
+    text_body = f"Hi {company_name},\n\nHigh-Match Alert: {seeker_name} applied for {job_title} with a {int(match_score)}% match score.\n\nReview now: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Review Top Candidate",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=recruiter_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# S2 — Round Score Result: Send seeker their assessment score after submission
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_round_score_to_seeker(
+    seeker_email: str,
+    seeker_name: str,
+    job_title: str,
+    company_name: str,
+    round_name: str,
+    round_type: str,
+    score: float,
+    correct_count: int = None,
+    total_count: int = None,
+    passed_count: int = None,
+    total_problems: int = None,
+) -> bool:
+    """
+    Email a job seeker their assessment score immediately after submission.
+    Works for MCQ and Coding rounds (not interview, which requires manual review).
+    """
+    subject = f"Your Result — {round_name} for {job_title} at {company_name}"
+    title = "Assessment Result"
+    subtitle = f"{round_name} — {job_title} at {company_name}"
+    badge = "Score Released"
+    cta_url = f"{FRONTEND_URL}/jobs/applications"
+
+    score_int = int(score)
+    if score_int >= 80:
+        score_color = "#059669"  # green
+        score_label = "Excellent"
+        result_bg = "#f0fdf4"
+        result_border = "#bbf7d0"
+    elif score_int >= 60:
+        score_color = "#d97706"  # amber
+        score_label = "Good"
+        result_bg = "#fffbeb"
+        result_border = "#fde68a"
+    else:
+        score_color = "#dc2626"  # red
+        score_label = "Needs Improvement"
+        result_bg = "#fef2f2"
+        result_border = "#fecaca"
+
+    # Build breakdown row based on round type
+    breakdown_html = ""
+    if round_type == "mcq" and correct_count is not None and total_count:
+        breakdown_html = f"""
+        <tr>
+            <td colspan="2" style="padding-bottom: 12px;">
+                <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Questions Correct</p>
+                <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e293b;">{correct_count} / {total_count}</p>
+            </td>
+        </tr>
+        """
+    elif round_type == "coding" and passed_count is not None and total_problems:
+        breakdown_html = f"""
+        <tr>
+            <td colspan="2" style="padding-bottom: 12px;">
+                <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Problems Solved</p>
+                <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e293b;">{passed_count} / {total_problems}</p>
+            </td>
+        </tr>
+        """
+
+    body_html = f"""
+    <p>Hi <strong>{seeker_name}</strong>,</p>
+    <p>Your submission for the <strong>{round_name}</strong> assessment has been evaluated. Here is your result:</p>
+
+    <div style="background: {result_bg}; border: 1.5px solid {result_border}; border-radius: 16px; padding: 24px; margin: 20px 0; text-align: center;">
+        <p style="margin: 0 0 4px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: {score_color}; letter-spacing: 1px;">Your Score</p>
+        <p style="margin: 0 0 4px; font-size: 52px; font-weight: 900; color: {score_color}; line-height: 1;">{score_int}%</p>
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: {score_color};">{score_label}</p>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin: 16px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Round</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b;">{round_name}</p>
+                </td>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Company</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: #2563eb;">{company_name}</p>
+                </td>
+            </tr>
+            {breakdown_html}
+        </table>
+    </div>
+
+    <p>Your result has been submitted to the hiring team. You can track your application status anytime from your Between Seeker Dashboard.</p>
+    """
+
+    text_body = f"Hi {seeker_name},\n\nYour {round_name} result for {job_title} at {company_name}: {score_int}% ({score_label})\n\nTrack application: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="View Application Status",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=seeker_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# R4 — Parse Quota Warning: Notify recruiter when 80% of monthly parse quota is used
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_parse_quota_warning_to_recruiter(
+    recruiter_email: str,
+    company_name: str,
+    used: int,
+    limit: int,
+    tier: str,
+    resets_on: str = "first of next month",
+) -> bool:
+    """
+    Warn a recruiter that they have consumed 80% or more of their monthly parse quota.
+    Triggered inside the check_rate_limit decorator after incrementing Redis counter.
+    """
+    subject = f"Parse Quota Warning — {used}/{limit} parses used this month"
+    title = "Monthly Parse Quota Warning"
+    subtitle = f"You have used {used} of {limit} resume parses ({int((used/limit)*100)}%)"
+    badge = "Quota Alert"
+    cta_url = f"{FRONTEND_URL}/dashboard/settings?tab=billing"
+
+    percent_used = int((used / limit) * 100) if limit > 0 else 0
+    remaining = limit - used
+    bar_width = min(percent_used, 100)
+    bar_color = "#dc2626" if percent_used >= 90 else "#d97706"
+
+    body_html = f"""
+    <p>Hi <strong>{company_name}</strong>,</p>
+    <p>You have used <strong>{percent_used}%</strong> of your monthly resume parse quota on the <strong>{tier.title()}</strong> plan. Only <strong>{remaining} parses</strong> remain before your limit is reached.</p>
+
+    <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 14px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #92400e; font-weight: 700; text-transform: uppercase;">Parses Used</p>
+                    <p style="margin: 0; font-size: 22px; font-weight: 900; color: #b45309;">{used}</p>
+                </td>
+                <td style="padding-bottom: 14px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #92400e; font-weight: 700; text-transform: uppercase;">Monthly Limit</p>
+                    <p style="margin: 0; font-size: 22px; font-weight: 900; color: #92400e;">{limit}</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-bottom: 8px;">
+                    <p style="margin: 0 0 6px; font-size: 11px; color: #92400e; font-weight: 700; text-transform: uppercase;">Usage</p>
+                    <div style="background: #fef3c7; border-radius: 999px; height: 10px; overflow: hidden;">
+                        <div style="background: {bar_color}; width: {bar_width}%; height: 100%; border-radius: 999px;"></div>
+                    </div>
+                    <p style="margin: 6px 0 0; font-size: 12px; color: #78350f; font-weight: 600;">{percent_used}% used &bull; Resets {resets_on}</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-top: 8px;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #92400e; font-weight: 700; text-transform: uppercase;">Current Plan</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: #b45309;">{tier.title()} Plan</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <p>To avoid disruption to your hiring workflow, consider upgrading your plan for higher monthly parse limits and additional features.</p>
+    """
+
+    text_body = f"Hi {company_name},\n\nWarning: You have used {used}/{limit} ({percent_used}%) of your monthly parse quota on the {tier.title()} plan.\n\nUpgrade plan: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Upgrade Plan",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=recruiter_email, subject=subject, html_body=html_email, text_body=text_body)
+

@@ -12,7 +12,12 @@ from django.utils import timezone
 from api.models import Company, Session, Candidate, JobApplication, Notification
 from api.decorators import require_api_key
 from models.schemas import success_response, error_response
-from api.services.email_service import send_status_update_to_seeker
+from api.services.email_service import (
+    send_status_update_to_seeker,
+    send_round_unlocked_to_seeker,
+    send_round_completed_to_recruiter,
+    send_high_match_alert_to_recruiter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -329,6 +334,7 @@ def candidate_action(request, session_id, cand_id):
         prior_round_order = candidate.current_round_index
 
         offer_letter_path = None
+        next_sr = None  # will be populated for forward action
         if action == "forward":
             if candidate.current_round_index >= max_round:
                 return JsonResponse(error_response("Already at last round"), status=400)
@@ -474,6 +480,30 @@ def candidate_action(request, session_id, cand_id):
                             message=notif_msg,
                             link=notif_link,
                         )
+
+                        # S1: Send round-unlocked email when forwarding to next round
+                        if action == 'forward' and next_sr:
+                            try:
+                                result_date_str = None
+                                for r in rounds:
+                                    try:
+                                        if int(r.get('order', 0)) == candidate.current_round_index:
+                                            result_date_str = r.get('result_announcement_date')
+                                            break
+                                    except (ValueError, TypeError):
+                                        continue
+                                send_round_unlocked_to_seeker(
+                                    seeker_email=seeker.email,
+                                    seeker_name=seeker.full_name,
+                                    job_title=session.job_title,
+                                    company_name=company_name,
+                                    round_name=next_sr.name,
+                                    round_type=next_sr.round_type or 'assessment',
+                                    test_link=test_link,
+                                    result_date=result_date_str,
+                                )
+                            except Exception as s1_err:
+                                logger.warning('S1 round-unlocked email failed: %s', s1_err)
 
                         # Send rich email with full details
                         send_status_update_to_seeker(
