@@ -445,22 +445,47 @@ def candidate_action(request, session_id, cand_id):
                         app.status = notify_status
                         app.save(update_fields=['status'])
 
-                        # Create in-app notification
+                        # Compute rich details for notification and email
+                        company_name = session.company.name if session.company else "Between Partner"
+                        match_val = _calculate_match_score(seeker, session)
+                        match_score_str = f"{match_val}%" if match_val else "N/A"
+
+                        current_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first()
+                        current_round_name = current_sr.name if current_sr else None
+
+                        test_link = None
+                        active_attempt = ApplicantRoundAttempt.objects.filter(
+                            candidate=candidate,
+                            round__round_number=candidate.current_round_index
+                        ).first()
+                        if active_attempt and active_attempt.access_token:
+                            test_link = f"/test/entry?token={active_attempt.access_token}"
+
+                        notif_link = test_link if test_link else f"/jobs/applications?app_id={app.id}"
+
+                        round_note = f" ({current_round_name})" if current_round_name else ""
+                        notif_msg = f"Your application for {session.job_title} at {company_name} [{match_score_str} Match] has been updated to {notify_status.title()}{round_note}. Click to view details and proceed."
+
+                        # Create rich in-app notification
                         Notification.objects.create(
                             seeker=seeker,
                             type='status_updated',
-                            title=f'Application Update — {session.job_title}',
-                            message=f'Your application at {session.company.name if session.company else "Between Partner"} has been updated to: {notify_status.title()}.',
-                            link=f'/jobs/applications?app_id={app.id}',
+                            title=f'{notify_status.title()}: {session.job_title} at {company_name}',
+                            message=notif_msg,
+                            link=notif_link,
                         )
 
-                        # Send email
+                        # Send rich email with full details
                         send_status_update_to_seeker(
                             seeker_email=seeker.email,
                             seeker_name=seeker.full_name,
                             job_title=session.job_title,
-                            company_name=session.company.name if session.company else "Between Partner",
+                            company_name=company_name,
                             new_status=notify_status,
+                            match_score=match_val,
+                            current_round_name=current_round_name,
+                            location=session.location if session.location else None,
+                            test_link=test_link,
                         )
         except Exception as notify_err:
             logger.warning('Notification error for candidate action: %s', notify_err)

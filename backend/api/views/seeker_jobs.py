@@ -418,12 +418,17 @@ def apply_job(request, session_id):
             status="applied",
         )
 
+        # Compute match score & details
+        match_val = calculate_unified_match_score(seeker, session)
+        match_score_str = f"{match_val}%" if match_val else "N/A"
+        company_name = session.company.name if session.company else "Between Partner"
+
         # Notification for seeker
         Notification.objects.create(
             seeker=seeker,
             type="general",
-            title=f"Application submitted — {session.job_title}",
-            message=f"Your application to {session.company.name if session.company else 'Between Partner'} for {session.job_title} has been submitted.",
+            title=f"Application Submitted: {session.job_title} at {company_name}",
+            message=f"Your application for {session.job_title} at {company_name} [{match_score_str} Match Score] has been submitted successfully.",
             link=f"/jobs/applications?app_id={application.id}",
         )
 
@@ -431,24 +436,27 @@ def apply_job(request, session_id):
         Notification.objects.create(
             company=session.company,
             type="application_received",
-            title=f"New applicant — {session.job_title}",
-            message=f"{seeker.full_name} applied for {session.job_title}.",
+            title=f"New Candidate Application: {session.job_title}",
+            message=f"{seeker.full_name} ({match_score_str} Match Score) applied for {session.job_title}.",
             link=f"/dashboard/sessions/{session_id}",
         )
 
-        # Send emails (non-blocking — failure won't break apply)
+        # Send emails with full details
         send_application_received_to_company(
             company_email=session.company.email,
-            company_name=session.company.name if session.company else "Between Partner",
+            company_name=company_name,
             seeker_name=seeker.full_name,
             job_title=session.job_title,
             session_id=session_id,
+            match_score=match_val,
         )
         send_application_confirmation_to_seeker(
             seeker_email=seeker.email,
             seeker_name=seeker.full_name,
             job_title=session.job_title,
-            company_name=session.company.name if session.company else "Between Partner",
+            company_name=company_name,
+            match_score=match_val,
+            location=session.location if session.location else None,
         )
 
         return JsonResponse(success_response({
@@ -527,11 +535,31 @@ def release_due_results_for_seeker(seeker):
                 app.status = target_app_status
                 app.save(update_fields=['status'])
                 
+                # Compute rich details for pending notification & email release
+                match_val = calculate_unified_match_score(seeker, session)
+                match_score_str = f"{match_val}%" if match_val else "N/A"
+                company_name = session.company.name if session.company else "Between Partner"
+
+                current_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first() if candidate else None
+                current_round_name = current_sr.name if current_sr else None
+
+                test_link = None
+                if candidate:
+                    active_attempt = ApplicantRoundAttempt.objects.filter(
+                        candidate=candidate,
+                        round__round_number=candidate.current_round_index
+                    ).first()
+                    if active_attempt and active_attempt.access_token:
+                        test_link = f"/test/entry?token={active_attempt.access_token}"
+
+                notif_link = test_link if test_link else f"/jobs/applications?app_id={app.id}"
+                round_note = f" ({current_round_name})" if current_round_name else ""
+
                 # Create in-app notification if it doesn't exist yet
                 notif_exists = Notification.objects.filter(
                     seeker=seeker,
                     type='status_updated',
-                    title=f'Application Update — {session.job_title}',
+                    title=f'{target_app_status.title()}: {session.job_title} at {company_name}',
                     message__contains=target_app_status.title()
                 ).exists()
                 
@@ -539,18 +567,22 @@ def release_due_results_for_seeker(seeker):
                     Notification.objects.create(
                         seeker=seeker,
                         type='status_updated',
-                        title=f'Application Update — {session.job_title}',
-                        message=f'Your application at {session.company.name if session.company else "Between Partner"} has been updated to: {target_app_status.title()}.',
-                        link=f'/jobs/applications?app_id={app.id}',
+                        title=f'{target_app_status.title()}: {session.job_title} at {company_name}',
+                        message=f'Your application for {session.job_title} at {company_name} [{match_score_str} Match] has been updated to {target_app_status.title()}{round_note}. Click to view details.',
+                        link=notif_link,
                     )
                     
-                    # Send email
+                    # Send rich email with full details
                     send_status_update_to_seeker(
                         seeker_email=seeker.email,
                         seeker_name=seeker.full_name,
                         job_title=session.job_title,
-                        company_name=session.company.name if session.company else "Between Partner",
+                        company_name=company_name,
                         new_status=target_app_status,
+                        match_score=match_val,
+                        current_round_name=current_round_name,
+                        location=session.location if session.location else None,
+                        test_link=test_link,
                     )
                     logger.info(f"Released pending result on-the-fly: {target_app_status} for app {app.id}")
 

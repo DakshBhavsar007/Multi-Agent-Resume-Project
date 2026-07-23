@@ -944,22 +944,54 @@ def release_round_results(application_id: str, notify_status: str):
         app.status = notify_status
         app.save(update_fields=['status'])
 
-        # Create in-app notification
+        company_name = app.session.company.name if app.session and app.session.company else (app.session.name if app.session else "Between Partner")
+        
+        # Calculate unified match score & active round details
+        match_val = None
+        current_round_name = None
+        test_link = None
+        try:
+            from api.views.jobs import calculate_unified_match_score
+            match_val = calculate_unified_match_score(app.seeker, app.session)
+        except Exception:
+            pass
+
+        try:
+            from api.models import SessionRound, ApplicantRoundAttempt
+            if app.candidate:
+                sr = SessionRound.objects.filter(session=app.session, round_number=app.candidate.current_round_index).first()
+                if sr:
+                    current_round_name = sr.name
+                attempt = ApplicantRoundAttempt.objects.filter(candidate=app.candidate, round__round_number=app.candidate.current_round_index).first()
+                if attempt and attempt.access_token:
+                    test_link = f"/test/entry?token={attempt.access_token}"
+        except Exception:
+            pass
+
+        match_score_str = f"{match_val}%" if match_val else "N/A"
+        notif_link = test_link if test_link else f"/jobs/applications?app_id={app.id}"
+        round_note = f" ({current_round_name})" if current_round_name else ""
+
+        # Create rich in-app notification
         Notification.objects.create(
             seeker=app.seeker,
             type='status_updated',
-            title=f'Application Update — {app.session.job_title}',
-            message=f'Your application at {app.session.name} has been updated to: {notify_status.title()}.',
-            link=f'/jobs/applications?app_id={app.id}',
+            title=f'{notify_status.title()}: {app.session.job_title} at {company_name}',
+            message=f'Your application for {app.session.job_title} at {company_name} [{match_score_str} Match] has been updated to {notify_status.title()}{round_note}. Click to view details.',
+            link=notif_link,
         )
 
-        # Send email
+        # Send rich email with full details
         send_status_update_to_seeker(
             seeker_email=app.seeker.email,
             seeker_name=app.seeker.full_name,
             job_title=app.session.job_title,
-            company_name=app.session.name,
+            company_name=company_name,
             new_status=notify_status,
+            match_score=match_val,
+            current_round_name=current_round_name,
+            location=app.session.location if app.session and app.session.location else None,
+            test_link=test_link,
         )
         logger.info(f"release_round_results: Released status {notify_status} for app {application_id}")
     except Exception as e:

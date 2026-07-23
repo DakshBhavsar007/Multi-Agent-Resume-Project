@@ -4,10 +4,10 @@ Email Service
 High-quality, responsive HTML email service for Between AI platform.
 Uses the SMTP configuration defined in Django settings / environment variables.
 Supports HTML email templates with Between logo, clean design tokens, and strict NO-EMOJI rules.
+All email & notification functions deliver full comprehensive details (job title, company name, match score, stage, test links).
 """
 
 import os
-import re
 import logging
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
@@ -161,9 +161,10 @@ def send_application_received_to_company(
     seeker_name: str,
     job_title: str,
     session_id: str,
+    match_score: str = None,
 ) -> bool:
     """
-    Notify a company recruiter that a new candidate application has been submitted.
+    Notify a company recruiter that a new candidate application has been submitted with full details.
     """
     subject = f"New Candidate Application — {job_title}"
     title = "New Candidate Application"
@@ -171,21 +172,37 @@ def send_application_received_to_company(
     badge = "New Application"
     cta_url = f"{FRONTEND_URL}/dashboard/sessions/{session_id}"
 
+    match_score_display = f"{int(match_score)}%" if (isinstance(match_score, (int, float)) and match_score > 0) else (str(match_score) if match_score else "N/A")
+
     body_html = f"""
     <p>Hi <strong>{company_name}</strong>,</p>
-    <p>You have received a new application for the <strong>{job_title}</strong> opening on Between.</p>
+    <p>You have received a new application for the <strong>{job_title}</strong> position on Between.</p>
     
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0;">
-        <p style="margin: 0 0 4px; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Applicant Name</p>
-        <p style="margin: 0 0 12px; font-size: 16px; font-weight: 800; color: #0f172a;">{seeker_name}</p>
-        <p style="margin: 0 0 4px; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Job Title</p>
-        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #2563eb;">{job_title}</p>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Applicant Name</p>
+                    <p style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">{seeker_name}</p>
+                </td>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Match Score</p>
+                    <p style="margin: 0; font-size: 16px; font-weight: 800; color: #059669;">{match_score_display}</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Target Job Role</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: #2563eb;">{job_title}</p>
+                </td>
+            </tr>
+        </table>
     </div>
     
     <p>Log in to your Between Recruiter Dashboard to review the complete profile, ATS compatibility match details, and candidate resume.</p>
     """
 
-    text_body = f"Hi {company_name},\n\nYou have received a new application from {seeker_name} for {job_title}.\n\nReview application: {cta_url}\n\n— Between AI Platform"
+    text_body = f"Hi {company_name},\n\nYou have received a new application from {seeker_name} for {job_title} ({match_score_display} Match).\n\nReview application: {cta_url}\n\n— Between AI Platform"
     html_email = build_between_email_html(
         title=title,
         subtitle=subtitle,
@@ -203,9 +220,11 @@ def send_application_confirmation_to_seeker(
     seeker_name: str,
     job_title: str,
     company_name: str,
+    match_score: str = None,
+    location: str = None,
 ) -> bool:
     """
-    Confirm to a job seeker that their application was submitted successfully.
+    Confirm to a job seeker that their application was submitted successfully with full details.
     """
     subject = f"Application Submitted — {job_title} at {company_name}"
     title = "Application Submitted"
@@ -213,21 +232,42 @@ def send_application_confirmation_to_seeker(
     badge = "Application Sent"
     cta_url = f"{FRONTEND_URL}/jobs/applications"
 
+    match_score_display = f"{int(match_score)}%" if (isinstance(match_score, (int, float)) and match_score > 0) else (str(match_score) if match_score else "N/A")
+    location_display = location if location else "Not specified"
+
     body_html = f"""
     <p>Hi <strong>{seeker_name}</strong>,</p>
     <p>Your application for <strong>{job_title}</strong> at <strong>{company_name}</strong> has been successfully submitted via Between.</p>
     
-    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; margin: 20px 0;">
-        <p style="margin: 0 0 4px; font-size: 12px; color: #166534; font-weight: 600; text-transform: uppercase;">Role</p>
-        <p style="margin: 0 0 8px; font-size: 16px; font-weight: 800; color: #14532d;">{job_title}</p>
-        <p style="margin: 0 0 4px; font-size: 12px; color: #166534; font-weight: 600; text-transform: uppercase;">Company</p>
-        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #15803d;">{company_name}</p>
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase;">Role</p>
+                    <p style="margin: 0; font-size: 15px; font-weight: 800; color: #14532d;">{job_title}</p>
+                </td>
+                <td style="padding-bottom: 12px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase;">Company</p>
+                    <p style="margin: 0; font-size: 15px; font-weight: 700; color: #15803d;">{company_name}</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase;">Match Score</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 800; color: #15803d;">{match_score_display}</p>
+                </td>
+                <td>
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase;">Location</p>
+                    <p style="margin: 0; font-size: 13px; font-weight: 600; color: #166534;">{location_display}</p>
+                </td>
+            </tr>
+        </table>
     </div>
     
-    <p>You can track application stage progress, scheduled assessment rounds, and interviewer updates anytime on your Seeker Dashboard.</p>
+    <p>You can track real-time application stage progress, scheduled assessment rounds, and interviewer updates anytime on your Seeker Dashboard.</p>
     """
 
-    text_body = f"Hi {seeker_name},\n\nYour application for {job_title} at {company_name} has been submitted.\n\nTrack applications: {cta_url}\n\n— Between AI Platform"
+    text_body = f"Hi {seeker_name},\n\nYour application for {job_title} at {company_name} ({match_score_display} Match) has been submitted.\nLocation: {location_display}\n\nTrack applications: {cta_url}\n\n— Between AI Platform"
     html_email = build_between_email_html(
         title=title,
         subtitle=subtitle,
@@ -269,24 +309,29 @@ def send_status_update_to_seeker(
     job_title: str,
     company_name: str,
     new_status: str,
+    match_score: str = None,
+    current_round_name: str = None,
+    location: str = None,
+    test_link: str = None,
+    rejection_reason: str = None,
 ) -> bool:
     """
-    Notify a job seeker that their application status has updated.
+    Notify a job seeker that their application status has updated with FULL COMPREHENSIVE DETAILS.
     """
     status_messages = {
-        "shortlisted": f"Great news! You have been shortlisted for {job_title} at {company_name}. The hiring team will be reviewing your profile for upcoming interview rounds.",
-        "rejected":    f"Thank you for taking the time to apply for {job_title} at {company_name}. After careful consideration, the hiring team has decided to proceed with other candidates for this position.",
-        "hired":       f"Congratulations! An offer has been extended to you for {job_title} at {company_name}. Please review your dashboard for details.",
+        "shortlisted": f"Great news! Your application for {job_title} at {company_name} has been reviewed and shortlisted by the hiring team. You have been selected to move forward to the next stage of recruitment.",
+        "rejected":    f"Thank you for applying for {job_title} at {company_name}. After careful review of your qualifications, the hiring team has decided to move forward with other candidates for this specific opening.",
+        "hired":       f"Congratulations! An official employment offer has been extended to you for {job_title} at {company_name}. Please log in to your dashboard for onboarding details.",
     }
 
     status_titles = {
         "shortlisted": "Application Shortlisted",
-        "rejected":    "Application Update",
+        "rejected":    "Application Status Update",
         "hired":       "Offer Extended",
     }
 
     status_badges = {
-        "shortlisted": "Shortlisted",
+        "shortlisted": "Shortlisted Candidate",
         "rejected":    "Application Update",
         "hired":       "Offer Extended",
     }
@@ -295,26 +340,88 @@ def send_status_update_to_seeker(
     title = status_titles.get(new_status, "Application Status Updated")
     badge = status_badges.get(new_status, "Status Update")
     subject = f"{title} — {job_title} at {company_name}"
+    
+    # Target CTA URL and text
     cta_url = f"{FRONTEND_URL}/jobs/applications"
+    cta_text = "View Application Details"
+    if test_link:
+        cta_url = test_link if test_link.startswith("http") else f"{FRONTEND_URL}{test_link}"
+        cta_text = "Take Assessment / Test Now"
+
+    # Match score string
+    match_score_display = "N/A"
+    if match_score is not None:
+        if isinstance(match_score, (int, float)) and match_score > 0:
+            match_score_display = f"{int(match_score)}%"
+        else:
+            match_score_display = str(match_score)
+
+    round_html = f"""
+    <tr>
+        <td style="padding-bottom: 12px;" colspan="2">
+            <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Current Stage / Assessment Round</p>
+            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b;">{current_round_name}</p>
+        </td>
+    </tr>
+    """ if current_round_name else ""
+
+    location_html = f"""
+    <tr>
+        <td style="padding-bottom: 12px;" colspan="2">
+            <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Location & Work Mode</p>
+            <p style="margin: 0; font-size: 13px; font-weight: 600; color: #475569;">{location}</p>
+        </td>
+    </tr>
+    """ if location else ""
+
+    rejection_html = f"""
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin: 16px 0 0 0;">
+        <p style="margin: 0 0 4px; font-size: 11px; color: #991b1b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Assessment Feedback / Rejection Note</p>
+        <p style="margin: 0; font-size: 13px; color: #7f1d1d; line-height: 1.5;">{rejection_reason}</p>
+    </div>
+    """ if (new_status == "rejected" and rejection_reason) else ""
 
     body_html = f"""
     <p>Hi <strong>{seeker_name}</strong>,</p>
     <p>{status_body}</p>
     
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0;">
-        <p style="margin: 0 0 4px; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Updated Status</p>
-        <p style="margin: 0; font-size: 16px; font-weight: 800; color: #2563eb;">{new_status.title()}</p>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 14px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Job Title</p>
+                    <p style="margin: 0; font-size: 15px; font-weight: 800; color: #0f172a;">{job_title}</p>
+                </td>
+                <td style="padding-bottom: 14px; width: 50%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Company</p>
+                    <p style="margin: 0; font-size: 15px; font-weight: 700; color: #2563eb;">{company_name}</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 14px;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Updated Status</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 800; color: #2563eb;">{new_status.title()}</p>
+                </td>
+                <td style="padding-bottom: 14px;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Match Score</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 800; color: #059669;">{match_score_display}</p>
+                </td>
+            </tr>
+            {round_html}
+            {location_html}
+        </table>
+        {rejection_html}
     </div>
     
-    <p>Log in to your Seeker Dashboard to view application stage details and next steps.</p>
+    <p>Log in to your Between Seeker Dashboard to view complete application details and proceed with next steps.</p>
     """
 
-    text_body = f"Hi {seeker_name},\n\n{status_body}\n\nView details: {cta_url}\n\n— Between AI Platform"
+    text_body = f"Hi {seeker_name},\n\n{status_body}\n\nJob: {job_title}\nCompany: {company_name}\nStatus: {new_status.title()}\nMatch Score: {match_score_display}\n\nView details: {cta_url}\n\n— Between AI Platform"
     html_email = build_between_email_html(
         title=title,
         subtitle=f"{job_title} at {company_name}",
         body_content_html=body_html,
-        cta_text="View Status Details",
+        cta_text=cta_text,
         cta_url=cta_url,
         badge_text=badge
     )
@@ -338,7 +445,7 @@ def send_status_update_to_seeker(
                     "rejected": "updated (not moving forward)",
                     "hired": "offered"
                 }.get(new_status, new_status)
-                sms_msg = f"Hi {seeker_name}, your application for {job_title} at {company_name} has been {sms_status_text}. Log in to Between to view details: {FRONTEND_URL}/jobs/applications"
+                sms_msg = f"Hi {seeker_name}, your application for {job_title} at {company_name} ({match_score_display} match) status is now {sms_status_text}. Details: {cta_url}"
                 send_sms(recipient_phone=seeker.phone, message_content=sms_msg)
                 
             track_automation_event(
@@ -358,9 +465,11 @@ def send_new_job_notification_to_follower(
     company_name: str,
     job_title: str,
     session_id: str,
+    location: str = None,
+    experience_level: str = None,
 ) -> bool:
     """
-    Notify a follower of a company that a new job opening has been posted.
+    Notify a follower of a company that a new job opening has been posted with full details.
     """
     subject = f"New Role Posted: {job_title} at {company_name}"
     title = "New Job Opportunity"
@@ -368,20 +477,25 @@ def send_new_job_notification_to_follower(
     badge = "Company Update"
     cta_url = f"{FRONTEND_URL}/jobs/{session_id}"
 
+    location_display = location if location else "Remote / Flexible"
+    exp_display = f" • {experience_level}" if experience_level else ""
+
     body_html = f"""
     <p>Hi <strong>{seeker_name}</strong>,</p>
     <p><strong>{company_name}</strong>, a company you follow on Between, has just posted a new career opportunity for <strong>{job_title}</strong>.</p>
     
-    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 18px; margin: 20px 0;">
-        <p style="margin: 0 0 4px; font-size: 12px; color: #1e40af; font-weight: 600; text-transform: uppercase;">Opening</p>
-        <p style="margin: 0 0 6px; font-size: 16px; font-weight: 800; color: #1d4ed8;">{job_title}</p>
-        <p style="margin: 0; font-size: 13px; color: #1e40af; font-weight: 600;">{company_name}</p>
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 2px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Job Title</p>
+        <p style="margin: 0 0 10px; font-size: 17px; font-weight: 800; color: #1d4ed8;">{job_title}</p>
+        
+        <p style="margin: 0 0 2px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Company & Location</p>
+        <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1e40af;">{company_name} &bull; {location_display}{exp_display}</p>
     </div>
     
     <p>Check the full job description and submit your application directly on Between.</p>
     """
 
-    text_body = f"Hi {seeker_name},\n\n{company_name} has posted a new job: {job_title}.\n\nApply now: {cta_url}\n\n— Between AI Platform"
+    text_body = f"Hi {seeker_name},\n\n{company_name} has posted a new job: {job_title} ({location_display}).\n\nApply now: {cta_url}\n\n— Between AI Platform"
     html_email = build_between_email_html(
         title=title,
         subtitle=subtitle,
@@ -398,7 +512,7 @@ def send_new_job_notification_to_follower(
         seeker = JobSeekerAccount.objects.filter(email=seeker_email).first()
         if seeker and seeker.phone:
             from api.services.brevo_service import send_sms
-            sms_msg = f"Hi {seeker_name}, {company_name} has posted a new role: {job_title}. Apply now: {FRONTEND_URL}/jobs/{session_id}"
+            sms_msg = f"Hi {seeker_name}, {company_name} has posted a new role: {job_title} ({location_display}). Apply now: {cta_url}"
             send_sms(recipient_phone=seeker.phone, message_content=sms_msg)
     except Exception as err:
         logger.warning("Brevo follower SMS notification failed: %s", err)
