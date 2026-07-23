@@ -73,7 +73,21 @@ def custom_serve_uploads(request, path, document_root=None, **kwargs):
         logger.warning("Upload serve failed for %s: %s", path, e)
         raise Http404("Upload file not found")
 
+from django.http import JsonResponse
+from django.utils import timezone
+
+def health_check(request):
+    return JsonResponse({
+        "status": "healthy",
+        "service": "Between AI Engine API",
+        "timestamp": timezone.now().isoformat()
+    }, status=200)
+
 urlpatterns = [
+    # Health checks for UptimeRobot, Render & Load Balancers
+    path('health', health_check, name='root-health'),
+    path('healthz', health_check, name='root-healthz'),
+
     # Route static/media uploads and photos
     re_path(r'^uploads/(?P<path>.*)$', custom_serve_uploads, {'document_root': os.getenv("UPLOAD_DIR", "uploads")}),
     re_path(r'^photos/(?P<path>.*)$', serve, {'document_root': os.getenv("PHOTO_DIR", "photos")}),

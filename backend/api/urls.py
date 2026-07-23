@@ -237,7 +237,9 @@ urlpatterns = [
     path('api/v1/seeker/notifications/read-all', seeker_jobs.mark_all_notifications_read, name='seeker-notifications-read-all'),
     path('api/v1/seeker/notifications/<str:notif_id>/read', seeker_jobs.mark_notification_read, name='seeker-notification-read'),
 
-    # ── Public Companies ──────────────────────────────────────────────────────
+    # ── Public Companies & Health ──────────────────────────────────────────────
+    path('health', companies.health_check, name='api-health'),
+    path('api/v1/health', companies.health_check, name='api-v1-health'),
     path('api/v1/public/companies', companies.public_list_companies, name='public-companies-list'),
     path('api/v1/public/companies/<str:company_id>', companies.public_get_company, name='public-companies-detail'),
     path('api/v1/public/market-trends', companies.public_market_trends, name='public-market-trends'),

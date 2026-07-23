@@ -342,6 +342,17 @@ def seeker_following_companies(request):
 
 
 @csrf_exempt
+def health_check(request):
+    """GET /health & /api/v1/health - lightweight health check endpoint for UptimeRobot, Render & Load Balancers."""
+    from django.utils import timezone
+    return JsonResponse({
+        "status": "healthy",
+        "service": "Between AI Engine API",
+        "timestamp": timezone.now().isoformat()
+    }, status=200)
+
+
+@csrf_exempt
 def public_market_trends(request):
     """GET /api/v1/public/market-trends - returns 100% DB-fetched dynamic market intelligence stats, salaries, locations, and charts."""
     if request.method != "GET":
