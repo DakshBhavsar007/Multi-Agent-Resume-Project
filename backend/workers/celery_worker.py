@@ -951,8 +951,8 @@ def release_round_results(application_id: str, notify_status: str):
         current_round_name = None
         test_link = None
         try:
-            from api.views.jobs import calculate_unified_match_score
-            match_val = calculate_unified_match_score(app.seeker, app.session)
+            from api.views.seeker_jobs import _compute_match_score
+            match_val = _compute_match_score(app.seeker.skills if (app.seeker and app.seeker.skills) else [], [], str(app.session.id) if app.session else "", app.seeker, app.session)
         except Exception:
             pass
 

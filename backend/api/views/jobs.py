@@ -54,8 +54,13 @@ def calculate_unified_match_score(skills, total_exp_years, location, entity_id_s
     cand_location = (location or "").lower().strip()
     location_score = 100 if not preferred_locs else (100 if any(l.lower().strip() in cand_location for l in preferred_locs) else 50)
 
-    # Hash offset variance (0 to 11%) based on entity_id_str (Seeker ID or Candidate ID)
-    hash_offset = (abs(hash(str(entity_id_str))) % 12) if entity_id_str else 5
+    # 100% Deterministic hash offset (0 to 11%) based on entity_id_str using hashlib.md5
+    import hashlib
+    if entity_id_str:
+        md5_hex = hashlib.md5(str(entity_id_str).encode('utf-8')).hexdigest()
+        hash_offset = int(md5_hex[:4], 16) % 12
+    else:
+        hash_offset = 5
 
     # Weighted overall score
     weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})

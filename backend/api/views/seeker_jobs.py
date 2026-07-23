@@ -38,27 +38,49 @@ def _parse_job_description_meta(description: str) -> dict:
     if not description:
         return meta
     
+    import re
+    sal_match = re.search(r'(?:SALARY|SALARY RANGE|COMPENSATION|REMUNERATION|PACKAGE|PAY)\s*[:\-]\s*([^\n\r]+)', description, re.IGNORECASE)
+    if sal_match:
+        meta["salary_range"] = sal_match.group(1).strip()
+
+    loc_match = re.search(r'(?:LOCATION|WORKPLACE|JOB LOCATION|CITY|BASED IN)\s*[:\-]\s*([^\n\r]+)', description, re.IGNORECASE)
+    if loc_match:
+        meta["location"] = loc_match.group(1).strip()
+
+    type_match = re.search(r'(?:TYPE|EMPLOYMENT TYPE|JOB TYPE)\s*[:\-]\s*([^\n\r]+)', description, re.IGNORECASE)
+    if type_match:
+        meta["employment_type"] = type_match.group(1).strip()
+
+    # Line by line fallback
     for line in description.splitlines():
         line = line.strip()
-        if not line:
+        if not line or ":" not in line:
             continue
-        if ":" in line:
-            parts = line.split(":", 1)
-            key = parts[0].strip().lower()
-            val = parts[1].strip()
-            if not val:
-                continue
-            if key in ["salary", "remuneration", "pay"]:
-                meta["salary_range"] = val
-            elif key in ["location", "job location", "city", "place", "workplace", "based in"]:
-                meta["location"] = val
-            elif key in ["type", "employment type", "employment_type", "job type"]:
-                meta["employment_type"] = val
+        parts = line.split(":", 1)
+        key = parts[0].strip().lower()
+        val = parts[1].strip()
+        if not val:
+            continue
+        if meta["salary_range"] == "Competitive" and key in ["salary", "remuneration", "pay", "package", "compensation"]:
+            meta["salary_range"] = val
+        elif meta["location"] == "Remote" and key in ["location", "job location", "city", "place", "workplace", "based in"]:
+            meta["location"] = val
+        elif meta["employment_type"] == "Full-time" and key in ["type", "employment type", "employment_type", "job type"]:
+            meta["employment_type"] = val
+
     return meta
 
 
 def _get_salary_range(session) -> str:
+    # 1. First check if salary is explicitly defined in JD description text
+    meta = _parse_job_description_meta(session.job_description)
+    if meta.get("salary_range") and meta["salary_range"] != "Competitive":
+        return meta["salary_range"]
+
     criteria = session.criteria or {}
+    if isinstance(criteria, dict) and criteria.get("salary_range"):
+        return criteria["salary_range"]
+
     salary_min = criteria.get("salary_min")
     salary_max = criteria.get("salary_max")
     salary_currency = criteria.get("salary_currency", "USD")
@@ -81,10 +103,8 @@ def _get_salary_range(session) -> str:
             return f"{symbol}{int(salary_min):,}+"
         except (ValueError, TypeError):
             pass
-            
-    # Fallback to description parsing
-    meta = _parse_job_description_meta(session.job_description)
-    return meta["salary_range"]
+
+    return meta.get("salary_range", "Competitive")
 
 
 def _session_to_job(session: Session, match_score=None, applied=False, is_saved=False) -> dict:
@@ -419,9 +439,9 @@ def apply_job(request, session_id):
         )
 
         # Compute match score & details
-        match_val = calculate_unified_match_score(seeker, session)
-        match_score_str = f"{match_val}%" if match_val else "N/A"
-        company_name = session.company.name if session.company else "Between Partner"
+        match_val = _compute_match_score(seeker.skills if seeker.skills else [], [], str(session.id), seeker, session)
+        match_score_str = f"{match_val}%" if (match_val is not None and match_val > 0) else "N/A"
+        company_name = session.company.name if (session.company and session.company.name) else "Between Partner"
 
         # Notification for seeker
         Notification.objects.create(
@@ -433,31 +453,38 @@ def apply_job(request, session_id):
         )
 
         # Notification for company
-        Notification.objects.create(
-            company=session.company,
-            type="application_received",
-            title=f"New Candidate Application: {session.job_title}",
-            message=f"{seeker.full_name} ({match_score_str} Match Score) applied for {session.job_title}.",
-            link=f"/dashboard/sessions/{session_id}",
-        )
+        if session.company:
+            Notification.objects.create(
+                company=session.company,
+                type="application_received",
+                title=f"New Candidate Application: {session.job_title}",
+                message=f"{seeker.full_name} ({match_score_str} Match Score) applied for {session.job_title}.",
+                link=f"/dashboard/sessions/{session_id}",
+            )
 
         # Send emails with full details
-        send_application_received_to_company(
-            company_email=session.company.email,
-            company_name=company_name,
-            seeker_name=seeker.full_name,
-            job_title=session.job_title,
-            session_id=session_id,
-            match_score=match_val,
-        )
-        send_application_confirmation_to_seeker(
-            seeker_email=seeker.email,
-            seeker_name=seeker.full_name,
-            job_title=session.job_title,
-            company_name=company_name,
-            match_score=match_val,
-            location=session.location if session.location else None,
-        )
+        loc_str = session.criteria.get("location") if (isinstance(session.criteria, dict) and session.criteria.get("location")) else "Remote"
+        try:
+            if session.company and session.company.email:
+                send_application_received_to_company(
+                    company_email=session.company.email,
+                    company_name=company_name,
+                    seeker_name=seeker.full_name,
+                    job_title=session.job_title,
+                    session_id=session_id,
+                    match_score=match_val,
+                )
+            if seeker.email:
+                send_application_confirmation_to_seeker(
+                    seeker_email=seeker.email,
+                    seeker_name=seeker.full_name,
+                    job_title=session.job_title,
+                    company_name=company_name,
+                    match_score=match_val,
+                    location=loc_str,
+                )
+        except Exception as mail_err:
+            logger.warning("Failed to send application emails: %s", mail_err)
 
         return JsonResponse(success_response({
             "application_id": str(application.id),
@@ -536,8 +563,8 @@ def release_due_results_for_seeker(seeker):
                 app.save(update_fields=['status'])
                 
                 # Compute rich details for pending notification & email release
-                match_val = calculate_unified_match_score(seeker, session)
-                match_score_str = f"{match_val}%" if match_val else "N/A"
+                match_val = _compute_match_score(seeker.skills if seeker and seeker.skills else [], [], str(session.id), seeker, session)
+                match_score_str = f"{match_val}%" if (match_val is not None and match_val > 0) else "N/A"
                 company_name = session.company.name if session.company else "Between Partner"
 
                 current_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first() if candidate else None
