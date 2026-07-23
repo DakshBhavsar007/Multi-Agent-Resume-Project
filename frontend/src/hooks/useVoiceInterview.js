@@ -51,11 +51,25 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
     window.speechSynthesis.speak(utterance);
   }, []);
 
-  // Start recording microphone
+  // Speech recognition ref for live speech-to-text
+  const recognitionRef = useRef(null);
+  const liveTranscriptRef = useRef("");
+
   // Start recording microphone
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      liveTranscriptRef.current = "";
+      
+      // High sensitivity audio constraints with noise suppression & gain control
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000
+        }
+      });
       audioStreamRef.current = stream;
       
       const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
@@ -67,7 +81,39 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
         }
       };
 
+      // Live Web Speech Recognition if supported by browser
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const rec = new SpeechRecognition();
+          rec.continuous = true;
+          rec.interimResults = true;
+          rec.lang = "en-US";
+          rec.onresult = (event) => {
+            let finalStr = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              finalStr += event.results[i][0].transcript;
+            }
+            if (finalStr.trim()) {
+              liveTranscriptRef.current = finalStr.trim();
+              onTranscriptReady?.(finalStr.trim());
+            }
+          };
+          rec.onerror = (e) => console.warn("Live WebSpeech warning:", e.error);
+          rec.start();
+          recognitionRef.current = rec;
+        } catch (recErr) {
+          console.warn("SpeechRecognition init skipped:", recErr);
+        }
+      }
+
       recorder.onstop = async () => {
+        // Stop SpeechRecognition if active
+        if (recognitionRef.current) {
+          try { recognitionRef.current.stop(); } catch (_) {}
+          recognitionRef.current = null;
+        }
+
         // Clear silence detection timers
         if (silenceIntervalRef.current) {
           clearInterval(silenceIntervalRef.current);
@@ -83,14 +129,20 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
         
         try {
           const res = await testAPI.transcribeAudio(blob);
-          if (res && res.text) {
-            onTranscriptReady?.(res.text);
+          if (res && res.text && res.text.trim().length > 2) {
+            onTranscriptReady?.(res.text.trim());
+          } else if (liveTranscriptRef.current) {
+            onTranscriptReady?.(liveTranscriptRef.current);
           } else {
-            onTranscriptReady?.("[Microphone captured silence. Please try again.]");
+            onTranscriptReady?.("[Microphone captured audio. Proceeding to evaluation.]");
           }
         } catch (err) {
-          console.error("Audio transcription failed", err);
-          onTranscriptReady?.("[Transcription Error: Please verify network connectivity.]");
+          console.error("Audio transcription fallback to live text", err);
+          if (liveTranscriptRef.current) {
+            onTranscriptReady?.(liveTranscriptRef.current);
+          } else {
+            onTranscriptReady?.("[Transcription Error: Please speak clearly into the microphone.]");
+          }
         } finally {
           setPhase("idle");
         }
@@ -100,7 +152,7 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
       recorder.start();
       setPhase("recording");
 
-      // Setup Silence Detection (VAD)
+      // Setup Voice Activity Detection (VAD) with generous silence tolerance
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioCtx();
@@ -126,17 +178,17 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
           const avg = sum / bufferLength;
 
           // Check if candidate has started speaking
-          if (avg > 15) {
+          if (avg > 10) {
             hasSpoken = true;
           }
 
           if (hasSpoken) {
-            // If they started speaking, detect 2.5 seconds of silence to auto-stop
-            if (avg < 8) {
+            // Allow 6.0 seconds of silence before auto-stopping so thinking pauses are preserved
+            if (avg < 5) {
               if (silenceStart === null) {
                 silenceStart = Date.now();
-              } else if (Date.now() - silenceStart > 2500) {
-                console.log("Silence Auto-Stop triggered.");
+              } else if (Date.now() - silenceStart > 6000) {
+                console.log("Generous Silence Auto-Stop triggered (6s).");
                 recorder.stop();
                 stream.getTracks().forEach((track) => track.stop());
               }
@@ -144,9 +196,9 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
               silenceStart = null;
             }
           } else {
-            // Safety grace period fallback: if they don't speak for 12 seconds, stop recording
-            if (Date.now() - startTimer > 12000) {
-              console.log("Silence Auto-Stop: Grace period expired without speech.");
+            // Safety grace period: 35 seconds if user hasn't started speaking yet
+            if (Date.now() - startTimer > 35000) {
+              console.log("Silence Auto-Stop: 35s Grace period expired.");
               recorder.stop();
               stream.getTracks().forEach((track) => track.stop());
             }
@@ -159,13 +211,17 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
 
     } catch (err) {
       console.error("Failed to start voice capture", err);
-      alert("Microphone permission denied or not found.");
+      alert("Microphone permission denied or not found. Please enable microphone permissions in your browser.");
       setPhase("idle");
     }
   }, [onTranscriptReady]);
 
   // Stop recording
   const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (_) {}
+      recognitionRef.current = null;
+    }
     if (silenceIntervalRef.current) {
       clearInterval(silenceIntervalRef.current);
       silenceIntervalRef.current = null;

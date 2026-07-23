@@ -210,11 +210,14 @@ def session_detail(request, session_id):
                     name = r.get("name")
                     name_lower = name.lower()
                     
-                    rtype = "interview"
-                    if "aptitude" in name_lower or "mcq" in name_lower:
-                        rtype = "mcq"
-                    elif "coding" in name_lower or "technical" in name_lower or "programming" in name_lower:
-                        rtype = "coding"
+                    rtype = r.get("round_type")
+                    if not rtype:
+                        if "aptitude" in name_lower or "mcq" in name_lower:
+                            rtype = "mcq"
+                        elif "coding" in name_lower or "programming" in name_lower:
+                            rtype = "coding"
+                        else:
+                            rtype = "interview"
                     
                     time_limit = 20 if rtype == "mcq" else (45 if rtype == "coding" else 25)
                     coding_problems = []

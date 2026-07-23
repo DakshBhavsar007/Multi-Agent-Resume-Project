@@ -100,42 +100,44 @@ export default function NewSessionPage() {
     salary_min: "", salary_max: "", salary_currency: "USD",
     weights: { skills: 0.5, experience: 0.3, location: 0.2 },
     rounds: [
-      { id: 1, name: "Screening Round", interviewer: "", order: 1 },
-      { id: 2, name: "Technical Round", interviewer: "", order: 2 },
-      { id: 3, name: "HR Round", interviewer: "", order: 3 }
+      { id: 1, name: "Aptitude Assessment Round", round_type: "mcq", order: 1 },
+      { id: 2, name: "Technical Coding Round", round_type: "coding", order: 2 },
+      { id: 3, name: "AI Interview Round", round_type: "interview", order: 3 }
     ]
   });
 
   const [inferredData, setInferredData] = useState(null);
   const [lastAnalyzedJD, setLastAnalyzedJD] = useState("");
-  const [mcqEnabled, setMcqEnabled] = useState(false);
-  const [codingEnabled, setCodingEnabled] = useState(false);
+  const [mcqEnabled, setMcqEnabled] = useState(true);
+  const [codingEnabled, setCodingEnabled] = useState(true);
   const [interviewEnabled, setInterviewEnabled] = useState(true);
   const [recommending, setRecommending] = useState(false);
 
-  const toggleRoundInList = (name, enabled) => {
+  const toggleRoundInList = (roundType, enabled) => {
+    const defaultNameMap = {
+      mcq: "Aptitude Assessment Round",
+      coding: "Technical Coding Round",
+      interview: "AI Interview Round"
+    };
+    
     setFormData(prev => {
-      let updatedRounds = [...prev.rounds];
+      let currentRounds = prev.rounds.filter(r => r.round_type !== roundType && r.name !== defaultNameMap[roundType]);
       if (enabled) {
-        if (!updatedRounds.some(r => r.name === name)) {
-          const nextId = Math.max(...updatedRounds.map(r => r.id), 0) + 1;
-          const nextOrder = updatedRounds.length + 1;
-          updatedRounds.push({
-            id: nextId,
-            name: name,
-            interviewer: "",
-            order: nextOrder,
-            result_announcement_date: ""
-          });
-        }
-      } else {
-        updatedRounds = updatedRounds.filter(r => r.name !== name);
-        updatedRounds = updatedRounds.map((r, i) => ({
-          ...r,
-          order: i + 1
-        }));
+        currentRounds.push({
+          id: currentRounds.length + 1,
+          name: defaultNameMap[roundType],
+          round_type: roundType,
+          interviewer: "",
+          order: currentRounds.length + 1,
+          result_announcement_date: ""
+        });
       }
-      return { ...prev, rounds: updatedRounds };
+      // Re-index order
+      currentRounds = currentRounds.map((r, i) => ({
+        ...r,
+        order: i + 1
+      }));
+      return { ...prev, rounds: currentRounds };
     });
   };
 
@@ -157,28 +159,20 @@ export default function NewSessionPage() {
             setCodingEnabled(hasCoding);
             setInterviewEnabled(hasInterview);
 
-            // Sync with rounds list below immediately
+            // Rebuild rounds list to ONLY contain the enabled distinct rounds
             setFormData(prev => {
-              let updatedRounds = [...prev.rounds];
-              const roundsToAdd = [];
-              if (hasMcq) roundsToAdd.push("Aptitude Assessment Round");
-              if (hasCoding) roundsToAdd.push("Technical Coding Round");
-              if (hasInterview) roundsToAdd.push("AI Interview Round");
-
-              roundsToAdd.forEach(name => {
-                if (!updatedRounds.some(r => r.name === name)) {
-                  const nextId = Math.max(...updatedRounds.map(r => r.id), 0) + 1;
-                  const nextOrder = updatedRounds.length + 1;
-                  updatedRounds.push({
-                    id: nextId,
-                    name: name,
-                    interviewer: "",
-                    order: nextOrder,
-                    result_announcement_date: ""
-                  });
-                }
-              });
-              return { ...prev, rounds: updatedRounds };
+              const newRounds = [];
+              let orderCount = 1;
+              if (hasMcq) {
+                newRounds.push({ id: 1, name: "Aptitude Assessment Round", round_type: "mcq", order: orderCount++ });
+              }
+              if (hasCoding) {
+                newRounds.push({ id: 2, name: "Technical Coding Round", round_type: "coding", order: orderCount++ });
+              }
+              if (hasInterview) {
+                newRounds.push({ id: 3, name: "AI Interview Round", round_type: "interview", order: orderCount++ });
+              }
+              return { ...prev, rounds: newRounds };
             });
           }
         })
@@ -403,12 +397,16 @@ export default function NewSessionPage() {
 
       // Save assessment rounds config dynamically from formData.rounds
       const assessmentRounds = formData.rounds.map((round) => {
-        let type = "interview";
+        let type = round.round_type;
         const nameLower = (round.name || "").toLowerCase();
-        if (nameLower.includes("aptitude") || nameLower.includes("mcq")) {
-          type = "mcq";
-        } else if (nameLower.includes("coding") || nameLower.includes("technical") || nameLower.includes("programming")) {
-          type = "coding";
+        if (!type) {
+          if (nameLower.includes("aptitude") || nameLower.includes("mcq")) {
+            type = "mcq";
+          } else if (nameLower.includes("coding") || nameLower.includes("programming")) {
+            type = "coding";
+          } else {
+            type = "interview";
+          }
         }
         
         const rPayload = {

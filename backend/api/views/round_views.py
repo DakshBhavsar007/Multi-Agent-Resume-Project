@@ -270,6 +270,14 @@ def create_session_rounds(request, session_id):
     for idx, r in enumerate(rounds_list):
         round_type = r.get("round_type")
         name = r.get("name", f"Round {idx+1}")
+        if not round_type:
+            name_lower = name.lower()
+            if "mcq" in name_lower or "aptitude" in name_lower:
+                round_type = "mcq"
+            elif "coding" in name_lower or "programming" in name_lower:
+                round_type = "coding"
+            else:
+                round_type = "interview"
         time_limit = int(r.get("time_limit_minutes", 30))
 
         custom_question_ids = r.get("custom_question_ids", [])
@@ -1277,8 +1285,7 @@ def transcribe_audio(request):
         # Call Groq Whisper API
         transcription = client.audio.transcriptions.create(
             file=(file_name, file_bytes, "audio/webm"),
-            model="whisper-large-v3-turbo",
-            language="en"
+            model="whisper-large-v3-turbo"
         )
         
         return JsonResponse(success_response({"text": transcription.text}))
