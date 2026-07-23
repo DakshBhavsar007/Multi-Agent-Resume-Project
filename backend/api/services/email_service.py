@@ -73,8 +73,18 @@ def build_between_email_html(
                                         <table role="presentation" border="0" cellspacing="0" cellpadding="0">
                                             <tr>
                                                 <td style="vertical-align: middle; padding-right: 12px;">
-                                                    <div style="width: 32px; height: 32px; background: #2563eb; border-radius: 9px; display: inline-block; text-align: center; line-height: 32px; font-size: 18px; font-weight: 900; color: #ffffff; font-family: sans-serif;">
-                                                        B
+                                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #0f172a; padding: 3px; display: inline-block; box-sizing: border-box; vertical-align: middle;">
+                                                        <svg viewBox="0 0 100 100" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <defs>
+                                                                <linearGradient id="logo-grad-email" x1="0%" y1="100%" x2="100%" y2="0%">
+                                                                    <stop offset="0%" stop-color="#38bdf8" />
+                                                                    <stop offset="100%" stop-color="#2563eb" />
+                                                                </linearGradient>
+                                                            </defs>
+                                                            <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-email)" stroke-width="14" stroke-linecap="round" />
+                                                            <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+                                                            <circle cx="68" cy="32" r="24" fill="#2563eb" />
+                                                        </svg>
                                                     </div>
                                                 </td>
                                                 <td style="vertical-align: middle;">

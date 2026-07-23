@@ -258,8 +258,18 @@ export default function AdminDashboard() {
       {/* Header */}
       <header className="border-b border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-[#0d0d11]/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-slate-900 dark:bg-zinc-100 flex items-center justify-center shadow-md">
-            <span className="text-white dark:text-zinc-900 font-extrabold text-lg">B</span>
+          <div className="w-9 h-9 rounded-lg bg-slate-900 dark:bg-zinc-900 p-1.5 flex items-center justify-center shadow-md">
+            <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logo-grad-admin" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="100%" stopColor="#2563eb" />
+                </linearGradient>
+              </defs>
+              <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-admin)" strokeWidth="14" strokeLinecap="round" />
+              <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+              <circle cx="68" cy="32" r="24" fill="#2563eb" />
+            </svg>
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Between AI Control Deck</h1>
