@@ -1,22 +1,158 @@
 """
 Email Service
 ─────────────
-Simple Django email notifications for the Vishleshan platform.
-Uses the SMTP config already in .env (MAIL_USERNAME, MAIL_PASSWORD, etc.)
-
-For development: emails are printed to console if EMAIL_BACKEND is not configured.
+High-quality, responsive HTML email service for Between AI platform.
+Uses the SMTP configuration defined in Django settings / environment variables.
+Supports HTML email templates with Between logo, clean design tokens, and strict NO-EMOJI rules.
 """
 
 import os
+import re
 import logging
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 # Sender address — falls back to settings.DEFAULT_FROM_EMAIL
-FROM_EMAIL = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@vishleshan.ai")
+FROM_EMAIL = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@between.indevs.in")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://between.indevs.in")
+
+
+def build_between_email_html(
+    title: str,
+    subtitle: str = "",
+    body_content_html: str = "",
+    cta_text: str = None,
+    cta_url: str = None,
+    badge_text: str = None
+) -> str:
+    """
+    Renders an ultra-premium, responsive, HTML email template for Between AI.
+    - Features Between branding with styled SVG logo & header.
+    - Strict NO EMOJI policy — clean SVG/CSS badges & Lucide-inspired design system.
+    - Tailored color palette matching light & dark theme design system.
+    """
+    badge_html = ""
+    if badge_text:
+        badge_html = f"""
+        <div style="display: inline-block; background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: 20px; padding: 4px 14px; margin-bottom: 14px;">
+            <span style="font-size: 11px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.8px;">{badge_text}</span>
+        </div>
+        """
+
+    cta_html = ""
+    if cta_text and cta_url:
+        cta_html = f"""
+        <div style="text-align: center; margin: 32px 0 20px;">
+            <a href="{cta_url}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; padding: 14px 34px; border-radius: 12px; font-size: 14px; font-weight: 700; letter-spacing: -0.2px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);">
+                {cta_text}
+            </a>
+        </div>
+        """
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; padding: 40px 16px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 560px; background-color: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);">
+                    
+                    <!-- Header Bar -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 32px 32px 28px; text-align: left;">
+                            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td style="vertical-align: middle;">
+                                        <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td style="vertical-align: middle; padding-right: 12px;">
+                                                    <div style="width: 32px; height: 32px; background: #2563eb; border-radius: 9px; display: inline-block; text-align: center; line-height: 32px; font-size: 18px; font-weight: 900; color: #ffffff; font-family: sans-serif;">
+                                                        B
+                                                    </div>
+                                                </td>
+                                                <td style="vertical-align: middle;">
+                                                    <span style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; font-family: 'Inter', sans-serif;">Between</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td align="right" style="vertical-align: middle;">
+                                        <span style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.5px; text-transform: uppercase;">Recruitment AI</span>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div style="margin-top: 24px;">
+                                {badge_html}
+                                <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.4px; line-height: 1.3;">{title}</h1>
+                                {f'<p style="color: #94a3b8; font-size: 13px; margin: 0; line-height: 1.5;">{subtitle}</p>' if subtitle else ''}
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding: 32px 32px 28px; background-color: #ffffff;">
+                            <div style="color: #334155; font-size: 14px; line-height: 1.65;">
+                                {body_content_html}
+                            </div>
+                            {cta_html}
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 24px 32px; border-top: 1px solid #f1f5f9; text-align: center;">
+                            <p style="color: #64748b; font-size: 12px; margin: 0 0 6px; font-weight: 500;">
+                                Between Technologies Private Limited &bull; AI Recruitment Intelligence Platform
+                            </p>
+                            <p style="color: #94a3b8; font-size: 11px; margin: 0 0 12px;">
+                                Need assistance? Contact our support desk at <a href="mailto:support@between.indevs.in" style="color: #2563eb; text-decoration: none; font-weight: 600;">support@between.indevs.in</a>
+                            </p>
+                            <p style="color: #cbd5e1; font-size: 11px; margin: 0;">
+                                &copy; 2026 Between AI. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+
+def send_email(to_email: str, subject: str, html_body: str = "", text_body: str = "") -> bool:
+    """
+    Core helper — sends email with HTML & plain text support.
+    """
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject.strip(),
+            body=text_body or "Please view this email in an HTML-capable email client.",
+            from_email=FROM_EMAIL,
+            to=[to_email.strip()],
+        )
+        if html_body:
+            msg.attach_alternative(html_body, "text/html")
+        msg.send(fail_silently=False)
+        logger.info("Email successfully sent to %s: %s", to_email, subject)
+        return True
+    except Exception as exc:
+        logger.warning("Email send failed to %s (%s): %s", to_email, subject, exc)
+        return False
+
+
+def _send(to_email: str, subject: str, message: str) -> bool:
+    """Internal fallback helper."""
+    return send_email(to_email=to_email, subject=subject, text_body=message)
 
 
 def send_application_received_to_company(
@@ -27,20 +163,39 @@ def send_application_received_to_company(
     session_id: str,
 ) -> bool:
     """
-    Notify a company that a new application has been received.
+    Notify a company recruiter that a new candidate application has been submitted.
     """
-    subject = f"New Application — {job_title}"
-    message = f"""
-Hi {company_name},
+    subject = f"New Candidate Application — {job_title}"
+    title = "New Candidate Application"
+    subtitle = f"Position: {job_title}"
+    badge = "New Application"
+    cta_url = f"{FRONTEND_URL}/dashboard/sessions/{session_id}"
 
-You have received a new application from {seeker_name} for the position of {job_title}.
+    body_html = f"""
+    <p>Hi <strong>{company_name}</strong>,</p>
+    <p>You have received a new application for the <strong>{job_title}</strong> opening on Between.</p>
+    
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0;">
+        <p style="margin: 0 0 4px; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Applicant Name</p>
+        <p style="margin: 0 0 12px; font-size: 16px; font-weight: 800; color: #0f172a;">{seeker_name}</p>
+        <p style="margin: 0 0 4px; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Job Title</p>
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #2563eb;">{job_title}</p>
+    </div>
+    
+    <p>Log in to your Between Recruiter Dashboard to review the complete profile, ATS compatibility match details, and candidate resume.</p>
+    """
 
-Log in to your Vishleshan dashboard to review the application:
-{FRONTEND_URL}/dashboard/sessions/{session_id}
+    text_body = f"Hi {company_name},\n\nYou have received a new application from {seeker_name} for {job_title}.\n\nReview application: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Review Application",
+        cta_url=cta_url,
+        badge_text=badge
+    )
 
-— Vishleshan Platform
-"""
-    return _send(company_email, subject, message)
+    return send_email(to_email=company_email, subject=subject, html_body=html_email, text_body=text_body)
 
 
 def send_application_confirmation_to_seeker(
@@ -50,23 +205,40 @@ def send_application_confirmation_to_seeker(
     company_name: str,
 ) -> bool:
     """
-    Confirm to a job seeker that their application was submitted.
-    Also syncs the contact details and tracks the event in Brevo CRM.
+    Confirm to a job seeker that their application was submitted successfully.
     """
     subject = f"Application Submitted — {job_title} at {company_name}"
-    message = f"""
-Hi {seeker_name},
+    title = "Application Submitted"
+    subtitle = f"{job_title} at {company_name}"
+    badge = "Application Sent"
+    cta_url = f"{FRONTEND_URL}/jobs/applications"
 
-Your application for {job_title} at {company_name} has been successfully submitted through Vishleshan.
-
-You can track the status of all your applications here:
-{FRONTEND_URL}/jobs/dashboard/applications
-
-Good luck!
-— Vishleshan Platform
-"""
-    email_sent = _send(seeker_email, subject, message)
+    body_html = f"""
+    <p>Hi <strong>{seeker_name}</strong>,</p>
+    <p>Your application for <strong>{job_title}</strong> at <strong>{company_name}</strong> has been successfully submitted via Between.</p>
     
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; margin: 20px 0;">
+        <p style="margin: 0 0 4px; font-size: 12px; color: #166534; font-weight: 600; text-transform: uppercase;">Role</p>
+        <p style="margin: 0 0 8px; font-size: 16px; font-weight: 800; color: #14532d;">{job_title}</p>
+        <p style="margin: 0 0 4px; font-size: 12px; color: #166534; font-weight: 600; text-transform: uppercase;">Company</p>
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #15803d;">{company_name}</p>
+    </div>
+    
+    <p>You can track application stage progress, scheduled assessment rounds, and interviewer updates anytime on your Seeker Dashboard.</p>
+    """
+
+    text_body = f"Hi {seeker_name},\n\nYour application for {job_title} at {company_name} has been submitted.\n\nTrack applications: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Track Applications",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+
+    email_sent = send_email(to_email=seeker_email, subject=subject, html_body=html_email, text_body=text_body)
+
     # Brevo CRM Integration
     try:
         from api.models import JobSeekerAccount
@@ -91,7 +263,6 @@ Good luck!
     return email_sent
 
 
-
 def send_status_update_to_seeker(
     seeker_email: str,
     seeker_name: str,
@@ -100,60 +271,76 @@ def send_status_update_to_seeker(
     new_status: str,
 ) -> bool:
     """
-    Notify a job seeker that their application status has changed.
-    Also sends an SMS and updates their status in Brevo CRM.
+    Notify a job seeker that their application status has updated.
     """
     status_messages = {
-        "shortlisted": f"Great news! You have been shortlisted for {job_title} at {company_name}. The company may reach out to you soon.",
-        "rejected":    f"Thank you for applying to {job_title} at {company_name}. Unfortunately, they have decided not to move forward with your application at this time.",
-        "hired":       f"Congratulations! You have been selected for {job_title} at {company_name}. Please expect further instructions from the company.",
+        "shortlisted": f"Great news! You have been shortlisted for {job_title} at {company_name}. The hiring team will be reviewing your profile for upcoming interview rounds.",
+        "rejected":    f"Thank you for taking the time to apply for {job_title} at {company_name}. After careful consideration, the hiring team has decided to proceed with other candidates for this position.",
+        "hired":       f"Congratulations! An offer has been extended to you for {job_title} at {company_name}. Please review your dashboard for details.",
     }
 
-    status_labels = {
-        "shortlisted": "Shortlisted ✅",
+    status_titles = {
+        "shortlisted": "Application Shortlisted",
         "rejected":    "Application Update",
-        "hired":       "Offer Extended 🎉",
+        "hired":       "Offer Extended",
     }
 
-    status_body   = status_messages.get(new_status, f"Your application status has been updated to: {new_status}")
-    status_label  = status_labels.get(new_status, "Application Update")
-    subject = f"{status_label} — {job_title} at {company_name}"
+    status_badges = {
+        "shortlisted": "Shortlisted",
+        "rejected":    "Application Update",
+        "hired":       "Offer Extended",
+    }
 
-    message = f"""
-Hi {seeker_name},
+    status_body = status_messages.get(new_status, f"Your application status for {job_title} at {company_name} has been updated to: {new_status.title()}.")
+    title = status_titles.get(new_status, "Application Status Updated")
+    badge = status_badges.get(new_status, "Status Update")
+    subject = f"{title} — {job_title} at {company_name}"
+    cta_url = f"{FRONTEND_URL}/jobs/applications"
 
-{status_body}
+    body_html = f"""
+    <p>Hi <strong>{seeker_name}</strong>,</p>
+    <p>{status_body}</p>
+    
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0;">
+        <p style="margin: 0 0 4px; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Updated Status</p>
+        <p style="margin: 0; font-size: 16px; font-weight: 800; color: #2563eb;">{new_status.title()}</p>
+    </div>
+    
+    <p>Log in to your Seeker Dashboard to view application stage details and next steps.</p>
+    """
 
-View your applications:
-{FRONTEND_URL}/jobs/dashboard/applications
+    text_body = f"Hi {seeker_name},\n\n{status_body}\n\nView details: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=f"{job_title} at {company_name}",
+        body_content_html=body_html,
+        cta_text="View Status Details",
+        cta_url=cta_url,
+        badge_text=badge
+    )
 
-— Vishleshan Platform
-"""
-    email_sent = _send(seeker_email, subject, message)
+    email_sent = send_email(to_email=seeker_email, subject=subject, html_body=html_email, text_body=text_body)
 
-    # Brevo CRM / SMS / Automation Integration
+    # Brevo CRM / SMS Integration
     try:
         from api.models import JobSeekerAccount
         seeker = JobSeekerAccount.objects.filter(email=seeker_email).first()
         if seeker:
             from api.services.brevo_service import send_sms, sync_contact, track_automation_event
-            # 1. Update contact status attributes in CRM
             sync_contact(
                 email=seeker_email,
                 attributes={"LATEST_APPLICATION_STATUS": new_status.title()}
             )
             
-            # 2. Send SMS if phone is available
             if seeker.phone:
-                status_text = {
-                    "shortlisted": "shortlisted ✅",
-                    "rejected": "updated (rejected)",
-                    "hired": "offered 🎉"
+                sms_status_text = {
+                    "shortlisted": "shortlisted",
+                    "rejected": "updated (not moving forward)",
+                    "hired": "offered"
                 }.get(new_status, new_status)
-                sms_msg = f"Hi {seeker_name}, your application for {job_title} at {company_name} has been {status_text}. Log in to Vishleshan to view details."
+                sms_msg = f"Hi {seeker_name}, your application for {job_title} at {company_name} has been {sms_status_text}. Log in to Between to view details: {FRONTEND_URL}/jobs/applications"
                 send_sms(recipient_phone=seeker.phone, message_content=sms_msg)
                 
-            # 3. Track automation event
             track_automation_event(
                 email=seeker_email,
                 event_name="application_status_updated",
@@ -165,25 +352,6 @@ View your applications:
     return email_sent
 
 
-
-def _send(to_email: str, subject: str, message: str) -> bool:
-    """Internal helper — sends mail and logs errors without crashing."""
-    try:
-        send_mail(
-            subject=subject,
-            message=message.strip(),
-            from_email=FROM_EMAIL,
-            recipient_list=[to_email],
-            fail_silently=False,
-        )
-        logger.info("Email sent to %s: %s", to_email, subject)
-        return True
-    except Exception as exc:
-        # Log but never crash — email failure should not block the application flow
-        logger.warning("Email failed to %s (%s): %s", to_email, subject, exc)
-        return False
-
-
 def send_new_job_notification_to_follower(
     seeker_email: str,
     seeker_name: str,
@@ -192,29 +360,45 @@ def send_new_job_notification_to_follower(
     session_id: str,
 ) -> bool:
     """
-    Notify a follower of a company that a new job has been posted.
-    Also sends an SMS notification if a phone number is registered.
+    Notify a follower of a company that a new job opening has been posted.
     """
-    subject = f"New Job Opening: {job_title} at {company_name}"
-    message = f"""
-Hi {seeker_name},
+    subject = f"New Role Posted: {job_title} at {company_name}"
+    title = "New Job Opportunity"
+    subtitle = f"Posted by {company_name}"
+    badge = "Company Update"
+    cta_url = f"{FRONTEND_URL}/jobs/{session_id}"
 
-{company_name}, a company you follow, has just posted a new job opening: {job_title}.
+    body_html = f"""
+    <p>Hi <strong>{seeker_name}</strong>,</p>
+    <p><strong>{company_name}</strong>, a company you follow on Between, has just posted a new career opportunity for <strong>{job_title}</strong>.</p>
+    
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 18px; margin: 20px 0;">
+        <p style="margin: 0 0 4px; font-size: 12px; color: #1e40af; font-weight: 600; text-transform: uppercase;">Opening</p>
+        <p style="margin: 0 0 6px; font-size: 16px; font-weight: 800; color: #1d4ed8;">{job_title}</p>
+        <p style="margin: 0; font-size: 13px; color: #1e40af; font-weight: 600;">{company_name}</p>
+    </div>
+    
+    <p>Check the full job description and submit your application directly on Between.</p>
+    """
 
-Click here to view details and apply:
-{FRONTEND_URL}/jobs/{session_id}
+    text_body = f"Hi {seeker_name},\n\n{company_name} has posted a new job: {job_title}.\n\nApply now: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="View Opening & Apply",
+        cta_url=cta_url,
+        badge_text=badge
+    )
 
-You are receiving this because you follow {company_name} on Between.
-— Between Platform
-"""
-    email_sent = _send(seeker_email, subject, message)
+    email_sent = send_email(to_email=seeker_email, subject=subject, html_body=html_email, text_body=text_body)
 
     try:
         from api.models import JobSeekerAccount
         seeker = JobSeekerAccount.objects.filter(email=seeker_email).first()
         if seeker and seeker.phone:
             from api.services.brevo_service import send_sms
-            sms_msg = f"Hi {seeker_name}, {company_name} has just posted a new role: {job_title}. Apply now: {FRONTEND_URL}/jobs/{session_id}"
+            sms_msg = f"Hi {seeker_name}, {company_name} has posted a new role: {job_title}. Apply now: {FRONTEND_URL}/jobs/{session_id}"
             send_sms(recipient_phone=seeker.phone, message_content=sms_msg)
     except Exception as err:
         logger.warning("Brevo follower SMS notification failed: %s", err)
@@ -222,39 +406,14 @@ You are receiving this because you follow {company_name} on Between.
     return email_sent
 
 
-
-def send_email(to_email: str, subject: str, html_body: str = "", text_body: str = "") -> bool:
-    """
-    Public helper — sends an email with optional HTML body.
-    Used by password reset and other features.
-    """
-    try:
-        from django.core.mail import EmailMultiAlternatives
-        msg = EmailMultiAlternatives(
-            subject=subject,
-            body=text_body or "Please view this email in an HTML-capable client.",
-            from_email=FROM_EMAIL,
-            to=[to_email],
-        )
-        if html_body:
-            msg.attach_alternative(html_body, "text/html")
-        msg.send(fail_silently=False)
-        logger.info("Email sent to %s: %s", to_email, subject)
-        return True
-    except Exception as exc:
-        logger.warning("Email failed to %s (%s): %s", to_email, subject, exc)
-        return False
-
-
 def send_welcome_email(
     user_email: str,
     user_name: str,
-    role: str,  # 'seeker', 'recruiter', 'developer'
+    role: str,
     custom_attributes: dict = None,
 ) -> bool:
     """
-    Send a branded welcome email to new users and sync them to Brevo CRM.
-    Called from register views for all three portals.
+    Send a branded welcome email to new users across all three portals.
     """
     role_labels = {
         "seeker": "Job Seeker",
@@ -270,74 +429,39 @@ def send_welcome_email(
     }
     cta_link = role_links.get(role, FRONTEND_URL)
 
-    subject = f"Welcome to Between AI, {user_name.split()[0] if user_name else 'there'}! 🎉"
-    text_body = f"""
-Hi {user_name},
+    subject = f"Welcome to Between AI, {user_name.split()[0] if user_name else 'User'}"
+    title = "Welcome to Between AI"
+    subtitle = f"Registration Confirmed as {role_label}"
+    badge = "Welcome"
 
-Welcome to Between AI — the intelligent hiring platform!
-
-You have signed up as a {role_label}. Here is what you can do next:
-
-- Explore the platform: {cta_link}
-- Complete your profile for the best experience
-- Verify your email and phone number for security
-
-If you have any questions, reply to this email or contact our support team.
-
-— The Between AI Team
-"""
-    html_body = f"""
-    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden;">
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 32px 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
-                Welcome to Between AI
-            </h1>
-            <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">
-                Intelligent Hiring Platform
-            </p>
-        </div>
-        <div style="padding: 32px 24px;">
-            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px;">
-                Hi <strong>{user_name}</strong>,
-            </p>
-            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-                Thank you for signing up as a <strong style="color: #374151;">{role_label}</strong>!
-                We are excited to have you on board.
-            </p>
-            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
-                <p style="color: #374151; font-size: 14px; font-weight: 600; margin: 0 0 12px;">Get started:</p>
-                <ul style="color: #6b7280; font-size: 13px; line-height: 2; margin: 0; padding-left: 20px;">
-                    <li>Complete your profile for the best experience</li>
-                    <li>Verify your email and phone number</li>
-                    <li>Explore all features available on your dashboard</li>
-                </ul>
-            </div>
-            <div style="text-align: center; margin-bottom: 24px;">
-                <a href="{cta_link}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 10px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);">
-                    Go to Dashboard →
-                </a>
-            </div>
-            <p style="color: #9ca3af; font-size: 12px; text-align: center; line-height: 1.5;">
-                If you have any questions, simply reply to this email.
-            </p>
-        </div>
-        <div style="background: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #f3f4f6;">
-            <p style="color: #d1d5db; font-size: 11px; margin: 0;">
-                Between AI — Vishleshan Platform
-            </p>
-        </div>
+    body_html = f"""
+    <p>Hi <strong>{user_name}</strong>,</p>
+    <p>Welcome to Between AI — the intelligent hiring platform! Your account registration as a <strong>{role_label}</strong> is complete.</p>
+    
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #0f172a; text-transform: uppercase;">Getting Started Steps:</p>
+        <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569; line-height: 1.8;">
+            <li>Complete your profile for personalized matching</li>
+            <li>Verify your email address and phone number</li>
+            <li>Explore features directly from your dashboard</li>
+        </ul>
     </div>
+    <p style="font-size: 13px; color: #64748b;">If you have questions, our support team is available 24/7 at support@between.indevs.in.</p>
     """
 
-    email_sent = _send(user_email, subject, text_body)
+    text_body = f"Hi {user_name},\n\nWelcome to Between AI! Your {role_label} account is ready.\n\nGo to dashboard: {cta_link}\n\n— Between AI Team"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Go to Dashboard",
+        cta_url=cta_link,
+        badge_text=badge
+    )
 
-    # Also send the HTML version
-    try:
-        send_email(to_email=user_email, subject=subject, html_body=html_body, text_body=text_body.strip())
-    except Exception:
-        pass  # The plain text version was already attempted above
+    email_sent = send_email(to_email=user_email, subject=subject, html_body=html_email, text_body=text_body)
 
-    # Brevo CRM Integration — sync new user as a contact
+    # Brevo CRM Integration
     try:
         from api.services.brevo_service import sync_contact, track_automation_event
         first_name = user_name.split()[0] if user_name else ""
@@ -366,64 +490,40 @@ If you have any questions, reply to this email or contact our support team.
 
 def send_support_ticket_confirmation(user_email: str, user_name: str, ticket_id: str, subject_text: str, message_text: str) -> bool:
     """
-    Send a beautifully styled, Between-branded confirmation email when a support ticket is created.
+    Send a confirmation email when a support ticket is created.
     """
     from django.utils.html import escape
     safe_name = escape(user_name)
     safe_subject = escape(subject_text)
     safe_message = escape(message_text)
 
-    subject = f"[Support Ticket #{str(ticket_id)[:8]}] - We have received your query"
-    text_body = f"""
-Hi {user_name},
+    ticket_short_id = str(ticket_id)[:8]
+    subject = f"[Support Ticket #{ticket_short_id}] We have received your query"
+    title = "Support Ticket Received"
+    subtitle = f"Reference Ticket ID: #{ticket_short_id}"
+    badge = "Support Request"
+    cta_url = f"{FRONTEND_URL}/support?ticket_id={ticket_id}"
 
-Thank you for reaching out to Between AI support. We have received your support ticket.
-
-Ticket ID: {ticket_id}
-Subject: {subject_text}
-Message: {message_text}
-
-Our admin team is reviewing your ticket and we will get back to you shortly.
-
-If you have any updates, please reply to this email.
-
-— The Between AI Team
-"""
-    html_body = f"""
-    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 550px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 32px 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
-                Support Ticket Received
-            </h1>
-            <p style="color: #94a3b8; font-size: 14px; margin-top: 8px;">
-                Ticket ID: #{str(ticket_id)[:8]}
-            </p>
-        </div>
-        <div style="padding: 32px 24px;">
-            <p style="color: #1f2937; font-size: 16px; line-height: 1.6; margin: 0 0 16px;">
-                Hi <strong>{safe_name}</strong>,
-            </p>
-            <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-                We have received your support query. Our admin team will review it and get back to you as soon as possible. Here is a summary of your ticket:
-            </p>
-            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
-                <p style="color: #1e293b; font-size: 13px; margin: 0 0 8px; line-height: 1.5;">
-                    <strong style="color: #475569;">Subject:</strong> {safe_subject}
-                </p>
-                <p style="color: #1e293b; font-size: 13px; margin: 0; line-height: 1.5;">
-                    <strong style="color: #475569;">Message:</strong> {safe_message}
-                </p>
-            </div>
-            <p style="color: #9ca3af; font-size: 12px; text-align: center; line-height: 1.5;">
-                If you have any questions or additional details, reply to this email directly.
-            </p>
-        </div>
-        <div style="background: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #f3f4f6;">
-            <p style="color: #9ca3af; font-size: 11px; margin: 0;">
-                Between AI — Vishleshan Platform
-            </p>
-        </div>
+    body_html = f"""
+    <p>Hi <strong>{safe_name}</strong>,</p>
+    <p>We have received your support query. Our admin team is reviewing your ticket and will respond as soon as possible.</p>
+    
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 8px; font-size: 13px; color: #334155;"><strong style="color: #64748b;">Subject:</strong> {safe_subject}</p>
+        <p style="margin: 0; font-size: 13px; color: #334155;"><strong style="color: #64748b;">Message:</strong> {safe_message}</p>
     </div>
+    
+    <p style="font-size: 13px; color: #64748b;">You can track real-time admin replies or chat directly via the Support & Appeals Portal.</p>
     """
-    return send_email(to_email=user_email, subject=subject, html_body=html_body, text_body=text_body)
 
+    text_body = f"Hi {user_name},\n\nWe have received your support ticket #{ticket_short_id}.\nSubject: {subject_text}\n\nTrack ticket: {cta_url}\n\n— Between Support Team"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Open Support Portal",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+
+    return send_email(to_email=user_email, subject=subject, html_body=html_email, text_body=text_body)

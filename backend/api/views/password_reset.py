@@ -14,7 +14,7 @@ from jose import jwt
 
 from api.models import Company, JobSeekerAccount
 from api.decorators import JWT_SECRET, JWT_ALGORITHM, rate_limit_ip
-from api.services.email_service import send_email
+from api.services.email_service import send_email, build_between_email_html
 from models.schemas import success_response, error_response
 
 logger = logging.getLogger(__name__)
@@ -65,17 +65,23 @@ def forgot_password_recruiter(request):
             frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/reset-password?token={token}&type=recruiter"
 
-            try:
+                html_body = build_between_email_html(
+                    title="Reset Your Password",
+                    subtitle=f"Recruiter Account: {company.name}",
+                    body_content_html=f"""
+                    <p>Hi <strong>{company.name}</strong>,</p>
+                    <p>We received a request to reset your password for your Between Recruiter account. Click the button below to set a new password:</p>
+                    <p style="font-size: 13px; color: #64748b;">This reset link expires in <strong>{RESET_TOKEN_EXPIRE_MINUTES} minutes</strong>. If you did not request this, you can safely ignore this email.</p>
+                    """,
+                    cta_text="Reset Password",
+                    cta_url=reset_link,
+                    badge_text="Account Security"
+                )
                 send_email(
                     to_email=email,
                     subject="Reset Your Password — Between",
-                    html_body=f"""
-                    <h2>Password Reset Request</h2>
-                    <p>Hi {company.name},</p>
-                    <p>Click the link below to reset your password. This link expires in {RESET_TOKEN_EXPIRE_MINUTES} minutes.</p>
-                    <p><a href="{reset_link}" style="background:#2563eb;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Reset Password</a></p>
-                    <p>If you didn't request this, you can safely ignore this email.</p>
-                    """,
+                    html_body=html_body,
+                    text_body=f"Hi {company.name},\n\nReset your password: {reset_link}\n\n— Between AI Platform"
                 )
             except Exception as email_err:
                 logger.warning("Failed to send reset email: %s", email_err)
@@ -138,17 +144,23 @@ def forgot_password_seeker(request):
             frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/seeker/reset-password?token={token}&type=seeker"
 
-            try:
+                html_body = build_between_email_html(
+                    title="Reset Your Password",
+                    subtitle=f"Seeker Account: {seeker.full_name}",
+                    body_content_html=f"""
+                    <p>Hi <strong>{seeker.full_name}</strong>,</p>
+                    <p>We received a request to reset your password for your Between Seeker account. Click the button below to set a new password:</p>
+                    <p style="font-size: 13px; color: #64748b;">This reset link expires in <strong>{RESET_TOKEN_EXPIRE_MINUTES} minutes</strong>. If you did not request this, you can safely ignore this email.</p>
+                    """,
+                    cta_text="Reset Password",
+                    cta_url=reset_link,
+                    badge_text="Account Security"
+                )
                 send_email(
                     to_email=email,
                     subject="Reset Your Password — Between",
-                    html_body=f"""
-                    <h2>Password Reset Request</h2>
-                    <p>Hi {seeker.full_name},</p>
-                    <p>Click below to reset your password. This link expires in {RESET_TOKEN_EXPIRE_MINUTES} minutes.</p>
-                    <p><a href="{reset_link}" style="background:#2563eb;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Reset Password</a></p>
-                    <p>If you didn't request this, you can safely ignore this email.</p>
-                    """,
+                    html_body=html_body,
+                    text_body=f"Hi {seeker.full_name},\n\nReset your password: {reset_link}\n\n— Between AI Platform"
                 )
             except Exception as email_err:
                 logger.warning("Failed to send seeker reset email: %s", email_err)
@@ -210,17 +222,23 @@ def forgot_password_developer(request):
             frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/developer/reset-password?token={token}&type=developer"
 
-            try:
+                html_body = build_between_email_html(
+                    title="Reset Your Password",
+                    subtitle=f"Developer Account: {company.name}",
+                    body_content_html=f"""
+                    <p>Hi <strong>{company.name}</strong>,</p>
+                    <p>We received a request to reset your password for your Between Developer Portal account. Click the button below to set a new password:</p>
+                    <p style="font-size: 13px; color: #64748b;">This reset link expires in <strong>{RESET_TOKEN_EXPIRE_MINUTES} minutes</strong>. If you did not request this, you can safely ignore this email.</p>
+                    """,
+                    cta_text="Reset Password",
+                    cta_url=reset_link,
+                    badge_text="Account Security"
+                )
                 send_email(
                     to_email=email,
                     subject="Reset Your Password — Between Developer Portal",
-                    html_body=f"""
-                    <h2>Password Reset Request</h2>
-                    <p>Hi {company.name},</p>
-                    <p>Click below to reset your developer portal password. This link expires in {RESET_TOKEN_EXPIRE_MINUTES} minutes.</p>
-                    <p><a href="{reset_link}" style="background:#2563eb;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Reset Password</a></p>
-                    <p>If you didn't request this, you can safely ignore this email.</p>
-                    """,
+                    html_body=html_body,
+                    text_body=f"Hi {company.name},\n\nReset your password: {reset_link}\n\n— Between AI Platform"
                 )
             except Exception as email_err:
                 logger.warning("Failed to send developer reset email: %s", email_err)

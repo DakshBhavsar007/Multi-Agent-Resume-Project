@@ -28,58 +28,30 @@ def get_user_by_role_and_phone(role, phone):
         return DeveloperAccount.objects.filter(phone=phone).first()
     return None
 
-def _build_otp_html(otp, purpose="verification"):
+def _build_otp_html(otp, purpose="email verification"):
     """Build a branded HTML email body for OTP delivery."""
-    return f"""
-    <div style="background-color: #f8fafc; padding: 40px 16px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100%;">
-        <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); border: 1px solid #f1f5f9; overflow: hidden;">
-            
-            <!-- Header Accent Bar -->
-            <div style="height: 6px; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);"></div>
-            
-            <div style="padding: 40px 32px 32px 32px;">
-                <!-- Brand Logo/Header -->
-                <div style="text-align: center; margin-bottom: 32px;">
-                    <div style="display: inline-block; padding: 8px 16px; background-color: #eff6ff; border-radius: 9999px; border: 1px solid #dbeafe; margin-bottom: 16px;">
-                        <span style="font-size: 13px; font-weight: 700; color: #2563eb; letter-spacing: 1px; text-transform: uppercase;">
-                            Between AI
-                        </span>
-                    </div>
-                    <h2 style="color: #0f172a; font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px; line-height: 1.2;">
-                        Verify your email
-                    </h2>
-                    <p style="color: #64748b; font-size: 14px; margin: 8px 0 0 0; line-height: 1.5;">
-                        Please use the following 6-digit code to complete your {purpose}.
-                    </p>
-                </div>
-                
-                <!-- OTP Box -->
-                <div style="background: #eff6ff; border: 1.5px dashed #bfdbfe; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 32px;">
-                    <div style="font-size: 38px; font-weight: 850; letter-spacing: 8px; color: #1e40af; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; padding-left: 8px;">
-                        {otp}
-                    </div>
-                </div>
-                
-                <!-- Info Text -->
-                <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #f1f5f9; margin-bottom: 32px;">
-                    <p style="color: #475569; font-size: 13px; margin: 0; line-height: 1.6; text-align: center;">
-                        This code is valid for <strong>5 minutes</strong>. If you did not request this code, you can safely ignore this email.
-                    </p>
-                </div>
-                
-                <!-- Footer -->
-                <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; text-align: center;">
-                    <p style="color: #94a3b8; font-size: 12px; margin: 0 0 4px 0; font-weight: 500;">
-                        Securely processed by Between AI
-                    </p>
-                    <p style="color: #cbd5e1; font-size: 11px; margin: 0;">
-                        Vishleshan Platform &copy; 2026
-                    </p>
-                </div>
-            </div>
+    from api.services.email_service import build_between_email_html
+    body_html = f"""
+    <p>Please use the following 6-digit verification code to complete your <strong>{purpose}</strong>:</p>
+    
+    <div style="background: #eff6ff; border: 1.5px dashed #bfdbfe; border-radius: 16px; padding: 24px; text-align: center; margin: 24px 0;">
+        <div style="font-size: 38px; font-weight: 850; letter-spacing: 8px; color: #1e40af; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; padding-left: 8px;">
+            {otp}
         </div>
     </div>
+    
+    <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+        <p style="color: #475569; font-size: 13px; margin: 0; line-height: 1.6; text-align: center;">
+            This code is valid for <strong>5 minutes</strong>. If you did not request this code, you can safely ignore this email.
+        </p>
+    </div>
     """
+    return build_between_email_html(
+        title="Verification Code",
+        subtitle=f"Use this 6-digit code for {purpose}",
+        body_content_html=body_html,
+        badge_text="Security Verification"
+    )
 
 
 @csrf_exempt
