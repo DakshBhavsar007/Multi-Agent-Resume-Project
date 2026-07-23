@@ -272,6 +272,12 @@ export default function NewSessionPage() {
       setFormData(prev => {
         const title = inferred.inferred_role || prev.job_title || "Draft";
         const name = prev.name || `${title} Session`;
+
+        // Detect currency: if JD has ₹ / LPA symbols or inferred currency is INR → INR, else as returned
+        const inferredCurrency = inferred.salary_currency; // "INR" | "USD" | "GBP" | "EUR" | null
+        const validCurrencies = ["INR", "USD", "GBP", "EUR"];
+        const currency = validCurrencies.includes(inferredCurrency) ? inferredCurrency : prev.salary_currency;
+
         return {
           ...prev,
           name,
@@ -279,7 +285,11 @@ export default function NewSessionPage() {
           required_skills: inferred.required_skills || [],
           nice_to_have: inferred.nice_to_have_skills || [],
           preferred_locations: inferred.preferred_locations || [],
-          min_experience: inferred.minimum_experience_years || 0
+          min_experience: inferred.minimum_experience_years || 0,
+          // Salary auto-fill — only override if AI actually extracted salary
+          salary_min: inferred.salary_min != null ? String(inferred.salary_min) : prev.salary_min,
+          salary_max: inferred.salary_max != null ? String(inferred.salary_max) : prev.salary_max,
+          salary_currency: currency
         };
       });
       toast.success("AI analysis complete!");
