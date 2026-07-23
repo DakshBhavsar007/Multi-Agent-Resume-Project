@@ -68,7 +68,7 @@ class JobRecommendationAgent:
                 recommended_jobs.append({
                     "id": str(job.id),
                     "job_title": job.job_title,
-                    "company_name": job.company.name if job.company else "Vishleshan Partner",
+                    "company_name": job.company.name if job.company else "Between Partner",
                     "company_logo_path": job.company.logo_path if job.company else None,
                     "location": crit.get("preferred_locations", ["Remote"])[0] if crit.get("preferred_locations") else "Remote",
                     "salary_range": salary,
@@ -92,7 +92,7 @@ class JobRecommendationAgent:
                     results.append({
                         "id": str(job.id),
                         "job_title": job.job_title,
-                        "company_name": job.company.name if job.company else "Vishleshan Partner",
+                        "company_name": job.company.name if job.company else "Between Partner",
                         "company_logo_path": job.company.logo_path if job.company else None,
                         "location": crit.get("preferred_locations", ["Remote"])[0] if crit.get("preferred_locations") else "Remote",
                         "salary_range": _get_salary_range(job),

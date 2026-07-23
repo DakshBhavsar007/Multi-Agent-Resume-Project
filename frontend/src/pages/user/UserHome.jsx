@@ -680,7 +680,7 @@ function Home() {
         </motion.div>
         <div className="mt-8 grid gap-3 md:grid-cols-3">
           {[
-            { q: "Workly turned weeks of search into days. The match score was uncannily accurate.", n: "Maya R.", r: "Product Designer, Vela", c: "var(--google-blue)" },
+            { q: "Between turned weeks of search into days. The match score was uncannily accurate.", n: "Maya R.", r: "Product Designer, Vela", c: "var(--google-blue)" },
             { q: "Loved the calm pipeline view. I always knew where every application stood.", n: "Daniel O.", r: "Staff Engineer, Northwind", c: "var(--google-green)" },
             { q: "Salary transparency made negotiation actually fair. Got 22% above my last role.", n: "Priya K.", r: "PM, Atlas Pay", c: "var(--google-red)" },
           ].map((t) => (

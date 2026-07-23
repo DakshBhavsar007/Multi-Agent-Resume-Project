@@ -83,9 +83,9 @@ export default function TestEntry() {
       <div className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white p-8 shadow-xl">
         <div className="text-center">
           <span className="grid h-12 w-12 mx-auto place-items-center rounded-2xl bg-blue-50 text-blue-600 font-bold text-xl">
-            W
+            B
           </span>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">Workly Assessment Portal</h1>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">Between Assessment Portal</h1>
           <p className="mt-1 text-sm text-gray-500">Secure proctored testing environment</p>
         </div>
 

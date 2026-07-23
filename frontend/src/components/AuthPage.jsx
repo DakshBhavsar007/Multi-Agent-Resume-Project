@@ -580,13 +580,17 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await authAPI.createSupportTicket({
+      const res = await authAPI.createSupportTicket({
         name: supportName,
         email: supportEmail,
         subject: supportSubject,
         message: supportMessage
       });
-      toast.success('Support ticket submitted! We will review your appeal shortly.');
+      if (typeof window !== "undefined") {
+        if (supportEmail) localStorage.setItem("between_support_email", supportEmail.trim());
+        if (res?.id) localStorage.setItem("between_support_ticket_id", res.id);
+      }
+      toast.success('Support ticket submitted! Connecting to live chat...');
       setShowSupportModal(false);
       setSupportName('');
       setSupportSubject('Banned Account Appeal');

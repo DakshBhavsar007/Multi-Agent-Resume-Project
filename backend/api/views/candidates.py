@@ -450,7 +450,7 @@ def candidate_action(request, session_id, cand_id):
                             seeker=seeker,
                             type='status_updated',
                             title=f'Application Update — {session.job_title}',
-                            message=f'Your application at {session.company.name if session.company else "Vishleshan Partner"} has been updated to: {notify_status.title()}.',
+                            message=f'Your application at {session.company.name if session.company else "Between Partner"} has been updated to: {notify_status.title()}.',
                             link=f'/jobs/applications?app_id={app.id}',
                         )
 
@@ -459,7 +459,7 @@ def candidate_action(request, session_id, cand_id):
                             seeker_email=seeker.email,
                             seeker_name=seeker.full_name,
                             job_title=session.job_title,
-                            company_name=session.company.name if session.company else "Vishleshan Partner",
+                            company_name=session.company.name if session.company else "Between Partner",
                             new_status=notify_status,
                         )
         except Exception as notify_err:

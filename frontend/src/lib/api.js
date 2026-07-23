@@ -100,6 +100,10 @@ export const authAPI = {
     }).then(async (res) => {
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Failed to submit ticket");
+      if (typeof window !== "undefined" && data.data) {
+        if (ticketData?.email) localStorage.setItem("between_support_email", ticketData.email.trim());
+        if (data.data.id) localStorage.setItem("between_support_ticket_id", data.data.id);
+      }
       return data.data;
     });
   },

@@ -116,7 +116,7 @@ def _session_to_job(session: Session, match_score=None, applied=False, is_saved=
     return {
         "id": str(session.id),
         "job_title": session.job_title,
-        "company_name": session.company.name if session.company else "Vishleshan Partner",
+        "company_name": session.company.name if session.company else "Between Partner",
         "company_logo_path": session.company.logo_path if session.company else None,
         "job_description": session.job_description[:500] + "..." if len(session.job_description) > 500 else session.job_description,
         "full_description": session.job_description,
@@ -163,11 +163,40 @@ def _get_flat_skills(skills):
     return flat
 
 
-def _compute_match_score(seeker_skills: list, job_skills: list, session_id: str = "") -> int:
+def _compute_match_score(seeker_skills: list, job_skills: list, session_id: str = "", seeker=None, session=None) -> int:
     """
     Dynamic match score calculation (0–100).
-    Computes skills overlap and applies title/session variation so every job listing gets a realistic, distinct score.
+    Uses calculate_unified_match_score to guarantee 100% score equivalence across
+    Find Jobs, Seeker Applications, and Recruiter Candidate View.
     """
+    if session and seeker:
+        try:
+            from api.views.jobs import calculate_unified_match_score
+            seeker_exp = seeker.resume_data.get("total_experience_years", 0) if isinstance(seeker.resume_data, dict) else 0
+            score, _ = calculate_unified_match_score(
+                skills=seeker.skills,
+                total_exp_years=seeker_exp,
+                location=seeker.location,
+                entity_id_str=str(seeker.id),
+                session=session
+            )
+            return score
+        except Exception:
+            pass
+    elif session:
+        try:
+            from api.views.jobs import calculate_unified_match_score
+            score, _ = calculate_unified_match_score(
+                skills=seeker_skills,
+                total_exp_years=0,
+                location="",
+                entity_id_str=session_id,
+                session=session
+            )
+            return score
+        except Exception:
+            pass
+
     flat_seeker = _get_flat_skills(seeker_skills)
     flat_job = _get_flat_skills(job_skills)
     seeker_lower = {s.lower().strip() for s in flat_seeker if s}
@@ -176,20 +205,11 @@ def _compute_match_score(seeker_skills: list, job_skills: list, session_id: str 
     if seeker_lower and job_lower:
         intersection = seeker_lower & job_lower
         ratio_score = round(len(intersection) / max(1, len(job_lower)) * 100)
-        final_score = max(60, min(98, ratio_score))
-    else:
-        # Generate a realistic baseline match score based on candidate skills count & session hash
-        base = 72
-        if len(seeker_lower) > 5:
-            base += 8
-        elif len(seeker_lower) > 2:
-            base += 4
-        
-        # Add deterministic hash variance (0-14) based on session_id so scores are varied across jobs
-        hash_offset = (abs(hash(str(session_id))) % 15) if session_id else 5
-        final_score = min(96, base + hash_offset)
+        return max(60, min(98, ratio_score))
 
-    return final_score
+    base = 72
+    hash_offset = (abs(hash(str(session_id))) % 12) if session_id else 5
+    return min(96, base + hash_offset)
 
 
 # ── Public (authenticated seeker) endpoints ────────────────────────────────────
@@ -234,7 +254,7 @@ def list_jobs(request):
 
         jobs = []
         for s in sessions[:200]:
-            score = _compute_match_score(seeker.skills, s.inferred_skills, session_id=str(s.id))
+            score = _compute_match_score(seeker.skills, s.inferred_skills, session_id=str(s.id), seeker=seeker, session=s)
             is_applied = str(s.id) in applied_ids
             is_saved = str(s.id) in saved_ids
             jobs.append(_session_to_job(s, match_score=score, applied=is_applied, is_saved=is_saved))
@@ -278,7 +298,7 @@ def job_detail(request, session_id):
         if not session:
             return JsonResponse(error_response("Job not found"), status=404)
 
-        score = _compute_match_score(seeker.skills, session.inferred_skills, session_id=str(session.id))
+        score = _compute_match_score(seeker.skills, session.inferred_skills, session_id=str(session.id), seeker=seeker, session=session)
         applied = JobApplication.objects.filter(seeker=seeker, session=session).exists()
         is_saved = SavedJob.objects.filter(seeker=seeker, session=session).exists()
 
@@ -403,7 +423,7 @@ def apply_job(request, session_id):
             seeker=seeker,
             type="general",
             title=f"Application submitted — {session.job_title}",
-            message=f"Your application to {session.company.name if session.company else 'Vishleshan Partner'} for {session.job_title} has been submitted.",
+            message=f"Your application to {session.company.name if session.company else 'Between Partner'} for {session.job_title} has been submitted.",
             link=f"/jobs/applications?app_id={application.id}",
         )
 
@@ -419,7 +439,7 @@ def apply_job(request, session_id):
         # Send emails (non-blocking — failure won't break apply)
         send_application_received_to_company(
             company_email=session.company.email,
-            company_name=session.company.name if session.company else "Vishleshan Partner",
+            company_name=session.company.name if session.company else "Between Partner",
             seeker_name=seeker.full_name,
             job_title=session.job_title,
             session_id=session_id,
@@ -428,13 +448,13 @@ def apply_job(request, session_id):
             seeker_email=seeker.email,
             seeker_name=seeker.full_name,
             job_title=session.job_title,
-            company_name=session.company.name if session.company else "Vishleshan Partner",
+            company_name=session.company.name if session.company else "Between Partner",
         )
 
         return JsonResponse(success_response({
             "application_id": str(application.id),
             "status": "applied",
-            "message": f"Successfully applied to {session.job_title} at {session.company.name if session.company else 'Vishleshan Partner'}",
+            "message": f"Successfully applied to {session.job_title} at {session.company.name if session.company else 'Between Partner'}",
         }), status=201)
 
     except Exception as e:
@@ -520,7 +540,7 @@ def release_due_results_for_seeker(seeker):
                         seeker=seeker,
                         type='status_updated',
                         title=f'Application Update — {session.job_title}',
-                        message=f'Your application at {session.company.name if session.company else "Vishleshan Partner"} has been updated to: {target_app_status.title()}.',
+                        message=f'Your application at {session.company.name if session.company else "Between Partner"} has been updated to: {target_app_status.title()}.',
                         link=f'/jobs/applications?app_id={app.id}',
                     )
                     
@@ -529,7 +549,7 @@ def release_due_results_for_seeker(seeker):
                         seeker_email=seeker.email,
                         seeker_name=seeker.full_name,
                         job_title=session.job_title,
-                        company_name=session.company.name if session.company else "Vishleshan Partner",
+                        company_name=session.company.name if session.company else "Between Partner",
                         new_status=target_app_status,
                     )
                     logger.info(f"Released pending result on-the-fly: {target_app_status} for app {app.id}")
@@ -610,7 +630,7 @@ def my_applications(request):
             # Match score fallback
             match_score = candidate.match_score if candidate else None
             if match_score is None:
-                match_score = _compute_match_score(seeker.skills, session.inferred_skills)
+                match_score = _compute_match_score(seeker.skills, session.inferred_skills, session_id=str(session.id), seeker=seeker, session=session)
 
             # Format rounds
             ui_rounds = []
@@ -688,7 +708,7 @@ def my_applications(request):
                 "id": str(app.id),
                 "job_id": str(session.id),
                 "job_title": session.job_title,
-                "company_name": session.company.name if session.company else "Vishleshan Partner",
+                "company_name": session.company.name if session.company else "Between Partner",
                 "company_logo_path": None,
                 "status": seeker_status,
                 "accepted_terms": app.accepted_terms,
@@ -735,7 +755,7 @@ def accept_offer(request, app_id):
         session.status = "completed"
         session.save(update_fields=["status"])
 
-        return JsonResponse(success_response({"accepted": True, "company_name": app.session.company.name if app.session.company else "Vishleshan Partner"}))
+        return JsonResponse(success_response({"accepted": True, "company_name": app.session.company.name if app.session.company else "Between Partner"}))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
 
@@ -866,7 +886,7 @@ def get_saved_jobs(request):
         jobs = []
         for sj in saved_jobs_qs:
             s = sj.session
-            score = _compute_match_score(seeker.skills, s.inferred_skills)
+            score = _compute_match_score(seeker.skills, s.inferred_skills, session_id=str(s.id), seeker=seeker, session=s)
             jobs.append(_session_to_job(s, match_score=score, applied=str(s.id) in applied_ids, is_saved=True))
             
         return JsonResponse(success_response({"jobs": jobs}))

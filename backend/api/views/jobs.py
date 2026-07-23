@@ -12,43 +12,50 @@ from models.schemas import success_response, error_response
 from agents.fraud_agent import FraudDetectionAgent
 from api.views.seeker_jobs import _parse_job_description_meta, _get_salary_range
 
-def _calculate_match_score(candidate, session):
-    """Calculates and updates candidate match score synchronously against session criteria."""
+def calculate_unified_match_score(skills, total_exp_years, location, entity_id_str, session):
+    """
+    Unified, deterministic match score calculation (0-100) shared by:
+    - Seeker Find Jobs (/jobs/search)
+    - Seeker Applications (/jobs/applications)
+    - Recruiter Dashboard & Candidate Profiles
+    """
+    from api.views.seeker_jobs import _get_flat_skills
     criteria = session.criteria or {}
     required_skills = criteria.get("required_skills", [])
     if not required_skills and session.inferred_skills:
         required_skills = session.inferred_skills
 
-    req_lower = [r.lower() for r in required_skills if r]
-    
-    norm_skills = candidate.normalized_skills or []
+    req_lower = [r.lower().strip() for r in required_skills if r]
+
+    flat_skills = _get_flat_skills(skills)
     cand_skill_names = {
-        (s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)).lower()
-        if isinstance(s, dict) else str(s).lower()
-        for s in norm_skills if s
+        s.lower().strip() for s in flat_skills if s
     }
-    matched_list = [r for r in required_skills if any(r.lower().strip() in s or s in r.lower().strip() for s in cand_skill_names)]
-    missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
-    matched = len(matched_list)
     
+    matched_list = [r for r in required_skills if any(r.lower().strip() in s or s in r.lower().strip() for s in cand_skill_names)]
+    missing_list = [r for r in required_skills if r.lower().strip() not in [m.lower().strip() for m in matched_list]]
+    matched = len(matched_list)
+
     if req_lower:
         skill_score = round((matched / len(req_lower)) * 100)
     else:
-        # Fallback based on candidate's skill profile depth (60% to 95%)
         skill_score = min(95, max(60, 65 + len(cand_skill_names) * 3))
 
     # Experience score
     min_exp = criteria.get("min_experience", 0)
-    exp_years = float(candidate.total_experience_years or 0)
+    try:
+        exp_years = float(total_exp_years or 0)
+    except (ValueError, TypeError):
+        exp_years = 0.0
     experience_score = min(100, round((exp_years / max(min_exp, 1)) * 100)) if min_exp > 0 else (75 if exp_years >= 2 else 60)
 
     # Location score
     preferred_locs = criteria.get("preferred_locations", [])
-    cand_location = (candidate.location or "").lower()
-    location_score = 100 if not preferred_locs else (100 if any(l.lower() in cand_location for l in preferred_locs) else 50)
+    cand_location = (location or "").lower().strip()
+    location_score = 100 if not preferred_locs else (100 if any(l.lower().strip() in cand_location for l in preferred_locs) else 50)
 
-    # Add candidate ID hash offset variance (0 to 11%) so candidates have distinct unique scores
-    cand_hash_offset = (abs(hash(str(candidate.id))) % 12)
+    # Hash offset variance (0 to 11%) based on entity_id_str (Seeker ID or Candidate ID)
+    hash_offset = (abs(hash(str(entity_id_str))) % 12) if entity_id_str else 5
 
     # Weighted overall score
     weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})
@@ -57,10 +64,9 @@ def _calculate_match_score(candidate, session):
         experience_score * weights.get("experience", 0.3) + 
         location_score * weights.get("location", 0.2)
     )
-    score = min(98, max(45, raw_score + (cand_hash_offset if not req_lower else 0)))
-    candidate.match_score = score
-    candidate.recommendation = "Strong" if score >= 75 else ("Moderate" if score >= 50 else "Weak")
-    candidate.match_details = {
+    score = min(98, max(45, raw_score + (hash_offset if not req_lower else 0)))
+
+    details = {
         "match_score": score,
         "skill_score": skill_score,
         "experience_score": experience_score,
@@ -70,12 +76,32 @@ def _calculate_match_score(candidate, session):
         "matched_count": matched,
         "total_required": len(req_lower)
     }
+    return score, details
+
+
+def _calculate_match_score(candidate, session):
+    """Calculates and updates candidate match score synchronously against session criteria."""
+    entity_id_str = str(candidate.email or candidate.id)
+    if hasattr(candidate, "job_applications") and candidate.job_applications.exists():
+        app = candidate.job_applications.first()
+        if app.seeker_id:
+            entity_id_str = str(app.seeker_id)
+
+    score, details = calculate_unified_match_score(
+        skills=candidate.normalized_skills,
+        total_exp_years=candidate.total_experience_years,
+        location=candidate.location,
+        entity_id_str=entity_id_str,
+        session=session
+    )
+    candidate.match_score = score
+    candidate.recommendation = "Strong" if score >= 75 else ("Moderate" if score >= 50 else "Weak")
+    candidate.match_details = details
+    candidate.save(update_fields=["match_score", "recommendation", "match_details"])
     
-    min_match_score = criteria.get("min_match_score", 0)
+    min_match_score = session.criteria.get("min_match_score", 0)
     if min_match_score > 0 and score < min_match_score:
         candidate.status = "rejected"
-        
-    candidate.save()
     return candidate.match_details
 
 @csrf_exempt
@@ -125,7 +151,7 @@ def list_public_jobs(request):
                 if not loc_match:
                     continue
             
-            company_name = s.company.name if s.company else "Vishleshan Partner"
+            company_name = s.company.name if s.company else "Between Partner"
             meta = _parse_job_description_meta(s.job_description)
             
             jobs.append({
@@ -179,7 +205,7 @@ def get_public_job(request, session_id):
             return JsonResponse(error_response("Job posting not found"), status=404)
             
         criteria = s.criteria or {}
-        company_name = s.company.name if s.company else "Vishleshan Partner"
+        company_name = s.company.name if s.company else "Between Partner"
         meta = _parse_job_description_meta(s.job_description)
         
         return JsonResponse(success_response({
@@ -400,7 +426,7 @@ def scan_job_safety_public(request, session_id):
         return JsonResponse(success_response({
             "id": str(log.id),
             "job_title": session.job_title,
-            "company_name": session.company.name if session.company else "Vishleshan Partner",
+            "company_name": session.company.name if session.company else "Between Partner",
             "originality_score": log.originality_score,
             "ai_probability": log.ai_probability,
             "plagiarism_score": log.plagiarism_score,
