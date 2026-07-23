@@ -64,7 +64,7 @@ def forgot_password_recruiter(request):
             token = _make_reset_token(company.id, "recruiter")
             frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/reset-password?token={token}&type=recruiter"
-
+            try:
                 html_body = build_between_email_html(
                     title="Reset Your Password",
                     subtitle=f"Recruiter Account: {company.name}",
@@ -143,7 +143,7 @@ def forgot_password_seeker(request):
             token = _make_reset_token(seeker.id, "seeker")
             frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/seeker/reset-password?token={token}&type=seeker"
-
+            try:
                 html_body = build_between_email_html(
                     title="Reset Your Password",
                     subtitle=f"Seeker Account: {seeker.full_name}",
@@ -221,7 +221,7 @@ def forgot_password_developer(request):
             token = _make_reset_token(company.id, "developer")
             frontend_url = os.getenv("FRONTEND_URL", "https://between.indevs.in")
             reset_link = f"{frontend_url}/developer/reset-password?token={token}&type=developer"
-
+            try:
                 html_body = build_between_email_html(
                     title="Reset Your Password",
                     subtitle=f"Developer Account: {company.name}",
