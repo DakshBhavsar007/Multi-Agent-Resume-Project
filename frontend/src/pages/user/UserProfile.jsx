@@ -830,8 +830,9 @@ export default function UserProfile() {
                   </div>
                 ) : seeker?.resume_file_path ? (
                   <>
-                    <div className="font-medium text-slate-800 truncate" title={seeker.resume_file_name}>
-                      📄 {seeker.resume_file_name || "resume.pdf"}
+                    <div className="font-medium text-slate-800 truncate flex items-center gap-1.5" title={seeker.resume_file_name}>
+                      <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span className="truncate">{seeker.resume_file_name || "resume.pdf"}</span>
                     </div>
                     {seeker.resume_size && <div className="text-slate-500">Size: {seeker.resume_size} KB</div>}
                     {seeker.resume_updated_at && <div className="text-slate-500">Updated: {new Date(seeker.resume_updated_at).toLocaleDateString()}</div>}

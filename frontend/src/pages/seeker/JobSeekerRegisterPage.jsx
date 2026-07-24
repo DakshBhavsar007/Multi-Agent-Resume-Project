@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { seekerAPI, publicAPI } from '../../lib/api';
 import { useSeekerAuthStore } from '../../stores/seekerAuthStore';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff, UploadCloud, Sparkles, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, UploadCloud, Sparkles, Loader2, Check } from 'lucide-react';
 import VerificationModal from '../../components/VerificationModal';
 import { LocationSelector } from '../../components/ui/LocationSelector';
 
@@ -179,7 +179,7 @@ export default function JobSeekerRegisterPage() {
                   }`}
                   style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  {isEmailVerified ? 'Verified ✓' : 'Verify'}
+                  {isEmailVerified ? <span className="flex items-center gap-1">Verified <Check className="w-3.5 h-3.5 inline text-emerald-400" /></span> : 'Verify'}
                 </button>
               )}
             </div>

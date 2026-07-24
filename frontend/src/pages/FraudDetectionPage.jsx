@@ -72,19 +72,19 @@ export default function FraudDetectionPage() {
 
   const [dbDescriptionTemplates] = useState([
     {
-      title: "🚀 Fullstack Engineer Template",
+      title: "Fullstack Engineer Template",
       text: "We are seeking a Senior Fullstack Engineer to build scalable web applications. Requirements: 4+ years of experience with React, Python/Django, PostgreSQL, and REST APIs. Responsibilities: Design resilient APIs, optimize database performance, write unit tests, and collaborate with cross-functional teams."
     },
     {
-      title: "🤖 AI / ML Engineer Template",
+      title: "AI / ML Engineer Template",
       text: "Join our AI team to build and deploy state-of-the-art LLM solutions. Requirements: Proficiency in PyTorch, Python, HuggingFace, RAG architectures, and vector databases (Faiss/Pinecone). Responsible for training, fine-tuning, and scaling real-time AI inference services."
     },
     {
-      title: "🎨 UI/UX Product Designer Template",
+      title: "UI/UX Product Designer Template",
       text: "Looking for an innovative Product Designer to craft seamless visual experiences. Requirements: Deep expertise in Figma, design systems, wireframing, and user research. Ability to transform complex enterprise workflows into elegant, intuitive UI interfaces."
     },
     {
-      title: "⚠️ Scam / Suspicious Test Pattern",
+      title: "Scam / Suspicious Test Pattern",
       text: "URGENT REQUIREMENT: Data Entry Specialist. Earn $4,000/week working 2 hours a day from home. No experience needed. Immediate wire transfer bonus. Must purchase starter equipment kit via Telegram link before starting."
     }
   ]);
@@ -817,7 +817,7 @@ export default function FraudDetectionPage() {
                     <div className="relative">
                       <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
                         <span>Company Name</span>
-                        <span className="text-[9px] text-[#2563EB] font-bold">✨ DB Suggestions Enabled</span>
+                        <span className="text-[9px] text-[#2563EB] font-bold flex items-center gap-1"><Sparkles className="w-3 h-3 text-[#2563EB]" /> DB Suggestions Enabled</span>
                       </label>
                       <input
                         type="text"
@@ -857,8 +857,8 @@ export default function FraudDetectionPage() {
                                     <span className="text-[10px] text-gray-500">{company.industry || "Technology"} &bull; {company.hq_location || "Remote"}</span>
                                   </div>
                                 </div>
-                                <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                  Verified DB Company
+                                <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                                  <CheckCircle className="w-2.5 h-2.5 text-emerald-600" /> Verified DB Company
                                 </span>
                               </div>
                             ))}
@@ -872,7 +872,7 @@ export default function FraudDetectionPage() {
                       <div className="relative">
                         <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
                           <span>Job Title</span>
-                          <span className="text-[9px] text-[#2563EB] font-bold">✨ Role Suggestions</span>
+                          <span className="text-[9px] text-[#2563EB] font-bold flex items-center gap-1"><Sparkles className="w-3 h-3 text-[#2563EB]" /> Role Suggestions</span>
                         </label>
                         <input
                           type="text"
@@ -918,7 +918,7 @@ export default function FraudDetectionPage() {
                       <div>
                         <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
                           <span>Location (Country / State / City)</span>
-                          <span className="text-[9px] text-[#2563EB] font-bold">🗺️ Country/State/City Select</span>
+                          <span className="text-[9px] text-[#2563EB] font-bold flex items-center gap-1"><Globe className="w-3 h-3 text-[#2563EB]" /> Country/State/City Select</span>
                         </label>
                         <LocationSelector
                           value={jobLocationInput}
@@ -932,7 +932,7 @@ export default function FraudDetectionPage() {
                     <div className="relative">
                       <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
                         <span>Job Posting Description</span>
-                        <span className="text-[9px] text-[#2563EB] font-bold">✨ Quick Preset Suggestions Below</span>
+                        <span className="text-[9px] text-[#2563EB] font-bold flex items-center gap-1"><Sparkles className="w-3 h-3 text-[#2563EB]" /> Quick Preset Suggestions Below</span>
                       </label>
 
                       {/* Quick Template Chips */}

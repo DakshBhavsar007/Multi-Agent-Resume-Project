@@ -199,7 +199,7 @@ export default function DeveloperRegisterPage() {
                       }`}
                       style={{ minWidth: '85px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      {isEmailVerified ? 'Verified ✓' : 'Verify'}
+                      {isEmailVerified ? <span className="flex items-center gap-1">Verified <Check className="w-3.5 h-3.5 inline text-emerald-400" /></span> : 'Verify'}
                     </button>
                   )}
                 </div>
@@ -311,7 +311,7 @@ export default function DeveloperRegisterPage() {
                    ))}
                  </ul>
                  <button className={`w-full py-3 rounded-xl font-bold ${selectedPlan === p.id ? "bg-accent text-white" : "bg-gray-100 text-charcoal"}`}>
-                   {selectedPlan === p.id ? "Selected ✓" : "Select Plan"}
+                   {selectedPlan === p.id ? <span className="flex items-center justify-center gap-1">Selected <Check className="w-4 h-4 inline" /></span> : "Select Plan"}
                  </button>
                </div>
              ))}
@@ -406,7 +406,7 @@ export default function DeveloperRegisterPage() {
 
               <label className="flex items-center gap-3 cursor-pointer bg-gray-50 border border-gray-200 px-5 py-3 rounded-xl select-none w-full justify-center max-w-lg">
                 <input type="checkbox" checked={keysSaved} onChange={e=>setKeysSaved(e.target.checked)} className="w-5 h-5 accent-accent" />
-                <span className="font-semibold text-charcoal">✓ I have securely saved all my API keys</span>
+                <span className="font-semibold text-charcoal flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-600 inline" /> I have securely saved all my API keys</span>
               </label>
 
               <button 

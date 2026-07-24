@@ -12,7 +12,7 @@ import { IndustrySelector } from '../components/ui/IndustrySelector';
 import VerificationModal from '../components/VerificationModal';
 
 import { publicAPI } from '../lib/api';
-import { UploadCloud, Sparkles } from 'lucide-react';
+import { UploadCloud, Sparkles, Check } from 'lucide-react';
 
 export default function CompleteProfilePage() {
   const navigate = useNavigate();
@@ -321,7 +321,7 @@ export default function CompleteProfilePage() {
                           : 'bg-blue-600 hover:bg-blue-700 text-white'
                       }`}
                     >
-                      {phoneVerified ? 'Verified ✓' : 'Verify'}
+                      {phoneVerified ? <span className="flex items-center gap-1">Verified <Check className="w-3.5 h-3.5 inline text-emerald-400" /></span> : 'Verify'}
                     </button>
                   )}
                 </div>
