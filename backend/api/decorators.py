@@ -236,6 +236,8 @@ def require_recruiter_jwt(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
+require_company_jwt = require_recruiter_jwt
+
 
 def require_developer_jwt(view_func):
     """Decorator to enforce Developer JWT (developer portal)."""
