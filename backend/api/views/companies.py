@@ -7,7 +7,7 @@ from api.views.seeker_auth import require_seeker_jwt
 from models.schemas import success_response, error_response
 from django.db.models import Avg, Count
 
-def _serialize_company(company, is_following=False, active_sessions=None, followers_count=None):
+def _serialize_company(company, is_following=False, active_sessions=None, followers_count=None, reviews_stat=None):
     # Get active job sessions for this company
     if active_sessions is None:
         active_sessions = Session.objects.filter(company=company, status="active")
@@ -31,7 +31,6 @@ def _serialize_company(company, is_following=False, active_sessions=None, follow
                 resume_data__followed_companies__contains=cid_str
             ).count()
         except Exception:
-            # Fallback to python count if the DB doesn't support json __contains properly
             followers_count = 0
             all_seekers = JobSeekerAccount.objects.all()
             for s in all_seekers:
@@ -41,11 +40,15 @@ def _serialize_company(company, is_following=False, active_sessions=None, follow
                         followers_count += 1
         
     # Dynamic rating from reviews
-    reviews_agg = Review.objects.filter(company=company).aggregate(
-        avg_rating=Avg("rating"), review_count=Count("id")
-    )
-    dynamic_rating = round(reviews_agg["avg_rating"], 1) if reviews_agg["avg_rating"] else (company.rating or 4.5)
-    review_count = reviews_agg["review_count"] or 0
+    if reviews_stat is not None:
+        dynamic_rating = reviews_stat.get("avg_rating") or (company.rating or 4.5)
+        review_count = reviews_stat.get("review_count", 0)
+    else:
+        reviews_agg = Review.objects.filter(company=company).aggregate(
+            avg_rating=Avg("rating"), review_count=Count("id")
+        )
+        dynamic_rating = round(reviews_agg["avg_rating"], 1) if reviews_agg["avg_rating"] else (company.rating or 4.5)
+        review_count = reviews_agg["review_count"] or 0
 
     return {
         "id": str(company.id),
@@ -84,6 +87,23 @@ def _get_bulk_followers_count(company_ids):
         pass
     return counts
 
+def _get_bulk_reviews_stats(company_ids):
+    stats = {str(cid): {"avg_rating": None, "review_count": 0} for cid in company_ids}
+    try:
+        revs = Review.objects.filter(company_id__in=company_ids).values('company_id').annotate(
+            avg_rating=Avg('rating'), count=Count('id')
+        )
+        for r in revs:
+            cid_str = str(r['company_id'])
+            if cid_str in stats:
+                stats[cid_str] = {
+                    "avg_rating": round(r['avg_rating'], 1) if r['avg_rating'] else None,
+                    "review_count": r['count'] or 0
+                }
+    except Exception:
+        pass
+    return stats
+
 @csrf_exempt
 def public_list_companies(request):
     """GET /api/v1/public/companies - lists all active companies."""
@@ -110,14 +130,16 @@ def public_list_companies(request):
             cid_str = str(s.company_id)
             sessions_by_company.setdefault(cid_str, []).append(s)
 
-        # Pre-calculate follower counts
+        # Pre-calculate follower counts & review stats
         follower_counts = _get_bulk_followers_count(company_ids)
+        reviews_stats = _get_bulk_reviews_stats(company_ids)
 
         serialized = [
             _serialize_company(
                 c, 
                 active_sessions=sessions_by_company.get(str(c.id), []),
-                followers_count=follower_counts.get(str(c.id), 0)
+                followers_count=follower_counts.get(str(c.id), 0),
+                reviews_stat=reviews_stats.get(str(c.id))
             ) 
             for c in paginated_companies
         ]
@@ -181,15 +203,17 @@ def seeker_list_companies(request):
             cid_str = str(s.company_id)
             sessions_by_company.setdefault(cid_str, []).append(s)
 
-        # Pre-calculate follower counts
+        # Pre-calculate follower counts & review stats
         follower_counts = _get_bulk_followers_count(company_ids)
+        reviews_stats = _get_bulk_reviews_stats(company_ids)
 
         serialized = [
             _serialize_company(
                 c, 
                 str(c.id) in followed, 
                 active_sessions=sessions_by_company.get(str(c.id), []),
-                followers_count=follower_counts.get(str(c.id), 0)
+                followers_count=follower_counts.get(str(c.id), 0),
+                reviews_stat=reviews_stats.get(str(c.id))
             )
             for c in paginated_companies
         ]

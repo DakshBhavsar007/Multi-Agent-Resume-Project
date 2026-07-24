@@ -160,7 +160,10 @@ export default function UserCompanies() {
                 </div>
                 <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground pt-4 border-t border-border/50">
                   <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{c.hq_location}</span>
-                  <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 fill-[var(--google-yellow)] text-[var(--google-yellow)]" />{c.rating}</span>
+                  <span className="flex items-center gap-1.5">
+                    <Star className="h-3.5 w-3.5 fill-[var(--google-yellow)] text-[var(--google-yellow)]" />
+                    {c.review_count > 0 ? `${c.rating} (${c.review_count})` : c.rating}
+                  </span>
                   <span className="pill bg-muted px-2.5 py-1">{c.openings} roles</span>
                 </div>
               </Link>

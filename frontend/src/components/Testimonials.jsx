@@ -1,10 +1,13 @@
 "use client";
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Quote, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { publicAPI } from '../lib/api';
+import VerifiedBadge from './VerifiedBadge';
 import './Testimonials.css';
 
-const testimonials = [
+const defaultTestimonials = [
   {
     quote: "Between transformed our screening process. We reduced our time-to-hire by 60% in just one quarter. The AI accuracy is unparalleled.",
     author: "Sarah Jenkins",
@@ -82,9 +85,11 @@ const TestimonialCard = ({ t, index }) => {
     y.set(0);
   };
 
+  const ratingStars = t.rating || 5;
+
   return (
     <motion.div 
-      className={`testimonial-card-wrapper size-${t.size}`}
+      className={`testimonial-card-wrapper size-${t.size || 'medium'}`}
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -102,20 +107,40 @@ const TestimonialCard = ({ t, index }) => {
         
         <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
           {[...Array(5)].map((_, i) => (
-            <Star key={i} size={14} fill={t.color} color={t.color} opacity={0.4} />
+            <Star key={i} size={14} fill={i < ratingStars ? (t.color || "#f59e0b") : "transparent"} color={t.color || "#f59e0b"} opacity={i < ratingStars ? 0.9 : 0.2} />
           ))}
         </div>
 
         <p className="testimonial-quote">"{t.quote}"</p>
         
         <div className="testimonial-author">
-          <div className="author-avatar" style={{ color: t.color }}>
-            {t.initials}
-          </div>
-          <div className="author-info">
-            <h4>{t.author}</h4>
-            <p>{t.role}</p>
-          </div>
+          {t.authorId ? (
+            <Link to={`/jobs/profile/${t.authorId}`} className="flex items-center gap-3 group hover:opacity-85 transition-opacity no-underline text-inherit">
+              <div className="author-avatar" style={{ color: t.color || "#3b82f6" }}>
+                {t.initials}
+              </div>
+              <div className="author-info">
+                <h4 className="flex items-center gap-1 font-bold">
+                  {t.author}
+                  {t.isVerified && <VerifiedBadge size={14} />}
+                </h4>
+                <p>{t.role}</p>
+              </div>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="author-avatar" style={{ color: t.color || "#3b82f6" }}>
+                {t.initials}
+              </div>
+              <div className="author-info">
+                <h4 className="flex items-center gap-1 font-bold">
+                  {t.author}
+                  {t.isVerified && <VerifiedBadge size={14} />}
+                </h4>
+                <p>{t.role}</p>
+              </div>
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
@@ -123,6 +148,32 @@ const TestimonialCard = ({ t, index }) => {
 };
 
 const Testimonials = () => {
+  const [items, setItems] = useState(defaultTestimonials);
+
+  useEffect(() => {
+    publicAPI.listReviews()
+      .then((data) => {
+        if (data.reviews && data.reviews.length > 0) {
+          const colors = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
+          const sizes = ["large", "small", "medium", "medium", "large", "small"];
+          const mapped = data.reviews.map((r, idx) => ({
+            id: r.id,
+            quote: r.text,
+            author: r.author?.full_name || "Verified Professional",
+            authorId: r.author?.id,
+            isVerified: r.author?.is_verified,
+            role: r.author?.headline || (r.company_name ? `Review for ${r.company_name}` : "Verified Member"),
+            initials: r.author?.full_name?.charAt(0) || "V",
+            rating: r.rating || 5,
+            color: colors[idx % colors.length],
+            size: sizes[idx % sizes.length],
+          }));
+          setItems(mapped);
+        }
+      })
+      .catch((err) => console.error("Failed to load public reviews on landing page:", err));
+  }, []);
+
   return (
     <section className="testimonials-section">
       <div className="testimonials-bg-glow" />
@@ -147,8 +198,8 @@ const Testimonials = () => {
       </div>
 
       <div className="testimonials-grid">
-        {testimonials.map((t, i) => (
-          <TestimonialCard key={i} t={t} index={i} />
+        {items.map((t, i) => (
+          <TestimonialCard key={t.id || i} t={t} index={i} />
         ))}
       </div>
 

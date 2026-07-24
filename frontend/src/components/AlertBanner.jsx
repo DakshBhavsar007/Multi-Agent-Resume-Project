@@ -16,14 +16,21 @@ export default function AlertBanner() {
   const [unverifiedPhone, setUnverifiedPhone] = useState(false);
 
   useEffect(() => {
+    const localSeeker = (() => {
+      try { return JSON.parse(localStorage.getItem('vish_seeker_data') || 'null'); } catch { return null; }
+    })();
+    const activeSeeker = seeker || localSeeker;
+
     if (recruiter) {
       setUnverifiedEmail(!recruiter.email_verified);
       setUnverifiedPhone(false);
       setShowBanner(!recruiter.email_verified);
-    } else if (seeker) {
-      setUnverifiedEmail(!seeker.email_verified);
-      setUnverifiedPhone(!seeker.phone_verified);
-      setShowBanner(!seeker.email_verified || !seeker.phone_verified);
+    } else if (activeSeeker) {
+      const emailUnverified = !activeSeeker.email_verified;
+      const phoneUnverified = !activeSeeker.phone_verified;
+      setUnverifiedEmail(emailUnverified);
+      setUnverifiedPhone(phoneUnverified);
+      setShowBanner(emailUnverified || phoneUnverified);
     } else if (developer) {
       setUnverifiedEmail(!developer.is_verified);
       setUnverifiedPhone(false);

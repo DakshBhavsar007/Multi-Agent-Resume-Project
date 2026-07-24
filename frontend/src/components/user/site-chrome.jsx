@@ -114,12 +114,16 @@ export function Header() {
 
   const isLoggedIn = !!seekerData;
 
+  const [imgError, setImgError] = useState(false);
+  const rawAvatar = seekerData?.avatar_path || seekerData?.avatar_url;
+
   useEffect(() => {
     if (isLoggedIn) {
       seekerAPI.getMe()
         .then((profile) => {
           setSeekerData(profile);
           localStorage.setItem('vish_seeker_data', JSON.stringify(profile));
+          useSeekerAuthStore.getState().setAuth({ seeker_token: localStorage.getItem('vish_seeker_token'), seeker: profile });
         })
         .catch((err) => console.error("Error syncing profile to navbar:", err));
     }
@@ -358,10 +362,11 @@ export function Header() {
                   className="flex items-center justify-center h-10 w-10 rounded-full bg-accent/10 text-accent hover:bg-accent/20 transition shrink-0"
                   aria-label="Profile"
                 >
-                  {seekerData?.avatar_url ? (
+                  {rawAvatar && !imgError ? (
                     <img
-                      src={seekerData.avatar_url.startsWith('http') ? seekerData.avatar_url : `${API_HOST}${seekerData.avatar_url}`}
-                      alt={seekerData.full_name}
+                      src={rawAvatar.startsWith('http') ? rawAvatar : `${API_HOST}${rawAvatar}`}
+                      alt={seekerData?.full_name || 'Profile'}
+                      onError={() => setImgError(true)}
                       className="h-8 w-8 rounded-full object-cover border border-accent/20 bg-muted"
                     />
                   ) : (

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock, Grid3x3, Home, LayoutDashboard, Bot, HelpCircle } from "lucide-react";
+import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock, Grid3x3, Home, LayoutDashboard, Bot, HelpCircle, Star, MessageSquareQuote } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { portalBilling, portalAuth } from "../../lib/portalApi";
+import { publicAPI } from "../../lib/api";
+import VerifiedBadge from "../../components/VerifiedBadge";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { SocialTooltip } from "../../components/ui/social-media";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -46,6 +48,7 @@ export default function DeveloperLandingPage() {
 
   const { tier, jwt, initFromStorage, setAuth } = usePortalAuthStore();
   const [isDevLoggedIn, setIsDevLoggedIn] = useState(false);
+  const [devReviews, setDevReviews] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem("portal_jwt");
@@ -76,6 +79,14 @@ export default function DeveloperLandingPage() {
       }
     };
     fetchPlans();
+
+    publicAPI.listReviews()
+      .then(data => {
+        if (data.reviews && data.reviews.length > 0) {
+          setDevReviews(data.reviews.slice(0, 3));
+        }
+      })
+      .catch(err => console.error("Failed to load developer reviews:", err));
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -426,6 +437,63 @@ const response = await fetch(
             </div>
          </div>
       </section>
+
+      {/* DEVELOPER TESTIMONIALS */}
+      {devReviews.length > 0 && (
+        <section className="py-20 border-t border-gray-100 dark:border-zinc-800/80 bg-white dark:bg-[#0b0b0d]">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Developer Reviews</span>
+              <h2 className="text-3xl font-bold text-charcoal dark:text-white mt-2">Loved by Builders & Engineers</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {devReviews.map((rev) => (
+                <div key={rev.id} className="bg-gray-50 dark:bg-zinc-900 border border-gray-200/80 dark:border-zinc-800 p-6 rounded-2xl flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} size={14} className={s <= rev.rating ? "fill-amber-400 text-amber-400" : "text-gray-300 dark:text-zinc-700"} />
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-zinc-300 leading-relaxed italic">"{rev.text}"</p>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-gray-200/60 dark:border-zinc-800 flex items-center justify-between">
+                    {rev.author?.id ? (
+                      <Link to={`/jobs/profile/${rev.author.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity no-underline">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
+                          {rev.author.full_name?.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-charcoal dark:text-white flex items-center gap-1">
+                            {rev.author.full_name}
+                            {rev.author.is_verified && <VerifiedBadge size={13} />}
+                          </div>
+                          <div className="text-[11px] text-gray-400 dark:text-zinc-400">{rev.author.headline || "Developer"}</div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
+                          {rev.author?.full_name?.charAt(0) || "D"}
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-charcoal dark:text-white flex items-center gap-1">
+                            {rev.author?.full_name}
+                            {rev.author?.is_verified && <VerifiedBadge size={13} />}
+                          </div>
+                          <div className="text-[11px] text-gray-400 dark:text-zinc-400">{rev.author?.headline || "Developer"}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* PRICING */}
       <section className="py-24 bg-gray-50 dark:bg-[#0b0b0d] border-t border-gray-100 dark:border-zinc-800/80" id="pricing">
