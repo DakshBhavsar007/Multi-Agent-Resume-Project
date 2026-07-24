@@ -68,11 +68,55 @@ def custom_serve_uploads(request, path, document_root=None, **kwargs):
             except Exception as e:
                 logger.error("Dynamic Candidate PDF regeneration failed: %s", e)
 
-        # Fallback for missing company logos: Return clean SVG placeholder instead of 500/404 error
-        if "logo" in path.lower() or path.endswith(".svg") or path.endswith(".png") or path.endswith(".jpg"):
+        # Dynamic avatar reconstruction from DB base64 if file missing on disk (e.g. Render restart)
+        import base64
+        match_seeker_img = re.match(r'^seekers/([a-f0-9\-]+)/', path)
+        if match_seeker_img:
+            seeker_id = match_seeker_img.group(1)
+            try:
+                from api.models import JobSeekerAccount
+                seeker = JobSeekerAccount.objects.filter(id=seeker_id).first()
+                if seeker and seeker.avatar_path and seeker.avatar_path.startswith("data:image/"):
+                    header, b64_data = seeker.avatar_path.split(";base64,", 1)
+                    mime_type = header.replace("data:", "")
+                    img_bytes = base64.b64decode(b64_data)
+                    try:
+                        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                        with open(full_path, "wb+") as f:
+                            f.write(img_bytes)
+                    except Exception:
+                        pass
+                    return HttpResponse(img_bytes, content_type=mime_type)
+            except Exception as e:
+                logger.error("Dynamic avatar serve failed: %s", e)
+
+        # Dynamic company logo reconstruction from DB base64 if file missing on disk
+        match_company_img = re.match(r'^companies/([a-f0-9\-]+)/', path)
+        if match_company_img:
+            company_id = match_company_img.group(1)
+            try:
+                from api.models import Company
+                company = Company.objects.filter(id=company_id).first()
+                if company and company.logo_path and company.logo_path.startswith("data:image/"):
+                    header, b64_data = company.logo_path.split(";base64,", 1)
+                    mime_type = header.replace("data:", "")
+                    img_bytes = base64.b64decode(b64_data)
+                    try:
+                        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                        with open(full_path, "wb+") as f:
+                            f.write(img_bytes)
+                    except Exception:
+                        pass
+                    return HttpResponse(img_bytes, content_type=mime_type)
+            except Exception as e:
+                logger.error("Dynamic company logo serve failed: %s", e)
+
+        # Fallback for missing images/logos/avatars: Return clean SVG placeholder instead of 500/404 error
+        path_lower = path.lower()
+        if any(ext in path_lower for ext in [".webp", ".png", ".jpg", ".jpeg", ".svg", "avatar", "logo"]):
             svg_placeholder = """<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
-              <rect width="64" height="64" rx="16" fill="#2563EB" fill-opacity="0.1"/>
-              <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="28" fill="#2563EB">B</text>
+              <rect width="64" height="64" rx="32" fill="#2563EB" fill-opacity="0.1"/>
+              <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="24" fill="#2563EB">B</text>
             </svg>"""
             return HttpResponse(svg_placeholder, content_type="image/svg+xml")
 
@@ -80,7 +124,11 @@ def custom_serve_uploads(request, path, document_root=None, **kwargs):
         return serve(request, path, document_root=document_root, **kwargs)
     except Exception as e:
         logger.warning("Upload serve failed for %s: %s", path, e)
-        raise Http404("Upload file not found")
+        svg_placeholder = """<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <rect width="64" height="64" rx="32" fill="#2563EB" fill-opacity="0.1"/>
+          <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="24" fill="#2563EB">B</text>
+        </svg>"""
+        return HttpResponse(svg_placeholder, content_type="image/svg+xml")
 
 from django.http import JsonResponse
 from django.utils import timezone
