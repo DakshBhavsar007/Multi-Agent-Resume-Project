@@ -567,9 +567,19 @@ export const seekerAPI = {
 // For browsing jobs/companies without logging in
 
 async function publicReq(method, path) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (typeof window !== "undefined") {
+    const seekerToken = localStorage.getItem('vish_seeker_token');
+    const recruiterToken = localStorage.getItem('vish_jwt');
+    const developerToken = localStorage.getItem('portal_jwt');
+    const token = seekerToken || recruiterToken || developerToken;
+    if (token && token !== "null" && token !== "undefined") {
+      headers['Authorization'] = `Bearer ${String(token).replace(/[^\x20-\x7E]/g, "")}`;
+    }
+  }
   const opts = {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
   };
   const res = await fetch(`${API_HOST}${path}`, opts);
   const data = await res.json();

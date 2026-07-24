@@ -128,20 +128,20 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
 
           {/* Edit / Delete actions if review is user's own */}
           {t.isOwn && (
-            <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+            <div style={{ display: 'flex', gap: '6px', marginLeft: '8px', alignItems: 'center' }}>
               <button
-                onClick={() => onEdit(t)}
-                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '6px', padding: '6px', cursor: 'pointer', color: '#60a5fa' }}
+                onClick={(e) => { e.stopPropagation(); onEdit(t); }}
+                style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(96, 165, 250, 0.3)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 title="Edit review"
               >
-                <Pen size={12} />
+                <Pen size={14} />
               </button>
               <button
-                onClick={() => onDelete(t.id)}
-                style={{ background: 'rgba(239,68,68,0.15)', border: 'none', borderRadius: '6px', padding: '6px', cursor: 'pointer', color: '#f87171' }}
+                onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
+                style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(248, 113, 113, 0.3)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 title="Delete review"
               >
-                <Trash2 size={12} />
+                <Trash2 size={14} />
               </button>
             </div>
           )}

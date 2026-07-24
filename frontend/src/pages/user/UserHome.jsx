@@ -845,20 +845,20 @@ function Home() {
 
                     {/* Edit/Delete for own reviews */}
                     {t.is_own && (
-                      <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1.5 ml-2 shrink-0">
                         <button
                           onClick={() => { setEditingReview(t); setShowReviewModal(true); }}
-                          className="p-1.5 rounded-lg bg-muted hover:bg-muted-foreground/10 transition-colors"
+                          className="p-1.5 rounded-lg bg-muted hover:bg-muted-foreground/10 transition-colors border border-border/40 cursor-pointer"
                           title="Edit review"
                         >
-                          <Pen className="h-3 w-3 text-muted-foreground" />
+                          <Pen className="h-3.5 w-3.5 text-accent" />
                         </button>
                         <button
                           onClick={() => handleDeleteReview(t.id)}
-                          className="p-1.5 rounded-lg bg-muted hover:bg-red-100 transition-colors"
+                          className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 hover:bg-red-100 transition-colors border border-red-200/50 cursor-pointer"
                           title="Delete review"
                         >
-                          <Trash2 className="h-3 w-3 text-red-500" />
+                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
                         </button>
                       </div>
                     )}
