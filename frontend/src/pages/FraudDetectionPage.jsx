@@ -35,10 +35,59 @@ export default function FraudDetectionPage() {
   const [jobDescriptionInput, setJobDescriptionInput] = useState("");
   const [jobLocationInput, setJobLocationInput] = useState("Remote");
 
-  // Database Company Autocomplete suggestions
+  // Database Autocomplete suggestions for ALL manual form fields
   const [dbCompanies, setDbCompanies] = useState([]);
   const [filteredCompanies, setFilteredCompanies] = useState([]);
   const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+
+  const [dbJobTitles, setDbJobTitles] = useState([
+    "Senior Fullstack Engineer",
+    "AI / Machine Learning Engineer",
+    "Lead Product Designer (UI/UX)",
+    "Backend Systems Architect (Python/Django)",
+    "DevOps & Cloud Infrastructure Engineer",
+    "Frontend Developer (React & TypeScript)",
+    "Product Manager - Enterprise AI",
+    "Data Scientist & Analytics Lead",
+    "Cybersecurity & Fraud Prevention Specialist"
+  ]);
+  const [filteredJobTitles, setFilteredJobTitles] = useState([]);
+  const [showTitleDropdown, setShowTitleDropdown] = useState(false);
+
+  const [dbLocations, setDbLocations] = useState([
+    "Remote",
+    "San Francisco, CA",
+    "New York, NY",
+    "Bengaluru, India",
+    "Chicago, IL",
+    "London, UK",
+    "Austin, TX",
+    "Engineering / Technology",
+    "Design / Creative",
+    "Data & Artificial Intelligence"
+  ]);
+  const [filteredLocations, setFilteredLocations] = useState([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+
+  const [dbDescriptionTemplates] = useState([
+    {
+      title: "🚀 Fullstack Engineer Template",
+      text: "We are seeking a Senior Fullstack Engineer to build scalable web applications. Requirements: 4+ years of experience with React, Python/Django, PostgreSQL, and REST APIs. Responsibilities: Design resilient APIs, optimize database performance, write unit tests, and collaborate with cross-functional teams."
+    },
+    {
+      title: "🤖 AI / ML Engineer Template",
+      text: "Join our AI team to build and deploy state-of-the-art LLM solutions. Requirements: Proficiency in PyTorch, Python, HuggingFace, RAG architectures, and vector databases (Faiss/Pinecone). Responsible for training, fine-tuning, and scaling real-time AI inference services."
+    },
+    {
+      title: "🎨 UI/UX Product Designer Template",
+      text: "Looking for an innovative Product Designer to craft seamless visual experiences. Requirements: Deep expertise in Figma, design systems, wireframing, and user research. Ability to transform complex enterprise workflows into elegant, intuitive UI interfaces."
+    },
+    {
+      title: "⚠️ Scam / Suspicious Test Pattern",
+      text: "URGENT REQUIREMENT: Data Entry Specialist. Earn $4,000/week working 2 hours a day from home. No experience needed. Immediate wire transfer bonus. Must purchase starter equipment kit via Telegram link before starting."
+    }
+  ]);
+  const [showDescDropdown, setShowDescDropdown] = useState(false);
 
   // History list and active report
   const [historyList, setHistoryList] = useState([]);
@@ -60,6 +109,7 @@ export default function FraudDetectionPage() {
   useEffect(() => {
     fetchHistory();
     fetchDBCompanies();
+    fetchDBJobs();
   }, []);
 
   const fetchDBCompanies = async () => {
@@ -73,16 +123,34 @@ export default function FraudDetectionPage() {
     }
   };
 
+  const fetchDBJobs = async () => {
+    try {
+      const res = await publicAPI.getJobs({ per_page: 100 });
+      if (res && res.jobs) {
+        const titles = new Set(dbJobTitles);
+        const locs = new Set(dbLocations);
+        res.jobs.forEach(j => {
+          if (j.title) titles.add(j.title);
+          if (j.location) locs.add(j.location);
+        });
+        setDbJobTitles(Array.from(titles));
+        setDbLocations(Array.from(locs));
+      }
+    } catch (err) {
+      console.error("Failed to load jobs for autocomplete:", err);
+    }
+  };
+
+  // Handlers for Company input
   const handleCompanyChange = (val) => {
     setJobCompanyInput(val);
     if (val.trim().length > 0) {
       const matches = dbCompanies.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
       setFilteredCompanies(matches);
-      setShowCompanyDropdown(true);
     } else {
-      setFilteredCompanies([]);
-      setShowCompanyDropdown(false);
+      setFilteredCompanies(dbCompanies);
     }
+    setShowCompanyDropdown(true);
   };
 
   const selectCompanySuggestion = (company) => {
@@ -91,6 +159,46 @@ export default function FraudDetectionPage() {
       setJobLocationInput(company.hq_location);
     }
     setShowCompanyDropdown(false);
+  };
+
+  // Handlers for Job Title input
+  const handleTitleChange = (val) => {
+    setJobTitleInput(val);
+    if (val.trim().length > 0) {
+      const matches = dbJobTitles.filter(t => t.toLowerCase().includes(val.toLowerCase()));
+      setFilteredJobTitles(matches);
+    } else {
+      setFilteredJobTitles(dbJobTitles);
+    }
+    setShowTitleDropdown(true);
+  };
+
+  const selectTitleSuggestion = (title) => {
+    setJobTitleInput(title);
+    setShowTitleDropdown(false);
+  };
+
+  // Handlers for Location input
+  const handleLocationChange = (val) => {
+    setJobLocationInput(val);
+    if (val.trim().length > 0) {
+      const matches = dbLocations.filter(l => l.toLowerCase().includes(val.toLowerCase()));
+      setFilteredLocations(matches);
+    } else {
+      setFilteredLocations(dbLocations);
+    }
+    setShowLocationDropdown(true);
+  };
+
+  const selectLocationSuggestion = (loc) => {
+    setJobLocationInput(loc);
+    setShowLocationDropdown(false);
+  };
+
+  // Handlers for Description input
+  const selectDescTemplate = (text) => {
+    setJobDescriptionInput(text);
+    setShowDescDropdown(false);
   };
 
   const fetchHistory = async () => {
@@ -704,13 +812,11 @@ export default function FraudDetectionPage() {
 
                     <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest my-1">OR ENTER DETAILS MANUALLY</div>
 
-                    {/* Company Name with Database Autocomplete Suggestions */}
+                    {/* 1. Company Name Field with Database Suggestions */}
                     <div className="relative">
                       <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
                         <span>Company Name</span>
-                        {dbCompanies.length > 0 && (
-                          <span className="text-[9px] text-[#2563EB] font-bold">Suggestions enabled ({dbCompanies.length} verified companies in DB)</span>
-                        )}
+                        <span className="text-[9px] text-[#2563EB] font-bold">✨ DB Suggestions Enabled</span>
                       </label>
                       <input
                         type="text"
@@ -718,14 +824,15 @@ export default function FraudDetectionPage() {
                         value={jobUrlInput.trim() ? "" : jobCompanyInput}
                         onChange={(e) => handleCompanyChange(e.target.value)}
                         onFocus={() => {
-                          if (jobCompanyInput.trim()) setShowCompanyDropdown(true);
+                          handleCompanyChange(jobCompanyInput);
+                          setShowCompanyDropdown(true);
                         }}
                         onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 200)}
-                        placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "e.g. Google, Microsoft, TCS, Between (Type for DB suggestions)..."}
+                        placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "Type company name (e.g. Google, Microsoft, TCS, Between)..."}
                         className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
                       />
 
-                      {/* Autocomplete Dropdown */}
+                      {/* Company Suggestions Dropdown */}
                       <AnimatePresence>
                         {showCompanyDropdown && filteredCompanies.length > 0 && !jobUrlInput.trim() && (
                           <motion.div
@@ -734,14 +841,14 @@ export default function FraudDetectionPage() {
                             exit={{ opacity: 0, y: -5 }}
                             className="absolute left-0 right-0 top-full mt-1 bg-white border border-blue-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto divide-y divide-gray-100"
                           >
-                            {filteredCompanies.map((company) => (
+                            {filteredCompanies.slice(0, 10).map((company) => (
                               <div
                                 key={company.id}
                                 onMouseDown={() => selectCompanySuggestion(company)}
-                                className="p-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between transition-colors"
+                                className="p-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between transition-colors"
                               >
                                 <div className="flex items-center gap-2.5">
-                                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-extrabold text-xs flex items-center justify-center shrink-0">
+                                  <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-extrabold text-xs flex items-center justify-center shrink-0">
                                     {company.name.charAt(0)}
                                   </div>
                                   <div>
@@ -760,36 +867,127 @@ export default function FraudDetectionPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Job Title</label>
+                      {/* 2. Job Title Field with Dynamic Suggestions */}
+                      <div className="relative">
+                        <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
+                          <span>Job Title</span>
+                          <span className="text-[9px] text-[#2563EB] font-bold">✨ Role Suggestions</span>
+                        </label>
                         <input
                           type="text"
                           disabled={!!jobUrlInput.trim()}
                           value={jobUrlInput.trim() ? "" : jobTitleInput}
-                          onChange={(e) => setJobTitleInput(e.target.value)}
-                          placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "e.g. Senior Product Designer"}
+                          onChange={(e) => handleTitleChange(e.target.value)}
+                          onFocus={() => {
+                            handleTitleChange(jobTitleInput);
+                            setShowTitleDropdown(true);
+                          }}
+                          onBlur={() => setTimeout(() => setShowTitleDropdown(false), 200)}
+                          placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "e.g. Senior Fullstack Engineer..."}
                           className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
                         />
+
+                        {/* Job Title Suggestions Dropdown */}
+                        <AnimatePresence>
+                          {showTitleDropdown && filteredJobTitles.length > 0 && !jobUrlInput.trim() && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -5 }}
+                              className="absolute left-0 right-0 top-full mt-1 bg-white border border-blue-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto divide-y divide-gray-100"
+                            >
+                              {filteredJobTitles.slice(0, 8).map((title, idx) => (
+                                <div
+                                  key={idx}
+                                  onMouseDown={() => selectTitleSuggestion(title)}
+                                  className="p-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between transition-colors"
+                                >
+                                  <span className="font-bold text-xs text-gray-800">{title}</span>
+                                  <span className="text-[9px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-semibold">
+                                    Suggested Role
+                                  </span>
+                                </div>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Location / Category</label>
+
+                      {/* 3. Location / Category Field with Suggestions */}
+                      <div className="relative">
+                        <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
+                          <span>Location / Category</span>
+                          <span className="text-[9px] text-[#2563EB] font-bold">✨ Location Suggestions</span>
+                        </label>
                         <input
                           type="text"
                           disabled={!!jobUrlInput.trim()}
                           value={jobUrlInput.trim() ? "" : jobLocationInput}
-                          onChange={(e) => setJobLocationInput(e.target.value)}
+                          onChange={(e) => handleLocationChange(e.target.value)}
+                          onFocus={() => {
+                            handleLocationChange(jobLocationInput);
+                            setShowLocationDropdown(true);
+                          }}
+                          onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
                           placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "e.g. Remote / Chicago, IL"}
                           className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
                         />
+
+                        {/* Location Suggestions Dropdown */}
+                        <AnimatePresence>
+                          {showLocationDropdown && filteredLocations.length > 0 && !jobUrlInput.trim() && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -5 }}
+                              className="absolute left-0 right-0 top-full mt-1 bg-white border border-blue-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto divide-y divide-gray-100"
+                            >
+                              {filteredLocations.slice(0, 8).map((loc, idx) => (
+                                <div
+                                  key={idx}
+                                  onMouseDown={() => selectLocationSuggestion(loc)}
+                                  className="p-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between transition-colors"
+                                >
+                                  <span className="font-bold text-xs text-gray-800">{loc}</span>
+                                  <span className="text-[9px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-medium">
+                                    Location
+                                  </span>
+                                </div>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1">Job Posting Description</label>
+
+                    {/* 4. Job Description Textarea with Preset Template Suggestions */}
+                    <div className="relative">
+                      <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
+                        <span>Job Posting Description</span>
+                        <span className="text-[9px] text-[#2563EB] font-bold">✨ Quick Preset Suggestions Below</span>
+                      </label>
+
+                      {/* Quick Template Chips */}
+                      {!jobUrlInput.trim() && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {dbDescriptionTemplates.map((tpl, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => selectDescTemplate(tpl.text)}
+                              className="text-[10px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors shadow-sm"
+                            >
+                              {tpl.title}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
                       <textarea
                         disabled={!!jobUrlInput.trim()}
                         value={jobUrlInput.trim() ? "" : jobDescriptionInput}
                         onChange={(e) => setJobDescriptionInput(e.target.value)}
-                        placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "Paste the description/requirements here to analyze for clone templates, ghost post indicators, or sketchy payment details..."}
+                        placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "Paste job description or click a template chip above for sample descriptions..."}
                         rows={4}
                         className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner resize-none disabled:opacity-50"
                       />
