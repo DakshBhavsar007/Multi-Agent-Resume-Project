@@ -243,6 +243,7 @@ urlpatterns = [
     path('api/v1/public/companies', companies.public_list_companies, name='public-companies-list'),
     path('api/v1/public/companies/<str:company_id>', companies.public_get_company, name='public-companies-detail'),
     path('api/v1/public/market-trends', companies.public_market_trends, name='public-market-trends'),
+    path('api/v1/public/parse-resume', parse.public_parse_resume, name='public-parse-resume'),
 
     # ── Job Seeker Companies ──────────────────────────────────────────────────
     path('api/v1/seeker/companies', companies.seeker_list_companies, name='seeker-companies-list'),

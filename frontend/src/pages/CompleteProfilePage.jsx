@@ -11,6 +11,9 @@ import { LocationSelector } from '../components/ui/LocationSelector';
 import { IndustrySelector } from '../components/ui/IndustrySelector';
 import VerificationModal from '../components/VerificationModal';
 
+import { publicAPI } from '../lib/api';
+import { UploadCloud, Sparkles } from 'lucide-react';
+
 export default function CompleteProfilePage() {
   const navigate = useNavigate();
   const recruiterAuth = useAuthStore();
@@ -18,7 +21,26 @@ export default function CompleteProfilePage() {
   const developerAuth = usePortalAuthStore();
 
   const [loading, setLoading] = useState(false);
+  const [parsingResume, setParsingResume] = useState(false);
   const [oauthData, setOauthData] = useState(null);
+
+  const handleAutoFillFromResume = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParsingResume(true);
+    const toastId = toast.loading("Extracting details from resume...");
+    try {
+      const data = await publicAPI.parseResume(file);
+      if (data.phone) setPhone(data.phone);
+      if (data.location) setLocation(data.location);
+      if (data.headline) setHeadline(data.headline);
+      toast.success("Profile details auto-filled from resume!", { id: toastId });
+    } catch (err) {
+      toast.error(err.message || "Failed to parse resume", { id: toastId });
+    } finally {
+      setParsingResume(false);
+    }
+  };
   
   // Seeker Form State
   const [phone, setPhone] = useState('');
@@ -233,6 +255,30 @@ export default function CompleteProfilePage() {
           {/* Role specific inputs */}
           {role === 'seeker' && (
             <>
+              {/* ⚡ Resume Upload Dropzone */}
+              <div className="mb-6 p-4 border-2 border-dashed border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/40 hover:border-blue-500/60 rounded-2xl transition-colors text-center group">
+                <input 
+                  type="file" 
+                  id="oauth-resume-upload" 
+                  accept=".pdf,.docx,.doc,.txt"
+                  className="hidden" 
+                  onChange={handleAutoFillFromResume}
+                  disabled={parsingResume}
+                />
+                <label htmlFor="oauth-resume-upload" className="cursor-pointer block space-y-1.5">
+                  {parsingResume ? (
+                    <Loader2 className="mx-auto text-blue-400 animate-spin w-6 h-6" />
+                  ) : (
+                    <UploadCloud className="mx-auto text-blue-400 group-hover:scale-110 transition-transform w-6 h-6" />
+                  )}
+                  <div className="text-xs font-bold text-blue-300 flex items-center justify-center gap-1">
+                    <Sparkles size={14} className="text-blue-400" />
+                    <span>{parsingResume ? "Parsing resume details..." : "Auto-fill profile using Resume PDF / DOCX"}</span>
+                  </div>
+                  <p className="text-[10px] text-blue-400/80 font-medium">Upload resume to extract Phone, Location & Headline automatically</p>
+                </label>
+              </div>
+
               {/* Phone */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Phone Number*</label>

@@ -1,21 +1,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { seekerAPI } from '../../lib/api';
+import { seekerAPI, publicAPI } from '../../lib/api';
 import { useSeekerAuthStore } from '../../stores/seekerAuthStore';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, UploadCloud, Sparkles, Loader2 } from 'lucide-react';
 import VerificationModal from '../../components/VerificationModal';
 import { LocationSelector } from '../../components/ui/LocationSelector';
 
 export default function JobSeekerRegisterPage() {
   const navigate = useNavigate();
   const setAuth = useSeekerAuthStore(s => s.setAuth);
-  const [form, setForm] = useState({ full_name: '', email: '', password: '', location: '', headline: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', password: '', location: '', headline: '', phone: '' });
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [verifyTarget, setVerifyTarget] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [parsingResume, setParsingResume] = useState(false);
   const googleClientRef = useRef(null);
+
+  const handleAutoFillFromResume = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParsingResume(true);
+    const toastId = toast.loading("Extracting profile details from resume...");
+    try {
+      const data = await publicAPI.parseResume(file);
+      setForm(prev => ({
+        ...prev,
+        full_name: data.full_name || prev.full_name,
+        email: data.email || prev.email,
+        phone: data.phone || prev.phone,
+        location: data.location || prev.location,
+        headline: data.headline || prev.headline,
+      }));
+      if (data.email) setIsEmailVerified(false);
+      toast.success("Profile details auto-filled from resume!", { id: toastId });
+    } catch (err) {
+      toast.error(err.message || "Failed to parse resume", { id: toastId });
+    } finally {
+      setParsingResume(false);
+    }
+  };
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -82,6 +107,30 @@ export default function JobSeekerRegisterPage() {
         <div className="flex flex-col items-center mb-6">
           <span className="text-gray-500 text-[14px] font-medium mb-1">Job Seeker Portal</span>
           <h1 className="text-3xl font-black tracking-tight text-accent">Create Account</h1>
+        </div>
+
+        {/* ⚡ Resume Upload Auto-Fill Dropzone */}
+        <div className="mb-4 p-4 border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-400 rounded-2xl transition-colors text-center group">
+          <input 
+            type="file" 
+            id="register-resume-upload" 
+            accept=".pdf,.docx,.doc,.txt"
+            className="hidden" 
+            onChange={handleAutoFillFromResume}
+            disabled={parsingResume}
+          />
+          <label htmlFor="register-resume-upload" className="cursor-pointer block space-y-1.5">
+            {parsingResume ? (
+              <Loader2 className="mx-auto text-blue-600 animate-spin w-6 h-6" />
+            ) : (
+              <UploadCloud className="mx-auto text-blue-500 group-hover:scale-110 transition-transform w-6 h-6" />
+            )}
+            <div className="text-xs font-bold text-blue-900 flex items-center justify-center gap-1">
+              <Sparkles size={14} className="text-blue-600" />
+              <span>{parsingResume ? "Parsing resume details..." : "Auto-fill registration using Resume PDF / DOCX"}</span>
+            </div>
+            <p className="text-[10px] text-blue-600 font-medium">Upload resume to extract Name, Email, Phone, Location & Headline automatically</p>
+          </label>
         </div>
 
         <form onSubmit={handle} className="flex flex-col gap-4">
