@@ -47,24 +47,21 @@ def _serialize_review(review, current_seeker_id=None):
 
 @csrf_exempt
 def public_list_reviews(request):
-    """GET /api/v1/public/reviews — list platform-level testimonials."""
+    """GET /api/v1/public/reviews — list platform & company reviews."""
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
 
     reviews = (
         Review.objects
-        .filter(company__isnull=True)
-        .select_related("seeker")
-        .order_by("-is_featured", "-created_at")[:20]
+        .all()
+        .select_related("seeker", "company")
+        .order_by("-is_featured", "-created_at")[:30]
     )
 
-    # Try to identify current seeker for is_own flag
     current_seeker_id = _extract_seeker_id(request)
-
     data = [_serialize_review(r, current_seeker_id) for r in reviews]
 
-    # Aggregate platform stats
-    agg = Review.objects.filter(company__isnull=True).aggregate(
+    agg = Review.objects.aggregate(
         avg_rating=Avg("rating"), total=Count("id")
     )
 
@@ -148,22 +145,21 @@ def seeker_reviews_root(request):
         if not company:
             return JsonResponse(error_response("Company not found"), status=404)
 
-    # Check uniqueness
-    existing = Review.objects.filter(seeker=seeker, company=company).first()
-    if existing:
-        return JsonResponse(
-            error_response("You have already submitted a review. You can edit your existing review instead."),
-            status=409
+    # Check uniqueness or update existing
+    review = Review.objects.filter(seeker=seeker, company=company).first()
+    if review:
+        review.rating = rating
+        review.text = text
+        review.save()
+    else:
+        review = Review.objects.create(
+            seeker=seeker,
+            company=company,
+            rating=rating,
+            text=text,
         )
 
-    review = Review.objects.create(
-        seeker=seeker,
-        company=company,
-        rating=rating,
-        text=text,
-    )
-
-    return JsonResponse(success_response(_serialize_review(review, seeker.id)), status=201)
+    return JsonResponse(success_response(_serialize_review(review, seeker.id)), status=200 if review else 201)
 
 
 @csrf_exempt

@@ -1,23 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { X, Star, MessageSquareQuote, Loader2, CheckCircle2 } from 'lucide-react';
-import { seekerAPI } from '../lib/api';
+import { X, Star, MessageSquareQuote, Loader2, CheckCircle2, Building2 } from 'lucide-react';
+import { seekerAPI, publicAPI } from '../lib/api';
 import toast from 'react-hot-toast';
 
 export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, editingReview = null, companyId = null, companyName = null }) {
   const [rating, setRating] = useState(editingReview?.rating || 5);
   const [hoverRating, setHoverRating] = useState(0);
   const [text, setText] = useState(editingReview?.text || '');
+  const [selectedCompanyId, setSelectedCompanyId] = useState(companyId || editingReview?.company_id || '');
+  const [companiesList, setCompaniesList] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!companyId && !editingReview) {
+      publicAPI.listCompanies({ per_page: 50 })
+        .then(data => setCompaniesList(data.companies || []))
+        .catch(() => {});
+    }
+  }, [companyId, editingReview]);
 
   useEffect(() => {
     if (editingReview) {
       setRating(editingReview.rating || 5);
       setText(editingReview.text || '');
+      setSelectedCompanyId(editingReview.company_id || '');
     } else {
       setRating(5);
       setText('');
+      setSelectedCompanyId(companyId || '');
     }
-  }, [editingReview]);
+  }, [editingReview, companyId]);
 
   if (!isOpen) return null;
 
@@ -38,7 +50,7 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
         if (onSubmit) onSubmit(updated);
       } else {
         const created = await seekerAPI.createReview({
-          company_id: companyId || null,
+          company_id: selectedCompanyId || null,
           rating,
           text: text.trim(),
         });
@@ -79,6 +91,27 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Target Selection (Platform or Company) */}
+          {!companyId && !editingReview && companiesList.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <Building2 size={13} className="text-gray-400" /> Review Target
+              </label>
+              <select
+                value={selectedCompanyId}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs font-bold text-charcoal dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white transition-all"
+              >
+                <option value="">General Platform Feedback (Between)</option>
+                {companiesList.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    Company: {c.name} ({c.industry || 'Technology'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Rating Selection */}
           <div>
             <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
