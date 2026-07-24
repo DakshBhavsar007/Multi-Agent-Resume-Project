@@ -956,13 +956,20 @@ def release_round_results(application_id: str, notify_status: str):
         except Exception:
             pass
 
+        prior_round_name = None
         try:
             from api.models import SessionRound, ApplicantRoundAttempt
             if app.candidate:
-                sr = SessionRound.objects.filter(session=app.session, round_number=app.candidate.current_round_index).first()
+                curr_idx = app.candidate.current_round_index
+                sr = SessionRound.objects.filter(session=app.session, round_number=curr_idx).first()
                 if sr:
                     current_round_name = sr.name
-                attempt = ApplicantRoundAttempt.objects.filter(candidate=app.candidate, round__round_number=app.candidate.current_round_index).first()
+                
+                prior_sr = SessionRound.objects.filter(session=app.session, round_number=max(1, curr_idx - 1)).first()
+                if prior_sr:
+                    prior_round_name = prior_sr.name
+
+                attempt = ApplicantRoundAttempt.objects.filter(candidate=app.candidate, round__round_number=curr_idx).first()
                 if attempt and attempt.access_token:
                     test_link = f"/test/entry?token={attempt.access_token}"
         except Exception:
@@ -970,14 +977,21 @@ def release_round_results(application_id: str, notify_status: str):
 
         match_score_str = f"{match_val}%" if match_val else "N/A"
         notif_link = test_link if test_link else f"/jobs/applications?app_id={app.id}"
-        round_note = f" ({current_round_name})" if current_round_name else ""
+
+        if notify_status == 'shortlisted':
+            notif_title = f"Shortlisted for {current_round_name or 'Next Round'} — {app.session.job_title}"
+            notif_msg = f"Congratulations! Your application for {app.session.job_title} at {company_name} [{match_score_str} Match] has been shortlisted on {prior_round_name or 'the previous round'}. You have advanced to the next round: {current_round_name or 'Next Round'}."
+        else:
+            notif_title = f"{notify_status.title()}: {app.session.job_title} at {company_name}"
+            round_note = f" ({current_round_name})" if current_round_name else ""
+            notif_msg = f"Your application for {app.session.job_title} at {company_name} [{match_score_str} Match] has been updated to {notify_status.title()}{round_note}. Click to view details."
 
         # Create rich in-app notification
         Notification.objects.create(
             seeker=app.seeker,
             type='status_updated',
-            title=f'{notify_status.title()}: {app.session.job_title} at {company_name}',
-            message=f'Your application for {app.session.job_title} at {company_name} [{match_score_str} Match] has been updated to {notify_status.title()}{round_note}. Click to view details.',
+            title=notif_title,
+            message=notif_msg,
             link=notif_link,
         )
 
@@ -990,6 +1004,7 @@ def release_round_results(application_id: str, notify_status: str):
             new_status=notify_status,
             match_score=match_val,
             current_round_name=current_round_name,
+            previous_round_name=prior_round_name if notify_status == 'shortlisted' else None,
             location=(app.session.criteria.get("location") if (app.session and isinstance(app.session.criteria, dict) and app.session.criteria.get("location")) else None),
             test_link=test_link,
         )
