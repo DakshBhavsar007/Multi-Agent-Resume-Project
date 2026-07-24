@@ -458,7 +458,7 @@ def apply_job(request, session_id):
             Notification.objects.create(
                 seeker=seeker,
                 type="shortlisted",
-                title=f"Application Shortlisted 🌟",
+                title=f"Application Shortlisted",
                 message=f"Congratulations! Your profile matched for {session.job_title} at {company_name} ({match_score_str} Match). Your application is currently under screening.",
                 link=f"/jobs/applications?app_id={application.id}",
             )

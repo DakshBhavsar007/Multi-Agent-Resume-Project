@@ -237,7 +237,7 @@ def scan_portfolio(request):
                     Notification.objects.create(
                         company=request.company,
                         type="general",
-                        title=f"🚨 Fraud Alert: {candidate_name}",
+                        title=f"Fraud Alert: {candidate_name}",
                         message=f"Suspicious resume flagged for {candidate_name} ({candidate_role}). Originality: {originality}%, Plagiarism: {plagiarism}%.",
                         link=f"/dashboard/protection"
                     )

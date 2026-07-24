@@ -687,7 +687,7 @@ export default function SettingsPage() {
                     <h2 className="text-2xl font-black text-charcoal flex items-center gap-3">
                       <CreditCard size={24} className="text-accent" /> {plans.find(p=>p.id===activePlan)?.name || (activePlan.charAt(0).toUpperCase() + activePlan.slice(1)) + " Plan"}
                     </h2>
-                    <span className="bg-green-100 text-green-700 text-[9px] uppercase font-black px-2 py-0.5 rounded-full">● {currentSub?.status || "Active"}</span>
+                    <span className="bg-green-100 text-green-700 text-[9px] uppercase font-black px-2 py-0.5 rounded-full flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>{currentSub?.status || "Active"}</span>
                   </div>
                   {activePlan !== "free" && (
                     <p className="text-gray-500 font-medium text-xs mt-1">₹{plans.find(p=>p.id===activePlan)?.price.toLocaleString()}/month. Status is active.</p>
