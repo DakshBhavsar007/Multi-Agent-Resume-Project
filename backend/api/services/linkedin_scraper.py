@@ -46,66 +46,128 @@ def extract_linkedin_slug_info(url: str) -> dict:
 
 def fetch_linkedin_job_details(url: str) -> dict:
     """
-    Fetches job details from LinkedIn job post URL.
-    Returns:
-      {
-        "job_title": str,
-        "company_name": str,
-        "location": str,
-        "job_description": str,
-        "source_url": str,
-        "scraped_successfully": bool
-      }
+    Fetches real-time job details from LinkedIn job post URL.
+    Uses multi-tier fetching:
+    1. LinkedIn Guest API: https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/<job_id>
+    2. Direct URL fetch with custom desktop browser headers & OpenGraph / JSON-LD parsing.
+    3. LLM structured metadata extraction.
     """
     slug_info = extract_linkedin_slug_info(url)
+    job_id = slug_info.get("job_id")
     fallback_title = slug_info["fallback_title"]
     fallback_company = slug_info["fallback_company"]
     fallback_location = slug_info["fallback_location"]
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
-        "Cache-Control": "max-age=0",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
     }
 
     html_content = ""
     scraped_successfully = False
 
-    try:
-        # Fetch target URL with 5 seconds timeout
-        print(f"[LINKEDIN SCRAPER] Fetching URL: {url}", flush=True)
-        with httpx.Client(follow_redirects=True, headers=headers, timeout=5.0) as client:
-            response = client.get(url)
-            
-            # Check if it was redirected to login or captcha pages
-            if response.status_code == 200 and "login" not in response.url.path.lower():
-                html_content = response.text
-                # Simple check if page actually contains typical job body or meta tags
-                if "og:title" in html_content or "og:description" in html_content:
+    # Attempt 1: Fetch via LinkedIn Guest API if job_id is present
+    if job_id:
+        guest_api_url = f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}"
+        print(f"[LINKEDIN SCRAPER] Fetching via Guest API: {guest_api_url}", flush=True)
+        try:
+            with httpx.Client(follow_redirects=True, headers=headers, timeout=6.0) as client:
+                res = client.get(guest_api_url)
+                if res.status_code == 200 and len(res.text) > 300:
+                    html_content = res.text
                     scraped_successfully = True
-                    print("[LINKEDIN SCRAPER] Successfully retrieved HTML content.", flush=True)
-            else:
-                print(f"[LINKEDIN SCRAPER] Request blocked or redirected (status={response.status_code}, url={response.url})", flush=True)
-    except Exception as e:
-        print(f"[LINKEDIN SCRAPER] Failed to fetch URL due to: {e}", flush=True)
+                    print("[LINKEDIN SCRAPER] Successfully retrieved HTML via Guest API.", flush=True)
+        except Exception as api_err:
+            print(f"[LINKEDIN SCRAPER] Guest API fetch failed: {api_err}", flush=True)
 
+    # Attempt 2: Fetch target URL directly if Guest API wasn't successful
+    if not scraped_successfully:
+        print(f"[LINKEDIN SCRAPER] Fetching target URL directly: {url}", flush=True)
+        try:
+            with httpx.Client(follow_redirects=True, headers=headers, timeout=6.0) as client:
+                res = client.get(url)
+                if res.status_code == 200 and "login" not in res.url.path.lower():
+                    html_content = res.text
+                    if "og:title" in html_content or "og:description" in html_content or "jobPosting" in html_content:
+                        scraped_successfully = True
+                        print("[LINKEDIN SCRAPER] Successfully retrieved target URL HTML.", flush=True)
+        except Exception as direct_err:
+            print(f"[LINKEDIN SCRAPER] Direct URL fetch failed: {direct_err}", flush=True)
+
+    # Fast-path JSON-LD parsing if structured schema is embedded
+    job_title = None
+    company_name = None
+    location_val = None
+    job_desc = None
+
+    if html_content:
+        # Check for <script type="application/ld+json">
+        json_ld_matches = re.findall(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>([\s\S]*?)</script>', html_content, re.IGNORECASE)
+        for ld_text in json_ld_matches:
+            try:
+                data = json.loads(ld_text.strip())
+                if isinstance(data, dict) and data.get("@type") == "JobPosting":
+                    job_title = data.get("title")
+                    job_desc = data.get("description")
+                    if isinstance(data.get("hiringOrganization"), dict):
+                        company_name = data["hiringOrganization"].get("name")
+                    if isinstance(data.get("jobLocation"), dict):
+                        addr = data["jobLocation"].get("address", {})
+                        if isinstance(addr, dict):
+                            location_val = addr.get("addressLocality") or addr.get("addressRegion") or addr.get("addressCountry")
+                    break
+            except Exception:
+                pass
+
+        # Check OpenGraph meta tags if JSON-LD fields are missing
+        if not job_title or not job_desc:
+            og_title_m = re.search(r'<meta[^>]*property=["\']og:title["\'][^>]*content=["\'](.*?)["\']', html_content, re.IGNORECASE)
+            og_desc_m = re.search(r'<meta[^>]*property=["\']og:description["\'][^>]*content=["\'](.*?)["\']', html_content, re.IGNORECASE)
+            if og_title_m and not job_title:
+                raw_og_title = og_title_m.group(1)
+                # Split "Job Title - Company - Location"
+                parts = raw_og_title.split(" hiring ") if " hiring " in raw_og_title else raw_og_title.split(" in ")
+                if len(parts) >= 2:
+                    job_title = parts[0].strip()
+                    company_name = parts[1].strip()
+                else:
+                    job_title = raw_og_title.strip()
+            if og_desc_m and not job_desc:
+                job_desc = og_desc_m.group(1)
+
+        # Check description HTML container elements
+        if not job_desc or len(job_desc) < 50:
+            desc_m = re.search(r'<div[^>]*class=["\'][^"\']*(?:show-more-less-html__markup|description__text)[^"\']*["\'][^>]*>([\s\S]*?)</div>', html_content, re.IGNORECASE)
+            if desc_m:
+                raw_desc_html = desc_m.group(1)
+                # Clean HTML tags
+                job_desc = re.sub(r'<[^>]+>', ' ', raw_desc_html).strip()
+
+    # Clean HTML tags from JSON-LD description if present
+    if job_desc and "<" in job_desc and ">" in job_desc:
+        job_desc = re.sub(r'<[^>]+>', ' ', job_desc)
+        job_desc = re.sub(r'\s+', ' ', job_desc).strip()
+
+    if job_title and job_desc and len(job_desc) > 50:
+        print("[LINKEDIN SCRAPER] Scraped & parsed real-time job post successfully!", flush=True)
+        return {
+            "job_title": job_title,
+            "company_name": company_name or fallback_company,
+            "location": location_val or fallback_location,
+            "job_description": job_desc,
+            "source_url": url,
+            "scraped_successfully": True
+        }
+
+    # Fallback to LLM extraction if raw HTML exists but standard selectors didn't find all fields
     llm = RotateLLMClient()
-
     if scraped_successfully and len(html_content) > 200:
-        # Extract headers and body tag contents (to fit inside context limit)
-        # Grab head and a part of body
         head_match = re.search(r"<head>([\s\S]*?)</head>", html_content)
         body_match = re.search(r"<body>([\s\S]*?)</body>", html_content)
-        
-        extracted_html = ""
-        if head_match:
-            extracted_html += head_match.group(1)
-        if body_match:
-            # Get up to 5000 characters from body to extract description
-            extracted_html += "\n" + body_match.group(1)[:5000]
-        else:
-            extracted_html += "\n" + html_content[:6000]
+        extracted_html = (head_match.group(1) if head_match else "") + "\n" + (body_match.group(1)[:5000] if body_match else html_content[:6000])
 
         system_prompt = (
             "You are an expert LinkedIn job description extractor.\n"
@@ -113,8 +175,6 @@ def fetch_linkedin_job_details(url: str) -> dict:
             "Return ONLY valid JSON. No markdown codeblocks, no extra explanations."
         )
         prompt = f"""Extract the Job Title, Company Name, Location, and full Job Description from the following HTML context.
-If some details are missing, construct them logically based on the HTML metadata.
-
 HTML context:
 {extracted_html[:8000]}
 
@@ -127,12 +187,9 @@ Return JSON format:
 }}"""
         try:
             res_content = llm.generate(prompt=prompt, system_prompt=system_prompt).strip()
-            if res_content.startswith("```json"):
-                res_content = res_content[7:]
-            if res_content.startswith("```"):
-                res_content = res_content[3:]
-            if res_content.endswith("```"):
-                res_content = res_content[:-3]
+            if res_content.startswith("```json"): res_content = res_content[7:]
+            if res_content.startswith("```"): res_content = res_content[3:]
+            if res_content.endswith("```"): res_content = res_content[:-3]
             
             parsed_data = json.loads(res_content.strip())
             return {
@@ -168,12 +225,9 @@ Return JSON format:
 }}"""
     try:
         res_content = llm.generate(prompt=prompt, system_prompt=system_prompt).strip()
-        if res_content.startswith("```json"):
-            res_content = res_content[7:]
-        if res_content.startswith("```"):
-            res_content = res_content[3:]
-        if res_content.endswith("```"):
-            res_content = res_content[:-3]
+        if res_content.startswith("```json"): res_content = res_content[7:]
+        if res_content.startswith("```"): res_content = res_content[3:]
+        if res_content.endswith("```"): res_content = res_content[:-3]
         
         parsed_data = json.loads(res_content.strip())
         return {
