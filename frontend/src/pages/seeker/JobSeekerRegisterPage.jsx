@@ -5,6 +5,7 @@ import { useSeekerAuthStore } from '../../stores/seekerAuthStore';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
 import VerificationModal from '../../components/VerificationModal';
+import { LocationSelector } from '../../components/ui/LocationSelector';
 
 export default function JobSeekerRegisterPage() {
   const navigate = useNavigate();
@@ -134,13 +135,11 @@ export default function JobSeekerRegisterPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-charcoal">Location</label>
-              <input 
-                type="text" 
-                placeholder="Ahmedabad, India" 
+              <label className="text-sm font-semibold text-charcoal">Location (Country / State / City)</label>
+              <LocationSelector
                 value={form.location}
-                onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-gray-400 font-medium"
+                onChange={(loc) => setForm(p => ({ ...p, location: loc }))}
+                isLight={true}
               />
             </div>
             <div className="flex flex-col gap-1.5">

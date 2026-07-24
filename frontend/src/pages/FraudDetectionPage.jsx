@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { protectionAPI } from '../lib/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import { LocationSelector } from '../components/ui/LocationSelector';
 import { 
   Shield, 
   AlertTriangle, 
@@ -913,50 +914,17 @@ export default function FraudDetectionPage() {
                         </AnimatePresence>
                       </div>
 
-                      {/* 3. Location / Category Field with Suggestions */}
-                      <div className="relative">
+                      {/* 3. Location / Category Field with Hierarchical Dropdown */}
+                      <div>
                         <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
-                          <span>Location / Category</span>
-                          <span className="text-[9px] text-[#2563EB] font-bold">✨ Location Suggestions</span>
+                          <span>Location (Country / State / City)</span>
+                          <span className="text-[9px] text-[#2563EB] font-bold">🗺️ Country/State/City Select</span>
                         </label>
-                        <input
-                          type="text"
-                          disabled={!!jobUrlInput.trim()}
-                          value={jobUrlInput.trim() ? "" : jobLocationInput}
-                          onChange={(e) => handleLocationChange(e.target.value)}
-                          onFocus={() => {
-                            handleLocationChange(jobLocationInput);
-                            setShowLocationDropdown(true);
-                          }}
-                          onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
-                          placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "e.g. Remote / Chicago, IL"}
-                          className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
+                        <LocationSelector
+                          value={jobLocationInput}
+                          onChange={(loc) => setJobLocationInput(loc)}
+                          isLight={true}
                         />
-
-                        {/* Location Suggestions Dropdown */}
-                        <AnimatePresence>
-                          {showLocationDropdown && filteredLocations.length > 0 && !jobUrlInput.trim() && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              className="absolute left-0 right-0 top-full mt-1 bg-white border border-blue-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto divide-y divide-gray-100"
-                            >
-                              {filteredLocations.slice(0, 8).map((loc, idx) => (
-                                <div
-                                  key={idx}
-                                  onMouseDown={() => selectLocationSuggestion(loc)}
-                                  className="p-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between transition-colors"
-                                >
-                                  <span className="font-bold text-xs text-gray-800">{loc}</span>
-                                  <span className="text-[9px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-medium">
-                                    Location
-                                  </span>
-                                </div>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
                       </div>
                     </div>
 
