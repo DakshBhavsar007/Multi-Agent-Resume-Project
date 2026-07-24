@@ -748,20 +748,40 @@ def my_applications(request):
                 except Exception:
                     offer_letter_url = None
 
-            # Check for active proctored rounds
+            # Check for active proctored rounds for visible_round_index
             test_link = None
             test_round_name = None
-            if candidate:
+
+            # Determine if visible_round_index is currently in an active result announcement countdown timer
+            visible_round_obj = None
+            for r in sorted_rounds:
+                if int(r.get("order", 1)) == visible_round_index:
+                    visible_round_obj = r
+                    break
+
+            is_awaiting_results = False
+            if visible_round_obj and visible_round_obj.get("result_announcement_date"):
+                try:
+                    dt = parse_datetime(visible_round_obj.get("result_announcement_date"))
+                    if dt:
+                        if not is_aware(dt):
+                            dt = make_aware(dt)
+                        if now < dt:
+                            is_awaiting_results = True
+                except Exception:
+                    pass
+
+            if candidate and not is_awaiting_results and seeker_status not in ["rejected", "hired"]:
                 active_attempt = ApplicantRoundAttempt.objects.filter(
                     candidate=candidate,
-                    round__round_number=candidate.current_round_index,
+                    round__round_number=visible_round_index,
                     status__in=["pending", "in_progress"]
                 ).select_related("round").first()
                 
                 if not active_attempt:
                     sr = SessionRound.objects.filter(
                         session=session,
-                        round_number=candidate.current_round_index
+                        round_number=visible_round_index
                     ).first()
                     if sr and sr.round_type in ["mcq", "coding", "interview"]:
                         import secrets

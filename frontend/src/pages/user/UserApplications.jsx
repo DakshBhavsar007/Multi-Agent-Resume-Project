@@ -516,7 +516,7 @@ export default function UserApplications() {
                                         </span>
                                       )}
                                     </p>
-                                    {isActive && app.test_link && (
+                                    {isActive && !isScheduled && app.test_link && (
                                       <div className="mt-2.5 flex flex-wrap gap-2 items-center">
                                         <a
                                           href={SHOW_MOCK_TESTING_CONTROLS 

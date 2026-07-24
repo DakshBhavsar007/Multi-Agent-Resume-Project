@@ -486,33 +486,58 @@ def public_market_trends(request):
         skill_salaries = {}
         for s in all_sessions:
             if isinstance(s.criteria, dict):
-                skills = s.criteria.get("skills", [])
+                req_sk = s.criteria.get("required_skills") or s.criteria.get("skills") or []
+                nice_sk = s.criteria.get("nice_to_have") or []
+                all_sk = []
+                if isinstance(req_sk, list): all_sk.extend(req_sk)
+                elif isinstance(req_sk, str): all_sk.extend([x.strip() for x in req_sk.split(",") if x.strip()])
+                if isinstance(nice_sk, list): all_sk.extend(nice_sk)
+                elif isinstance(nice_sk, str): all_sk.extend([x.strip() for x in nice_sk.split(",") if x.strip()])
+
                 sal_val = (
-                    s.criteria.get("max_budget") or s.criteria.get("salary_max") or 
-                    s.criteria.get("max_salary") or s.criteria.get("budget")
+                    s.criteria.get("salary_max") or s.criteria.get("max_budget") or 
+                    s.criteria.get("max_salary") or s.criteria.get("salary_min") or s.criteria.get("budget")
                 )
-                if isinstance(skills, list):
-                    for sk in skills:
-                        if isinstance(sk, str) and sk.strip():
-                            clean_sk = sk.strip().title()
-                            skill_counts[clean_sk] += 1
-                            if isinstance(sal_val, (int, float)) and sal_val > 0:
-                                skill_salaries.setdefault(clean_sk, []).append(sal_val)
+                curr = s.criteria.get("salary_currency", "USD")
+
+                for sk in all_sk:
+                    if isinstance(sk, str) and sk.strip():
+                        clean_sk = sk.strip().title()
+                        skill_counts[clean_sk] += 1
+                        if isinstance(sal_val, (int, float)) and sal_val > 0:
+                            skill_salaries.setdefault(clean_sk, []).append((sal_val, curr))
+
+        # Also aggregate skills from candidate profiles
+        from api.models import Candidate
+        for cand in Candidate.objects.filter(deleted_at__isnull=True):
+            cand_skills = cand.skills if isinstance(cand.skills, list) else []
+            for csk in cand_skills:
+                if isinstance(csk, str) and csk.strip():
+                    clean_csk = csk.strip().title()
+                    skill_counts[clean_csk] += 1
 
         db_growth_configs = list(GrowthSkillFallback.objects.filter(is_active=True))
         high_growth_domains = []
         
-        top_db_skills = skill_counts.most_common(3)
+        top_db_skills = skill_counts.most_common(5)
         for idx, (sk_name, count_val) in enumerate(top_db_skills):
-            sal_list = skill_salaries.get(sk_name, [])
-            avg_sk_pay = int(sum(sal_list)/len(sal_list)) if sal_list else (135000 + (count_val * 4000))
-            growth_pct = min(99, 15 + (count_val * 5))
+            sal_tuples = skill_salaries.get(sk_name, [])
+            if sal_tuples:
+                avg_val = sum(t[0] for t in sal_tuples) / len(sal_tuples)
+                curr_symbol = "₹" if sal_tuples[0][1] == "INR" else ("€" if sal_tuples[0][1] == "EUR" else ("£" if sal_tuples[0][1] == "GBP" else "$"))
+                pay_str = f"{curr_symbol}{int(avg_val / 1000)}k" if avg_val < 100000 else f"{curr_symbol}{round(avg_val / 100000, 1)}L"
+            else:
+                pay_str = f"${145 + (count_val * 5)}k"
+
+            growth_pct = min(99, 18 + (count_val * 6))
             high_growth_domains.append({
                 "name": sk_name,
                 "growth": f"+{growth_pct}%",
-                "pay": f"${int(avg_sk_pay / 1000)}k",
-                "description": f"Demand indexed across {count_val} active database requisitions."
+                "pay": pay_str,
+                "description": f"Highest request growth across {count_val} active database requisitions."
             })
+            if len(high_growth_domains) >= 3:
+                break
 
         for g_cfg in db_growth_configs:
             if len(high_growth_domains) >= 3:
