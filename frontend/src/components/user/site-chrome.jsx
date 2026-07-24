@@ -6,6 +6,7 @@ import { OnboardingTour, useTour } from "../OnboardingTour";
 import { SocialTooltip } from "../ui/social-media";
 import ThemeToggle from "../ThemeToggle";
 import { seekerAPI, API_HOST } from "../../lib/api";
+import { useSeekerAuthStore } from "../../stores/seekerAuthStore";
 
 const SEEKER_TOUR_STEPS = [
   {

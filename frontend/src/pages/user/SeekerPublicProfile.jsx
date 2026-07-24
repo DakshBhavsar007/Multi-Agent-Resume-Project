@@ -122,14 +122,17 @@ export default function SeekerPublicProfile() {
                 <Sparkles size={14} className="text-amber-500" /> Skills & Expertise
               </h3>
               <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill, idx) => (
-                  <span
-                    key={idx}
-                    className="bg-muted border border-border text-foreground text-xs font-semibold px-3 py-1 rounded-full"
-                  >
-                    {skill}
-                  </span>
-                ))}
+                {profile.skills.map((skill, idx) => {
+                  const skillLabel = typeof skill === 'object' && skill !== null ? (skill.name || skill.title || skill.skill || JSON.stringify(skill)) : String(skill);
+                  return (
+                    <span
+                      key={idx}
+                      className="bg-muted border border-border text-foreground text-xs font-semibold px-3 py-1 rounded-full"
+                    >
+                      {skillLabel}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -152,7 +155,7 @@ export default function SeekerPublicProfile() {
                 <div key={rev.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-foreground bg-muted px-2.5 py-1 rounded-lg">
-                      {rev.company_name}
+                      {rev.company_name || 'Between Platform'}
                     </span>
                     <div className="flex items-center gap-0.5">
                       {[1, 2, 3, 4, 5].map((s) => (
