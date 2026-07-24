@@ -54,25 +54,25 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 md:p-8 overflow-hidden">
+      <div className="relative w-full max-w-lg bg-white dark:bg-[#141417] text-charcoal dark:text-gray-100 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 p-6 md:p-8 overflow-hidden">
         {/* Top Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4 mb-6">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600">
+            <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
               <MessageSquareQuote size={22} />
             </div>
             <div>
-              <h3 className="font-extrabold text-lg text-charcoal">
+              <h3 className="font-extrabold text-lg text-charcoal dark:text-white">
                 {editingReview ? 'Edit Your Review' : companyName ? `Review ${companyName}` : 'Share Your Experience'}
               </h3>
-              <p className="text-xs font-medium text-gray-400">
+              <p className="text-xs font-medium text-gray-400 dark:text-gray-400">
                 {companyName ? `Rate your experience with ${companyName}` : 'Help others by sharing your genuine feedback'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-gray-400 hover:text-charcoal hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-full text-gray-400 hover:text-charcoal dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <X size={18} />
           </button>
@@ -81,10 +81,10 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Rating Selection */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
               Overall Rating
             </label>
-            <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-2xl border border-gray-100 justify-center">
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/60 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 justify-center">
               {[1, 2, 3, 4, 5].map((star) => {
                 const active = star <= (hoverRating || rating);
                 return (
@@ -99,13 +99,13 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
                     <Star
                       size={28}
                       className={`${
-                        active ? 'fill-amber-400 text-amber-400' : 'text-gray-300 fill-gray-100'
+                        active ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-gray-700 fill-gray-100 dark:fill-gray-800'
                       } transition-colors`}
                     />
                   </button>
                 );
               })}
-              <span className="ml-3 text-sm font-extrabold text-charcoal min-w-[50px]">
+              <span className="ml-3 text-sm font-extrabold text-charcoal dark:text-white min-w-[50px]">
                 {hoverRating || rating} / 5
               </span>
             </div>
@@ -114,10 +114,10 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
           {/* Review Text Area */}
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                 Your Review
               </label>
-              <span className={`text-[11px] font-semibold ${text.length < 10 ? 'text-amber-600' : 'text-emerald-600'}`}>
+              <span className={`text-[11px] font-semibold ${text.length < 10 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                 {text.length} / 2000 chars {text.length < 10 && '(min 10)'}
               </span>
             </div>
@@ -128,7 +128,7 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
               rows={5}
               maxLength={2000}
               required
-              className="w-full p-4 rounded-2xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-none text-sm text-charcoal placeholder-gray-400 resize-none transition-all"
+              className="w-full p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white outline-none text-sm text-charcoal dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 resize-none transition-all"
             />
           </div>
 
@@ -137,14 +137,14 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all"
+              className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || text.trim().length < 10}
-              className="px-6 py-2.5 rounded-xl bg-charcoal hover:bg-black text-white text-xs font-bold transition-all flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 rounded-xl bg-charcoal dark:bg-white text-white dark:text-black hover:bg-black dark:hover:bg-gray-200 text-xs font-bold transition-all flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
