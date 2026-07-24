@@ -138,6 +138,36 @@ function Home() {
     });
   }, []);
 
+  // Fetch dynamic reviews
+  useEffect(() => {
+    publicAPI.listReviews()
+      .then((data) => {
+        setReviews(data.reviews || []);
+        setReviewStats(data.stats || { avg_rating: 0, total_reviews: 0 });
+      })
+      .catch((err) => console.error('Failed to load reviews:', err));
+  }, []);
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      await seekerAPI.deleteReview(reviewId);
+      setReviews(prev => prev.filter(r => r.id !== reviewId));
+      toast.success('Review deleted');
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete review');
+    }
+  };
+
+  const handleReviewSubmitted = (newReview) => {
+    if (editingReview) {
+      setReviews(prev => prev.map(r => r.id === newReview.id ? newReview : r));
+    } else {
+      setReviews(prev => [newReview, ...prev]);
+    }
+    setShowReviewModal(false);
+    setEditingReview(null);
+  };
+
   const featured = realJobs.length ? realJobs : jobs.slice(0, 4);
   const topCompanies = realCompanies.length ? realCompanies : companies.slice(0, 6);
 
