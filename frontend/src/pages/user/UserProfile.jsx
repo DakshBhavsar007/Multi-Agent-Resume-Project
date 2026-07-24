@@ -459,9 +459,9 @@ export default function UserProfile() {
                   disabled={uploadingAvatar}
                 />
                 <label htmlFor="avatar-upload" className="cursor-pointer block relative">
-                  {seeker?.avatar_url ? (
+                  {seeker?.avatar_url || seeker?.avatar_path ? (
                     <img
-                      src={seeker.avatar_url.startsWith('http') ? seeker.avatar_url : `${API_HOST}${seeker.avatar_url}`}
+                      src={(seeker.avatar_url || seeker.avatar_path).startsWith('http') || (seeker.avatar_url || seeker.avatar_path).startsWith('data:') ? (seeker.avatar_url || seeker.avatar_path) : `${API_HOST}${seeker.avatar_url || seeker.avatar_path}`}
                       alt={seeker.full_name}
                       className="h-20 w-20 shrink-0 object-cover rounded-3xl border border-border bg-muted shadow-sm transition group-hover:opacity-85"
                     />

@@ -365,7 +365,7 @@ export function Header() {
                 >
                   {rawAvatar && !imgError ? (
                     <img
-                      src={rawAvatar.startsWith('http') ? rawAvatar : `${API_HOST}${rawAvatar}`}
+                      src={rawAvatar.startsWith('http') || rawAvatar.startsWith('data:') ? rawAvatar : `${API_HOST}${rawAvatar}`}
                       alt={seekerData?.full_name || 'Profile'}
                       onError={() => setImgError(true)}
                       className="h-8 w-8 rounded-full object-cover border border-accent/20 bg-muted"
