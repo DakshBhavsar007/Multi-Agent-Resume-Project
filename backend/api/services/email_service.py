@@ -321,6 +321,7 @@ def send_status_update_to_seeker(
     new_status: str,
     match_score: str = None,
     current_round_name: str = None,
+    previous_round_name: str = None,
     location: str = None,
     test_link: str = None,
     rejection_reason: str = None,
@@ -328,14 +329,18 @@ def send_status_update_to_seeker(
     """
     Notify a job seeker that their application status has updated with FULL COMPREHENSIVE DETAILS.
     """
-    status_messages = {
-        "shortlisted": f"Great news! Your application for {job_title} at {company_name} has been reviewed and shortlisted by the hiring team. You have been selected to move forward to the next stage of recruitment.",
-        "rejected":    f"Thank you for applying for {job_title} at {company_name}. After careful review of your qualifications, the hiring team has decided to move forward with other candidates for this specific opening.",
-        "hired":       f"Congratulations! An official employment offer has been extended to you for {job_title} at {company_name}. Please log in to your dashboard for onboarding details.",
-    }
+    if new_status == "shortlisted" and previous_round_name and current_round_name:
+        status_body = f"Great news! Your application for <strong>{job_title}</strong> at <strong>{company_name}</strong> has been reviewed and shortlisted on <strong>{previous_round_name}</strong>. You have been selected to move forward to the next stage of recruitment: <strong>{current_round_name}</strong>."
+    else:
+        status_messages = {
+            "shortlisted": f"Great news! Your application for {job_title} at {company_name} has been reviewed and shortlisted by the hiring team. You have been selected to move forward to the next stage of recruitment.",
+            "rejected":    f"Thank you for applying for {job_title} at {company_name}. After careful review of your qualifications, the hiring team has decided to move forward with other candidates for this specific opening.",
+            "hired":       f"Congratulations! An official employment offer has been extended to you for {job_title} at {company_name}. Please log in to your dashboard for onboarding details.",
+        }
+        status_body = status_messages.get(new_status, f"Your application status for {job_title} at {company_name} has been updated to: {new_status.title()}.")
 
     status_titles = {
-        "shortlisted": "Application Shortlisted",
+        "shortlisted": f"Application Shortlisted: Advanced to {current_round_name}" if current_round_name else "Application Shortlisted",
         "rejected":    "Application Status Update",
         "hired":       "Offer Extended",
     }
@@ -346,10 +351,13 @@ def send_status_update_to_seeker(
         "hired":       "Offer Extended",
     }
 
-    status_body = status_messages.get(new_status, f"Your application status for {job_title} at {company_name} has been updated to: {new_status.title()}.")
     title = status_titles.get(new_status, "Application Status Updated")
     badge = status_badges.get(new_status, "Status Update")
-    subject = f"{title} — {job_title} at {company_name}"
+    
+    if new_status == "shortlisted" and previous_round_name and current_round_name:
+        subject = f"Application Shortlisted on {previous_round_name} — Advanced to {current_round_name} for {job_title}"
+    else:
+        subject = f"{title} — {job_title} at {company_name}"
     
     # Target CTA URL and text
     cta_url = f"{FRONTEND_URL}/jobs/applications"
@@ -366,11 +374,20 @@ def send_status_update_to_seeker(
         else:
             match_score_display = str(match_score)
 
+    prev_round_html = f"""
+    <tr>
+        <td style="padding-bottom: 12px;" colspan="2">
+            <p style="margin: 0 0 2px; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Previous Stage Cleared</p>
+            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #15803d;">{previous_round_name}</p>
+        </td>
+    </tr>
+    """ if previous_round_name else ""
+
     round_html = f"""
     <tr>
         <td style="padding-bottom: 12px;" colspan="2">
-            <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Current Stage / Assessment Round</p>
-            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b;">{current_round_name}</p>
+            <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Current Active Stage</p>
+            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #2563eb;">{current_round_name}</p>
         </td>
     </tr>
     """ if current_round_name else ""
@@ -417,6 +434,7 @@ def send_status_update_to_seeker(
                     <p style="margin: 0; font-size: 14px; font-weight: 800; color: #059669;">{match_score_display}</p>
                 </td>
             </tr>
+            {prev_round_html}
             {round_html}
             {location_html}
         </table>
@@ -427,6 +445,7 @@ def send_status_update_to_seeker(
     """
 
     text_body = f"Hi {seeker_name},\n\n{status_body}\n\nJob: {job_title}\nCompany: {company_name}\nStatus: {new_status.title()}\nMatch Score: {match_score_display}\n\nView details: {cta_url}\n\n— Between AI Platform"
+
     html_email = build_between_email_html(
         title=title,
         subtitle=f"{job_title} at {company_name}",

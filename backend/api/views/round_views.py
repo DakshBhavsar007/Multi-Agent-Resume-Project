@@ -485,6 +485,7 @@ def get_applicant_results(request, session_id):
                 "round_id": str(a.round.id),
                 "round_type": a.round.round_type,
                 "round_name": a.round.name,
+                "passing_score": getattr(a.round, "passing_score", 50),
                 "status": a.status,
                 "started_at": a.started_at,
                 "submitted_at": a.submitted_at,

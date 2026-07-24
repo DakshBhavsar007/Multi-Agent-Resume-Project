@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { roundsAPI } from "../lib/api";
 import { toast } from "react-hot-toast";
+import { CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 
 export default function ApplicantResultsPage() {
   const { id } = useParams();
@@ -26,9 +27,11 @@ export default function ApplicantResultsPage() {
                   id: a.access_token,
                   candidate_name: c.name,
                   candidate_email: c.email,
+                  candidate_status: c.status,
                   round_type: a.round_type,
                   round_name: a.round_name,
                   status: a.status,
+                  passing_score: a.passing_score !== undefined && a.passing_score !== null ? a.passing_score : 50,
                   evaluation_score: a.mcq_score !== undefined && a.mcq_score !== null ? a.mcq_score : (a.coding_score !== undefined && a.coding_score !== null ? a.coding_score : (a.interview_score !== undefined && a.interview_score !== null ? a.interview_score : null)),
                   completed_at: a.submitted_at,
                   tab_switch_count: a.proctoring_flags?.filter(f => f.type === 'tab_switch' || f.event_type === 'tab_switch').length || 0,
@@ -59,20 +62,41 @@ export default function ApplicantResultsPage() {
     );
   });
 
-  const getStatusBadgeClass = (status) => {
-    if (status === "submitted" || status === "evaluated") {
-      return "bg-green-50 text-green-700 border border-green-200";
-    }
-    if (status === "in_progress") {
-      return "bg-blue-50 text-blue-700 border border-blue-200";
-    }
-    return "bg-gray-50 text-gray-700 border border-gray-200";
-  };
-
   const getScoreColorClass = (score) => {
     if (score >= 80) return "text-green-600 font-bold";
     if (score >= 50) return "text-amber-600 font-bold";
     return "text-red-500 font-bold";
+  };
+
+  const renderStatusBadge = (att) => {
+    if (att.evaluation_score !== null && att.evaluation_score !== undefined) {
+      const isPassed = att.evaluation_score >= att.passing_score;
+      if (isPassed) {
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle className="w-3 h-3 text-emerald-600" /> PASSED
+          </span>
+        );
+      } else {
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+            <XCircle className="w-3 h-3 text-rose-600" /> FAILED
+          </span>
+        );
+      }
+    }
+    if (att.status === "in_progress") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+          <Clock className="w-3 h-3 text-blue-600" /> IN PROGRESS
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-gray-50 text-gray-700 border border-gray-200">
+        <Clock className="w-3 h-3 text-gray-400" /> PENDING
+      </span>
+    );
   };
 
   if (loading) {
@@ -164,11 +188,9 @@ export default function ApplicantResultsPage() {
                           <span className="block font-semibold text-gray-900">{att.candidate_name}</span>
                           <span className="text-[10px] text-gray-400 font-normal">{att.candidate_email}</span>
                         </td>
-                        <td className="px-4 py-3.5 capitalize">{att.round_type} Round</td>
+                        <td className="px-4 py-3.5 capitalize">{att.round_name || `${att.round_type} Round`}</td>
                         <td className="px-4 py-3.5">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider ${getStatusBadgeClass(att.status)}`}>
-                            {att.status}
-                          </span>
+                          {renderStatusBadge(att)}
                         </td>
                         <td className="px-4 py-3.5 text-right font-mono font-bold">
                           {att.evaluation_score !== null ? (
@@ -196,18 +218,26 @@ export default function ApplicantResultsPage() {
                   <p className="text-xs text-gray-500 mt-1">Reviewing metrics for {selectedAttempt.candidate_name}</p>
                 </div>
 
-                <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-2 text-xs">
-                  <div className="flex justify-between">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-2.5 text-xs">
+                  <div className="flex justify-between items-center">
                     <span className="font-semibold text-gray-400">Assessment:</span>
                     <span className="font-bold text-gray-800">{selectedAttempt.round_name}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-gray-400">Outcome:</span>
+                    <div>{renderStatusBadge(selectedAttempt)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
                     <span className="font-semibold text-gray-400">Score:</span>
                     <span className={`font-mono font-bold ${getScoreColorClass(selectedAttempt.evaluation_score || 0)}`}>
                       {selectedAttempt.evaluation_score !== null ? `${selectedAttempt.evaluation_score}%` : "Not graded"}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-gray-400">Passing Threshold:</span>
+                    <span className="font-mono font-bold text-slate-700">{selectedAttempt.passing_score}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
                     <span className="font-semibold text-gray-400">Completed at:</span>
                     <span className="font-medium text-gray-800">
                       {selectedAttempt.completed_at ? new Date(selectedAttempt.completed_at).toLocaleString() : "Pending"}

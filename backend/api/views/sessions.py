@@ -36,7 +36,10 @@ def session_root(request):
                     "name": r.get("name"),
                     "interviewer": r.get("interviewer"),
                     "order": r.get("order"),
-                    "result_announcement_date": ann_date if ann_date else None
+                    "result_announcement_date": ann_date if ann_date else None,
+                    "round_type": r.get("round_type"),
+                    "interview_mode": r.get("interview_mode"),
+                    "passing_score": r.get("passing_score", 50)
                 })
 
             status_val = "analysis" if job_title == "Smart Analyzer Session" else "active"
@@ -191,7 +194,10 @@ def session_detail(request, session_id):
                         "name": r.get("name"),
                         "interviewer": r.get("interviewer"),
                         "order": r.get("order"),
-                        "result_announcement_date": ann_date if ann_date else None
+                        "result_announcement_date": ann_date if ann_date else None,
+                        "round_type": r.get("round_type"),
+                        "interview_mode": r.get("interview_mode"),
+                        "passing_score": r.get("passing_score", 50)
                     })
                 session.rounds = rounds_data
 

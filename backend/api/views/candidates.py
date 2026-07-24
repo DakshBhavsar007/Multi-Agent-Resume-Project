@@ -452,12 +452,11 @@ def candidate_action(request, session_id, cand_id):
                         app.save(update_fields=['status'])
 
                         # Compute rich details for notification and email
-                        company_name = session.company.name if session.company else "Between Partner"
-                        match_val = _calculate_match_score(seeker, session)
-                        match_score_str = f"{match_val}%" if match_val else "N/A"
+                        prior_sr = SessionRound.objects.filter(session=session, round_number=prior_round_order).first()
+                        prior_round_name = prior_sr.name if prior_sr else f"Round {prior_round_order}"
 
                         current_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first()
-                        current_round_name = current_sr.name if current_sr else None
+                        current_round_name = current_sr.name if current_sr else f"Round {candidate.current_round_index}"
 
                         test_link = None
                         active_attempt = ApplicantRoundAttempt.objects.filter(
@@ -469,14 +468,19 @@ def candidate_action(request, session_id, cand_id):
 
                         notif_link = test_link if test_link else f"/jobs/applications?app_id={app.id}"
 
-                        round_note = f" ({current_round_name})" if current_round_name else ""
-                        notif_msg = f"Your application for {session.job_title} at {company_name} [{match_score_str} Match] has been updated to {notify_status.title()}{round_note}. Click to view details and proceed."
+                        if action == 'forward':
+                            notif_title = f"Shortlisted for {current_round_name} — {session.job_title}"
+                            notif_msg = f"Congratulations! Your application for {session.job_title} at {company_name} [{match_score_str} Match] has been shortlisted on {prior_round_name}. You have advanced to the next round: {current_round_name}."
+                        else:
+                            notif_title = f"{notify_status.title()}: {session.job_title} at {company_name}"
+                            round_note = f" ({current_round_name})" if current_round_name else ""
+                            notif_msg = f"Your application for {session.job_title} at {company_name} [{match_score_str} Match] has been updated to {notify_status.title()}{round_note}. Click to view details and proceed."
 
                         # Create rich in-app notification
                         Notification.objects.create(
                             seeker=seeker,
                             type='status_updated',
-                            title=f'{notify_status.title()}: {session.job_title} at {company_name}',
+                            title=notif_title,
                             message=notif_msg,
                             link=notif_link,
                         )
@@ -514,6 +518,7 @@ def candidate_action(request, session_id, cand_id):
                             new_status=notify_status,
                             match_score=match_val,
                             current_round_name=current_round_name,
+                            previous_round_name=prior_round_name if action == 'forward' else None,
                             location=(session.criteria.get("location") if (isinstance(session.criteria, dict) and session.criteria.get("location")) else None),
                             test_link=test_link,
                         )

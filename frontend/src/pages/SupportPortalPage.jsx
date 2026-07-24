@@ -240,8 +240,18 @@ export default function SupportPortalPage() {
       <header className="border-b border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-105 transition">
-              B
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-[#2A2A2A] p-1 shadow-md group-hover:scale-105 transition">
+              <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="logo-grad-support" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#2563eb" />
+                  </linearGradient>
+                </defs>
+                <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-support)" strokeWidth="14" strokeLinecap="round" />
+                <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+                <circle cx="68" cy="32" r="24" fill="#2563eb" />
+              </svg>
             </div>
             <span className="font-display font-bold text-xl text-slate-900 dark:text-white tracking-tight">Between</span>
             <span className="text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold px-2 py-0.5 rounded border border-blue-500/20 ml-1">

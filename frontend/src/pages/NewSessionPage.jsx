@@ -362,16 +362,18 @@ export default function NewSessionPage() {
       }
     }
 
-    // Validate result declaration dates are not in the past
+    // Validate result declaration dates are compulsory and not in the past
     const now = new Date();
     for (let i = 0; i < formData.rounds.length; i++) {
       const r = formData.rounds[i];
-      if (r.result_announcement_date) {
-        const declaredDate = new Date(r.result_announcement_date);
-        if (declaredDate < now) {
-          toast.error(`Result Declaration Time for Round ${i + 1} ("${r.name || `Round ${i + 1}`}") cannot be in the past.`);
-          return;
-        }
+      if (!r.result_announcement_date) {
+        toast.error(`Result declaration time is compulsory for Round ${i + 1} ("${r.name || `Round ${i + 1}`}")`);
+        return;
+      }
+      const declaredDate = new Date(r.result_announcement_date);
+      if (declaredDate < now) {
+        toast.error(`Result declaration time for Round ${i + 1} ("${r.name || `Round ${i + 1}`}") cannot be in the past`);
+        return;
       }
     }
 
@@ -859,11 +861,37 @@ export default function NewSessionPage() {
                       </button>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 pl-7 mt-1">
+                    {/* AI Interview Mode selector if Interview Round */}
+                    {(() => {
+                      const nameLower = (round.name || "").toLowerCase();
+                      const isInterview = round.round_type === "interview" || (!nameLower.includes("aptitude") && !nameLower.includes("mcq") && !nameLower.includes("coding"));
+                      if (!isInterview) return null;
+                      return (
+                        <div className="flex items-center gap-2 pl-7 mt-2">
+                          <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">AI Interview Mode:</label>
+                          <select
+                            value={round.interview_mode || (nameLower.includes("hr") || nameLower.includes("behavioral") ? "hr" : nameLower.includes("screening") ? "screening" : "technical")}
+                            onChange={(e) => {
+                              const newRounds = [...formData.rounds];
+                              newRounds[idx].interview_mode = e.target.value;
+                              setFormData({...formData, rounds: newRounds});
+                            }}
+                            className="p-1.5 border border-gray-200 bg-white rounded-lg text-xs font-semibold text-charcoal focus:border-[#2563EB] focus:outline-none flex-1"
+                          >
+                            <option value="technical">Technical AI Interview (Architecture & Coding)</option>
+                            <option value="hr">HR & Behavioral AI Interview (Culture Fit & CTC)</option>
+                            <option value="screening">General Screening AI Interview (Background Validation)</option>
+                          </select>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 pl-7 mt-2">
                       <div className="flex items-center gap-2 flex-1">
-                        <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">Result Declaration Time (optional):</label>
+                        <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">Result Declaration Time*:</label>
                         <input
                           type="datetime-local"
+                          required
                           min={(() => {
                             const now = new Date();
                             const year = now.getFullYear();
