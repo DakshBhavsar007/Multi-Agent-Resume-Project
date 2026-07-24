@@ -4,6 +4,7 @@ import { Header, Footer } from "../../components/user/site-chrome";
 import { seekerAPI, API_HOST } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import VerificationModal from "../../components/VerificationModal";
+import VerifiedBadge from "../../components/VerifiedBadge";
 import { useSeekerAuthStore } from "../../stores/seekerAuthStore";
 import { LocationSelector } from "../../components/ui/LocationSelector";
 import { 
@@ -488,7 +489,12 @@ export default function UserProfile() {
                   </div>
                 ) : (
                   <>
-                    <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-800">{seeker?.full_name}</h1>
+                    <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-800 flex items-center gap-1.5">
+                      <span>{seeker?.full_name}</span>
+                      {(seeker?.email_verified !== false && seeker?.phone_verified !== false) && (
+                        <VerifiedBadge size={22} title="Verified Job Seeker (Email & Phone Verified)" />
+                      )}
+                    </h1>
                     <p className="mt-1 text-muted-foreground text-sm font-medium">{seeker?.headline || "Job Seeker"}</p>
                   </>
                 )}

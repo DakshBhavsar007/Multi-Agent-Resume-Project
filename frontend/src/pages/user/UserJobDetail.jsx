@@ -4,6 +4,7 @@ import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
+import VerifiedBadge from "../../components/VerifiedBadge";
 import { ArrowLeft, Bookmark, Share2, MapPin, Clock, Briefcase, DollarSign, CheckCircle2, Star, BookOpen, TrendingUp, Award } from "lucide-react";
 import toast from "react-hot-toast";
 import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
@@ -168,8 +169,9 @@ export default function UserJobDetail() {
             <div className="flex items-start gap-5 sm:items-center">
               <CompanyLogo name={job.company} logoPath={job.logoPath} color={job.logoColor} size={72} />
               <div className="min-w-0">
-                <Link to={`/jobs/companies/${job.companyId}`} className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                  {job.company}
+                <Link to={`/jobs/companies/${job.companyId}`} className="text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                  <span>{job.company}</span>
+                  <VerifiedBadge size={16} title="Verified Employer" />
                 </Link>
                 <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">{job.title}</h1>
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">

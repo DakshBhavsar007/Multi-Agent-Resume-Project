@@ -4,6 +4,7 @@ import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI, seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
+import VerifiedBadge from "../../components/VerifiedBadge";
 import { ArrowLeft, MapPin, Users, Users2, Calendar, Star, Globe, Bell, UserCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -157,9 +158,13 @@ export default function UserCompanyDetail() {
             style={{ background: `radial-gradient(50% 70% at 20% 0%, color-mix(in oklab, ${company.logoColor} 25%, transparent), transparent)` }}
           />
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-5 sm:flex sm:items-center sm:gap-6">
-            <CompanyLogo name={company.name} logoPath={company.logoPath} color={company.logoColor} size={88} />
             <div className="min-w-0">
-              <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">{company.name}</h1>
+              <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl flex items-center gap-2">
+                <span>{company.name}</span>
+                {company.email_verified !== false && (
+                  <VerifiedBadge size={28} title="Verified Company Account" />
+                )}
+              </h1>
               <p className="mt-2 text-muted-foreground">{company.industry}</p>
               <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{company.location}</span>

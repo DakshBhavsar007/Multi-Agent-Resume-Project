@@ -5,6 +5,7 @@ import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
+import VerifiedBadge from "../../components/VerifiedBadge";
 import {
   Pagination,
   PaginationContent,
@@ -147,7 +148,10 @@ export default function UserCompanies() {
                   <div className="flex items-start gap-4">
                     <CompanyLogo name={c.name} logoPath={c.logo_path} color="#059669" size={56} />
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-display text-lg font-semibold tracking-tight group-hover:text-primary">{c.name}</h3>
+                      <h3 className="font-display text-lg font-semibold tracking-tight group-hover:text-primary flex items-center gap-1">
+                        <span className="truncate">{c.name}</span>
+                        <VerifiedBadge size={16} title="Verified Company Account" />
+                      </h3>
                       <p className="truncate text-xs text-muted-foreground">{c.industry}</p>
                     </div>
                     <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />

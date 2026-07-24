@@ -49,6 +49,14 @@ def register(request):
             except (ValueError, TypeError):
                 pass
 
+        is_email_verified = data.get("email_verified", True)
+        if isinstance(is_email_verified, str):
+            is_email_verified = is_email_verified.lower() in ("true", "1", "yes")
+
+        is_phone_verified = data.get("phone_verified", False)
+        if isinstance(is_phone_verified, str):
+            is_phone_verified = is_phone_verified.lower() in ("true", "1", "yes")
+
         new_company = Company.objects.create(
             name=company_name,
             email=email,
@@ -59,7 +67,9 @@ def register(request):
             company_size=company_size,
             founded_year=parsed_founded,
             website_url=website_url,
-            about=about
+            about=about,
+            email_verified=bool(is_email_verified),
+            phone_verified=bool(is_phone_verified)
         )
 
         secret = "vish_live_" + secrets.token_urlsafe(24)
