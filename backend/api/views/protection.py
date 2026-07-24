@@ -28,6 +28,7 @@ def scan_portfolio(request):
         url_val = ""
         job_title = ""
         job_description = ""
+        company_name = ""
         location_val = "Remote"
         uploaded_file = request.FILES.get("file")
 
@@ -40,6 +41,7 @@ def scan_portfolio(request):
                     url_val = data.get("url", "").strip()
                     job_title = data.get("job_title", "").strip()
                     job_description = data.get("job_description", "").strip()
+                    company_name = data.get("company_name", "").strip()
                     location_val = data.get("location", "Remote").strip()
             except Exception:
                 pass
@@ -53,20 +55,24 @@ def scan_portfolio(request):
             job_title = request.POST.get("job_title", "").strip()
         if not job_description:
             job_description = request.POST.get("job_description", "").strip()
+        if not company_name:
+            company_name = request.POST.get("company_name", "").strip()
         if not location_val or location_val == "Remote":
             location_val = request.POST.get("location", "Remote").strip()
 
         agent = FraudDetectionAgent()
 
         if scan_type == "job":
-            company_name = "LinkedIn Company"
+            if not company_name:
+                company_name = "Corporate Partner"
+
             if url_val and "linkedin.com" in url_val.lower():
                 from api.services.linkedin_scraper import fetch_linkedin_job_details
                 details = fetch_linkedin_job_details(url_val)
                 job_title = details.get("job_title")
                 job_description = details.get("job_description")
                 location_val = details.get("location", location_val)
-                company_name = details.get("company_name", "LinkedIn Company")
+                company_name = details.get("company_name", company_name or "LinkedIn Company")
             
             if not job_title or not job_description:
                 return JsonResponse(error_response("Job title and description are required for job scanning"), status=400)

@@ -30,9 +30,15 @@ export default function FraudDetectionPage() {
   
   // Job specific inputs
   const [jobUrlInput, setJobUrlInput] = useState("");
+  const [jobCompanyInput, setJobCompanyInput] = useState("");
   const [jobTitleInput, setJobTitleInput] = useState("");
   const [jobDescriptionInput, setJobDescriptionInput] = useState("");
   const [jobLocationInput, setJobLocationInput] = useState("Remote");
+
+  // Database Company Autocomplete suggestions
+  const [dbCompanies, setDbCompanies] = useState([]);
+  const [filteredCompanies, setFilteredCompanies] = useState([]);
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
 
   // History list and active report
   const [historyList, setHistoryList] = useState([]);
@@ -53,7 +59,39 @@ export default function FraudDetectionPage() {
 
   useEffect(() => {
     fetchHistory();
+    fetchDBCompanies();
   }, []);
+
+  const fetchDBCompanies = async () => {
+    try {
+      const res = await publicAPI.getCompanies({ per_page: 100 });
+      if (res && res.companies) {
+        setDbCompanies(res.companies);
+      }
+    } catch (err) {
+      console.error("Failed to load companies for autocomplete:", err);
+    }
+  };
+
+  const handleCompanyChange = (val) => {
+    setJobCompanyInput(val);
+    if (val.trim().length > 0) {
+      const matches = dbCompanies.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
+      setFilteredCompanies(matches);
+      setShowCompanyDropdown(true);
+    } else {
+      setFilteredCompanies([]);
+      setShowCompanyDropdown(false);
+    }
+  };
+
+  const selectCompanySuggestion = (company) => {
+    setJobCompanyInput(company.name);
+    if (company.hq_location && company.hq_location !== "Remote") {
+      setJobLocationInput(company.hq_location);
+    }
+    setShowCompanyDropdown(false);
+  };
 
   const fetchHistory = async () => {
     setLoadingHistory(true);
@@ -96,6 +134,7 @@ export default function FraudDetectionPage() {
         return await protectionAPI.scan({
           scan_type: "job",
           url: jobUrlInput.trim(),
+          company_name: jobCompanyInput.trim(),
           job_title: jobTitleInput.trim(),
           job_description: jobDescriptionInput.trim(),
           location: jobLocationInput.trim()
@@ -664,6 +703,61 @@ export default function FraudDetectionPage() {
                     </div>
 
                     <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest my-1">OR ENTER DETAILS MANUALLY</div>
+
+                    {/* Company Name with Database Autocomplete Suggestions */}
+                    <div className="relative">
+                      <label className="block text-[10px] font-extrabold text-[#2A2A2A] uppercase tracking-wider mb-1 flex items-center justify-between">
+                        <span>Company Name</span>
+                        {dbCompanies.length > 0 && (
+                          <span className="text-[9px] text-[#2563EB] font-bold">Suggestions enabled ({dbCompanies.length} verified companies in DB)</span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!!jobUrlInput.trim()}
+                        value={jobUrlInput.trim() ? "" : jobCompanyInput}
+                        onChange={(e) => handleCompanyChange(e.target.value)}
+                        onFocus={() => {
+                          if (jobCompanyInput.trim()) setShowCompanyDropdown(true);
+                        }}
+                        onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 200)}
+                        placeholder={jobUrlInput.trim() ? "Locked: URL provided" : "e.g. Google, Microsoft, TCS, Between (Type for DB suggestions)..."}
+                        className="w-full text-sm border border-[#e6dfcd] rounded-xl p-3 focus:outline-none focus:border-[#2563EB] bg-white text-[#2A2A2A] font-medium shadow-inner disabled:opacity-50"
+                      />
+
+                      {/* Autocomplete Dropdown */}
+                      <AnimatePresence>
+                        {showCompanyDropdown && filteredCompanies.length > 0 && !jobUrlInput.trim() && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            className="absolute left-0 right-0 top-full mt-1 bg-white border border-blue-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto divide-y divide-gray-100"
+                          >
+                            {filteredCompanies.map((company) => (
+                              <div
+                                key={company.id}
+                                onMouseDown={() => selectCompanySuggestion(company)}
+                                className="p-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between transition-colors"
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-extrabold text-xs flex items-center justify-center shrink-0">
+                                    {company.name.charAt(0)}
+                                  </div>
+                                  <div>
+                                    <h5 className="font-bold text-xs text-gray-900">{company.name}</h5>
+                                    <span className="text-[10px] text-gray-500">{company.industry || "Technology"} &bull; {company.hq_location || "Remote"}</span>
+                                  </div>
+                                </div>
+                                <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  Verified DB Company
+                                </span>
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
