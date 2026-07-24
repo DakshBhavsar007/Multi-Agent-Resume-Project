@@ -8,7 +8,11 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 def custom_serve_uploads(request, path, document_root=None, **kwargs):
+    from django.http import Http404, HttpResponse
+    if not document_root:
+        document_root = os.getenv("UPLOAD_DIR", "uploads")
     full_path = os.path.join(document_root, path)
+
     if not os.path.exists(full_path):
         # Match pattern: seekers/<seeker_id>/<uuid_or_something>_active_resume.pdf
         match = re.match(r'^seekers/([a-f0-9\-]+)/.*_active_resume\.pdf$', path)
@@ -64,11 +68,16 @@ def custom_serve_uploads(request, path, document_root=None, **kwargs):
             except Exception as e:
                 logger.error("Dynamic Candidate PDF regeneration failed: %s", e)
 
-    from django.http import Http404
+        # Fallback for missing company logos: Return clean SVG placeholder instead of 500/404 error
+        if "logo" in path.lower() or path.endswith(".svg") or path.endswith(".png") or path.endswith(".jpg"):
+            svg_placeholder = """<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+              <rect width="64" height="64" rx="16" fill="#2563EB" fill-opacity="0.1"/>
+              <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="28" fill="#2563EB">B</text>
+            </svg>"""
+            return HttpResponse(svg_placeholder, content_type="image/svg+xml")
+
     try:
         return serve(request, path, document_root=document_root, **kwargs)
-    except Http404:
-        raise
     except Exception as e:
         logger.warning("Upload serve failed for %s: %s", path, e)
         raise Http404("Upload file not found")

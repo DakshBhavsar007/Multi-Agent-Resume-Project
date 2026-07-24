@@ -509,8 +509,8 @@ def public_market_trends(request):
 
         # Also aggregate skills from candidate profiles
         from api.models import Candidate
-        for cand in Candidate.objects.filter(deleted_at__isnull=True):
-            cand_skills = cand.skills if isinstance(cand.skills, list) else []
+        for cand in Candidate.objects.filter(deleted_at__isnull=True)[:200]:
+            cand_skills = cand.normalized_skills if isinstance(cand.normalized_skills, list) else []
             for csk in cand_skills:
                 if isinstance(csk, str) and csk.strip():
                     clean_csk = csk.strip().title()
