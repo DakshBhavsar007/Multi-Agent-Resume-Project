@@ -3,7 +3,16 @@ import { X, Star, MessageSquareQuote, Loader2, CheckCircle2, Building2 } from 'l
 import { seekerAPI, publicAPI } from '../lib/api';
 import toast from 'react-hot-toast';
 
-export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, editingReview = null, companyId = null, companyName = null }) {
+export default function WriteReviewModal({
+  isOpen = true,
+  onClose,
+  onSubmit,
+  editingReview = null,
+  companyId = null,
+  companyName = null,
+  userRole = "job_seeker",
+  customSubmit = null,
+}) {
   const [rating, setRating] = useState(editingReview?.rating || 5);
   const [hoverRating, setHoverRating] = useState(0);
   const [text, setText] = useState(editingReview?.text || '');
@@ -12,12 +21,12 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!companyId && !editingReview) {
+    if (!companyId && !editingReview && userRole === "job_seeker") {
       publicAPI.listCompanies({ per_page: 50 })
         .then(data => setCompaniesList(data.companies || []))
         .catch(() => {});
     }
-  }, [companyId, editingReview]);
+  }, [companyId, editingReview, userRole]);
 
   useEffect(() => {
     if (editingReview) {
@@ -41,7 +50,11 @@ export default function WriteReviewModal({ isOpen = true, onClose, onSubmit, edi
     }
     setLoading(true);
     try {
-      if (editingReview) {
+      if (customSubmit) {
+        const res = await customSubmit({ rating, text: text.trim(), company_id: selectedCompanyId || null });
+        toast.success('Review submitted successfully!');
+        if (onSubmit) onSubmit(res);
+      } else if (editingReview) {
         const updated = await seekerAPI.updateReview(editingReview.id, {
           rating,
           text: text.trim(),

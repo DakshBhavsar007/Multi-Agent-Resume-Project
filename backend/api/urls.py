@@ -276,10 +276,12 @@ urlpatterns = [
     path('api/v1/seeker/billing/current', seeker_billing.current_subscription, name='seeker-billing-current'),
     path('api/v1/seeker/billing/cancel', seeker_billing.cancel_subscription, name='seeker-billing-cancel'),
 
-    # ── Seeker Reviews & Testimonials ─────────────────────────────────────────
+    # ── Reviews & Testimonials ──────────────────────────────────────────────────
     path('api/v1/seeker/reviews', reviews.seeker_reviews_root, name='seeker-reviews-root'),
-    path('api/v1/seeker/reviews/mine', reviews.seeker_my_reviews, name='seeker-reviews-mine'),
+    path('api/v1/seeker/reviews/my', reviews.seeker_my_reviews, name='seeker-my-reviews'),
     path('api/v1/seeker/reviews/<str:review_id>', reviews.seeker_review_detail, name='seeker-review-detail'),
+    path('api/v1/developer/reviews', reviews.developer_reviews_root, name='developer-reviews-root'),
+    path('api/v1/recruiter/reviews', reviews.recruiter_reviews_root, name='recruiter-reviews-root'),
 
     # ── Assessment Rounds ──
     # Company side

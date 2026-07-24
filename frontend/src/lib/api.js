@@ -604,7 +604,10 @@ export const publicAPI = {
   },
 
   // Reviews & Testimonials
-  listReviews: () => publicReq('GET', '/api/v1/public/reviews'),
+  listReviews: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return publicReq('GET', `/api/v1/public/reviews${qs ? '?' + qs : ''}`);
+  },
   getCompanyReviews: (id) => publicReq('GET', `/api/v1/public/companies/${id}/reviews`),
   getSeekerProfile: (id) => publicReq('GET', `/api/v1/public/seekers/${id}/profile`),
 };

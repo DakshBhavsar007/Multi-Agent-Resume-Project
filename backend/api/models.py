@@ -624,13 +624,22 @@ class SupportTicket(models.Model):
 
 class Review(models.Model):
     """
-    Dynamic review / testimonial by a verified job seeker.
-    company=NULL  → platform-level testimonial (homepage).
-    company=<FK>  → company-specific review (company detail page).
+    Dynamic review / testimonial by a verified user (Job Seeker, Developer, or Recruiter).
+    - Company Reviews: company != NULL (Verified Job Seekers ONLY).
+    - Platform Reviews: company == NULL (Verified Job Seekers, Developers, or Recruiters).
     """
+    USER_TYPE_CHOICES = [
+        ("job_seeker", "Job Seeker"),
+        ("developer",  "Developer"),
+        ("recruiter",  "Recruiter"),
+    ]
+
     id          = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    seeker      = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, related_name="reviews")
-    company     = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True, related_name="reviews")
+    seeker      = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, null=True, blank=True, related_name="reviews")
+    developer   = models.ForeignKey("DeveloperAccount", on_delete=models.CASCADE, null=True, blank=True, related_name="reviews")
+    recruiter   = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True, related_name="recruiter_reviews")
+    company     = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True, related_name="target_company_reviews")
+    user_type   = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default="job_seeker")
     rating      = models.IntegerField(default=5)   # 1-5 stars
     text        = models.TextField()
     is_featured = models.BooleanField(default=False)
@@ -640,11 +649,15 @@ class Review(models.Model):
     class Meta:
         db_table = "reviews"
         ordering = ["-created_at"]
-        unique_together = [("seeker", "company")]
 
     def __str__(self):
-        target = self.company.name if self.company else "Platform"
-        return f"{self.seeker.full_name} → {target} ({self.rating} stars)"
+        author = (
+            self.seeker.full_name if self.seeker else
+            self.developer.full_name if self.developer else
+            self.recruiter.name if self.recruiter else "Anonymous"
+        )
+        target = self.company.name if self.company else "Between Platform"
+        return f"{author} ({self.user_type}) → {target} ({self.rating} stars)"
 
 
 class AdminBanLog(models.Model):

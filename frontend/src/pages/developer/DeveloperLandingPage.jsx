@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock, Grid3x3, Home, LayoutDashboard, Bot, HelpCircle, Star, MessageSquareQuote } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { portalBilling, portalAuth } from "../../lib/portalApi";
+import { portalBilling, portalAuth, portalReviews } from "../../lib/portalApi";
 import { publicAPI } from "../../lib/api";
 import VerifiedBadge from "../../components/VerifiedBadge";
+import WriteReviewModal from "../../components/WriteReviewModal";
+import toast from "react-hot-toast";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { SocialTooltip } from "../../components/ui/social-media";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -49,6 +51,7 @@ export default function DeveloperLandingPage() {
   const { tier, jwt, initFromStorage, setAuth } = usePortalAuthStore();
   const [isDevLoggedIn, setIsDevLoggedIn] = useState(false);
   const [devReviews, setDevReviews] = useState([]);
+  const [showDevReviewModal, setShowDevReviewModal] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("portal_jwt");
@@ -439,13 +442,22 @@ const response = await fetch(
       </section>
 
       {/* DEVELOPER TESTIMONIALS */}
-      {devReviews.length > 0 && (
-        <section className="py-20 border-t border-gray-100 dark:border-zinc-800/80 bg-white dark:bg-[#0b0b0d]">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-12">
+      <section className="py-20 border-t border-gray-100 dark:border-zinc-800/80 bg-white dark:bg-[#0b0b0d]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-12 text-center sm:text-left">
+            <div>
               <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Developer Reviews</span>
               <h2 className="text-3xl font-bold text-charcoal dark:text-white mt-2">Loved by Builders & Engineers</h2>
             </div>
+            {isDevLoggedIn && (
+              <button
+                onClick={() => setShowDevReviewModal(true)}
+                className="px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all shrink-0 cursor-pointer"
+              >
+                <MessageSquareQuote size={16} /> Write Platform Review
+              </button>
+            )}
+          </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {devReviews.map((rev) => (
@@ -493,7 +505,6 @@ const response = await fetch(
             </div>
           </div>
         </section>
-      )}
 
       {/* PRICING */}
       <section className="py-24 bg-gray-50 dark:bg-[#0b0b0d] border-t border-gray-100 dark:border-zinc-800/80" id="pricing">
@@ -587,7 +598,21 @@ const response = await fetch(
                </div>
             </div>
          </div>
-      </footer>
-    </div>
-  );
-}
+       </footer>
+
+       {showDevReviewModal && (
+         <WriteReviewModal
+           isOpen={showDevReviewModal}
+           onClose={() => setShowDevReviewModal(false)}
+           userRole="developer"
+           customSubmit={portalReviews.createReview}
+           onSubmit={(newRev) => {
+             setShowDevReviewModal(false);
+             setDevReviews(prev => [newRev, ...prev.filter(r => r.id !== newRev.id)]);
+             toast.success("Thank you for reviewing Between API Platform!");
+           }}
+         />
+       )}
+     </div>
+   );
+ }

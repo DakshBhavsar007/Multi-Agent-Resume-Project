@@ -105,10 +105,17 @@ const TestimonialCard = ({ t, index }) => {
           <Quote size={80} opacity={0.05} />
         </div>
         
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} size={14} fill={i < ratingStars ? (t.color || "#f59e0b") : "transparent"} color={t.color || "#f59e0b"} opacity={i < ratingStars ? 0.9 : 0.2} />
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} size={14} fill={i < ratingStars ? (t.color || "#f59e0b") : "transparent"} color={t.color || "#f59e0b"} opacity={i < ratingStars ? 0.9 : 0.2} />
+            ))}
+          </div>
+          {t.targetBadge && (
+            <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
+              {t.targetBadge}
+            </span>
+          )}
         </div>
 
         <p className="testimonial-quote">"{t.quote}"</p>
@@ -125,6 +132,11 @@ const TestimonialCard = ({ t, index }) => {
                   {t.isVerified && <VerifiedBadge size={14} />}
                 </h4>
                 <p>{t.role}</p>
+                {t.roleBadge && (
+                  <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', marginTop: '4px', display: 'inline-block' }}>
+                    {t.roleBadge}
+                  </span>
+                )}
               </div>
             </Link>
           ) : (
@@ -138,6 +150,11 @@ const TestimonialCard = ({ t, index }) => {
                   {t.isVerified && <VerifiedBadge size={14} />}
                 </h4>
                 <p>{t.role}</p>
+                {t.roleBadge && (
+                  <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', marginTop: '4px', display: 'inline-block' }}>
+                    {t.roleBadge}
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -149,6 +166,7 @@ const TestimonialCard = ({ t, index }) => {
 
 const Testimonials = () => {
   const [items, setItems] = useState(defaultTestimonials);
+  const [filterTab, setFilterTab] = useState("all");
 
   useEffect(() => {
     publicAPI.listReviews()
@@ -160,19 +178,31 @@ const Testimonials = () => {
             id: r.id,
             quote: r.text,
             author: r.author?.full_name || "Verified Professional",
-            authorId: r.author?.id,
+            authorId: r.author?.user_type === "job_seeker" ? r.author?.id : null,
             isVerified: r.author?.is_verified,
             role: r.author?.headline || (r.company_name ? `Review for ${r.company_name}` : "Verified Member"),
+            roleBadge: r.author?.role_badge || (r.user_type ? r.user_type.replace('_', ' ').toUpperCase() : "MEMBER"),
+            targetBadge: r.company_name ? r.company_name : "Between Platform",
             initials: r.author?.full_name?.charAt(0) || "V",
             rating: r.rating || 5,
+            review_type: r.review_type,
+            user_type: r.user_type,
             color: colors[idx % colors.length],
             size: sizes[idx % sizes.length],
           }));
+
           setItems(mapped);
         }
       })
       .catch((err) => console.error("Failed to load public reviews on landing page:", err));
   }, []);
+
+  const filteredItems = items.filter(t => {
+    if (filterTab === "platform") return t.review_type === "platform" || !t.review_type;
+    if (filterTab === "company") return t.review_type === "company";
+    if (filterTab === "developer") return t.user_type === "developer";
+    return true;
+  });
 
   return (
     <section className="testimonials-section">
@@ -193,12 +223,40 @@ const Testimonials = () => {
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: [0.21, 0.45, 0.32, 0.9] }}
         >
-          Trusted by Innovative Teams.
+          Trusted by Innovative Teams & Builders
         </motion.h2>
+
+        {/* Filter Tabs */}
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' }}>
+          {[
+            { id: "all", label: "All Testimonials" },
+            { id: "platform", label: "Between Platform" },
+            { id: "company", label: "Company Reviews" },
+            { id: "developer", label: "Developer Reviews" }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setFilterTab(tab.id)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                border: '1px solid rgba(255,255,255,0.15)',
+                background: filterTab === tab.id ? '#3b82f6' : 'rgba(255,255,255,0.05)',
+                color: '#ffffff',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="testimonials-grid">
-        {items.map((t, i) => (
+        {(filteredItems.length > 0 ? filteredItems : items).map((t, i) => (
           <TestimonialCard key={t.id || i} t={t} index={i} />
         ))}
       </div>

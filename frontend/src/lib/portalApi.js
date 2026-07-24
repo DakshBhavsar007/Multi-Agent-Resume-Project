@@ -137,3 +137,21 @@ export const portalEmbed = {
   create: (b) => req("POST","/embed/tokens",b),
   revoke: (id) => req("DELETE",`/embed/tokens/${id}`)
 }
+
+export const portalReviews = {
+  createReview: (b) => {
+    const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+    const API_HOST = rawBase.replace('/api/v1', '');
+    const headers = { 'Content-Type': 'application/json' };
+    const jwt = getJwt();
+    if (jwt) headers['Authorization'] = `Bearer ${jwt}`;
+    return fetch(`${API_HOST}/api/v1/developer/reviews`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(b),
+    }).then(res => res.json()).then(d => {
+      if (!d.success) throw new Error(d.error || 'Failed to submit review');
+      return d.data;
+    });
+  }
+}

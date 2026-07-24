@@ -2,8 +2,9 @@
 Reviews & Testimonials Views
 ─────────────────────────────
 Public endpoints for reading reviews/testimonials.
-Seeker-authenticated endpoints for CRUD on own reviews.
-Only verified seekers (email+phone) can create reviews.
+Job Seekers: Can review Companies AND Between Platform (must be verified email + phone).
+Developers: Can ONLY review Between Platform (must be verified developer).
+Recruiters: Can ONLY review Between Platform (must be verified email/company).
 """
 
 import json
@@ -12,34 +13,95 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg, Count
 
-from api.models import Review, JobSeekerAccount, Company
+from api.models import Review, JobSeekerAccount, Company, DeveloperAccount
 from api.views.seeker_auth import require_seeker_jwt
+from api.decorators import require_developer_jwt, require_company_jwt
 from models.schemas import success_response, error_response
 
 logger = logging.getLogger(__name__)
 
 
-def _serialize_review(review, current_seeker_id=None):
-    """Serialize a Review instance including author profile info."""
-    seeker = review.seeker
-    is_verified = bool(seeker.email_verified and seeker.phone_verified)
+def _extract_seeker_id(request):
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header.split(" ")[1]
+    from api.views.seeker_auth import JWT_SECRET, JWT_ALGORITHM
+    from jose import jwt, JWTError
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload.get("seeker_id")
+    except JWTError:
+        return None
+
+
+def _serialize_review(review, current_user_id=None):
+    """Serialize a Review instance including author profile info and role badges."""
+    user_type = review.user_type or "job_seeker"
+    author_info = {}
+    is_own = False
+
+    if user_type == "developer" and review.developer:
+        dev = review.developer
+        is_own = str(dev.id) == str(current_user_id) if current_user_id else False
+        author_info = {
+            "id": str(dev.id),
+            "full_name": dev.full_name,
+            "headline": "Software Developer & API Builder",
+            "avatar_path": "",
+            "is_verified": bool(dev.is_verified),
+            "user_type": "developer",
+            "role_badge": "Developer",
+        }
+    elif user_type == "recruiter" and review.recruiter:
+        rec = review.recruiter
+        is_own = str(rec.id) == str(current_user_id) if current_user_id else False
+        author_info = {
+            "id": str(rec.id),
+            "full_name": rec.name,
+            "headline": f"Recruiter @ {rec.name}",
+            "avatar_path": rec.logo_path or "",
+            "is_verified": bool(rec.email_verified),
+            "user_type": "recruiter",
+            "role_badge": "Recruiter",
+        }
+    else:  # job_seeker
+        seeker = review.seeker
+        if seeker:
+            is_own = str(seeker.id) == str(current_user_id) if current_user_id else False
+            author_info = {
+                "id": str(seeker.id),
+                "full_name": seeker.full_name,
+                "headline": seeker.headline or "Job Seeker",
+                "avatar_path": seeker.avatar_path or "",
+                "is_verified": bool(seeker.email_verified and seeker.phone_verified),
+                "user_type": "job_seeker",
+                "role_badge": "Job Seeker",
+            }
+        else:
+            author_info = {
+                "id": "unknown",
+                "full_name": "Verified Member",
+                "headline": "Platform Contributor",
+                "avatar_path": "",
+                "is_verified": True,
+                "user_type": user_type,
+                "role_badge": user_type.replace("_", " ").title(),
+            }
+
     return {
         "id": str(review.id),
         "rating": review.rating,
         "text": review.text,
         "company_id": str(review.company_id) if review.company_id else None,
         "company_name": review.company.name if review.company else None,
+        "review_type": "company" if review.company_id else "platform",
+        "user_type": user_type,
         "is_featured": review.is_featured,
         "created_at": review.created_at.isoformat(),
         "updated_at": review.updated_at.isoformat(),
-        "is_own": str(seeker.id) == str(current_seeker_id) if current_seeker_id else False,
-        "author": {
-            "id": str(seeker.id),
-            "full_name": seeker.full_name,
-            "headline": seeker.headline or "",
-            "avatar_path": seeker.avatar_path or "",
-            "is_verified": is_verified,
-        },
+        "is_own": is_own,
+        "author": author_info,
     }
 
 
@@ -47,23 +109,29 @@ def _serialize_review(review, current_seeker_id=None):
 
 @csrf_exempt
 def public_list_reviews(request):
-    """GET /api/v1/public/reviews — list platform & company reviews."""
+    """GET /api/v1/public/reviews — list platform & company reviews with filter support."""
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
 
-    reviews = (
-        Review.objects
-        .all()
-        .select_related("seeker", "company")
-        .order_by("-is_featured", "-created_at")[:30]
-    )
+    review_type = request.GET.get("type")        # "platform" or "company"
+    user_type   = request.GET.get("user_type")   # "job_seeker", "developer", "recruiter"
 
-    current_seeker_id = _extract_seeker_id(request)
-    data = [_serialize_review(r, current_seeker_id) for r in reviews]
+    qs = Review.objects.all().select_related("seeker", "developer", "recruiter", "company")
 
-    agg = Review.objects.aggregate(
-        avg_rating=Avg("rating"), total=Count("id")
-    )
+    if review_type == "platform":
+        qs = qs.filter(company__isnull=True)
+    elif review_type == "company":
+        qs = qs.filter(company__isnull=False)
+
+    if user_type in ["job_seeker", "developer", "recruiter"]:
+        qs = qs.filter(user_type=user_type)
+
+    reviews = qs.order_by("-is_featured", "-created_at")[:50]
+
+    current_user_id = _extract_seeker_id(request)
+    data = [_serialize_review(r, current_user_id) for r in reviews]
+
+    agg = qs.aggregate(avg_rating=Avg("rating"), total=Count("id"))
 
     return JsonResponse(success_response({
         "reviews": data,
@@ -76,7 +144,7 @@ def public_list_reviews(request):
 
 @csrf_exempt
 def public_company_reviews(request, company_id):
-    """GET /api/v1/public/companies/<id>/reviews — list company reviews."""
+    """GET /api/v1/public/companies/<id>/reviews — list company specific reviews."""
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
 
@@ -87,12 +155,12 @@ def public_company_reviews(request, company_id):
     reviews = (
         Review.objects
         .filter(company=company)
-        .select_related("seeker")
+        .select_related("seeker", "developer", "recruiter")
         .order_by("-created_at")[:50]
     )
 
-    current_seeker_id = _extract_seeker_id(request)
-    data = [_serialize_review(r, current_seeker_id) for r in reviews]
+    current_user_id = _extract_seeker_id(request)
+    data = [_serialize_review(r, current_user_id) for r in reviews]
 
     agg = Review.objects.filter(company=company).aggregate(
         avg_rating=Avg("rating"), total=Count("id")
@@ -105,21 +173,21 @@ def public_company_reviews(request, company_id):
     }))
 
 
-# ── Seeker Endpoints ──────────────────────────────────────────────────────────
+# ── Seeker Endpoints (Companies + Platform Reviews) ─────────────────────────
 
 @csrf_exempt
 @require_seeker_jwt
 def seeker_reviews_root(request):
-    """POST /api/v1/seeker/reviews — create a review."""
+    """POST /api/v1/seeker/reviews — create/update review as verified job seeker."""
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)
 
     seeker = request.seeker
 
-    # Verification gate: only verified seekers can write reviews
+    # Verification gate
     if not (seeker.email_verified and seeker.phone_verified):
         return JsonResponse(
-            error_response("You must verify both email and phone to write reviews. Complete verification in your profile settings."),
+            error_response("Only verified job seekers (email + phone verified) can write reviews."),
             status=403
         )
 
@@ -130,7 +198,7 @@ def seeker_reviews_root(request):
 
     rating = body.get("rating")
     text = body.get("text", "").strip()
-    company_id = body.get("company_id")  # null for platform review
+    company_id = body.get("company_id")
 
     if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
         return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
@@ -145,7 +213,6 @@ def seeker_reviews_root(request):
         if not company:
             return JsonResponse(error_response("Company not found"), status=404)
 
-    # Check uniqueness or update existing
     review = Review.objects.filter(seeker=seeker, company=company).first()
     if review:
         review.rating = rating
@@ -155,6 +222,7 @@ def seeker_reviews_root(request):
         review = Review.objects.create(
             seeker=seeker,
             company=company,
+            user_type="job_seeker",
             rating=rating,
             text=text,
         )
@@ -162,15 +230,115 @@ def seeker_reviews_root(request):
     return JsonResponse(success_response(_serialize_review(review, seeker.id)), status=200 if review else 201)
 
 
+# ── Developer Endpoints (Platform Reviews ONLY) ──────────────────────────────
+
+@csrf_exempt
+@require_developer_jwt
+def developer_reviews_root(request):
+    """POST /api/v1/developer/reviews — create/update platform review as verified developer."""
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    dev = request.developer
+
+    if not dev.is_verified:
+        return JsonResponse(
+            error_response("Only verified developers can submit platform reviews."),
+            status=403
+        )
+
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse(error_response("Invalid JSON body"), status=400)
+
+    rating = body.get("rating")
+    text = body.get("text", "").strip()
+    company_id = body.get("company_id")
+
+    if company_id:
+        return JsonResponse(error_response("Developers can only submit Between platform reviews."), status=400)
+
+    if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
+        return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
+    if not text or len(text) < 10:
+        return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
+
+    review = Review.objects.filter(developer=dev, company__isnull=True).first()
+    if review:
+        review.rating = rating
+        review.text = text
+        review.save()
+    else:
+        review = Review.objects.create(
+            developer=dev,
+            company=None,
+            user_type="developer",
+            rating=rating,
+            text=text,
+        )
+
+    return JsonResponse(success_response(_serialize_review(review, dev.id)), status=200 if review else 201)
+
+
+# ── Recruiter Endpoints (Platform Reviews ONLY) ──────────────────────────────
+
+@csrf_exempt
+@require_company_jwt
+def recruiter_reviews_root(request):
+    """POST /api/v1/recruiter/reviews — create/update platform review as verified recruiter."""
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    recruiter = request.company
+
+    if not recruiter.email_verified:
+        return JsonResponse(
+            error_response("Only verified recruiters can submit platform reviews."),
+            status=403
+        )
+
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse(error_response("Invalid JSON body"), status=400)
+
+    rating = body.get("rating")
+    text = body.get("text", "").strip()
+    company_id = body.get("company_id")
+
+    if company_id:
+        return JsonResponse(error_response("Recruiters can only submit Between platform reviews."), status=400)
+
+    if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
+        return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
+    if not text or len(text) < 10:
+        return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
+
+    review = Review.objects.filter(recruiter=recruiter, company__isnull=True).first()
+    if review:
+        review.rating = rating
+        review.text = text
+        review.save()
+    else:
+        review = Review.objects.create(
+            recruiter=recruiter,
+            company=None,
+            user_type="recruiter",
+            rating=rating,
+            text=text,
+        )
+
+    return JsonResponse(success_response(_serialize_review(review, recruiter.id)), status=200 if review else 201)
+
+
+# ── Seeker Review Detail & Public Profile ────────────────────────────────────
+
 @csrf_exempt
 @require_seeker_jwt
 def seeker_review_detail(request, review_id):
-    """
-    PATCH /api/v1/seeker/reviews/<id> — edit own review.
-    DELETE /api/v1/seeker/reviews/<id> — delete own review.
-    """
     seeker = request.seeker
-    review = Review.objects.filter(id=review_id).select_related("seeker", "company").first()
+    review = Review.objects.filter(id=review_id).first()
     if not review:
         return JsonResponse(error_response("Review not found"), status=404)
 
@@ -185,24 +353,18 @@ def seeker_review_detail(request, review_id):
 
         if "rating" in body:
             r = body["rating"]
-            if not isinstance(r, int) or r < 1 or r > 5:
-                return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
-            review.rating = r
-
+            if isinstance(r, int) and 1 <= r <= 5:
+                review.rating = r
         if "text" in body:
             t = body["text"].strip()
-            if len(t) < 10:
-                return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
-            if len(t) > 2000:
-                return JsonResponse(error_response("Review text must be under 2000 characters"), status=400)
-            review.text = t
-
+            if len(t) >= 10:
+                review.text = t
         review.save()
         return JsonResponse(success_response(_serialize_review(review, seeker.id)))
 
     elif request.method == "DELETE":
         review.delete()
-        return JsonResponse(success_response({"deleted": True}))
+        return JsonResponse(success_response({"message": "Review deleted"}))
 
     return JsonResponse(error_response("Method not allowed"), status=405)
 
@@ -210,79 +372,40 @@ def seeker_review_detail(request, review_id):
 @csrf_exempt
 @require_seeker_jwt
 def seeker_my_reviews(request):
-    """GET /api/v1/seeker/reviews/mine — get current seeker's own reviews."""
-    if request.method != "GET":
-        return JsonResponse(error_response("Method not allowed"), status=405)
+    seeker = request.seeker
+    reviews = Review.objects.filter(seeker=seeker).select_related("company").order_by("-created_at")
+    data = [_serialize_review(r, seeker.id) for r in reviews]
+    return JsonResponse(success_response(data))
 
-    reviews = (
-        Review.objects
-        .filter(seeker=request.seeker)
-        .select_related("seeker", "company")
-        .order_by("-created_at")
-    )
-
-    data = [_serialize_review(r, request.seeker.id) for r in reviews]
-    return JsonResponse(success_response({"reviews": data}))
-
-
-# ── Public Seeker Profile ─────────────────────────────────────────────────────
 
 @csrf_exempt
 def public_seeker_profile(request, seeker_id):
-    """GET /api/v1/public/seekers/<id>/profile — limited public profile for review author links."""
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
 
-    seeker = JobSeekerAccount.objects.filter(id=seeker_id, is_active=True).first()
+    seeker = JobSeekerAccount.objects.filter(id=seeker_id).first()
     if not seeker:
-        return JsonResponse(error_response("Profile not found"), status=404)
+        return JsonResponse(error_response("Seeker profile not found"), status=404)
 
     is_verified = bool(seeker.email_verified and seeker.phone_verified)
+    user_reviews = Review.objects.filter(seeker=seeker).select_related("company").order_by("-created_at")
 
-    # Get their reviews
-    reviews = (
-        Review.objects
-        .filter(seeker=seeker)
-        .select_related("company")
-        .order_by("-created_at")[:10]
-    )
+    current_user_id = _extract_seeker_id(request)
+    reviews_data = [_serialize_review(r, current_user_id) for r in user_reviews]
 
-    reviews_data = []
-    for r in reviews:
-        reviews_data.append({
-            "id": str(r.id),
-            "rating": r.rating,
-            "text": r.text,
-            "company_id": str(r.company_id) if r.company_id else None,
-            "company_name": r.company.name if r.company else "Platform Review",
-            "created_at": r.created_at.isoformat(),
-        })
-
-    return JsonResponse(success_response({
+    profile_data = {
         "id": str(seeker.id),
         "full_name": seeker.full_name,
-        "headline": seeker.headline or "",
+        "headline": seeker.headline or "Job Seeker",
         "avatar_path": seeker.avatar_path or "",
         "location": seeker.location or "",
-        "skills": (seeker.skills or [])[:15],
         "is_verified": is_verified,
-        "created_at": seeker.created_at.isoformat(),
+        "email_verified": seeker.email_verified,
+        "phone_verified": seeker.phone_verified,
+        "skills": seeker.skills or [],
         "reviews": reviews_data,
-    }))
+        "total_reviews": len(reviews_data),
+        "joined_date": seeker.created_at.strftime("%B %Y"),
+    }
 
-
-# ── Helper ────────────────────────────────────────────────────────────────────
-
-def _extract_seeker_id(request):
-    """Try to extract seeker ID from JWT without enforcing auth."""
-    from jose import jwt, JWTError
-    from api.decorators import JWT_SECRET, JWT_ALGORITHM
-    auth_header = request.META.get("HTTP_AUTHORIZATION", "")
-    if not auth_header.startswith("Bearer "):
-        return None
-    token = auth_header.split(" ", 1)[1]
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload.get("seeker_id")
-    except (JWTError, Exception):
-        return None
+    return JsonResponse(success_response(profile_data))
