@@ -141,32 +141,15 @@ def public_parse_resume(request):
         result = async_to_sync(parser.parse)(file_path, file_ext)
         parsed = result.get("parsed", {})
 
+        # Keep temp file in temp_resumes directory so it can be assigned to the user profile upon signup
+        perm_temp_dir = os.path.join(UPLOAD_DIR, "temp_resumes")
+        os.makedirs(perm_temp_dir, exist_ok=True)
+        perm_file_path = os.path.join(perm_temp_dir, fname)
         try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            import shutil
+            shutil.copyfile(file_path, perm_file_path)
         except Exception:
-            pass
-
-        raw_skills = parsed.get("skills", [])
-        def flatten_skill(s):
-            if isinstance(s, str): return s
-            if isinstance(s, dict): return s.get("canonical_skill") or s.get("skill") or s.get("name") or str(s)
-            return str(s)
-
-        raw_skills_flat = [flatten_skill(s) for s in raw_skills if s]
-
-        try:
-            norm_agent = SkillNormalizationAgent()
-            normalized_skills = async_to_sync(norm_agent.normalize)(raw_skills_flat)
-            normalized_skills = [flatten_skill(s) for s in normalized_skills if s]
-        except Exception:
-            normalized_skills = raw_skills_flat
-
-        full_name = parsed.get("name") or parsed.get("full_name") or ""
-        email = parsed.get("email") or ""
-        phone = parsed.get("phone") or ""
-        location = parsed.get("location") or ""
-        headline = parsed.get("headline") or parsed.get("summary") or parsed.get("role") or ""
+            perm_file_path = file_path
 
         response_data = {
             "full_name": full_name,
@@ -175,6 +158,7 @@ def public_parse_resume(request):
             "location": location,
             "headline": headline,
             "skills": normalized_skills,
+            "resume_file_path": perm_file_path,
             "raw_parsed_data": parsed
         }
 

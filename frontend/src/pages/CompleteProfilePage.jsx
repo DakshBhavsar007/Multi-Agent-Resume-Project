@@ -24,6 +24,10 @@ export default function CompleteProfilePage() {
   const [parsingResume, setParsingResume] = useState(false);
   const [oauthData, setOauthData] = useState(null);
 
+  const [parsedResumePath, setParsedResumePath] = useState('');
+  const [parsedResumeData, setParsedResumeData] = useState(null);
+  const [parsedSkills, setParsedSkills] = useState([]);
+
   const handleAutoFillFromResume = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -34,6 +38,9 @@ export default function CompleteProfilePage() {
       if (data.phone) setPhone(data.phone);
       if (data.location) setLocation(data.location);
       if (data.headline) setHeadline(data.headline);
+      if (data.resume_file_path) setParsedResumePath(data.resume_file_path);
+      if (data.raw_parsed_data) setParsedResumeData(data.raw_parsed_data);
+      if (data.skills) setParsedSkills(data.skills);
       toast.success("Profile details auto-filled from resume!", { id: toastId });
     } catch (err) {
       toast.error(err.message || "Failed to parse resume", { id: toastId });
@@ -126,7 +133,10 @@ export default function CompleteProfilePage() {
         const updated = await seekerAPI.updateProfile({
           phone: phone.trim(),
           location: location.trim(),
-          headline: headline.trim()
+          headline: headline.trim(),
+          resume_file_path: parsedResumePath || undefined,
+          resume_data: parsedResumeData || undefined,
+          skills: parsedSkills.length > 0 ? parsedSkills : undefined,
         });
 
         // Save final logged in state

@@ -188,6 +188,9 @@ def register(request):
         if not isinstance(skills, list):
             skills = [s.strip() for s in str(skills).split(",") if s.strip()]
 
+        resume_file_path = data.get("resume_file_path", "").strip() or None
+        resume_data = data.get("resume_data") or {}
+
         seeker = JobSeekerAccount.objects.create(
             full_name=full_name,
             email=email,
@@ -196,6 +199,8 @@ def register(request):
             location=data.get("location", "").strip() or None,
             headline=data.get("headline", "").strip() or None,
             skills=skills,
+            resume_file_path=resume_file_path,
+            resume_data=resume_data,
             tier="free",
             phone_verified=data.get("phone_verified", False),
             email_verified=data.get("email_verified", False),
@@ -304,15 +309,20 @@ def update_profile(request):
         if "open_to" in data:
             seeker.open_to = data["open_to"]
             fields_changed.append("open_to")
+        if "resume_file_path" in data and data["resume_file_path"]:
+            seeker.resume_file_path = data["resume_file_path"]
+            fields_changed.append("resume_file_path")
         
         # Handle experience and education inside resume_data
-        if "experience" in data or "education" in data:
+        if "experience" in data or "education" in data or "resume_data" in data:
             if not isinstance(seeker.resume_data, dict):
                 seeker.resume_data = {}
             if "experience" in data:
                 seeker.resume_data["experience"] = data["experience"]
             if "education" in data:
                 seeker.resume_data["education"] = data["education"]
+            if "resume_data" in data and isinstance(data["resume_data"], dict):
+                seeker.resume_data.update(data["resume_data"])
             fields_changed.append("resume_data")
 
         if fields_changed:

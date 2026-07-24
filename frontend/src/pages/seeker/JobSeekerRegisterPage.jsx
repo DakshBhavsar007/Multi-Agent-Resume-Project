@@ -32,6 +32,9 @@ export default function JobSeekerRegisterPage() {
         phone: data.phone || prev.phone,
         location: data.location || prev.location,
         headline: data.headline || prev.headline,
+        skills: data.skills || prev.skills || [],
+        resume_file_path: data.resume_file_path || prev.resume_file_path,
+        resume_data: data.raw_parsed_data || prev.resume_data,
       }));
       if (data.email) setIsEmailVerified(false);
       toast.success("Profile details auto-filled from resume!", { id: toastId });
