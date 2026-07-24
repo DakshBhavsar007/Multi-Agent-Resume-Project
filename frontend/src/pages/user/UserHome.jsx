@@ -515,7 +515,7 @@ function Home() {
                 <div className="min-w-0">
                   <div className="truncate font-display text-sm font-semibold tracking-tight group-hover:text-primary">{c.t}</div>
                   <div className="text-[11px] text-muted-foreground">
-                    {(stats?.category_counts?.[c.t] !== undefined) ? stats.category_counts[c.t] : c.n} open
+                    {(stats?.category_counts?.[c.t] !== undefined) ? stats.category_counts[c.t] : (statsLoading ? "..." : 0)} open
                   </div>
                 </div>
               </Link>
