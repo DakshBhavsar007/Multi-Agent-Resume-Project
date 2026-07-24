@@ -41,13 +41,13 @@ def _serialize_company(company, is_following=False, active_sessions=None, follow
         
     # Dynamic rating from reviews
     if reviews_stat is not None:
-        dynamic_rating = reviews_stat.get("avg_rating") or (company.rating or 4.5)
+        dynamic_rating = reviews_stat.get("avg_rating") or (company.rating or 0.0)
         review_count = reviews_stat.get("review_count", 0)
     else:
         reviews_agg = Review.objects.filter(company=company).aggregate(
             avg_rating=Avg("rating"), review_count=Count("id")
         )
-        dynamic_rating = round(reviews_agg["avg_rating"], 1) if reviews_agg["avg_rating"] else (company.rating or 4.5)
+        dynamic_rating = round(reviews_agg["avg_rating"], 1) if reviews_agg["avg_rating"] else (company.rating or 0.0)
         review_count = reviews_agg["review_count"] or 0
 
     return {

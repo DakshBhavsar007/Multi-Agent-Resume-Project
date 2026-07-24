@@ -165,7 +165,7 @@ const TestimonialCard = ({ t, index }) => {
 };
 
 const Testimonials = () => {
-  const [items, setItems] = useState(defaultTestimonials);
+  const [items, setItems] = useState([]);
   const [filterTab, setFilterTab] = useState("all");
 
   useEffect(() => {
@@ -192,6 +192,8 @@ const Testimonials = () => {
           }));
 
           setItems(mapped);
+        } else {
+          setItems([]);
         }
       })
       .catch((err) => console.error("Failed to load public reviews on landing page:", err));

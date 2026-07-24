@@ -15,7 +15,7 @@ class Company(models.Model):
     industry = models.CharField(max_length=255, null=True, blank=True)
     hq_location = models.CharField(max_length=255, null=True, blank=True)
     about = models.TextField(null=True, blank=True)
-    rating = models.FloatField(default=4.5)
+    rating = models.FloatField(default=0.0)
     company_size = models.CharField(max_length=50, null=True, blank=True)
     founded_year = models.IntegerField(null=True, blank=True)
     website_url = models.CharField(max_length=500, null=True, blank=True)

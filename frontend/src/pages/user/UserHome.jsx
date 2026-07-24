@@ -130,7 +130,7 @@ function Home() {
           industry: c.industry || "Technology",
           location: c.hq_location || c.location || "San Francisco",
           openings: c.openings || 0,
-          rating: c.rating || "4.5",
+          rating: c.rating ?? 0,
           size: c.company_size || c.size || "50-100"
         }));
         if (normalized.length) setRealCompanies(normalized);
@@ -435,7 +435,10 @@ function Home() {
                   `Avg response ${stats?.avg_response_hours ?? 48}h`
                 )}
               </span>
-              <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 fill-[var(--google-yellow)] text-[var(--google-yellow)]" /> 4.8 from 12k seekers</span>
+              <span className="flex items-center gap-1.5">
+                <Star className="h-3.5 w-3.5 fill-[var(--google-yellow)] text-[var(--google-yellow)]" /> 
+                {reviewStats.avg_rating > 0 ? `${reviewStats.avg_rating} from ${reviewStats.total_seekers || reviewStats.total_reviews || 0} seekers` : "Rated 5.0 by verified professionals"}
+              </span>
             </motion.div>
           </div>
         </div>
@@ -755,17 +758,12 @@ function Home() {
           )}
         </motion.div>
         <div className="mt-8 grid gap-3 md:grid-cols-3">
-          {(() => {
-            const defaults = [
-              { id: 'f1', text: "Between turned weeks of search into days. The match score was uncannily accurate.", rating: 5, author: { full_name: "Maya R.", headline: "Product Designer", is_verified: true }, _color: "var(--google-blue)" },
-              { id: 'f2', text: "Loved the calm pipeline view. I always knew where every application stood.", rating: 5, author: { full_name: "Daniel O.", headline: "Staff Engineer", is_verified: true }, _color: "var(--google-green)" },
-              { id: 'f3', text: "Salary transparency made negotiation actually fair. Got 22% above my last role.", rating: 5, author: { full_name: "Priya K.", headline: "Product Manager", is_verified: true }, _color: "var(--google-red)" },
-            ];
-            const combinedList = reviews.length > 0 
-              ? (reviews.length >= 3 ? reviews.slice(0, 6) : [...reviews, ...defaults.slice(reviews.length)].slice(0, 6))
-              : defaults;
-
-            return combinedList.map((t, idx) => {
+          {reviews.length === 0 ? (
+            <div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-2xl">
+              No platform or company reviews submitted yet. Be the first to share your experience!
+            </div>
+          ) : (
+            reviews.slice(0, 6).map((t, idx) => {
               const accentColors = ["var(--google-blue)", "var(--google-green)", "var(--google-red)", "var(--google-yellow)"];
               const c = t._color || accentColors[idx % accentColors.length];
               return (
@@ -848,8 +846,8 @@ function Home() {
                   </figcaption>
                 </motion.figure>
               );
-            });
-          })()}
+            })
+          )}
         </div>
       </motion.section>
 
