@@ -676,5 +676,9 @@ export const dynamicAPI = {
   get: () => req("GET", "/dynamic-data")
 };
 
+export const recruiterAPI = {
+  createReview: (b) => req('POST', '/recruiter/reviews', b),
+};
+
 
 

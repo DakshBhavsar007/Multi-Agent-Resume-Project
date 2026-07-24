@@ -10,15 +10,19 @@ import {
   Shield, 
   FileText, 
   ArrowUpRight, 
-  Plus 
+  Plus,
+  MessageSquareQuote
 } from 'lucide-react';
-import { sessionsAPI } from '../lib/api';
+import { sessionsAPI, recruiterAPI } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import WriteReviewModal from '../components/WriteReviewModal';
+import toast from 'react-hot-toast';
 
 export default function DashboardHome() {
   const navigate = useNavigate();
   const { company } = useAuthStore();
+  const [showReviewModal, setShowReviewModal] = React.useState(false);
 
   const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
     queryKey: ['sessions-all'],
@@ -90,12 +94,20 @@ export default function DashboardHome() {
             {getGreeting()}, {company?.name || 'Daksh'}. Here's your recruitment overview.
           </p>
         </div>
-        <button 
-          onClick={() => navigate('/dashboard/sessions/new')}
-          className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-accent text-white font-display font-medium text-sm shadow-sm hover:shadow-md transition"
-        >
-          <Plus size={18} /> New session
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowReviewModal(true)}
+            className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 text-charcoal dark:text-white font-display font-medium text-xs shadow-xs transition"
+          >
+            <MessageSquareQuote size={16} className="text-amber-500" /> Write Review
+          </button>
+          <button 
+            onClick={() => navigate('/dashboard/sessions/new')}
+            className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-accent text-white font-display font-medium text-sm shadow-sm hover:shadow-md transition"
+          >
+            <Plus size={18} /> New session
+          </button>
+        </div>
       </header>
 
       {/* Stat cards */}
@@ -166,6 +178,19 @@ export default function DashboardHome() {
           )}
         </div>
       </section>
+
+      {showReviewModal && (
+        <WriteReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          userRole="recruiter"
+          customSubmit={recruiterAPI.createReview}
+          onSubmit={() => {
+            setShowReviewModal(false);
+            toast.success("Thank you for reviewing Between Platform!");
+          }}
+        />
+      )}
     </div>
   );
 }
