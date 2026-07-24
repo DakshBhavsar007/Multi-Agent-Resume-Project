@@ -440,41 +440,40 @@ export function Header() {
   );
 }
 
-
 export function Footer() {
   const [logoHovered, setLogoHovered] = useState(false);
 
   const socialLinks = [
     {
-      href: "#",
+      href: "https://linkedin.com",
       ariaLabel: "LinkedIn",
       tooltip: "LinkedIn",
       color: "#0A66C2",
       svgUrl: "https://cdn.simpleicons.org/linkedin",
     },
     {
-      href: "#",
+      href: "https://x.com",
       ariaLabel: "Twitter",
       tooltip: "Twitter",
       color: "#000000",
       svgUrl: "https://cdn.simpleicons.org/x",
     },
     {
-      href: "#",
+      href: "https://instagram.com",
       ariaLabel: "Instagram",
       tooltip: "Instagram",
       color: "#E1306C",
       svgUrl: "https://cdn.simpleicons.org/instagram",
     },
     {
-      href: "#",
+      href: "https://facebook.com",
       ariaLabel: "Facebook",
       tooltip: "Facebook",
-      color: "#3B5998",
+      color: "#1877F2",
       svgUrl: "https://cdn.simpleicons.org/facebook",
     },
     {
-      href: "#",
+      href: "https://t.me",
       ariaLabel: "Telegram",
       tooltip: "Telegram",
       color: "#0088CC",
@@ -482,9 +481,55 @@ export function Footer() {
     },
   ];
 
+  const footerSections = [
+    { 
+      t: "Job Seekers", 
+      items: [
+        { label: "Find Jobs", to: "/jobs/search" },
+        { label: "Explore Companies", to: "/jobs/companies" },
+        { label: "AI Resume Builder", to: "/resume-builder" },
+        { label: "Hiring Safety", to: "/jobs/safety-checker" },
+        { label: "Market Trends", to: "/jobs/trends" },
+        { label: "AI Mock Interview", to: "/jobs/mock-interview" },
+        { label: "Premium Plans", to: "/jobs/billing" }
+      ] 
+    },
+    { 
+      t: "Developers & API", 
+      items: [
+        { label: "Developer Portal", to: "/developer" },
+        { label: "API Documentation", to: "/developer/docs" },
+        { label: "API Keys", to: "/developer/keys" },
+        { label: "Webhooks", to: "/developer/webhooks" },
+        { label: "Usage & Billing", to: "/developer/billing" }
+      ] 
+    },
+    { 
+      t: "Portals & Login", 
+      items: [
+        { label: "Job Seeker Portal", to: "/jobs" },
+        { label: "Recruiter Workspace", to: "/login" },
+        { label: "Developer Portal", to: "/developer" },
+        { label: "Admin Login", to: "/admin/login" }
+      ] 
+    },
+    { 
+      t: "Company & Legal", 
+      items: [
+        { label: "About Us", to: "/about" },
+        { label: "Contact Support", to: "/contact" },
+        { label: "Support & Appeals", to: "/support" },
+        { label: "Terms of Service", to: "/terms" },
+        { label: "Privacy Policy", to: "/terms" },
+        { label: "Refund Policy", to: "/refund-policy" }
+      ] 
+    },
+  ];
+
   return (
     <footer className="mt-24 border-t border-border/60 bg-background relative overflow-hidden">
-      <div className="mx-auto flex flex-col md:flex-row justify-between items-start max-w-7xl w-full px-6 py-12 gap-10 relative z-10">
+      <div className="mx-auto flex flex-col lg:flex-row justify-between items-start max-w-7xl w-full px-6 py-12 gap-10 relative z-10">
+        {/* Brand Section */}
         <div className="max-w-xs w-full space-y-4">
           <Link 
             to="/jobs" 
@@ -492,31 +537,17 @@ export function Footer() {
             onMouseEnter={() => setLogoHovered(true)}
             onMouseLeave={() => setLogoHovered(false)}
           >
-            <div className={`w-9 h-9 rounded-full bg-card flex items-center justify-center shrink-0 p-1.5 transition-all duration-300 ${logoHovered ? 'scale-105 shadow-sm border-gray-300' : 'border-gray-200'} border`}>
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white font-display font-bold text-sm bg-[#2A2A2A] p-1.5 border border-white/10 shrink-0 shadow-sm transition-all duration-300 ${logoHovered ? 'scale-105 shadow-md ring-2 ring-blue-500/20' : ''}`}>
               <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <linearGradient id="logo-grad-footer" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <linearGradient id="logo-grad-footer-chrome" x1="0%" y1="100%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#38bdf8" />
                     <stop offset="100%" stopColor="#2563eb" />
                   </linearGradient>
                 </defs>
-                <line 
-                  x1="32" y1="68" x2="68" y2="32" 
-                  stroke={logoHovered ? "url(#logo-grad-footer)" : "#9ca3af"} 
-                  strokeWidth="12" 
-                  strokeLinecap="round" 
-                  className="transition-all duration-300"
-                />
-                <circle 
-                  cx="32" cy="68" r="16" 
-                  fill={logoHovered ? "#38bdf8" : "#9ca3af"} 
-                  className="transition-all duration-300"
-                />
-                <circle 
-                  cx="68" cy="32" r="24" 
-                  fill={logoHovered ? "#2563eb" : "#9ca3af"} 
-                  className="transition-all duration-300"
-                />
+                <line x1="32" y1="68" x2="68" y2="32" stroke="url(#logo-grad-footer-chrome)" strokeWidth="14" strokeLinecap="round" />
+                <circle cx="32" cy="68" r="16" fill="#38bdf8" />
+                <circle cx="68" cy="32" r="24" fill="#2563eb" />
               </svg>
             </div>
             <span className={`font-display text-2xl font-bold tracking-tight transition-all duration-300 ${
@@ -528,46 +559,22 @@ export function Footer() {
             </span>
           </Link>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            A calmer job search. Built for humans, not algorithms.
+            A calmer job search & screening platform. Built for smarter hiring.
           </p>
           <div className="pt-2">
             <SocialTooltip items={socialLinks} className="justify-start" />
           </div>
         </div>
 
-        <div className="flex flex-1 flex-wrap gap-x-12 gap-y-8 justify-between md:justify-end md:gap-x-16 md:mr-[300px] lg:mr-[360px] xl:mr-[400px]">
-          {[
-            { 
-              t: "Product", 
-              items: [
-                { label: "Browse jobs", to: "/jobs/search" },
-                { label: "Companies", to: "/jobs/companies" },
-                { label: "Resume", to: "/jobs/resume" },
-                { label: "Billing Plans", to: "/jobs/billing" }
-              ] 
-            },
-            { 
-              t: "Company", 
-              items: [
-                { label: "About Us", to: "/about" },
-                { label: "Contact Us", to: "/contact" }
-              ] 
-            },
-            { 
-              t: "Resources & Support", 
-              items: [
-                { label: "Support & Appeals", to: "/support" },
-                { label: "Terms & Privacy", to: "/terms" },
-                { label: "Refund Policy", to: "/refund-policy" }
-              ] 
-            },
-          ].map((c) => (
-            <div key={c.t} className="min-w-[100px]">
-              <div className="text-sm font-semibold text-foreground mb-3">{c.t}</div>
+        {/* Links Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 w-full lg:w-auto flex-1 lg:max-w-3xl">
+          {footerSections.map((c) => (
+            <div key={c.t} className="min-w-[120px]">
+              <div className="text-sm font-bold text-foreground mb-3 font-display">{c.t}</div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {c.items.map((x) => (
                   <li key={x.label}>
-                    <Link to={x.to} className="hover:text-foreground transition-colors">{x.label}</Link>
+                    <Link to={x.to} className="hover:text-foreground transition-colors leading-normal block">{x.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -575,9 +582,10 @@ export function Footer() {
           ))}
         </div>
       </div>
+
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground relative z-10 bg-background/80 backdrop-blur-sm">
-        © 2026 Between · Designed with care
+        © {new Date().getFullYear()} Between Platform · Built for smarter hiring.
       </div>
     </footer>
   );
-}
+};

@@ -13,6 +13,7 @@ import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { SocialTooltip } from "../../components/ui/social-media";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import ThemeToggle from "../../components/ThemeToggle";
+import { Footer } from "../../components/user/site-chrome";
 
 export default function DeveloperLandingPage() {
   useDocumentTitle(
@@ -554,51 +555,7 @@ const response = await fetch(
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-charcoal text-white/70 py-16">
-         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex flex-col items-center md:items-start gap-2">
-              <div className="flex items-center gap-2 text-white">
-                <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
-                  <svg className="w-7 h-7" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="10" cy="16" r="6" stroke="url(#dev-logo-grad-1)" strokeWidth="2.5" />
-                    <circle cx="22" cy="16" r="6" stroke="url(#dev-logo-grad-2)" strokeWidth="2.5" />
-                    <line x1="10" y1="16" x2="22" y2="16" stroke="url(#dev-logo-grad-line)" strokeWidth="2.5" />
-                    <defs>
-                      <linearGradient id="dev-logo-grad-1" x1="4" y1="10" x2="16" y2="22" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#2563EB" />
-                        <stop offset="1" stopColor="#3B82F6" />
-                      </linearGradient>
-                      <linearGradient id="dev-logo-grad-2" x1="16" y1="10" x2="28" y2="22" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#EF4444" />
-                        <stop offset="1" stopColor="#F87171" />
-                      </linearGradient>
-                      <linearGradient id="dev-logo-grad-line" x1="10" y1="16" x2="22" y2="16" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#2563EB" />
-                        <stop offset="0.5" stopColor="#8B5CF6" />
-                        <stop offset="1" stopColor="#EF4444" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                <span className="font-display text-lg font-black tracking-tight text-white">Between</span>
-              </div>
-              <p className="text-sm mt-1">Built for smarter hiring.</p>
-            </div>
-            
-             <div className="flex flex-wrap justify-center gap-8 text-sm font-medium">
-                <a href="/terms" className="hover:text-accent transition-colors">Privacy Policy</a>
-                <a href="/terms" className="hover:text-accent transition-colors">Terms of Service</a>
-                <a href="/contact" className="hover:text-accent transition-colors">Contact Support</a>
-             </div>
-            
-            <div className="flex flex-col items-center md:items-end gap-4">
-               <SocialTooltip items={socialLinks} className="justify-center md:justify-end" />
-               <div className="text-sm">
-                  © {new Date().getFullYear()} Between API.
-               </div>
-            </div>
-         </div>
-       </footer>
+      <Footer />
 
        {showDevReviewModal && (
          <WriteReviewModal
