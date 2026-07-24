@@ -128,7 +128,7 @@ function Home() {
           name: c.name,
           logo_path: c.logo_path,
           industry: c.industry || "Technology",
-          location: c.hq_location || c.location || "San Francisco",
+          location: c.hq_location || c.location || "—",
           openings: c.openings || 0,
           rating: c.rating ?? 0,
           size: c.company_size || c.size || "50-100"
@@ -242,7 +242,7 @@ function Home() {
               ) : (
                 <>
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--google-green)]" />
-                  {Number(stats?.open_roles || 12480).toLocaleString()} new roles this week · updated hourly
+                  {stats?.open_roles ? `${Number(stats.open_roles).toLocaleString()} new roles this week · updated hourly` : "Fresh opportunities · updated hourly"}
                 </>
               )}
             </motion.div>
@@ -454,10 +454,10 @@ function Home() {
       >
         <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-4 sm:grid-cols-4 sm:p-5">
           {[
-            { k: "Open roles", v: statsLoading ? null : Number(stats?.open_roles ?? 12480).toLocaleString(), c: "var(--google-blue)" },
-            { k: "Companies", v: statsLoading ? null : `${Number(stats?.companies ?? 3200).toLocaleString()}+`, c: "var(--google-green)" },
-            { k: "Hired this month", v: statsLoading ? null : Number(stats?.hired_this_month ?? 1940).toLocaleString(), c: "var(--google-yellow)" },
-            { k: "Avg. response", v: statsLoading ? null : `${stats?.avg_response_hours ?? 48} hrs`, c: "var(--google-red)" },
+            { k: "Open roles", v: statsLoading ? null : (stats?.open_roles ? Number(stats.open_roles).toLocaleString() : "—"), c: "var(--google-blue)" },
+            { k: "Companies", v: statsLoading ? null : (stats?.companies ? `${Number(stats.companies).toLocaleString()}+` : "—"), c: "var(--google-green)" },
+            { k: "Hired this month", v: statsLoading ? null : (stats?.hired_this_month ? Number(stats.hired_this_month).toLocaleString() : "—"), c: "var(--google-yellow)" },
+            { k: "Avg. response", v: statsLoading ? null : (stats?.avg_response_hours ? `${stats.avg_response_hours} hrs` : "—"), c: "var(--google-red)" },
           ].map((s) => (
             <div key={s.k} className="px-2">
               <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{s.k}</div>

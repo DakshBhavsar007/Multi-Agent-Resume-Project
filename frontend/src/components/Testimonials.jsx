@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Quote, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -7,58 +7,9 @@ import { publicAPI } from '../lib/api';
 import VerifiedBadge from './VerifiedBadge';
 import './Testimonials.css';
 
-const defaultTestimonials = [
-  {
-    quote: "Between transformed our screening process. We reduced our time-to-hire by 60% in just one quarter. The AI accuracy is unparalleled.",
-    author: "Sarah Jenkins",
-    role: "Head of Talent @ TechFlow",
-    initials: "SJ",
-    color: "#3b82f6",
-    size: "large"
-  },
-  {
-    quote: "The developer API is a masterpiece. We integrated ranking directly in 48 hours.",
-    author: "Alex Rivera",
-    role: "CTO @ Solv",
-    initials: "AR",
-    color: "#10b981",
-    size: "small"
-  },
-  {
-    quote: "Finally, an AI tool that doesn't feel like a black box. The transparency is exactly what we needed for our scale.",
-    author: "Elena Petrova",
-    role: "HR Lead @ Nordics Tech",
-    initials: "EP",
-    color: "#f59e0b",
-    size: "medium"
-  },
-  {
-    quote: "Our recruiters focus more on people now than on paperwork. Precision is key.",
-    author: "Michael Ross",
-    role: "Founder @ ScaleUp Studios",
-    initials: "MR",
-    color: "#8b5cf6",
-    size: "medium"
-  },
-  {
-    quote: "The best ROI we've seen from any HR tool in 5 years. Innovative and fast.",
-    author: "Dinesh Kumar",
-    role: "VP Engineering @ CloudNexus",
-    initials: "DK",
-    color: "#ec4899",
-    size: "large"
-  },
-  {
-    quote: "A must-have for modern recruiters. Surgical precision for every session.",
-    author: "James Chen",
-    role: "Director of HR @ GlobalScale",
-    initials: "JC",
-    color: "#1a1c1e",
-    size: "small"
-  }
-];
 
-const TestimonialCard = ({ t, index }) => {
+
+const TestimonialCard = ({ t, index, timeAgo }) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -87,6 +38,16 @@ const TestimonialCard = ({ t, index }) => {
 
   const ratingStars = t.rating || 5;
 
+  const AvatarEl = () => (
+    t.avatarPath ? (
+      <img src={t.avatarPath} alt={t.author} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} />
+    ) : (
+      <div className="author-avatar" style={{ color: t.color || "#3b82f6" }}>
+        {t.initials}
+      </div>
+    )
+  );
+
   return (
     <motion.div 
       className={`testimonial-card-wrapper size-${t.size || 'medium'}`}
@@ -111,11 +72,18 @@ const TestimonialCard = ({ t, index }) => {
               <Star key={i} size={14} fill={i < ratingStars ? (t.color || "#f59e0b") : "transparent"} color={t.color || "#f59e0b"} opacity={i < ratingStars ? 0.9 : 0.2} />
             ))}
           </div>
-          {t.targetBadge && (
-            <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
-              {t.targetBadge}
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {t.createdAt && timeAgo && (
+              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: '500' }}>
+                {timeAgo(t.createdAt)}
+              </span>
+            )}
+            {t.targetBadge && (
+              <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
+                {t.targetBadge}
+              </span>
+            )}
+          </div>
         </div>
 
         <p className="testimonial-quote">"{t.quote}"</p>
@@ -123,9 +91,7 @@ const TestimonialCard = ({ t, index }) => {
         <div className="testimonial-author">
           {t.authorId ? (
             <Link to={`/jobs/profile/${t.authorId}`} className="flex items-center gap-3 group hover:opacity-85 transition-opacity no-underline text-inherit">
-              <div className="author-avatar" style={{ color: t.color || "#3b82f6" }}>
-                {t.initials}
-              </div>
+              <AvatarEl />
               <div className="author-info">
                 <h4 className="flex items-center gap-1 font-bold">
                   {t.author}
@@ -141,9 +107,7 @@ const TestimonialCard = ({ t, index }) => {
             </Link>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="author-avatar" style={{ color: t.color || "#3b82f6" }}>
-                {t.initials}
-              </div>
+              <AvatarEl />
               <div className="author-info">
                 <h4 className="flex items-center gap-1 font-bold">
                   {t.author}
@@ -164,9 +128,11 @@ const TestimonialCard = ({ t, index }) => {
   );
 };
 
+
 const Testimonials = () => {
   const [items, setItems] = useState([]);
   const [filterTab, setFilterTab] = useState("all");
+  const [companyNames, setCompanyNames] = useState([]);
 
   useEffect(() => {
     publicAPI.listReviews()
@@ -179,6 +145,7 @@ const Testimonials = () => {
             quote: r.text,
             author: r.author?.full_name || "Verified Professional",
             authorId: r.author?.user_type === "job_seeker" ? r.author?.id : null,
+            avatarPath: r.author?.avatar_path || null,
             isVerified: r.author?.is_verified,
             role: r.author?.headline || (r.company_name ? `Review for ${r.company_name}` : "Verified Member"),
             roleBadge: r.author?.role_badge || (r.user_type ? r.user_type.replace('_', ' ').toUpperCase() : "MEMBER"),
@@ -187,6 +154,7 @@ const Testimonials = () => {
             rating: r.rating || 5,
             review_type: r.review_type,
             user_type: r.user_type,
+            createdAt: r.created_at,
             color: colors[idx % colors.length],
             size: sizes[idx % sizes.length],
           }));
@@ -197,6 +165,16 @@ const Testimonials = () => {
         }
       })
       .catch((err) => console.error("Failed to load public reviews on landing page:", err));
+
+    // Fetch real company names for the logo strip
+    publicAPI.listCompanies()
+      .then((data) => {
+        const comps = data?.companies || (Array.isArray(data) ? data : []);
+        if (comps.length > 0) {
+          setCompanyNames(comps.slice(0, 6).map(c => c.name?.toUpperCase() || ""));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const filteredItems = items.filter(t => {
@@ -205,6 +183,26 @@ const Testimonials = () => {
     if (filterTab === "developer") return t.user_type === "developer";
     return true;
   });
+
+  // Helper: relative time
+  const timeAgo = (dateStr) => {
+    if (!dateStr) return "";
+    const now = new Date();
+    const past = new Date(dateStr);
+    const diffMs = now - past;
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `${weeks}w ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    return `${Math.floor(months / 12)}y ago`;
+  };
 
   return (
     <section className="testimonials-section">
@@ -259,19 +257,20 @@ const Testimonials = () => {
 
       <div className="testimonials-grid">
         {(filteredItems.length > 0 ? filteredItems : items).map((t, i) => (
-          <TestimonialCard key={t.id || i} t={t} index={i} />
+          <TestimonialCard key={t.id || i} t={t} index={i} timeAgo={timeAgo} />
         ))}
       </div>
 
-      <div className="company-logo-strip">
-        <span className="company-logo">TECHFLOW</span>
-        <span className="company-logo">SOLV</span>
-        <span className="company-logo">GLOBALSCALE_</span>
-        <span className="company-logo">NORDICS</span>
-        <span className="company-logo">SCALE_UP</span>
-      </div>
+      {companyNames.length > 0 && (
+        <div className="company-logo-strip">
+          {companyNames.map((name, i) => (
+            <span key={i} className="company-logo">{name}</span>
+          ))}
+        </div>
+      )}
     </section>
   );
 };
 
 export default Testimonials;
+

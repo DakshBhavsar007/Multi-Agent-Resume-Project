@@ -5,6 +5,7 @@ import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { CreditCard, Check, AlertTriangle } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { DEVELOPER_PLANS_BILLING } from "../../lib/plans";
 
 export default function DeveloperBilling() {
   const { tier, setAuth } = usePortalAuthStore();
@@ -25,11 +26,7 @@ export default function DeveloperBilling() {
   const { data: plans } = useQuery({
     queryKey: ["billing-plans"],
     queryFn: portalBilling.plans,
-    initialData: [
-      { id: "free", name: "Free", price: 0, features: ["100 free parses/month", "Community support", "Basic formatting", "No SLA"] },
-      { id: "starter", name: "Starter", price: 2999, features: ["1000 parses/month", "Email support", "All output formats", "99% uptime", "Webhooks"] },
-      { id: "business", name: "Business", price: 9999, features: ["10000 parses/month", "Priority support", "Custom prompts", "99.9% uptime SLA", "Embed UI Component"] }
-    ]
+    initialData: DEVELOPER_PLANS_BILLING
   });
 
   const { data: current } = useQuery({

@@ -30,6 +30,7 @@ import { usePortalAuthStore } from '../stores/portalAuthStore';
 import { useSeekerAuthStore } from '../stores/seekerAuthStore';
 import './AuthPage.css';
 import VerificationModal from './VerificationModal';
+import { DEVELOPER_PLANS } from '../lib/plans';
 
 const AntigravityGrid = () => {
   const canvasRef = useRef(null);
@@ -352,11 +353,7 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
       portalBilling.plans()
         .then(d => { if (d && d.length > 0) setPlans(d); })
         .catch(() => {
-          setPlans([
-            { id: "free", name: "Free", price: 0, features: ["100 free parses/month", "Community support", "Basic formatting", "No SLA"] },
-            { id: "starter", name: "Starter", price: 2999, features: ["1000 parses/month", "Email support", "All output formats", "99% uptime"] },
-            { id: "business", name: "Business", price: 9999, features: ["10000 parses/month", "Priority support", "Custom prompts", "99.9% uptime SLA"] }
-          ]);
+          setPlans(DEVELOPER_PLANS);
         });
     }
   }, [role, isLogin]);

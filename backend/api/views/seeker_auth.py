@@ -345,6 +345,7 @@ def upload_avatar(request):
     try:
         import os
         import uuid
+        seeker = request.seeker
         file = request.FILES.get("file") or request.FILES.get("avatar")
         if not file:
             return JsonResponse(error_response("No file provided"), status=400)

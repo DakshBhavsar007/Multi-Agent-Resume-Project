@@ -14,6 +14,7 @@ import { SocialTooltip } from "../../components/ui/social-media";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Footer } from "../../components/user/site-chrome";
+import { DEVELOPER_PLANS } from "../../lib/plans";
 
 export default function DeveloperLandingPage() {
   useDocumentTitle(
@@ -43,11 +44,7 @@ export default function DeveloperLandingPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  const [plans, setPlans] = useState([
-    { id: "free", name: "Free", price: 0, features: ["100 free parses/month", "Community support", "Basic formatting", "No SLA"] },
-    { id: "starter", name: "Starter", price: 2999, features: ["1000 parses/month", "Email support", "All output formats", "99% uptime"] },
-    { id: "business", name: "Business", price: 9999, features: ["10000 parses/month", "Priority support", "Custom prompts", "99.9% uptime SLA"] }
-  ]);
+  const [plans, setPlans] = useState(DEVELOPER_PLANS);
 
   const { tier, jwt, initFromStorage, setAuth } = usePortalAuthStore();
   const [isDevLoggedIn, setIsDevLoggedIn] = useState(false);
