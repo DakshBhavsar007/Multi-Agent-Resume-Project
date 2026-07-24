@@ -150,7 +150,15 @@ function Home() {
 
   const handleDeleteReview = async (reviewId) => {
     try {
-      await seekerAPI.deleteReview(reviewId);
+      const isRecruiter = !!localStorage.getItem('vish_jwt');
+      const isDeveloper = !!localStorage.getItem('portal_jwt');
+      if (isRecruiter) {
+        await recruiterAPI.deleteReview(reviewId);
+      } else if (isDeveloper) {
+        await portalReviews.deleteReview(reviewId);
+      } else {
+        await seekerAPI.deleteReview(reviewId);
+      }
       setReviews(prev => prev.filter(r => r.id !== reviewId));
       toast.success('Review deleted');
     } catch (err) {
@@ -454,9 +462,9 @@ function Home() {
       >
         <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-4 sm:grid-cols-4 sm:p-5">
           {[
-            { k: "Open roles", v: statsLoading ? null : (stats?.open_roles ? Number(stats.open_roles).toLocaleString() : "—"), c: "var(--google-blue)" },
-            { k: "Companies", v: statsLoading ? null : (stats?.companies ? `${Number(stats.companies).toLocaleString()}+` : "—"), c: "var(--google-green)" },
-            { k: "Hired this month", v: statsLoading ? null : (stats?.hired_this_month ? Number(stats.hired_this_month).toLocaleString() : "—"), c: "var(--google-yellow)" },
+            { k: "Open roles", v: statsLoading ? null : Number(stats?.open_roles ?? 0).toLocaleString(), c: "var(--google-blue)" },
+            { k: "Companies", v: statsLoading ? null : `${Number(stats?.companies ?? 0).toLocaleString()}+`, c: "var(--google-green)" },
+            { k: "Hired this month", v: statsLoading ? null : Number(stats?.hired_this_month ?? 0).toLocaleString(), c: "var(--google-yellow)" },
             { k: "Avg. response", v: statsLoading ? null : (stats?.avg_response_hours ? `${stats.avg_response_hours} hrs` : "—"), c: "var(--google-red)" },
           ].map((s) => (
             <div key={s.k} className="px-2">
@@ -736,26 +744,37 @@ function Home() {
               </div>
             )}
           </div>
-          {hasSeekerToken && (
-            <button
-              onClick={() => {
-                if (!isVerified) {
-                  toast.error('Verify your email and phone to write reviews');
-                  return;
-                }
-                setEditingReview(null);
-                setShowReviewModal(true);
-              }}
-              className={`pill inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors ${
-                isVerified
-                  ? 'bg-primary text-primary-foreground hover:opacity-90'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed'
-              }`}
-              title={!isVerified ? 'Verify your email and phone to write reviews' : 'Write a review'}
-            >
-              <MessageSquareQuote className="h-3.5 w-3.5" /> Write a Review
-            </button>
-          )}
+          {(() => {
+            const isRecruiterToken = !!localStorage.getItem('vish_jwt');
+            const isDeveloperToken = !!localStorage.getItem('portal_jwt');
+            const isSeekerToken = !!localStorage.getItem('vish_seeker_token');
+            const isUserLoggedIn = isRecruiterToken || isDeveloperToken || isSeekerToken;
+            const currentRole = isRecruiterToken ? 'recruiter' : isDeveloperToken ? 'developer' : 'job_seeker';
+            const canSubmit = isRecruiterToken || isDeveloperToken || (isSeekerToken && isVerified);
+
+            if (!isUserLoggedIn) return null;
+
+            return (
+              <button
+                onClick={() => {
+                  if (isSeekerToken && !isVerified) {
+                    toast.error('Verify your email and phone to write reviews');
+                    return;
+                  }
+                  setEditingReview(null);
+                  setShowReviewModal(true);
+                }}
+                className={`pill inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors ${
+                  canSubmit
+                    ? 'bg-primary text-primary-foreground hover:opacity-90 cursor-pointer'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
+                }`}
+                title={!canSubmit ? 'Verify your account to write reviews' : 'Write a review'}
+              >
+                <MessageSquareQuote className="h-3.5 w-3.5" /> Write a Review
+              </button>
+            );
+          })()}
         </motion.div>
         <div className="mt-8 grid gap-3 md:grid-cols-3">
           {reviews.length === 0 ? (
@@ -857,6 +876,10 @@ function Home() {
           onClose={() => { setShowReviewModal(false); setEditingReview(null); }}
           onSubmit={handleReviewSubmitted}
           editingReview={editingReview}
+          userRole={
+            localStorage.getItem('vish_jwt') ? 'recruiter' :
+            localStorage.getItem('portal_jwt') ? 'developer' : 'job_seeker'
+          }
         />
       )}
 

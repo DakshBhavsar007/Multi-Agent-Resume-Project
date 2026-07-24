@@ -19,7 +19,7 @@ class Company(models.Model):
     company_size = models.CharField(max_length=50, null=True, blank=True)
     founded_year = models.IntegerField(null=True, blank=True)
     website_url = models.CharField(max_length=500, null=True, blank=True)
-    logo_path = models.CharField(max_length=500, null=True, blank=True)
+    logo_path = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -266,7 +266,7 @@ class JobSeekerAccount(models.Model):
     phone             = models.CharField(max_length=50, null=True, blank=True)
     location          = models.CharField(max_length=255, null=True, blank=True)
     headline          = models.CharField(max_length=255, null=True, blank=True)  # e.g. "Frontend Developer"
-    avatar_path       = models.CharField(max_length=500, null=True, blank=True)
+    avatar_path       = models.TextField(null=True, blank=True)
     resume_file_path  = models.CharField(max_length=500, null=True, blank=True)
     resume_data       = models.JSONField(default=dict)    # parsed resume JSON
     enhanced_resume   = models.JSONField(default=dict)    # AI-enhanced version

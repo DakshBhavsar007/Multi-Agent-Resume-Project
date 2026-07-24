@@ -1,15 +1,16 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { Quote, Star } from 'lucide-react';
+import { Quote, Star, Pen, Trash2, MessageSquareQuote } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { publicAPI } from '../lib/api';
+import { publicAPI, seekerAPI, recruiterAPI } from '../lib/api';
+import { portalReviews } from '../lib/portalApi';
+import WriteReviewModal from './WriteReviewModal';
 import VerifiedBadge from './VerifiedBadge';
+import toast from 'react-hot-toast';
 import './Testimonials.css';
 
-
-
-const TestimonialCard = ({ t, index, timeAgo }) => {
+const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -72,7 +73,7 @@ const TestimonialCard = ({ t, index, timeAgo }) => {
               <Star key={i} size={14} fill={i < ratingStars ? (t.color || "#f59e0b") : "transparent"} color={t.color || "#f59e0b"} opacity={i < ratingStars ? 0.9 : 0.2} />
             ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', items: 'center', gap: '6px' }}>
             {t.createdAt && timeAgo && (
               <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: '500' }}>
                 {timeAgo(t.createdAt)}
@@ -88,38 +89,60 @@ const TestimonialCard = ({ t, index, timeAgo }) => {
 
         <p className="testimonial-quote">"{t.quote}"</p>
         
-        <div className="testimonial-author">
-          {t.authorId ? (
-            <Link to={`/jobs/profile/${t.authorId}`} className="flex items-center gap-3 group hover:opacity-85 transition-opacity no-underline text-inherit">
-              <AvatarEl />
-              <div className="author-info">
-                <h4 className="flex items-center gap-1 font-bold">
-                  {t.author}
-                  {t.isVerified && <VerifiedBadge size={14} />}
-                </h4>
-                <p>{t.role}</p>
-                {t.roleBadge && (
-                  <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', marginTop: '4px', display: 'inline-block' }}>
-                    {t.roleBadge}
-                  </span>
-                )}
+        <div className="testimonial-author" style={{ display: 'flex', alignItems: 'center', justify: 'space-between', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+            {t.authorId ? (
+              <Link to={`/jobs/profile/${t.authorId}`} className="flex items-center gap-3 group hover:opacity-85 transition-opacity no-underline text-inherit">
+                <AvatarEl />
+                <div className="author-info">
+                  <h4 className="flex items-center gap-1 font-bold">
+                    {t.author}
+                    {t.isVerified && <VerifiedBadge size={14} />}
+                  </h4>
+                  <p>{t.role}</p>
+                  {t.roleBadge && (
+                    <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', marginTop: '4px', display: 'inline-block' }}>
+                      {t.roleBadge}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-3">
+                <AvatarEl />
+                <div className="author-info">
+                  <h4 className="flex items-center gap-1 font-bold">
+                    {t.author}
+                    {t.isVerified && <VerifiedBadge size={14} />}
+                  </h4>
+                  <p>{t.role}</p>
+                  {t.roleBadge && (
+                    <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', marginTop: '4px', display: 'inline-block' }}>
+                      {t.roleBadge}
+                    </span>
+                  )}
+                </div>
               </div>
-            </Link>
-          ) : (
-            <div className="flex items-center gap-3">
-              <AvatarEl />
-              <div className="author-info">
-                <h4 className="flex items-center gap-1 font-bold">
-                  {t.author}
-                  {t.isVerified && <VerifiedBadge size={14} />}
-                </h4>
-                <p>{t.role}</p>
-                {t.roleBadge && (
-                  <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', marginTop: '4px', display: 'inline-block' }}>
-                    {t.roleBadge}
-                  </span>
-                )}
-              </div>
+            )}
+          </div>
+
+          {/* Edit / Delete actions if review is user's own */}
+          {t.isOwn && (
+            <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+              <button
+                onClick={() => onEdit(t)}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '6px', padding: '6px', cursor: 'pointer', color: '#60a5fa' }}
+                title="Edit review"
+              >
+                <Pen size={12} />
+              </button>
+              <button
+                onClick={() => onDelete(t.id)}
+                style={{ background: 'rgba(239,68,68,0.15)', border: 'none', borderRadius: '6px', padding: '6px', cursor: 'pointer', color: '#f87171' }}
+                title="Delete review"
+              >
+                <Trash2 size={12} />
+              </button>
             </div>
           )}
         </div>
@@ -133,8 +156,16 @@ const Testimonials = () => {
   const [items, setItems] = useState([]);
   const [filterTab, setFilterTab] = useState("all");
   const [companyNames, setCompanyNames] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
 
-  useEffect(() => {
+  const isRecruiter = !!localStorage.getItem('vish_jwt');
+  const isDeveloper = !!localStorage.getItem('portal_jwt');
+  const isSeeker = !!localStorage.getItem('vish_seeker_token');
+  const isLoggedIn = isRecruiter || isDeveloper || isSeeker;
+  const userRole = isRecruiter ? 'recruiter' : isDeveloper ? 'developer' : 'job_seeker';
+
+  const loadReviews = () => {
     publicAPI.listReviews()
       .then((data) => {
         if (data.reviews && data.reviews.length > 0) {
@@ -155,6 +186,8 @@ const Testimonials = () => {
             review_type: r.review_type,
             user_type: r.user_type,
             createdAt: r.created_at,
+            isOwn: r.is_own,
+            rawReview: r,
             color: colors[idx % colors.length],
             size: sizes[idx % sizes.length],
           }));
@@ -165,6 +198,10 @@ const Testimonials = () => {
         }
       })
       .catch((err) => console.error("Failed to load public reviews on landing page:", err));
+  };
+
+  useEffect(() => {
+    loadReviews();
 
     // Fetch real company names for the logo strip
     publicAPI.listCompanies()
@@ -176,6 +213,32 @@ const Testimonials = () => {
       })
       .catch(() => {});
   }, []);
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      if (isRecruiter) {
+        await recruiterAPI.deleteReview(reviewId);
+      } else if (isDeveloper) {
+        await portalReviews.deleteReview(reviewId);
+      } else {
+        await seekerAPI.deleteReview(reviewId);
+      }
+      toast.success("Review deleted successfully");
+      loadReviews();
+    } catch (err) {
+      toast.error(err.message || "Failed to delete review");
+    }
+  };
+
+  const handleEditReview = (t) => {
+    setEditingReview({
+      id: t.id,
+      rating: t.rating,
+      text: t.quote,
+      company_id: t.rawReview?.company_id,
+    });
+    setShowReviewModal(true);
+  };
 
   const filteredItems = items.filter(t => {
     if (filterTab === "platform") return t.review_type === "platform" || !t.review_type;
@@ -226,8 +289,8 @@ const Testimonials = () => {
           Trusted by Innovative Teams & Builders
         </motion.h2>
 
-        {/* Filter Tabs */}
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' }}>
+        {/* Filter Tabs & Write Review Button */}
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
           {[
             { id: "all", label: "All Testimonials" },
             { id: "platform", label: "Between Platform" },
@@ -252,12 +315,44 @@ const Testimonials = () => {
               {tab.label}
             </button>
           ))}
+
+          {isLoggedIn && (
+            <button
+              onClick={() => {
+                setEditingReview(null);
+                setShowReviewModal(true);
+              }}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                border: '1px solid #3b82f6',
+                background: '#3b82f6',
+                color: '#ffffff',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <MessageSquareQuote size={14} /> Write a Review
+            </button>
+          )}
         </div>
       </div>
 
       <div className="testimonials-grid">
         {(filteredItems.length > 0 ? filteredItems : items).map((t, i) => (
-          <TestimonialCard key={t.id || i} t={t} index={i} timeAgo={timeAgo} />
+          <TestimonialCard
+            key={t.id || i}
+            t={t}
+            index={i}
+            timeAgo={timeAgo}
+            onEdit={handleEditReview}
+            onDelete={handleDeleteReview}
+          />
         ))}
       </div>
 
@@ -267,6 +362,23 @@ const Testimonials = () => {
             <span key={i} className="company-logo">{name}</span>
           ))}
         </div>
+      )}
+
+      {showReviewModal && (
+        <WriteReviewModal
+          isOpen={showReviewModal}
+          onClose={() => {
+            setShowReviewModal(false);
+            setEditingReview(null);
+          }}
+          editingReview={editingReview}
+          userRole={userRole}
+          onSubmit={() => {
+            setShowReviewModal(false);
+            setEditingReview(null);
+            loadReviews();
+          }}
+        />
       )}
     </section>
   );

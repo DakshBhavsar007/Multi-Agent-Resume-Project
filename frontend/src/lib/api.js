@@ -678,6 +678,8 @@ export const dynamicAPI = {
 
 export const recruiterAPI = {
   createReview: (b) => req('POST', '/recruiter/reviews', b),
+  updateReview: (id, b) => req('PATCH', `/recruiter/reviews/${id}`, b),
+  deleteReview: (id) => req('DELETE', `/recruiter/reviews/${id}`),
 };
 
 

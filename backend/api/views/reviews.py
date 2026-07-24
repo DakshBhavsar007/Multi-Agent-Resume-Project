@@ -21,21 +21,31 @@ from models.schemas import success_response, error_response
 logger = logging.getLogger(__name__)
 
 
-def _extract_seeker_id(request):
+def _extract_user_identity(request):
     auth_header = request.headers.get("Authorization", "")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return None
-    token = auth_header.split(" ")[1]
-    from api.views.seeker_auth import JWT_SECRET, JWT_ALGORITHM
+    token = ""
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        token = request.GET.get("token") or request.GET.get("jwt") or ""
+    if not token or token in ["undefined", "null"]:
+        return None, None
+    from api.decorators import JWT_SECRET, JWT_ALGORITHM
     from jose import jwt, JWTError
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload.get("seeker_id")
+        if payload.get("seeker_id"):
+            return str(payload["seeker_id"]), "job_seeker"
+        elif payload.get("company_id"):
+            return str(payload["company_id"]), "recruiter"
+        elif payload.get("developer_id"):
+            return str(payload["developer_id"]), "developer"
     except JWTError:
-        return None
+        pass
+    return None, None
 
 
-def _serialize_review(review, current_user_id=None):
+def _serialize_review(review, current_user_id=None, current_user_type=None):
     """Serialize a Review instance including author profile info and role badges."""
     user_type = review.user_type or "job_seeker"
     author_info = {}
@@ -43,7 +53,8 @@ def _serialize_review(review, current_user_id=None):
 
     if user_type == "developer" and review.developer:
         dev = review.developer
-        is_own = str(dev.id) == str(current_user_id) if current_user_id else False
+        if current_user_id and current_user_type == "developer":
+            is_own = str(dev.id) == str(current_user_id)
         author_info = {
             "id": str(dev.id),
             "full_name": dev.full_name,
@@ -55,7 +66,8 @@ def _serialize_review(review, current_user_id=None):
         }
     elif user_type == "recruiter" and review.recruiter:
         rec = review.recruiter
-        is_own = str(rec.id) == str(current_user_id) if current_user_id else False
+        if current_user_id and current_user_type == "recruiter":
+            is_own = str(rec.id) == str(current_user_id)
         author_info = {
             "id": str(rec.id),
             "full_name": rec.name,
@@ -68,7 +80,8 @@ def _serialize_review(review, current_user_id=None):
     else:  # job_seeker
         seeker = review.seeker
         if seeker:
-            is_own = str(seeker.id) == str(current_user_id) if current_user_id else False
+            if current_user_id and current_user_type == "job_seeker":
+                is_own = str(seeker.id) == str(current_user_id)
             author_info = {
                 "id": str(seeker.id),
                 "full_name": seeker.full_name,
@@ -128,8 +141,8 @@ def public_list_reviews(request):
 
     reviews = qs.order_by("-is_featured", "-created_at")[:50]
 
-    current_user_id = _extract_seeker_id(request)
-    data = [_serialize_review(r, current_user_id) for r in reviews]
+    current_user_id, current_user_type = _extract_user_identity(request)
+    data = [_serialize_review(r, current_user_id, current_user_type) for r in reviews]
 
     agg = qs.aggregate(avg_rating=Avg("rating"), total=Count("id"))
 
@@ -159,8 +172,8 @@ def public_company_reviews(request, company_id):
         .order_by("-created_at")[:50]
     )
 
-    current_user_id = _extract_seeker_id(request)
-    data = [_serialize_review(r, current_user_id) for r in reviews]
+    current_user_id, current_user_type = _extract_user_identity(request)
+    data = [_serialize_review(r, current_user_id, current_user_type) for r in reviews]
 
     agg = Review.objects.filter(company=company).aggregate(
         avg_rating=Avg("rating"), total=Count("id")
@@ -390,8 +403,8 @@ def public_seeker_profile(request, seeker_id):
     is_verified = bool(seeker.email_verified and seeker.phone_verified)
     user_reviews = Review.objects.filter(seeker=seeker).select_related("company").order_by("-created_at")
 
-    current_user_id = _extract_seeker_id(request)
-    reviews_data = [_serialize_review(r, current_user_id) for r in user_reviews]
+    current_user_id, current_user_type = _extract_user_identity(request)
+    reviews_data = [_serialize_review(r, current_user_id, current_user_type) for r in user_reviews]
 
     profile_data = {
         "id": str(seeker.id),
@@ -409,3 +422,76 @@ def public_seeker_profile(request, seeker_id):
     }
 
     return JsonResponse(success_response(profile_data))
+
+
+# ── Developer & Recruiter Review Detail (PATCH / DELETE) ─────────────────────
+
+@csrf_exempt
+@require_developer_jwt
+def developer_review_detail(request, review_id):
+    dev = request.developer
+    review = Review.objects.filter(id=review_id).first()
+    if not review:
+        return JsonResponse(error_response("Review not found"), status=404)
+
+    if str(review.developer_id) != str(dev.id):
+        return JsonResponse(error_response("You can only modify your own reviews"), status=403)
+
+    if request.method == "PATCH":
+        try:
+            body = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse(error_response("Invalid JSON body"), status=400)
+
+        if "rating" in body:
+            r = body["rating"]
+            if isinstance(r, int) and 1 <= r <= 5:
+                review.rating = r
+        if "text" in body:
+            t = body["text"].strip()
+            if len(t) >= 10:
+                review.text = t
+        review.save()
+        return JsonResponse(success_response(_serialize_review(review, dev.id, "developer")))
+
+    elif request.method == "DELETE":
+        review.delete()
+        return JsonResponse(success_response({"message": "Review deleted"}))
+
+    return JsonResponse(error_response("Method not allowed"), status=405)
+
+
+@csrf_exempt
+@require_company_jwt
+def recruiter_review_detail(request, review_id):
+    recruiter = request.company
+    review = Review.objects.filter(id=review_id).first()
+    if not review:
+        return JsonResponse(error_response("Review not found"), status=404)
+
+    if str(review.recruiter_id) != str(recruiter.id):
+        return JsonResponse(error_response("You can only modify your own reviews"), status=403)
+
+    if request.method == "PATCH":
+        try:
+            body = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse(error_response("Invalid JSON body"), status=400)
+
+        if "rating" in body:
+            r = body["rating"]
+            if isinstance(r, int) and 1 <= r <= 5:
+                review.rating = r
+        if "text" in body:
+            t = body["text"].strip()
+            if len(t) >= 10:
+                review.text = t
+        review.save()
+        return JsonResponse(success_response(_serialize_review(review, recruiter.id, "recruiter")))
+
+    elif request.method == "DELETE":
+        review.delete()
+        return JsonResponse(success_response({"message": "Review deleted"}))
+
+    return JsonResponse(error_response("Method not allowed"), status=405)
+

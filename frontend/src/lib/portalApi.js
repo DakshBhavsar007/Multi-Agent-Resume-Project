@@ -153,5 +153,34 @@ export const portalReviews = {
       if (!d.success) throw new Error(d.error || 'Failed to submit review');
       return d.data;
     });
+  },
+  updateReview: (id, b) => {
+    const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+    const API_HOST = rawBase.replace('/api/v1', '');
+    const headers = { 'Content-Type': 'application/json' };
+    const jwt = getJwt();
+    if (jwt) headers['Authorization'] = `Bearer ${jwt}`;
+    return fetch(`${API_HOST}/api/v1/developer/reviews/${id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(b),
+    }).then(res => res.json()).then(d => {
+      if (!d.success) throw new Error(d.error || 'Failed to update review');
+      return d.data;
+    });
+  },
+  deleteReview: (id) => {
+    const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+    const API_HOST = rawBase.replace('/api/v1', '');
+    const headers = { 'Content-Type': 'application/json' };
+    const jwt = getJwt();
+    if (jwt) headers['Authorization'] = `Bearer ${jwt}`;
+    return fetch(`${API_HOST}/api/v1/developer/reviews/${id}`, {
+      method: 'DELETE',
+      headers,
+    }).then(res => res.json()).then(d => {
+      if (!d.success) throw new Error(d.error || 'Failed to delete review');
+      return d.data;
+    });
   }
-}
+};

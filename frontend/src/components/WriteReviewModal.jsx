@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Star, MessageSquareQuote, Loader2, CheckCircle2, Building2 } from 'lucide-react';
-import { seekerAPI, publicAPI } from '../lib/api';
+import { seekerAPI, recruiterAPI, publicAPI } from '../lib/api';
+import { portalReviews } from '../lib/portalApi';
 import toast from 'react-hot-toast';
 
 export default function WriteReviewModal({
@@ -55,18 +56,29 @@ export default function WriteReviewModal({
         toast.success('Review submitted successfully!');
         if (onSubmit) onSubmit(res);
       } else if (editingReview) {
-        const updated = await seekerAPI.updateReview(editingReview.id, {
-          rating,
-          text: text.trim(),
-        });
+        let updated;
+        if (userRole === 'recruiter') {
+          updated = await recruiterAPI.updateReview(editingReview.id, { rating, text: text.trim() });
+        } else if (userRole === 'developer') {
+          updated = await portalReviews.updateReview(editingReview.id, { rating, text: text.trim() });
+        } else {
+          updated = await seekerAPI.updateReview(editingReview.id, { rating, text: text.trim() });
+        }
         toast.success('Review updated successfully!');
         if (onSubmit) onSubmit(updated);
       } else {
-        const created = await seekerAPI.createReview({
-          company_id: selectedCompanyId || null,
-          rating,
-          text: text.trim(),
-        });
+        let created;
+        if (userRole === 'recruiter') {
+          created = await recruiterAPI.createReview({ rating, text: text.trim() });
+        } else if (userRole === 'developer') {
+          created = await portalReviews.createReview({ rating, text: text.trim() });
+        } else {
+          created = await seekerAPI.createReview({
+            company_id: selectedCompanyId || null,
+            rating,
+            text: text.trim(),
+          });
+        }
         toast.success('Review submitted successfully!');
         if (onSubmit) onSubmit(created);
       }

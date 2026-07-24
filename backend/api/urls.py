@@ -281,7 +281,9 @@ urlpatterns = [
     path('api/v1/seeker/reviews/my', reviews.seeker_my_reviews, name='seeker-my-reviews'),
     path('api/v1/seeker/reviews/<str:review_id>', reviews.seeker_review_detail, name='seeker-review-detail'),
     path('api/v1/developer/reviews', reviews.developer_reviews_root, name='developer-reviews-root'),
+    path('api/v1/developer/reviews/<str:review_id>', reviews.developer_review_detail, name='developer-review-detail'),
     path('api/v1/recruiter/reviews', reviews.recruiter_reviews_root, name='recruiter-reviews-root'),
+    path('api/v1/recruiter/reviews/<str:review_id>', reviews.recruiter_review_detail, name='recruiter-review-detail'),
 
     # ── Assessment Rounds ──
     # Company side
