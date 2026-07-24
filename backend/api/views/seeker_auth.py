@@ -358,18 +358,24 @@ def upload_avatar(request):
         if ext not in allowed_ext:
             return JsonResponse(error_response("Only PNG, JPG, JPEG, or WEBP images are allowed"), status=400)
 
-        seeker = request.seeker
-        UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
-        seeker_dir = os.path.join(UPLOAD_DIR, "seekers", str(seeker.id))
-        os.makedirs(seeker_dir, exist_ok=True)
+        import base64
+        file_content = file.read()
+        mime_type = "image/png" if ext == ".png" else "image/webp" if ext == ".webp" else "image/jpeg"
+        base64_encoded = base64.b64encode(file_content).decode("utf-8")
+        avatar_url_path = f"data:{mime_type};base64,{base64_encoded}"
 
-        fname = f"avatar_{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(seeker_dir, fname)
-        with open(file_path, "wb+") as f:
-            for chunk in file.chunks():
-                f.write(chunk)
+        # Also write file to local disk if directory exists (fallback)
+        try:
+            UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+            seeker_dir = os.path.join(UPLOAD_DIR, "seekers", str(seeker.id))
+            os.makedirs(seeker_dir, exist_ok=True)
+            fname = f"avatar_{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(seeker_dir, fname)
+            with open(file_path, "wb+") as f:
+                f.write(file_content)
+        except Exception:
+            pass
 
-        avatar_url_path = f"/uploads/seekers/{seeker.id}/{fname}"
         seeker.avatar_path = avatar_url_path
         seeker.save(update_fields=["avatar_path"])
 

@@ -499,20 +499,25 @@ def upload_logo(request):
         if ext not in allowed_ext:
             return JsonResponse(error_response("Only PNG, JPG, JPEG, SVG, or WEBP images are allowed"), status=400)
 
-        # Save to uploads/companies/{company_id}/logo_{uuid}{ext}
-        company = request.company
-        UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
-        company_dir = os.path.join(UPLOAD_DIR, "companies", str(company.id))
-        os.makedirs(company_dir, exist_ok=True)
+        import base64
+        file_content = file.read()
+        mime_type = "image/png" if ext == ".png" else "image/svg+xml" if ext == ".svg" else "image/webp" if ext == ".webp" else "image/jpeg"
+        base64_encoded = base64.b64encode(file_content).decode("utf-8")
+        logo_url_path = f"data:{mime_type};base64,{base64_encoded}"
 
-        fname = f"logo_{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(company_dir, fname)
-        with open(file_path, "wb+") as f:
-            for chunk in file.chunks():
-                f.write(chunk)
+        # Fallback local file write
+        try:
+            company = request.company
+            UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+            company_dir = os.path.join(UPLOAD_DIR, "companies", str(company.id))
+            os.makedirs(company_dir, exist_ok=True)
+            fname = f"logo_{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(company_dir, fname)
+            with open(file_path, "wb+") as f:
+                f.write(file_content)
+        except Exception:
+            pass
 
-        # Save URL path (Django handles uploads/ path directly)
-        logo_url_path = f"/uploads/companies/{company.id}/{fname}"
         company.logo_path = logo_url_path
         company.save(update_fields=["logo_path"])
 
