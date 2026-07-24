@@ -456,6 +456,10 @@ def update_profile(request):
                 pass
         if "website_url" in data:
             company.website_url = data.get("website_url")
+        if "notification_settings" in data:
+            ns = data.get("notification_settings")
+            if isinstance(ns, dict):
+                company.notification_settings = ns
 
         company.save()
         return JsonResponse(success_response({
@@ -470,6 +474,7 @@ def update_profile(request):
             "company_size": company.company_size,
             "founded_year": company.founded_year,
             "website_url": company.website_url,
+            "notification_settings": company.notification_settings,
             "created_at": company.created_at.isoformat() if company.created_at else None
         }))
     except Exception as e:

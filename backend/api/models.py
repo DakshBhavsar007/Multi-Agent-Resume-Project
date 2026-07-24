@@ -2,6 +2,14 @@ import uuid
 from django.db import models
 from django.utils import timezone
 
+def default_company_notification_settings():
+    return {
+        "new_candidate_applied": True,
+        "weekly_digest": False,
+        "fraud_alerts": True,
+    }
+
+
 class Company(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, db_index=True)
@@ -20,6 +28,7 @@ class Company(models.Model):
     founded_year = models.IntegerField(null=True, blank=True)
     website_url = models.CharField(max_length=500, null=True, blank=True)
     logo_path = models.TextField(null=True, blank=True)
+    notification_settings = models.JSONField(default=default_company_notification_settings)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

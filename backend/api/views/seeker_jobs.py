@@ -465,13 +465,15 @@ def apply_job(request, session_id):
 
         # Notification for company
         if session.company:
-            Notification.objects.create(
-                company=session.company,
-                type="application_received",
-                title=f"New Candidate Application: {session.job_title}",
-                message=f"{seeker.full_name} ({match_score_str} Match Score) applied for {session.job_title}.",
-                link=f"/dashboard/sessions/{session_id}",
-            )
+            comp_notif_settings = getattr(session.company, 'notification_settings', {}) or {}
+            if comp_notif_settings.get("new_candidate_applied", True):
+                Notification.objects.create(
+                    company=session.company,
+                    type="application_received",
+                    title=f"New Candidate Application: {session.job_title}",
+                    message=f"{seeker.full_name} ({match_score_str} Match Score) applied for {session.job_title}.",
+                    link=f"/dashboard/sessions/{session_id}",
+                )
 
         # Send emails with full details
         loc_str = session.criteria.get("location") if (isinstance(session.criteria, dict) and session.criteria.get("location")) else "Remote"

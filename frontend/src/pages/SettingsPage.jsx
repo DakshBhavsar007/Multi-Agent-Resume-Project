@@ -38,6 +38,11 @@ export default function SettingsPage() {
   const [companySize, setCompanySize] = useState(company?.company_size || '');
   const [foundedYear, setFoundedYear] = useState(company?.founded_year || '');
   const [websiteUrl, setWebsiteUrl] = useState(company?.website_url || '');
+  const [notifSettings, setNotifSettings] = useState({
+    new_candidate_applied: company?.notification_settings?.new_candidate_applied ?? true,
+    weekly_digest: company?.notification_settings?.weekly_digest ?? false,
+    fraud_alerts: company?.notification_settings?.fraud_alerts ?? true,
+  });
 
   useEffect(() => {
     if (company) {
@@ -48,8 +53,36 @@ export default function SettingsPage() {
       setCompanySize(company.company_size || '');
       setFoundedYear(company.founded_year || '');
       setWebsiteUrl(company.website_url || '');
+      if (company.notification_settings) {
+        setNotifSettings({
+          new_candidate_applied: company.notification_settings.new_candidate_applied ?? true,
+          weekly_digest: company.notification_settings.weekly_digest ?? false,
+          fraud_alerts: company.notification_settings.fraud_alerts ?? true,
+        });
+      }
     }
   }, [company]);
+
+  const handleToggleNotif = async (key) => {
+    const updated = {
+      ...notifSettings,
+      [key]: !notifSettings[key]
+    };
+    setNotifSettings(updated);
+    try {
+      const res = await authAPI.updateProfile({ notification_settings: updated });
+      if (res && res.notification_settings) {
+        setAuth({
+          ...company,
+          notification_settings: res.notification_settings,
+          jwt_token: localStorage.getItem("vish_jwt")
+        });
+      }
+      toast.success("Notification preference saved!");
+    } catch (err) {
+      toast.error("Failed to save notification preference");
+    }
+  };
 
   const getFullUrl = (path) => {
     if (!path) return "";
@@ -577,18 +610,26 @@ export default function SettingsPage() {
               </h2>
               <div className="divide-y divide-gray-100">
                 {[
-                  { label: "New candidate applied", desc: "Get notified when a candidate joins a session.", defaultVal: true },
-                  { label: "Weekly digest", desc: "A summary of activity across sessions.", defaultVal: false },
-                  { label: "Fraud alerts", desc: "Immediate alert when a suspicious resume is flagged.", defaultVal: true },
-                ].map((it, i) => (
-                  <div key={i} className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
-                    <div>
-                      <div className="font-bold text-sm text-charcoal">{it.label}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{it.desc}</div>
+                  { key: "new_candidate_applied", label: "New candidate applied", desc: "Get notified when a candidate joins a session.", defaultVal: true },
+                  { key: "weekly_digest", label: "Weekly digest", desc: "A summary of activity across sessions.", defaultVal: false },
+                  { key: "fraud_alerts", label: "Fraud alerts", desc: "Immediate alert when a suspicious resume is flagged.", defaultVal: true },
+                ].map((it) => {
+                  const isOn = notifSettings[it.key] ?? it.defaultVal;
+                  return (
+                    <div key={it.key} className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
+                      <div>
+                        <div className="font-bold text-sm text-charcoal flex items-center gap-2">
+                          {it.label}
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500">
+                            {it.key === 'weekly_digest' ? 'Email' : 'In-App + Email'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">{it.desc}</div>
+                      </div>
+                      <ToggleSwitch on={isOn} onChange={() => handleToggleNotif(it.key)} />
                     </div>
-                    <ToggleSwitch defaultOn={it.defaultVal} />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -829,13 +870,12 @@ export default function SettingsPage() {
   );
 }
 
-function ToggleSwitch({ defaultOn }) {
-  const [on, setOn] = useState(!!defaultOn);
+function ToggleSwitch({ on, onChange }) {
   return (
     <button
       type="button"
-      onClick={() => setOn((v) => !v)}
-      className={`w-12 h-7 rounded-full p-0.5 transition shrink-0 ${on ? "bg-accent" : "bg-gray-100 border border-gray-200"}`}
+      onClick={onChange}
+      className={`w-12 h-7 rounded-full p-0.5 transition shrink-0 cursor-pointer ${on ? "bg-accent" : "bg-gray-100 border border-gray-200"}`}
     >
       <span className={`block w-6 h-6 bg-white rounded-full shadow transition-transform ${on ? "translate-x-5" : "translate-x-0 border border-gray-200/50"}`} />
     </button>

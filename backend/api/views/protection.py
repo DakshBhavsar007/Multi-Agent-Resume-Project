@@ -230,6 +230,18 @@ def scan_portfolio(request):
                 portfolios=portfolios
             )
 
+            if request.company and (status_str.lower().startswith("suspicious") or originality < 70 or plagiarism > 30):
+                comp_settings = getattr(request.company, 'notification_settings', {}) or {}
+                if comp_settings.get("fraud_alerts", True):
+                    from api.models import Notification
+                    Notification.objects.create(
+                        company=request.company,
+                        type="general",
+                        title=f"🚨 Fraud Alert: {candidate_name}",
+                        message=f"Suspicious resume flagged for {candidate_name} ({candidate_role}). Originality: {originality}%, Plagiarism: {plagiarism}%.",
+                        link=f"/dashboard/protection"
+                    )
+
         detailed_checks = log.detailed_checks or {}
         risk_level = detailed_checks.get("risk_level")
         if not risk_level:
