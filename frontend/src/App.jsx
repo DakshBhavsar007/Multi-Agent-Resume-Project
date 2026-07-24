@@ -46,6 +46,7 @@ const JobSeekerSafetyPage = lazy(() => import('./pages/JobSeekerSafetyPage'));
 const ResumeBuilderLanding = lazy(() => import('./pages/user/ResumeBuilderLanding'));
 const ResumeEditor = lazy(() => import('./pages/user/ResumeEditor'));
 const MockInterviewPage = lazy(() => import('./pages/user/MockInterviewPage'));
+const SeekerPublicProfile = lazy(() => import('./pages/user/SeekerPublicProfile'));
 
 
 // Developer Portal imports
@@ -250,6 +251,7 @@ export default function App() {
           <Route path="/jobs/companies/:companyId" element={<UserCompanyDetail />} />
           <Route path="/jobs/following" element={<UserFollowedCompanies />} />
           <Route path="/jobs/profile" element={<UserProfile />} />
+          <Route path="/jobs/profile/:seekerId" element={<SeekerPublicProfile />} />
           <Route path="/jobs/dashboard" element={<UserDashboard />} />
           <Route path="/jobs/upload-resume" element={<UserUploadResume />} />
           <Route path="/jobs/apply/:jobId" element={<UserApply />} />

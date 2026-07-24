@@ -29,6 +29,7 @@ from api.views import (
     ml_views,
     verification,
     admin_views,
+    reviews,
 )
 from api.views.developer import (
     auth as dev_auth,
@@ -242,8 +243,11 @@ urlpatterns = [
     path('api/v1/health', companies.health_check, name='api-v1-health'),
     path('api/v1/public/companies', companies.public_list_companies, name='public-companies-list'),
     path('api/v1/public/companies/<str:company_id>', companies.public_get_company, name='public-companies-detail'),
+    path('api/v1/public/companies/<str:company_id>/reviews', reviews.public_company_reviews, name='public-company-reviews'),
     path('api/v1/public/market-trends', companies.public_market_trends, name='public-market-trends'),
     path('api/v1/public/parse-resume', parse.public_parse_resume, name='public-parse-resume'),
+    path('api/v1/public/reviews', reviews.public_list_reviews, name='public-reviews-list'),
+    path('api/v1/public/seekers/<str:seeker_id>/profile', reviews.public_seeker_profile, name='public-seeker-profile'),
 
     # ── Job Seeker Companies ──────────────────────────────────────────────────
     path('api/v1/seeker/companies', companies.seeker_list_companies, name='seeker-companies-list'),
@@ -271,6 +275,11 @@ urlpatterns = [
     path('api/v1/seeker/billing/verify-payment', seeker_billing.verify_payment, name='seeker-billing-verify'),
     path('api/v1/seeker/billing/current', seeker_billing.current_subscription, name='seeker-billing-current'),
     path('api/v1/seeker/billing/cancel', seeker_billing.cancel_subscription, name='seeker-billing-cancel'),
+
+    # ── Seeker Reviews & Testimonials ─────────────────────────────────────────
+    path('api/v1/seeker/reviews', reviews.seeker_reviews_root, name='seeker-reviews-root'),
+    path('api/v1/seeker/reviews/mine', reviews.seeker_my_reviews, name='seeker-reviews-mine'),
+    path('api/v1/seeker/reviews/<str:review_id>', reviews.seeker_review_detail, name='seeker-review-detail'),
 
     # ── Assessment Rounds ──
     # Company side

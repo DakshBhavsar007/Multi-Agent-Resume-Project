@@ -555,6 +555,12 @@ export const seekerAPI = {
     fd.append("audio", audioBlob, "audio.webm");
     return seekerReq("POST", "/api/v1/seeker/mock-interview/transcribe-audio", fd, true);
   },
+
+  // Reviews & Testimonials
+  createReview: (b) => seekerReq('POST', '/api/v1/seeker/reviews', b),
+  updateReview: (id, b) => seekerReq('PATCH', `/api/v1/seeker/reviews/${id}`, b),
+  deleteReview: (id) => seekerReq('DELETE', `/api/v1/seeker/reviews/${id}`),
+  getMyReviews: () => seekerReq('GET', '/api/v1/seeker/reviews/mine'),
 };
 
 // ── PUBLIC API (no auth required) ──────────────────────────────────────────────
@@ -596,6 +602,11 @@ export const publicAPI = {
         return data.data;
       });
   },
+
+  // Reviews & Testimonials
+  listReviews: () => publicReq('GET', '/api/v1/public/reviews'),
+  getCompanyReviews: (id) => publicReq('GET', `/api/v1/public/companies/${id}/reviews`),
+  getSeekerProfile: (id) => publicReq('GET', `/api/v1/public/seekers/${id}/profile`),
 };
 
 export const roundsAPI = {

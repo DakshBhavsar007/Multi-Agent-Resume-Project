@@ -5,14 +5,35 @@ import { CompanyLogo } from "../../components/user/company-logo";
 import { publicAPI, seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import VerifiedBadge from "../../components/VerifiedBadge";
-import { ArrowLeft, MapPin, Users, Users2, Calendar, Star, Globe, Bell, UserCheck } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Users2, Calendar, Star, Globe, Bell, UserCheck, Pen, Trash2, MessageSquareQuote } from "lucide-react";
 import toast from "react-hot-toast";
+import WriteReviewModal from "../../components/WriteReviewModal";
 
 export default function UserCompanyDetail() {
   const { companyId } = useParams();
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
+
+  // Review states
+  const [reviews, setReviews] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
+
+  const hasSeekerToken = !!localStorage.getItem("vish_seeker_token");
+  const seekerData = (() => {
+    try { return JSON.parse(localStorage.getItem('vish_seeker_data') || 'null'); } catch { return null; }
+  })();
+  const isVerified = !!(seekerData?.email_verified && seekerData?.phone_verified);
+
+  useEffect(() => {
+    if (!companyId) return;
+    publicAPI.getCompanyReviews(companyId)
+      .then((data) => {
+        setReviews(data.reviews || []);
+      })
+      .catch((err) => console.error("Failed to load company reviews", err));
+  }, [companyId]);
 
   useEffect(() => {
     if (!companyId) return;
@@ -239,6 +260,126 @@ export default function UserCompanyDetail() {
                 )}
               </div>
             </div>
+
+            {/* Company Reviews Card */}
+            <div className="rounded-[2rem] border border-border bg-card p-8">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h2 className="font-display text-xl font-semibold tracking-tight">Company Reviews ({company.review_count || reviews.length})</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Average rating: {company.rating} / 5</p>
+                </div>
+                {hasSeekerToken && (
+                  <button
+                    onClick={() => {
+                      if (!isVerified) {
+                        toast.error('Verify your email and phone to write reviews');
+                        return;
+                      }
+                      setEditingReview(null);
+                      setShowReviewModal(true);
+                    }}
+                    className={`pill inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors ${
+                      isVerified
+                        ? 'bg-primary text-primary-foreground hover:opacity-90'
+                        : 'bg-muted text-muted-foreground cursor-not-allowed'
+                    }`}
+                    title={!isVerified ? 'Verify your email and phone to write reviews' : 'Review this company'}
+                  >
+                    <MessageSquareQuote className="h-3.5 w-3.5" /> Rate & Review
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {reviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">No reviews for {company.name} yet. Be the first to share your experience!</p>
+                ) : (
+                  reviews.map((r) => (
+                    <div key={r.id} className="p-4 rounded-2xl border border-border bg-background relative group">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-3.5 w-3.5 ${
+                                star <= r.rating ? 'fill-[var(--google-yellow)] text-[var(--google-yellow)]' : 'text-muted-foreground/30'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[11px] text-muted-foreground">
+                          {new Date(r.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">"{r.text}"</p>
+                      
+                      {/* Author Info */}
+                      <div className="mt-3 flex items-center justify-between pt-3 border-t border-border/50">
+                        {r.author?.id ? (
+                          <Link to={`/jobs/profile/${r.author.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                            {r.author.avatar_path ? (
+                              <img src={r.author.avatar_path} alt={r.author.full_name} className="h-7 w-7 rounded-full object-cover" />
+                            ) : (
+                              <div className="h-7 w-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold">
+                                {r.author.full_name?.charAt(0)}
+                              </div>
+                            )}
+                            <div>
+                              <div className="text-xs font-semibold flex items-center gap-0.5">
+                                {r.author.full_name}
+                                {r.author.is_verified && <VerifiedBadge size={13} />}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">{r.author.headline || 'Verified Job Seeker'}</div>
+                            </div>
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="h-7 w-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold">
+                              {r.author?.full_name?.charAt(0) || 'U'}
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold flex items-center gap-0.5">
+                                {r.author?.full_name}
+                                {r.author?.is_verified && <VerifiedBadge size={13} />}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">{r.author?.headline || 'Verified Job Seeker'}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Owner edit/delete */}
+                        {r.is_own && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => { setEditingReview(r); setShowReviewModal(true); }}
+                              className="p-1 rounded bg-muted hover:bg-muted-foreground/10 text-muted-foreground"
+                              title="Edit review"
+                            >
+                              <Pen className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await seekerAPI.deleteReview(r.id);
+                                  setReviews(prev => prev.filter(x => x.id !== r.id));
+                                  toast.success('Review deleted');
+                                } catch (err) {
+                                  toast.error(err.message || 'Failed to delete review');
+                                }
+                              }}
+                              className="p-1 rounded bg-muted hover:bg-red-100 text-red-500"
+                              title="Delete review"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
 
           <aside className="space-y-4">
@@ -251,6 +392,7 @@ export default function UserCompanyDetail() {
                   ["HQ", company.location],
                   ["Founded", String(company.founded)],
                   ["Open roles", String(company.openings)],
+                  ["Rating", `${company.rating} ★ (${company.review_count || reviews.length} reviews)`],
                 ].map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between">
                     <dt className="text-muted-foreground">{k}</dt>
@@ -262,6 +404,26 @@ export default function UserCompanyDetail() {
           </aside>
         </div>
       </section>
+
+      {showReviewModal && (
+        <WriteReviewModal
+          isOpen={showReviewModal}
+          onClose={() => { setShowReviewModal(false); setEditingReview(null); }}
+          companyId={company.id}
+          companyName={company.name}
+          editingReview={editingReview}
+          onSubmit={(rev) => {
+            if (editingReview) {
+              setReviews(prev => prev.map(x => x.id === rev.id ? rev : x));
+            } else {
+              setReviews(prev => [rev, ...prev]);
+            }
+            setShowReviewModal(false);
+            setEditingReview(null);
+          }}
+        />
+      )}
+
       <Footer />
     </div>
   );

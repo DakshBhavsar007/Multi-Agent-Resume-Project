@@ -2,9 +2,10 @@ import json
 import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from api.models import Company, Session, JobApplication, Notification, JobSeekerAccount
+from api.models import Company, Session, JobApplication, Notification, JobSeekerAccount, Review
 from api.views.seeker_auth import require_seeker_jwt
 from models.schemas import success_response, error_response
+from django.db.models import Avg, Count
 
 def _serialize_company(company, is_following=False, active_sessions=None, followers_count=None):
     # Get active job sessions for this company
@@ -39,6 +40,13 @@ def _serialize_company(company, is_following=False, active_sessions=None, follow
                     if isinstance(followed, list) and cid_str in followed:
                         followers_count += 1
         
+    # Dynamic rating from reviews
+    reviews_agg = Review.objects.filter(company=company).aggregate(
+        avg_rating=Avg("rating"), review_count=Count("id")
+    )
+    dynamic_rating = round(reviews_agg["avg_rating"], 1) if reviews_agg["avg_rating"] else (company.rating or 4.5)
+    review_count = reviews_agg["review_count"] or 0
+
     return {
         "id": str(company.id),
         "name": company.name,
@@ -46,7 +54,8 @@ def _serialize_company(company, is_following=False, active_sessions=None, follow
         "industry": company.industry or "Technology",
         "hq_location": company.hq_location or "Remote",
         "about": company.about or "This company has not provided an overview yet.",
-        "rating": company.rating or 4.5,
+        "rating": dynamic_rating,
+        "review_count": review_count,
         "company_size": company.company_size or "50-200",
         "founded_year": company.founded_year or 2020,
         "website_url": company.website_url or "https://example.com",

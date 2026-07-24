@@ -4,18 +4,21 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Search, MapPin, ArrowRight, Briefcase, Sparkles, FileUp, CheckCircle2, Star,
   Code2, Palette, LineChart, Megaphone, HeartPulse, Wrench, GraduationCap, Building2,
-  ShieldCheck, Zap, Quote,
+  ShieldCheck, Zap, Quote, Pen, Trash2, X, MessageSquareQuote, Loader2,
 } from "lucide-react";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { jobs, companies } from "../../lib/data";
-import { publicAPI } from "../../lib/api";
+import { publicAPI, seekerAPI } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
+import VerifiedBadge from "../../components/VerifiedBadge";
+import WriteReviewModal from "../../components/WriteReviewModal";
 import spotResume from "../../assets/spot-resume.png";
 import spotDashboard from "../../assets/spot-dashboard.png";
 import { ScrollingAnimation } from "../../components/user/ui/scrolling-animation";
 import heroBg from "../../assets/hero-bg.png";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import toast from "react-hot-toast";
 
 const categories = [
   { i: Code2, t: "Engineering", n: "2,840", c: "var(--google-blue)" },
@@ -87,6 +90,15 @@ function Home() {
 
   const [realJobs, setRealJobs] = useState([]);
   const [realCompanies, setRealCompanies] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState({ avg_rating: 0, total_reviews: 0 });
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
+  const seekerData = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('vish_seeker_data') || 'null'); } catch { return null; }
+  }, []);
+  const hasSeekerToken = !!localStorage.getItem('vish_seeker_token');
+  const isVerified = !!(seekerData?.email_verified && seekerData?.phone_verified);
 
   useEffect(() => {
     Promise.all([
@@ -666,7 +678,7 @@ function Home() {
 
       <ScrollingAnimation />
 
-      {/* Testimonials */}
+      {/* Testimonials — Dynamic */}
       <motion.section
         className="mx-auto max-w-7xl px-6 py-14"
         initial="hidden"
@@ -674,32 +686,129 @@ function Home() {
         viewport={{ once: true, margin: "-80px" }}
         variants={staggerContainerVariants}
       >
-        <motion.div variants={fadeInUpVariants} className="text-center">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-[var(--google-yellow)]">Stories</div>
-          <h2 className="mt-1.5 font-display text-2xl font-semibold tracking-tight sm:text-3xl">Loved by 120,000+ professionals</h2>
+        <motion.div variants={fadeInUpVariants} className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-[var(--google-yellow)]">Stories</div>
+            <h2 className="mt-1.5 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              Loved by {reviewStats.total_reviews > 0 ? `${reviewStats.total_reviews.toLocaleString()}+` : '120,000+'} professionals
+            </h2>
+            {reviewStats.avg_rating > 0 && (
+              <div className="mt-1 flex items-center gap-1.5 justify-center sm:justify-start">
+                <div className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(reviewStats.avg_rating) ? 'fill-[var(--google-yellow)] text-[var(--google-yellow)]' : 'text-muted-foreground/30'}`} />
+                  ))}
+                </div>
+                <span className="text-xs font-semibold text-muted-foreground">{reviewStats.avg_rating} avg</span>
+              </div>
+            )}
+          </div>
+          {hasSeekerToken && (
+            <button
+              onClick={() => {
+                if (!isVerified) {
+                  toast.error('Verify your email and phone to write reviews');
+                  return;
+                }
+                setEditingReview(null);
+                setShowReviewModal(true);
+              }}
+              className={`pill inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors ${
+                isVerified
+                  ? 'bg-primary text-primary-foreground hover:opacity-90'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+              title={!isVerified ? 'Verify your email and phone to write reviews' : 'Write a review'}
+            >
+              <MessageSquareQuote className="h-3.5 w-3.5" /> Write a Review
+            </button>
+          )}
         </motion.div>
         <div className="mt-8 grid gap-3 md:grid-cols-3">
-          {[
-            { q: "Between turned weeks of search into days. The match score was uncannily accurate.", n: "Maya R.", r: "Product Designer, Vela", c: "var(--google-blue)" },
-            { q: "Loved the calm pipeline view. I always knew where every application stood.", n: "Daniel O.", r: "Staff Engineer, Northwind", c: "var(--google-green)" },
-            { q: "Salary transparency made negotiation actually fair. Got 22% above my last role.", n: "Priya K.", r: "PM, Atlas Pay", c: "var(--google-red)" },
-          ].map((t) => (
-            <motion.figure key={t.n} variants={staggerItemVariants} className="rounded-2xl border border-border bg-card p-5">
-              <Quote className="h-5 w-5" style={{ color: t.c }} />
-              <blockquote className="mt-2 text-sm leading-relaxed text-foreground">"{t.q}"</blockquote>
-              <figcaption className="mt-4 flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-full text-xs font-semibold text-white" style={{ background: t.c }}>
-                  {t.n.charAt(0)}
+          {(reviews.length > 0 ? reviews.slice(0, 6) : [
+            { id: 'f1', text: "Between turned weeks of search into days. The match score was uncannily accurate.", rating: 5, author: { full_name: "Maya R.", headline: "Product Designer", is_verified: true }, _color: "var(--google-blue)" },
+            { id: 'f2', text: "Loved the calm pipeline view. I always knew where every application stood.", rating: 5, author: { full_name: "Daniel O.", headline: "Staff Engineer", is_verified: true }, _color: "var(--google-green)" },
+            { id: 'f3', text: "Salary transparency made negotiation actually fair. Got 22% above my last role.", rating: 5, author: { full_name: "Priya K.", headline: "Product Manager", is_verified: true }, _color: "var(--google-red)" },
+          ]).map((t, idx) => {
+            const accentColors = ["var(--google-blue)", "var(--google-green)", "var(--google-red)", "var(--google-yellow)"];
+            const c = t._color || accentColors[idx % accentColors.length];
+            return (
+              <motion.figure key={t.id} variants={staggerItemVariants} className="rounded-2xl border border-border bg-card p-5 relative group">
+                <div className="flex items-center justify-between">
+                  <Quote className="h-5 w-5" style={{ color: c }} />
+                  <div className="flex items-center gap-0.5">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} className={`h-3 w-3 ${s <= t.rating ? 'fill-[var(--google-yellow)] text-[var(--google-yellow)]' : 'text-muted-foreground/30'}`} />
+                    ))}
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold">{t.n}</div>
-                  <div className="text-[11px] text-muted-foreground">{t.r}</div>
-                </div>
-              </figcaption>
-            </motion.figure>
-          ))}
+                <blockquote className="mt-2 text-sm leading-relaxed text-foreground">"{t.text}"</blockquote>
+                <figcaption className="mt-4 flex items-center gap-3">
+                  {t.author?.id ? (
+                    <Link to={`/jobs/profile/${t.author.id}`} className="flex items-center gap-3 group/author hover:opacity-80 transition-opacity">
+                      {t.author.avatar_path ? (
+                        <img src={t.author.avatar_path} alt={t.author.full_name} className="h-9 w-9 rounded-full object-cover" />
+                      ) : (
+                        <div className="grid h-9 w-9 place-items-center rounded-full text-xs font-semibold text-white" style={{ background: c }}>
+                          {t.author.full_name?.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold flex items-center gap-0.5">
+                          {t.author.full_name}
+                          {t.author.is_verified && <VerifiedBadge size={14} />}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">{t.author.headline}</div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <>
+                      <div className="grid h-9 w-9 place-items-center rounded-full text-xs font-semibold text-white" style={{ background: c }}>
+                        {t.author?.full_name?.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold flex items-center gap-0.5">
+                          {t.author?.full_name}
+                          {t.author?.is_verified && <VerifiedBadge size={14} />}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">{t.author?.headline}</div>
+                      </div>
+                    </>
+                  )}
+                </figcaption>
+                {/* Edit/Delete for own reviews */}
+                {t.is_own && (
+                  <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => { setEditingReview(t); setShowReviewModal(true); }}
+                      className="p-1.5 rounded-lg bg-muted hover:bg-muted-foreground/10 transition-colors"
+                      title="Edit review"
+                    >
+                      <Pen className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteReview(t.id)}
+                      className="p-1.5 rounded-lg bg-muted hover:bg-red-100 transition-colors"
+                      title="Delete review"
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </button>
+                  </div>
+                )}
+              </motion.figure>
+            );
+          })}
         </div>
       </motion.section>
+
+      {/* Write Review Modal */}
+      {showReviewModal && (
+        <WriteReviewModal
+          onClose={() => { setShowReviewModal(false); setEditingReview(null); }}
+          onSubmit={handleReviewSubmitted}
+          editingReview={editingReview}
+        />
+      )}
 
       {/* For employers + Seekers split */}
       <motion.section

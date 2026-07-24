@@ -621,6 +621,32 @@ class SupportTicket(models.Model):
         db_table = "support_tickets"
 
 
+
+class Review(models.Model):
+    """
+    Dynamic review / testimonial by a verified job seeker.
+    company=NULL  → platform-level testimonial (homepage).
+    company=<FK>  → company-specific review (company detail page).
+    """
+    id          = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seeker      = models.ForeignKey(JobSeekerAccount, on_delete=models.CASCADE, related_name="reviews")
+    company     = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True, related_name="reviews")
+    rating      = models.IntegerField(default=5)   # 1-5 stars
+    text        = models.TextField()
+    is_featured = models.BooleanField(default=False)
+    created_at  = models.DateTimeField(default=timezone.now)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "reviews"
+        ordering = ["-created_at"]
+        unique_together = [("seeker", "company")]
+
+    def __str__(self):
+        target = self.company.name if self.company else "Platform"
+        return f"{self.seeker.full_name} → {target} ({self.rating} stars)"
+
+
 class AdminBanLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     admin_email = models.CharField(max_length=255)
