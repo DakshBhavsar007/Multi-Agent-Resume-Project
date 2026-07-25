@@ -404,7 +404,7 @@ function Home() {
               <span>Find work that</span>
               <FlipFadeText 
                 words={["fits", "empowers", "matches", "elevates", "deserves"]} 
-                className="gradient-text font-bold text-blue-600 dark:text-blue-400" 
+                className="gradient-text font-bold" 
               />
               <span>you — not the other way around.</span>
             </motion.h1>

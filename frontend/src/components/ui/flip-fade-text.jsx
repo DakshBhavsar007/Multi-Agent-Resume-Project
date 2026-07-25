@@ -37,15 +37,15 @@ export function FlipFadeText({
   const currentWord = words[index] || "";
 
   return (
-    <span className={`relative inline-flex overflow-hidden perspective-[1000px] align-baseline ${className}`}>
+    <span className="relative inline-flex overflow-hidden perspective-[1000px] align-baseline">
       <AnimatePresence mode="wait">
         <motion.span
           key={currentWord}
           initial={{ opacity: 0, rotateX: -90, filter: 'blur(6px)', y: 16 }}
           animate={{ opacity: 1, rotateX: 0, filter: 'blur(0px)', y: 0 }}
-          exit={{ opacity: 0, rotateX: 90, filter: 'blur(6px)', y: -16 }}
+          exit={{ opacity: 0, rotateX: 90, filter: 'blur(6px)', y:-16 }}
           transition={{ duration, ease: [0.21, 0.45, 0.32, 0.9] }}
-          className="inline-block transform-gpu origin-center"
+          className={`inline-block transform-gpu origin-center ${className}`}
         >
           {currentWord}
         </motion.span>
