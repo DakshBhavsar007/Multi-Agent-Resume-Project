@@ -190,7 +190,7 @@ const Testimonials = () => {
   const isLoggedIn = isRecruiter || isDeveloper || isSeeker;
   const userRole = isRecruiter ? 'recruiter' : isDeveloper ? 'developer' : 'job_seeker';
 
-  const loadReviews = () => {
+  const loadReviews = (retryCount = 0) => {
     publicAPI.listReviews()
       .then((data) => {
         if (data.stats) {
@@ -226,7 +226,12 @@ const Testimonials = () => {
           setItems([]);
         }
       })
-      .catch((err) => console.error("Failed to load public reviews on landing page:", err));
+      .catch((err) => {
+        console.warn("Public reviews fetch failed (server restarting?), retrying in 3s...", err);
+        if (retryCount < 3) {
+          setTimeout(() => loadReviews(retryCount + 1), 3000);
+        }
+      });
   };
 
   useEffect(() => {
