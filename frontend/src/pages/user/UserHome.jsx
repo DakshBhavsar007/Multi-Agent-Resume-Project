@@ -4,8 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Search, MapPin, ArrowRight, Briefcase, Sparkles, FileUp, CheckCircle2, Star,
   Code2, Palette, LineChart, Megaphone, HeartPulse, Wrench, GraduationCap, Building2,
-  ShieldCheck, Zap, Quote, Pen, Trash2, X, MessageSquareQuote, Loader2,
+  ShieldCheck, Zap, Quote, Pen, Trash2, X, MessageSquareQuote, Loader2, Target, FileCheck2, BarChart3
 } from "lucide-react";
+import ExpandableBentoGrid from "../../components/ExpandableBentoGrid";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { jobs, companies } from "../../lib/data";
@@ -19,6 +20,144 @@ import { ScrollingAnimation } from "../../components/user/ui/scrolling-animation
 import heroBg from "../../assets/hero-bg.png";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
+
+const bentoCapabilities = [
+  {
+    id: "ai-parser",
+    title: "AI Resume Parsing",
+    subtitle: "Multi-agent skill & profile extraction",
+    description: "Extract skills, work history, education, and domain proficiency in milliseconds using LLM-powered analysis.",
+    tag: "CORE AI",
+    color: "#2563eb",
+    icon: <Sparkles className="h-6 w-6" />,
+    link: "/jobs/register",
+    content: (
+      <div className="space-y-3">
+        <h4 className="font-bold text-sm text-charcoal dark:text-white">Multi-Agent Resume Intelligence</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Our specialized AI agent extracts deep structure from unformatted PDF, DOCX, and TXT resumes. It normalizes skills into standardized taxonomies and maps candidate proficiency.
+        </p>
+        <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+          <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <span className="font-extrabold text-blue-600 dark:text-blue-400 block mb-0.5">Speed</span>
+            <span>Sub-second parsing response</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 block mb-0.5">Accuracy</span>
+            <span>98.4% skill extraction rate</span>
+          </div>
+        </div>
+      </div>
+    )
+  },
+  {
+    id: "rank-match",
+    title: "Rank & Semantic Match",
+    subtitle: "Weighted requirement scoring",
+    description: "Semantic scoring maps candidate skills against job requirements with configurable weights and real-time rank ordering.",
+    tag: "MATCHING",
+    color: "#10b981",
+    icon: <Target className="h-6 w-6" />,
+    link: "/jobs/search",
+    content: (
+      <div className="space-y-3">
+        <h4 className="font-bold text-sm text-charcoal dark:text-white">Smart Match Algorithm</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Recruiters can customize scoring weights for mandatory skills, preferred experience, education level, and compensation compatibility.
+        </p>
+        <ul className="space-y-1.5 text-xs text-muted-foreground list-disc pl-4">
+          <li>Custom weighting matrix for technical and soft skills</li>
+          <li>Instant candidate score breakdown out of 100</li>
+          <li>Automated candidate shortlist recommendation</li>
+        </ul>
+      </div>
+    )
+  },
+  {
+    id: "fraud-protection",
+    title: "AI Fraud Protection",
+    subtitle: "Plagiarism & fake resume scanner",
+    description: "AI-powered scanning detects plagiarism, fake experience, ATS keyword stuffing, and suspicious domain patterns.",
+    tag: "SECURITY",
+    color: "#ef4444",
+    icon: <ShieldCheck className="h-6 w-6" />,
+    link: "/jobs/dashboard",
+    content: (
+      <div className="space-y-3">
+        <h4 className="font-bold text-sm text-charcoal dark:text-white">Active Protection Shield</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Protects both recruiters from fraudulent candidate applications and job seekers from phishing or spam recruiter listings.
+        </p>
+        <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs space-y-1 text-red-700 dark:text-red-300 font-medium">
+          <div>✓ Cross-checked against known fake experience templates</div>
+          <div>✓ ATS keyword stuffing penalty detection</div>
+          <div>✓ Recruiter email domain verification</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    id: "developer-portal",
+    title: "Developer REST API",
+    subtitle: "Tiered API keys & webhooks",
+    description: "Complete REST API infrastructure with API keys, usage metering, webhook notifications, and live playground.",
+    tag: "API & DEV",
+    color: "#8b5cf6",
+    icon: <Code2 className="h-6 w-6" />,
+    link: "/developer/portal",
+    content: (
+      <div className="space-y-3">
+        <h4 className="font-bold text-sm text-charcoal dark:text-white">Developer Integrations</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Integrate AI resume parsing, candidate scoring, and job posting widgets directly into your HR tech stack or custom career portal.
+        </p>
+        <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs font-mono text-purple-700 dark:text-purple-300">
+          POST /api/v1/parse -H "X-API-Key: vish_pub_xxx"
+        </div>
+      </div>
+    )
+  },
+  {
+    id: "resume-builder",
+    title: "Dynamic Resume Builder",
+    subtitle: "7 modern ATS templates",
+    description: "Build ATS-optimized resumes with 7 dynamic templates, live page split previews, ATS score verifier, and PDF export.",
+    tag: "PRO BUILDER",
+    color: "#f59e0b",
+    icon: <FileCheck2 className="h-6 w-6" />,
+    link: "/jobs/resume-builder",
+    content: (
+      <div className="space-y-3">
+        <h4 className="font-bold text-sm text-charcoal dark:text-white">ATS-Optimized Resumes</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Create professional resumes in minutes with real-time ATS scoring, custom section ordering, 1/2 column layouts, and high-res PDF generation.
+        </p>
+        <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 font-semibold text-amber-700 dark:text-amber-300">7 Executive Templates</div>
+          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 font-semibold text-amber-700 dark:text-amber-300">Live ATS Score Check</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    id: "market-analytics",
+    title: "Market Trends & Insights",
+    subtitle: "Real-time hiring data & salaries",
+    description: "Explore market trends, high-growth technical skills, regional salary distributions, and hiring velocity metrics.",
+    tag: "INSIGHTS",
+    color: "#06b6d4",
+    icon: <BarChart3 className="h-6 w-6" />,
+    link: "/jobs/trends",
+    content: (
+      <div className="space-y-3">
+        <h4 className="font-bold text-sm text-charcoal dark:text-white">Real-Time Industry Intelligence</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Track salary growth trends across tech roles, top remote engineering hubs, and demand growth indices for emerging AI skills.
+        </p>
+      </div>
+    )
+  }
+];
 
 const categories = [
   { i: Code2, t: "Engineering", n: "2,840", c: "var(--google-blue)" },
@@ -624,6 +763,31 @@ function Home() {
             </div>
           </div>
         </div>
+      </motion.section>
+
+      {/* Platform Capabilities (Expandable Bento Grid) */}
+      <motion.section
+        className="mx-auto max-w-7xl px-6 py-12 border-t border-border/40"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        variants={staggerContainerVariants}
+      >
+        <motion.div variants={fadeInUpVariants} className="text-center max-w-2xl mx-auto mb-10">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-[var(--google-blue)]">
+            Platform Capabilities
+          </div>
+          <h2 className="mt-1.5 font-display text-2xl font-bold tracking-tight sm:text-3xl text-charcoal dark:text-white">
+            Built for candidates, recruiters & developers
+          </h2>
+          <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
+            Click on any card to expand full workflow details, metrics & live API endpoints.
+          </p>
+        </motion.div>
+
+        <motion.div variants={fadeInUpVariants}>
+          <ExpandableBentoGrid items={bentoCapabilities} />
+        </motion.div>
       </motion.section>
 
       {/* Top companies */}
