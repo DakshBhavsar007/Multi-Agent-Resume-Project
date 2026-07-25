@@ -523,7 +523,7 @@ export default function MyResumePage() {
                   </div>
 
                   <div style={{ fontSize:'12px', color:'#6b7280', lineHeight:1.6 }}>
-                    <span style={{ fontWeight:700, color:'#111', display:'block', marginBottom:'4px' }}>✓ Action Bullet Points Written</span>
+                    <span style={{ fontWeight:700, color:'#111', display:'block', marginBottom:'4px' }}>Action Bullet Points Written</span>
                     Experience segments rewritten using metrics, action verbs, and optimized formatting parameters.
                   </div>
                 </div>

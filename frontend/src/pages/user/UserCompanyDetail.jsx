@@ -392,7 +392,7 @@ export default function UserCompanyDetail() {
                   ["HQ", company.location],
                   ["Founded", String(company.founded)],
                   ["Open roles", String(company.openings)],
-                  ["Rating", `${company.rating} ★ (${company.review_count || reviews.length} reviews)`],
+                  ["Rating", `${company.rating} / 5 (${company.review_count || reviews.length} reviews)`],
                 ].map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between">
                     <dt className="text-muted-foreground">{k}</dt>

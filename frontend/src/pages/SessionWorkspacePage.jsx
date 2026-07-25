@@ -807,7 +807,7 @@ export default function SessionWorkspacePage() {
                     <div className="flex flex-col sm:flex-row gap-4 items-stretch h-32" {...getAtsProps()}>
                       <div className={`border-2 border-dashed rounded-xl flex-1 flex flex-col items-center justify-center cursor-pointer transition-colors ${atsFile ? 'border-accent bg-blue-50' : 'border-gray-300 bg-gray-50/50 hover:bg-gray-50'}`}>
                         <input {...getAtsInput()} />
-                        <span className="text-2xl mb-2">📄</span>
+                        <FileText className="text-accent mb-2" size={28} />
                         <span className="text-sm text-gray-500 font-bold">{atsFile ? atsFile.name : 'Drop CSV / Excel file here'}</span>
                       </div>
                       <div className="flex flex-col justify-center gap-3 min-w-[200px]">
