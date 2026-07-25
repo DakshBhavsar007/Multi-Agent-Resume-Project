@@ -78,7 +78,35 @@ const DefaultIcons = {
 export const DEFAULT_ORBITS = [
   {
     id: "inner",
-    name: "Inner Ring",
+    name: "Core Intelligence",
+    radiusClass: "var(--radius-inner)",
+    radiusPx: 175,
+    speed: 22,
+    items: [
+      { id: "parser", label: "Parsing Agent", color: "#3B82F6", svg: <FileCode2 className="w-5 h-5 text-blue-400" /> },
+      { id: "matcher", label: "Semantic Matcher", color: "#10B981", svg: <Sparkles className="w-5 h-5 text-emerald-400" /> },
+      { id: "fraud", label: "Fraud Detector", color: "#EF4444", svg: <Shield className="w-5 h-5 text-red-400" /> },
+    ],
+  },
+  {
+    id: "mid",
+    name: "Scoring & Analysis",
+    radiusClass: "var(--radius-mid)",
+    radiusPx: 285,
+    speed: 34,
+    items: [
+      { id: "ats", label: "ATS Scorer", color: "#8B5CF6", svg: <Zap className="w-5 h-5 text-purple-400" /> },
+      { id: "skill", label: "Skill Extraction", color: "#F59E0B", svg: <Bot className="w-5 h-5 text-amber-400" /> },
+      { id: "ranking", label: "Realtime Ranking", color: "#06B6D4", svg: <Cpu className="w-5 h-5 text-cyan-400" /> },
+      { id: "interview", label: "Interview AI", color: "#EC4899", svg: <Globe className="w-5 h-5 text-pink-400" /> },
+    ],
+  },
+];
+
+export const TECH_STACK_ORBITS = [
+  {
+    id: "inner",
+    name: "Frontend SDKs",
     radiusClass: "var(--radius-inner)",
     radiusPx: 175,
     speed: 20,
@@ -91,7 +119,7 @@ export const DEFAULT_ORBITS = [
   },
   {
     id: "mid",
-    name: "Middle Ring",
+    name: "AI & Backend",
     radiusClass: "var(--radius-mid)",
     radiusPx: 285,
     speed: 32,
@@ -102,7 +130,7 @@ export const DEFAULT_ORBITS = [
   },
   {
     id: "outer",
-    name: "Outer Ring",
+    name: "Infrastructure",
     radiusClass: "var(--radius-outer)",
     radiusPx: 395,
     speed: 48,

@@ -15,7 +15,7 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Footer } from "../../components/user/site-chrome";
 import { DEVELOPER_PLANS } from "../../lib/plans";
-import SolarSystem from "../../components/SolarSystem";
+import SolarSystem, { TECH_STACK_ORBITS } from "../../components/SolarSystem";
 import FlipFadeText from "../../components/ui/flip-fade-text";
 
 export default function DeveloperLandingPage() {
@@ -464,6 +464,22 @@ const response = await fetch(
                </SyntaxHighlighter>
             </div>
          </div>
+      </section>
+
+      {/* DEVELOPER ECOSYSTEM SOLAR SYSTEM */}
+      <section className="py-20 border-t border-gray-100 dark:border-zinc-800/80 overflow-hidden">
+        <div className="text-center max-w-2xl mx-auto mb-8 px-6">
+          <span className="px-3.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
+            Developer Ecosystem & SDKs
+          </span>
+          <h2 className="text-3xl lg:text-4xl font-extrabold text-charcoal dark:text-white mt-3 tracking-tight">
+            Seamless multi-language integrations
+          </h2>
+          <p className="text-gray-500 dark:text-zinc-400 mt-2 text-sm">
+            Plug into Python AI pipelines, React SDKs, Node.js services, or raw REST endpoints with high-throughput response times.
+          </p>
+        </div>
+        <SolarSystem orbits={TECH_STACK_ORBITS} />
       </section>
 
       {/* DEVELOPER TESTIMONIALS */}
