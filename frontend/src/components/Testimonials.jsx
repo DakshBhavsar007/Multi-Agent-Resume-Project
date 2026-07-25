@@ -152,7 +152,7 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
                 <Pen size={14} />
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
+                onClick={(e) => { e.stopPropagation(); onDelete(t); }}
                 style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(248, 113, 113, 0.3)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 title="Delete review"
               >
@@ -229,11 +229,13 @@ const Testimonials = () => {
       .catch(() => {});
   }, []);
 
-  const handleDeleteReview = async (reviewId) => {
+  const handleDeleteReview = async (t) => {
     try {
-      if (isRecruiter) {
+      const reviewId = typeof t === "object" ? t.id : t;
+      const targetRole = typeof t === "object" ? t.user_type : (isRecruiter ? 'recruiter' : isDeveloper ? 'developer' : 'job_seeker');
+      if (targetRole === 'recruiter') {
         await recruiterAPI.deleteReview(reviewId);
-      } else if (isDeveloper) {
+      } else if (targetRole === 'developer') {
         await portalReviews.deleteReview(reviewId);
       } else {
         await seekerAPI.deleteReview(reviewId);
@@ -251,6 +253,7 @@ const Testimonials = () => {
       rating: t.rating,
       text: t.quote,
       company_id: t.rawReview?.company_id,
+      user_type: t.user_type,
     });
     setShowReviewModal(true);
   };
