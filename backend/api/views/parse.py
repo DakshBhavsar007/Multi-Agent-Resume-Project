@@ -141,6 +141,31 @@ def public_parse_resume(request):
         result = async_to_sync(parser.parse)(file_path, file_ext)
         parsed = result.get("parsed", {})
 
+        # Extract parsed fields safely
+        full_name = parsed.get("name") or parsed.get("full_name") or ""
+        email = parsed.get("email") or ""
+        phone = parsed.get("phone") or parsed.get("phone_number") or ""
+        location = parsed.get("location") or ""
+        headline = parsed.get("headline") or parsed.get("summary") or parsed.get("title") or ""
+
+        raw_skills = parsed.get("skills", [])
+        def flatten_skill(s):
+            if isinstance(s, str):
+                return s
+            if isinstance(s, dict):
+                return s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or s.get("name") or str(s)
+            return str(s)
+
+        raw_skills_flat = [flatten_skill(s) for s in raw_skills if s]
+
+        try:
+            norm_agent = SkillNormalizationAgent()
+            normalized_skills = async_to_sync(norm_agent.normalize)(raw_skills_flat)
+            normalized_skills = [flatten_skill(s) for s in normalized_skills if s]
+        except Exception as norm_err:
+            logger.warning("Skill normalization failed in public parse view: %s", norm_err)
+            normalized_skills = raw_skills_flat
+
         # Keep temp file in temp_resumes directory so it can be assigned to the user profile upon signup
         perm_temp_dir = os.path.join(UPLOAD_DIR, "temp_resumes")
         os.makedirs(perm_temp_dir, exist_ok=True)
