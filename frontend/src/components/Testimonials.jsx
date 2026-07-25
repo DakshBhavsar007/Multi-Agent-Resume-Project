@@ -169,6 +169,7 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
 
 const Testimonials = () => {
   const [items, setItems] = useState([]);
+  const [apiStats, setApiStats] = useState({ avg_rating: 5.0, total_reviews: 0 });
   const [filterTab, setFilterTab] = useState("all");
   const [companyNames, setCompanyNames] = useState([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -183,6 +184,9 @@ const Testimonials = () => {
   const loadReviews = () => {
     publicAPI.listReviews()
       .then((data) => {
+        if (data.stats) {
+          setApiStats(data.stats);
+        }
         if (data.reviews && data.reviews.length > 0) {
           const colors = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
           const sizes = ["large", "small", "medium", "medium", "large", "small"];
@@ -269,9 +273,21 @@ const Testimonials = () => {
     return true;
   });
 
+  const totalReviewsCount = items.length || apiStats.total_reviews || 0;
+
   const avgRating = items.length
     ? (items.reduce((acc, curr) => acc + (curr.rating || 5), 0) / items.length).toFixed(1)
-    : "4.9";
+    : (apiStats.avg_rating ? Number(apiStats.avg_rating).toFixed(1) : "5.0");
+
+  const highRatingCount = items.filter(t => (t.rating || 5) >= 4).length;
+  const recommendPct = items.length
+    ? Math.round((highRatingCount / items.length) * 100)
+    : 100;
+
+  const verifiedAuthorsCount = items.filter(t => t.isVerified).length;
+  const verifiedProfilesPct = items.length
+    ? Math.round((verifiedAuthorsCount / items.length) * 100)
+    : 100;
 
   const timeAgo = (dateStr) => {
     if (!dateStr) return "";
@@ -320,20 +336,20 @@ const Testimonials = () => {
             <span className="text-base font-black text-amber-500">{avgRating}</span>
             <div className="flex items-center gap-0.5">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} size={14} fill="#f59e0b" color="#f59e0b" />
+                <Star key={i} size={14} fill={i < Math.round(Number(avgRating)) ? "#f59e0b" : "transparent"} color="#f59e0b" opacity={i < Math.round(Number(avgRating)) ? 1 : 0.3} />
               ))}
             </div>
             <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 ml-1">
-              {items.length || 48} Verified Reviews
+              {totalReviewsCount} {totalReviewsCount === 1 ? 'Verified Review' : 'Verified Reviews'}
             </span>
           </div>
 
           <div className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <ThumbsUp size={14} /> 98% Recommend Between
+            <ThumbsUp size={14} /> {recommendPct}% Recommend Between
           </div>
 
           <div className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-            <ShieldCheck size={14} /> 100% Verified Profiles
+            <ShieldCheck size={14} /> {verifiedProfilesPct}% Verified Profiles
           </div>
         </div>
 
