@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STILLWATER — A Calm Home for Focused Work</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow: hidden; background-color: #f6f8f4; font-family: 'Inter', sans-serif; color: #16231b; -webkit-font-smoothing: antialiased; }
+    
+    .bg-video {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover; z-index: 0; pointer-events: none;
+    }
+    
+    .scrim {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, rgba(246,248,244,0.52) 0%, rgba(246,248,244,0) 72%),
+        linear-gradient(to bottom, rgba(246,248,244,0.66) 0%, rgba(246,248,244,0.06) 35%, rgba(246,248,244,0.06) 65%, rgba(246,248,244,0.58) 100%);
+    }
+    
+    .blur-mask {
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      mask-image: linear-gradient(to top, #000 0%, transparent 22%);
+      -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 22%);
+    }
+
+    .shell {
+      position: relative; z-index: 10; height: 100vh;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 28px 48px; position: relative;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 15px;
+      letter-spacing: 0.24em; color: #16231b; text-decoration: none;
+      animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 0s forwards;
+    }
+    .brand-dot {
+      width: 11px; height: 11px; border-radius: 50%; background-color: #2f5d43;
+      box-shadow: 0 0 0 4px rgba(47,93,67,.16);
+    }
+
+    .nav-links {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 32px; list-style: none;
+    }
+    .nav-links a {
+      font-size: 14px; font-weight: 500; color: rgba(22,35,27,.72);
+      text-decoration: none; transition: color 0.2s ease;
+    }
+    .nav-links a:hover { color: #16231b; }
+    .nav-links li:nth-child(1) { animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 90ms forwards; }
+    .nav-links li:nth-child(2) { animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 140ms forwards; }
+    .nav-links li:nth-child(3) { animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 190ms forwards; }
+    .nav-links li:nth-child(4) { animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 240ms forwards; }
+
+    .nav-actions { display: flex; align-items: center; gap: 24px; }
+    .nav-signin {
+      font-size: 14px; font-weight: 500; color: rgba(22,35,27,.72); text-decoration: none;
+      animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 290ms forwards;
+    }
+    .nav-signin:hover { color: #16231b; }
+
+    .btn-pill-sm {
+      font-family: 'Manrope', sans-serif; font-weight: 600; font-size: 13px;
+      padding: 9px 22px; border-radius: 100px; background-color: #2f5d43; color: #f2f6ef;
+      text-decoration: none; transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(47,93,67,.22), inset 0 1px 0 rgba(255,255,255,.2);
+      animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 340ms forwards;
+    }
+    .btn-pill-sm:hover { background-color: #356a4c; transform: translateY(-1px); }
+
+    .hero-content {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; padding: 0 32px 44px;
+    }
+
+    .kicker-pill {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+      letter-spacing: 0.34em; color: #2f5d43; padding: 7px 18px; border-radius: 100px;
+      border: 1px solid rgba(47,93,67,.26); background: rgba(246,248,244,.75);
+      backdrop-filter: blur(8px); display: inline-flex; align-items: center; gap: 8px;
+      margin-bottom: 24px; animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 440ms forwards;
+    }
+    .kicker-dot { width: 6px; height: 6px; border-radius: 50%; background-color: #2f5d43; }
+
+    h1 {
+      font-family: 'Manrope', sans-serif; font-weight: 700;
+      font-size: clamp(56px, 7.5vw, 108px); line-height: 0.96; letter-spacing: -0.045em;
+      color: #16231b; text-shadow: 0 2px 40px rgba(246,248,244,.55);
+      margin-bottom: 20px; animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 540ms forwards;
+    }
+
+    .sub-line {
+      font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 1.55;
+      color: rgba(22,35,27,.72); max-width: 530px; margin: 0 auto 36px;
+      animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 680ms forwards;
+    }
+
+    .cta-group {
+      display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      font-family: 'Manrope', sans-serif; font-weight: 600; font-size: 15px;
+      padding: 14px 34px; border-radius: 100px; background-color: #2f5d43; color: #f2f6ef;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: 0 6px 20px rgba(47,93,67,.28), inset 0 1px 0 rgba(255,255,255,.2);
+      transition: all 0.25s ease; animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 800ms forwards;
+    }
+    .btn-primary:hover { background-color: #356a4c; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(47,93,67,.35); }
+
+    .btn-ghost {
+      font-family: 'Inter', sans-serif; font-weight: 500; font-size: 15px;
+      color: rgba(22,35,27,.72); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.2s ease; animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 900ms forwards;
+    }
+    .btn-ghost:hover { color: #16231b; }
+    .btn-ghost svg { transition: transform 0.2s ease; }
+    .btn-ghost:hover svg { transform: translateX(3px); }
+
+    footer {
+      display: flex; align-items: center; justify-content: center; gap: 16px;
+      padding: 0 48px 30px; animation: blurFadeUp 1s cubic-bezier(.2,.7,.2,1) 1020ms forwards;
+    }
+    .footer-rule { width: 26px; height: 1px; background-color: rgba(22,35,27,.16); }
+    .footer-tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+      letter-spacing: 0.30em; color: rgba(22,35,27,.52);
+    }
+
+    .rise { opacity: 0; }
+
+    @keyframes blurFadeUp {
+      from { opacity: 0; filter: blur(20px); transform: translateY(36px); }
+      to { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rise, .brand, .nav-links li, .nav-signin, .btn-pill-sm, .kicker-pill, h1, .sub-line, .btn-primary, .btn-ghost, footer {
+        animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .nav-links { display: none; }
+      nav { padding: 20px 24px; }
+      .hero-content { padding: 0 20px 32px; }
+      footer { padding: 0 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <video id="bg-video" class="bg-video" src="https://zxdefgavgwfxastwmmjm.supabase.co/storage/v1/object/public/assets/stillwater.mp4" autoplay muted loop playsinline></video>
+  <div class="scrim"></div>
+  <div class="blur-mask"></div>
+
+  <div class="shell">
+    <nav>
+      <a href="#" class="brand rise">
+        <span class="brand-dot"></span>
+        <span>STILLWATER</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#" class="rise">Product</a></li>
+        <li><a href="#" class="rise">Studio</a></li>
+        <li><a href="#" class="rise">About</a></li>
+        <li><a href="#" class="rise">Journal</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="#" class="nav-signin rise">Sign in</a>
+        <a href="#" class="btn-pill-sm rise">Begin</a>
+      </div>
+    </nav>
+
+    <main class="hero-content">
+      <div class="kicker-pill rise">
+        <span class="kicker-dot"></span>
+        <span>A CALM HOME FOR FOCUSED WORK</span>
+      </div>
+      <h1 class="rise">Built for deep work.</h1>
+      <p class="sub-line rise">A quiet place to think, make, and finish — one uninterrupted surface for the work that deserves your full attention.</p>
+      <div class="cta-group">
+        <a href="#" class="btn-primary rise">
+          <span>Begin</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#" class="btn-ghost rise">
+          <span>See how it works</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </main>
+
+    <footer class="rise">
+      <div class="footer-rule"></div>
+      <div class="footer-tag">STILLWATER — DEEP WORK, UNDISTURBED</div>
+      <div class="footer-rule"></div>
+    </footer>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var video = document.getElementById('bg-video');
+      if (video) {
+        video.play().catch(function() {});
+        video.addEventListener('canplay', function() {
+          video.play().catch(function() {});
+        });
+      }
+    });
+  </script>
+</body>
+</html>

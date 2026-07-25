@@ -361,20 +361,18 @@ function Home() {
 
       {/* Hero — two column with illustration */}
       <section className="relative overflow-hidden z-20">
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10 bg-cover bg-center bg-no-repeat opacity-20"
-          style={{
-            backgroundImage: `url(${heroBg})`,
-          }}
+        <video
+          className="absolute inset-0 -z-20 h-full w-full object-cover pointer-events-none opacity-40 dark:opacity-30"
+          src="https://zxdefgavgwfxastwmmjm.supabase.co/storage/v1/object/public/assets/stillwater.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          onCanPlay={(e) => e.target.play().catch(() => {})}
         />
         <div
           aria-hidden
-          className="absolute inset-0 -z-10"
-          style={{
-            background:
-              "radial-gradient(55% 50% at 15% 10%, color-mix(in oklab, var(--google-blue) 14%, transparent), transparent 70%), radial-gradient(45% 40% at 95% 0%, color-mix(in oklab, var(--google-red) 10%, transparent), transparent 70%), radial-gradient(45% 50% at 50% 100%, color-mix(in oklab, var(--google-green) 10%, transparent), transparent 70%)",
-          }}
+          className="absolute inset-0 -z-10 bg-gradient-to-b from-background/60 via-background/30 to-background/80 backdrop-blur-[1px]"
         />
         <div className="mx-auto flex max-w-4xl flex-col items-center text-center px-6 pt-10 pb-12 sm:pt-16 sm:pb-16">
           <div className="flex flex-col items-center w-full">
