@@ -226,13 +226,20 @@ def verify_payment(request):
         seeker.tier = plan
         seeker.save(update_fields=['tier'])
 
-        # Upsert billing subscription
+        # Upsert billing subscription with 30-day validity
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        period_end = now + timedelta(days=30)
+
         sub = SeekerBillingSubscription.objects.filter(seeker_id=seeker.id).first()
         if sub:
             sub.plan = plan
             sub.status = "active"
             sub.payment_id = razorpay_payment_id
             sub.plan_snapshot = snapshot
+            sub.current_period_start = now
+            sub.current_period_end = period_end
             sub.save()
         else:
             SeekerBillingSubscription.objects.create(
@@ -240,7 +247,9 @@ def verify_payment(request):
                 plan=plan,
                 status="active",
                 payment_id=razorpay_payment_id,
-                plan_snapshot=snapshot
+                plan_snapshot=snapshot,
+                current_period_start=now,
+                current_period_end=period_end
             )
 
         return JsonResponse(success_response({"new_tier": plan, "message": "Subscription activated"}))
@@ -271,18 +280,31 @@ def current_subscription(request):
                 "days_remaining": None
             }))
 
+        from django.utils import timezone
+        now = timezone.now()
         days_remaining = None
+
+        # Check if 1 month (30 days) has passed and auto-expire
         if sub.current_period_end:
-            from django.utils import timezone
-            now = timezone.now() if sub.current_period_end.tzinfo else datetime.utcnow()
-            delta = sub.current_period_end - now
+            sub_end = sub.current_period_end if sub.current_period_end.tzinfo else timezone.make_aware(sub.current_period_end)
+            if now >= sub_end and sub.status == "active":
+                sub.status = "expired"
+                sub.save()
+                seeker.tier = "free"
+                seeker.save(update_fields=['tier'])
+
+            delta = sub_end - now
             days_remaining = max(0, delta.days)
 
-        limits = sub.plan_snapshot.get("limits") if (sub.plan_snapshot and isinstance(sub.plan_snapshot, dict)) else get_plan_limits(sub.plan)
+        active_plan = seeker.tier if sub.status == "expired" else sub.plan
+        active_status = "expired" if sub.status == "expired" else sub.status
+        limits = get_plan_limits(active_plan) if active_status == "expired" else (
+            sub.plan_snapshot.get("limits") if (sub.plan_snapshot and isinstance(sub.plan_snapshot, dict)) else get_plan_limits(sub.plan)
+        )
 
         return JsonResponse(success_response({
-            "plan": sub.plan,
-            "status": sub.status,
+            "plan": active_plan,
+            "status": active_status,
             "payment_id": sub.payment_id,
             "limits": limits,
             "days_remaining": days_remaining,

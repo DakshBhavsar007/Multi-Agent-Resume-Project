@@ -189,19 +189,28 @@ def verify_payment(request):
         dev.tier = plan
         dev.save(update_fields=['tier'])
 
-        # Upsert billing subscription
+        # Upsert billing subscription with 30-day validity
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        period_end = now + timedelta(days=30)
+
         sub = BillingSubscription.objects.filter(developer_id=dev.id).first()
         if sub:
             sub.plan = plan
             sub.status = "active"
             sub.payment_id = razorpay_payment_id
+            sub.current_period_start = now
+            sub.current_period_end = period_end
             sub.save()
         else:
             BillingSubscription.objects.create(
                 developer=dev,
                 plan=plan,
                 status="active",
-                payment_id=razorpay_payment_id
+                payment_id=razorpay_payment_id,
+                current_period_start=now,
+                current_period_end=period_end
             )
 
         return JsonResponse(success_response({"new_tier": plan, "message": "Subscription activated"}))
@@ -224,19 +233,30 @@ def current_subscription(request):
                 "days_remaining": None
             }))
 
+        from django.utils import timezone
+        now = timezone.now()
         days_remaining = None
+
+        # Check if 1 month (30 days) has passed and auto-expire
         if sub.current_period_end:
-            # Handle timezone aware
-            from django.utils import timezone
-            now = timezone.now() if sub.current_period_end.tzinfo else datetime.utcnow()
-            delta = sub.current_period_end - now
+            sub_end = sub.current_period_end if sub.current_period_end.tzinfo else timezone.make_aware(sub.current_period_end)
+            if now >= sub_end and sub.status == "active":
+                sub.status = "expired"
+                sub.save()
+                dev.tier = "free"
+                dev.save(update_fields=['tier'])
+
+            delta = sub_end - now
             days_remaining = max(0, delta.days)
 
+        active_plan = dev.tier if sub.status == "expired" else sub.plan
+        active_status = "expired" if sub.status == "expired" else sub.status
+
         return JsonResponse(success_response({
-            "plan": sub.plan,
-            "status": sub.status,
+            "plan": active_plan,
+            "status": active_status,
             "payment_id": sub.payment_id,
-            "limits": PLAN_DETAILS.get(sub.plan, PLAN_DETAILS["free"])["limits"],
+            "limits": PLAN_DETAILS.get(active_plan, PLAN_DETAILS["free"])["limits"],
             "days_remaining": days_remaining,
             "created_at": sub.created_at.isoformat() if sub.created_at else None
         }))
