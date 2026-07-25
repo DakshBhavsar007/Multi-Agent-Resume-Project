@@ -12,7 +12,8 @@ import FlipFadeText from "../../components/ui/flip-fade-text";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { jobs, companies } from "../../lib/data";
-import { publicAPI, seekerAPI } from "../../lib/api";
+import { publicAPI, seekerAPI, recruiterAPI } from "../../lib/api";
+import { portalReviews } from "../../lib/portalApi";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import VerifiedBadge from "../../components/VerifiedBadge";
 import WriteReviewModal from "../../components/WriteReviewModal";
@@ -289,13 +290,16 @@ function Home() {
       .catch((err) => console.error('Failed to load reviews:', err));
   }, []);
 
-  const handleDeleteReview = async (reviewId) => {
+  const handleDeleteReview = async (t) => {
     try {
-      const isRecruiter = !!localStorage.getItem('vish_jwt');
-      const isDeveloper = !!localStorage.getItem('portal_jwt');
-      if (isRecruiter) {
+      const reviewId = typeof t === "object" ? t.id : t;
+      const targetRole = typeof t === "object" ? (t.user_type || t.author?.user_type) : (
+        localStorage.getItem('vish_jwt') ? 'recruiter' :
+        localStorage.getItem('portal_jwt') ? 'developer' : 'job_seeker'
+      );
+      if (targetRole === 'recruiter') {
         await recruiterAPI.deleteReview(reviewId);
-      } else if (isDeveloper) {
+      } else if (targetRole === 'developer') {
         await portalReviews.deleteReview(reviewId);
       } else {
         await seekerAPI.deleteReview(reviewId);
@@ -993,7 +997,7 @@ function Home() {
                           <Pen className="h-3.5 w-3.5 text-accent" />
                         </button>
                         <button
-                          onClick={() => handleDeleteReview(t.id)}
+                          onClick={() => handleDeleteReview(t)}
                           className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 hover:bg-red-100 transition-colors border border-red-200/50 cursor-pointer"
                           title="Delete review"
                         >

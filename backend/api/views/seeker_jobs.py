@@ -236,15 +236,31 @@ def _compute_match_score(seeker_skills: list, job_skills: list, session_id: str 
 # ── Public (authenticated seeker) endpoints ────────────────────────────────────
 
 CATEGORY_MAP = {
-    "engineering": ["engineer", "developer", "software", "frontend", "backend", "full-stack", "fullstack", "devops", "systems", "architecture", "coding", "tech", "web", "site reliability", "sre"],
-    "data & ai": ["data", "ai", "ml", "machine learning", "analytics", "data scientist", "nlp", "python", "deep learning", "artificial intelligence", "business intelligence"],
-    "design": ["design", "ui", "ux", "product designer", "creative", "figma", "graphic", "user experience", "visual"],
-    "marketing": ["marketing", "growth", "seo", "content", "brand", "social media", "copywriter", "campaign"],
-    "operations": ["operations", "project manager", "product manager", "agile", "scrum", "lead", "coordinator", "manager", "program manager"],
-    "finance": ["finance", "fintech", "accounting", "banking", "crypto", "tax", "analyst", "investment", "financial"],
-    "healthcare": ["health", "medical", "pharma", "clinical", "bio", "nurse", "doctor", "biotech"],
-    "education": ["education", "tutor", "teacher", "academic", "learning", "instructor", "course", "curriculum"]
+    "engineering": ["engineer", "developer", "frontend", "backend", "full-stack", "fullstack", "devops", "systems architect", "site reliability", "sre", "software engineer", "software developer", "coding"],
+    "data & ai": ["data scientist", "data engineer", "data analyst", "machine learning", "ai engineer", "deep learning", "nlp", "business intelligence", "artificial intelligence"],
+    "design": ["design", "ui", "ux", "product designer", "figma", "graphic", "user experience", "visual designer"],
+    "marketing": ["marketing", "growth", "seo", "content manager", "brand manager", "social media", "copywriter", "campaign manager"],
+    "operations": ["operations", "project manager", "product manager", "scrum master", "program manager", "coordinator"],
+    "finance": ["finance", "fintech", "accounting", "banking", "crypto", "financial analyst", "tax"],
+    "healthcare": ["health", "medical", "pharma", "clinical", "biotech", "nurse", "doctor"],
+    "education": ["education", "tutor", "teacher", "academic", "learning instructor", "curriculum"]
 }
+
+def get_category_q_filter(category_str):
+    category_str = (category_str or "").strip().lower()
+    terms = CATEGORY_MAP.get(category_str)
+    if not terms:
+        for cat_key, keywords in CATEGORY_MAP.items():
+            if cat_key in category_str or category_str in cat_key:
+                terms = keywords
+                break
+    from django.db.models import Q
+    if terms:
+        q_expr = Q()
+        for term in terms:
+            q_expr |= Q(job_title__icontains=term) | Q(inferred_skills__icontains=term)
+        return q_expr
+    return Q(job_title__icontains=category_str) | Q(job_description__icontains=category_str) | Q(inferred_skills__icontains=category_str)
 
 @csrf_exempt
 @require_seeker_jwt
@@ -270,24 +286,8 @@ def list_jobs(request):
 
         search_target = category or q
         if search_target:
-            terms = CATEGORY_MAP.get(search_target)
-            if not terms:
-                for cat_key, keywords in CATEGORY_MAP.items():
-                    if cat_key in search_target or search_target in cat_key:
-                        terms = keywords
-                        break
-            if terms:
-                q_expr = Q()
-                for term in terms:
-                    q_expr |= Q(job_title__icontains=term) | Q(job_description__icontains=term) | Q(company__name__icontains=term) | Q(inferred_skills__icontains=term)
-                sessions = sessions.filter(q_expr)
-            else:
-                sessions = sessions.filter(
-                    Q(job_title__icontains=search_target) |
-                    Q(job_description__icontains=search_target) |
-                    Q(company__name__icontains=search_target) |
-                    Q(inferred_skills__icontains=search_target)
-                )
+            q_filter = get_category_q_filter(search_target)
+            sessions = sessions.filter(q_filter)
 
         if location:
             sessions = sessions.filter(Q(job_description__icontains=location) | Q(job_title__icontains=location))

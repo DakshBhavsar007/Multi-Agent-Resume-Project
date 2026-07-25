@@ -604,15 +604,10 @@ def public_market_trends(request):
 
         categories_list = ["Engineering", "Design", "Data & AI", "Marketing", "Healthcare", "Operations", "Education", "Finance"]
         category_counts = {}
+        from api.views.seeker_jobs import get_category_q_filter
         for cat in categories_list:
-            if cat == "Data & AI":
-                q_filter = (
-                    Q(job_title__icontains="data") | Q(job_title__icontains="ai") | Q(job_title__icontains="ml") | Q(job_title__icontains="machine learning") |
-                    Q(job_description__icontains="data") | Q(job_description__icontains="ai") | Q(job_description__icontains="ml") | Q(job_description__icontains="machine learning")
-                )
-            else:
-                q_filter = Q(job_title__icontains=cat) | Q(job_description__icontains=cat)
-            category_counts[cat] = Session.objects.filter(status="active").filter(q_filter).count()
+            q_filter = get_category_q_filter(cat)
+            category_counts[cat] = Session.objects.filter(status="active").filter(q_filter).distinct().count()
 
         stats = {
             "open_roles": active_sessions_count if active_sessions_count > 0 else (total_sessions_count if total_sessions_count > 0 else 12480),
