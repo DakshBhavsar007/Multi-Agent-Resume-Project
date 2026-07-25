@@ -197,6 +197,18 @@ urlpatterns = [
     path('api/v1/public/jobs/<str:session_id>/apply', jobs.apply_public_job, name='public-jobs-apply'),
     path('api/v1/public/jobs/<str:session_id>/safety-check', jobs.scan_job_safety_public, name='public-jobs-safety-check'),
 
+    # ── Reviews & Testimonials ────────────────────────────────────────────────
+    path('api/v1/public/reviews', reviews.public_list_reviews, name='public-reviews-list'),
+    path('api/v1/public/companies/<str:company_id>/reviews', reviews.public_company_reviews, name='public-company-reviews'),
+    path('api/v1/public/seekers/<str:seeker_id>', reviews.public_seeker_profile, name='public-seeker-profile'),
+    path('api/v1/seeker/reviews', reviews.seeker_reviews_root, name='seeker-reviews-root'),
+    path('api/v1/seeker/reviews/mine', reviews.seeker_my_reviews, name='seeker-reviews-mine'),
+    path('api/v1/seeker/reviews/<str:review_id>', reviews.seeker_review_detail, name='seeker-reviews-detail'),
+    path('api/v1/developer/reviews', reviews.developer_reviews_root, name='dev-reviews-root'),
+    path('api/v1/developer/reviews/<str:review_id>', reviews.developer_review_detail, name='dev-reviews-detail'),
+    path('api/v1/recruiter/reviews', reviews.recruiter_reviews_root, name='recruiter-reviews-root'),
+    path('api/v1/recruiter/reviews/<str:review_id>', reviews.recruiter_review_detail, name='recruiter-reviews-detail'),
+
     # ── Protection & Fraud Detection ──────────────────────────────────────────
     path('api/v1/parse', parse.parse_resume, name='api-parse'),
     path('api/v1/match', parse.global_match, name='api-global-match'),
