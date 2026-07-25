@@ -108,7 +108,7 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
               <Link 
                 to={
                   t.user_type === "recruiter"
-                    ? `/jobs/companies/${t.authorId}`
+                    ? `/jobs/companies/${t.companyId || t.authorId}`
                     : t.user_type === "developer"
                     ? `/developer/profile/${t.authorId}`
                     : `/jobs/profile/${t.authorId}`
@@ -203,7 +203,7 @@ const Testimonials = () => {
             id: r.id,
             quote: r.text,
             author: r.author?.full_name || "Verified Professional",
-            authorId: r.author?.user_type === "job_seeker" ? r.author?.id : null,
+            authorId: r.author?.id && r.author?.id !== "unknown" ? r.author.id : null,
             companyId: r.company_id || r.author?.company_id || null,
             avatarPath: r.author?.avatar_path || null,
             isVerified: r.author?.is_verified,
