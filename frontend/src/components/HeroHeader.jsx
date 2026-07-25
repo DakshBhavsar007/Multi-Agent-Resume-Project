@@ -87,11 +87,24 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
   return (
     <motion.section 
       ref={containerRef}
-      className="hero-container"
+      className="hero-container relative overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
     >
+      <video
+        className="absolute inset-0 -z-20 h-full w-full object-cover pointer-events-none opacity-35 dark:opacity-25"
+        src="https://zxdefgavgwfxastwmmjm.supabase.co/storage/v1/object/public/assets/stillwater.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        onCanPlay={(e) => e.target.play().catch(() => {})}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-background/70 via-background/40 to-background/90 backdrop-blur-[1px]"
+      />
       <motion.div 
         className="badge-wrapper"
         initial={{ y: 20, opacity: 0 }}

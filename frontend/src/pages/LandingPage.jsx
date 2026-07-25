@@ -13,6 +13,8 @@ import Footer from '../components/Footer'
 import { useNavigate, useLocation } from 'react-router-dom';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
+import SolarSystem from '../components/SolarSystem';
+
 export default function LandingPage() {
   useDocumentTitle(
     "AI Resume Parsing & Intelligent Recruiter Screening",
@@ -51,6 +53,23 @@ export default function LandingPage() {
         <HeroHeader onStart={handleAuth} isLoggedIn={isLoggedIn} />
         <LogoCloud />
         <HowItWorks />
+
+        {/* 3D Multi-Agent Ecosystem Solar System */}
+        <section className="py-20 max-w-7xl mx-auto px-6 overflow-hidden">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <span className="px-3.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
+              Multi-Agent Intelligence Core
+            </span>
+            <h2 className="text-3xl lg:text-4xl font-extrabold text-charcoal dark:text-white mt-3 tracking-tight">
+              Powered by 7 specialized AI agents
+            </h2>
+            <p className="text-gray-500 dark:text-zinc-400 mt-2 text-sm max-w-lg mx-auto">
+              Explore how specialized agents revolve around the core matching engine to extract skills, detect fraud, and rank candidates in real time.
+            </p>
+          </div>
+          <SolarSystem />
+        </section>
+
         <FeaturesList />
         <DetailedShowcase />
         <Pricing onStart={handleAuth} isLoggedIn={isLoggedIn} />
