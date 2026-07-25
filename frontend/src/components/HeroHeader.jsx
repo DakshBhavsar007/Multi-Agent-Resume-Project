@@ -180,28 +180,6 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px' }}><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </motion.button>
         </div>
-
-        {/* Floating Scroll Indicator Animation */}
-        <motion.div
-          className="mt-6 flex flex-col items-center gap-2 cursor-pointer group"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2, duration: 0.8 }}
-          onClick={() => {
-            window.scrollBy({ top: window.innerHeight * 0.85, behavior: 'smooth' });
-          }}
-        >
-          <span className="text-[10px] font-bold tracking-[0.2em] text-gray-500/80 dark:text-gray-400 uppercase group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-            Scroll to Explore
-          </span>
-          <div className="w-5 h-9 rounded-full border-2 border-gray-400/50 group-hover:border-blue-600 dark:group-hover:border-blue-400 flex items-start justify-center p-1 transition-colors shadow-sm bg-white/40 dark:bg-black/40 backdrop-blur-sm">
-            <motion.div
-              className="w-1 h-2 bg-blue-600 dark:bg-blue-400 rounded-full"
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </div>
-        </motion.div>
       </div>
     </motion.section>
   );
