@@ -146,11 +146,17 @@ def public_list_reviews(request):
 
     agg = qs.aggregate(avg_rating=Avg("rating"), total=Count("id"))
 
+    total_seekers = JobSeekerAccount.objects.count()
+    total_devs = DeveloperAccount.objects.count()
+    total_comps = Company.objects.count()
+    total_prof = total_seekers + total_devs + total_comps
+
     return JsonResponse(success_response({
         "reviews": data,
         "stats": {
-            "avg_rating": round(agg["avg_rating"] or 0, 1),
+            "avg_rating": round(agg["avg_rating"] or 5.0, 1),
             "total_reviews": agg["total"] or 0,
+            "total_professionals": max(total_prof, agg["total"] or 0, 1),
         }
     }))
 

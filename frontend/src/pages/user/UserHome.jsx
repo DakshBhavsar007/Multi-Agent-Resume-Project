@@ -874,7 +874,7 @@ function Home() {
           <div className="text-center sm:text-left">
             <div className="text-[11px] font-medium uppercase tracking-wider text-[var(--google-yellow)]">Stories</div>
             <h2 className="mt-1.5 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-              Loved by {reviewStats.total_reviews > 0 ? `${reviewStats.total_reviews.toLocaleString()}+` : '120,000+'} professionals
+              Loved by {reviewStats.total_professionals ? `${reviewStats.total_professionals.toLocaleString()}+` : reviewStats.total_reviews ? `${reviewStats.total_reviews.toLocaleString()}+` : '100+'} professionals
             </h2>
             {reviewStats.avg_rating > 0 && (
               <div className="mt-1 flex items-center gap-1.5 justify-center sm:justify-start">
@@ -1072,7 +1072,7 @@ function Home() {
               <Building2 className="h-3 w-3 text-[var(--google-green)]" /> For employers
             </div>
             <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight sm:text-3xl">Hire calmer, faster</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Reach 120k+ pre-screened candidates with salary-transparent listings and one clean dashboard.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Reach {reviewStats.total_professionals ? `${reviewStats.total_professionals.toLocaleString()}+` : 'verified'} pre-screened candidates with salary-transparent listings and one clean dashboard.</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Link to="/jobs/companies" className="pill inline-flex items-center gap-1.5 bg-foreground px-4 py-2 text-xs font-medium text-background hover:opacity-90">
                 Post a job

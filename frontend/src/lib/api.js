@@ -598,6 +598,10 @@ export const publicAPI = {
     const qs = new URLSearchParams(params).toString();
     return publicReq('GET', `/api/v1/public/jobs${qs ? '?' + qs : ''}`);
   },
+  listReviews: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return publicReq('GET', `/api/v1/public/reviews${qs ? '?' + qs : ''}`);
+  },
   getJob: (id) => publicReq('GET', `/api/v1/public/jobs/${id}`),
   parseResume: (file) => {
     const fd = new FormData();
