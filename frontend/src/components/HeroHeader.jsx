@@ -94,7 +94,7 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
       transition={{ duration: 1 }}
     >
       <video
-        className="absolute inset-0 -z-20 h-full w-full object-cover pointer-events-none opacity-35 dark:opacity-25"
+        className="absolute inset-0 -z-20 h-full w-full object-cover pointer-events-none opacity-85 dark:opacity-65"
         src="https://zxdefgavgwfxastwmmjm.supabase.co/storage/v1/object/public/assets/stillwater.mp4"
         autoPlay
         muted
@@ -104,7 +104,11 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
       />
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-background/70 via-background/40 to-background/90 backdrop-blur-[1px]"
+        className="absolute inset-0 -z-10 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse at center, rgba(246,248,244,0.52) 0%, rgba(246,248,244,0) 72%), linear-gradient(to bottom, rgba(246,248,244,0.66) 0%, rgba(246,248,244,0.06) 35%, rgba(246,248,244,0.06) 65%, rgba(246,248,244,0.58) 100%)'
+        }}
       />
       <motion.div 
         className="badge-wrapper"
@@ -174,11 +178,6 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px' }}><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </motion.button>
       </div>
-
-      <motion.div className="hero-image-container" style={{ scale, rotateX }}>
-        <img src={heroImg} alt="Dashboard" className="hero-image" fetchpriority="high" />
-        <div className="hero-image-vignette" />
-      </motion.div>
     </motion.section>
   );
 };
