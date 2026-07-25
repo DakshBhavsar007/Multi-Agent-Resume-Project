@@ -105,11 +105,7 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
       />
       <div
         aria-hidden
-        className="absolute inset-0 z-[1] pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(circle at 50% 44%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.55) 35%, rgba(255,255,255,0.20) 65%, rgba(255,255,255,0.05) 100%), linear-gradient(to bottom, rgba(255,255,255,0.80) 0%, transparent 15%, transparent 60%, var(--bg) 100%)'
-        }}
+        className="hero-scrim"
       />
       <div className="relative z-10 flex flex-col items-center w-full px-6">
         <motion.div 
