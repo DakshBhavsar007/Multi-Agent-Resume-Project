@@ -1,7 +1,7 @@
 import React from 'react';
 import { toast } from 'react-hot-toast';
 
-const getApiBase = () => {
+export const getApiBase = () => {
   if (typeof window !== "undefined") {
     // If we have a custom API URL in Vite env (for development or specific staging)
     const viteApiUrl = import.meta.env?.VITE_API_URL;
@@ -17,7 +17,7 @@ const getApiBase = () => {
   return "http://127.0.0.1:8000/api/v1";
 };
 
-const BASE = getApiBase();
+export const BASE = getApiBase();
 
 export const API_HOST = BASE.replace("/api/v1", "");
 

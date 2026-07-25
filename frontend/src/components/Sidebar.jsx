@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Layers, Settings as SettingsIcon, LogOut, Sparkles, Home, Shield } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
-import { authAPI } from '../lib/api';
+import { authAPI, API_HOST } from '../lib/api';
 
 export default function Sidebar() {
   const pathname = useLocation().pathname;
@@ -14,8 +14,7 @@ export default function Sidebar() {
   const getFullUrl = (path) => {
     if (!path) return "";
     if (path.startsWith("data:") || path.startsWith("http")) return path;
-    const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
-    return `${apiBase}${path}`;
+    return `${API_HOST}${path}`;
   };
 
   const logoUrl = company?.logo_path ? getFullUrl(company.logo_path) : logo;

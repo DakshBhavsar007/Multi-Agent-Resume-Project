@@ -1,5 +1,19 @@
-const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+function getRawApiBase() {
+  if (typeof window !== "undefined") {
+    const viteApiUrl = import.meta.env?.VITE_API_URL;
+    if (viteApiUrl) return viteApiUrl;
+    const host = window.location.origin;
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      return "http://127.0.0.1:8000/api/v1";
+    }
+    return `${host}/api/v1`;
+  }
+  return "http://127.0.0.1:8000/api/v1";
+}
+
+const rawBase = getRawApiBase();
 const BASE = rawBase.replace("/api/v1", "/api/developer");
+const API_HOST = rawBase.replace("/api/v1", "");
 
 function getJwt() {
   if (typeof window !== "undefined") {
@@ -21,7 +35,13 @@ async function req(method, path, body=null, auth=true) {
     body: body ? JSON.stringify(body) : undefined
   })
   
-  const data = await res.json()
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch(e) {
+    throw new Error(`Server returned non-JSON response (${res.status})`);
+  }
   
   if (res.status === 401) {
     if (typeof window !== "undefined") {
@@ -140,8 +160,6 @@ export const portalEmbed = {
 
 export const portalReviews = {
   createReview: (b) => {
-    const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
-    const API_HOST = rawBase.replace('/api/v1', '');
     const headers = { 'Content-Type': 'application/json' };
     const jwt = getJwt();
     if (jwt) headers['Authorization'] = `Bearer ${jwt}`;
@@ -149,14 +167,19 @@ export const portalReviews = {
       method: 'POST',
       headers,
       body: JSON.stringify(b),
-    }).then(res => res.json()).then(d => {
-      if (!d.success) throw new Error(d.error || 'Failed to submit review');
-      return d.data;
+    }).then(async res => {
+      const text = await res.text();
+      let d;
+      try {
+        d = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Server returned error (${res.status}): ${text.substring(0, 100)}`);
+      }
+      if (!res.ok || !d.success) throw new Error(d.error || 'Failed to submit review');
+      return d.data || d;
     });
   },
   updateReview: (id, b) => {
-    const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
-    const API_HOST = rawBase.replace('/api/v1', '');
     const headers = { 'Content-Type': 'application/json' };
     const jwt = getJwt();
     if (jwt) headers['Authorization'] = `Bearer ${jwt}`;
@@ -164,23 +187,35 @@ export const portalReviews = {
       method: 'PATCH',
       headers,
       body: JSON.stringify(b),
-    }).then(res => res.json()).then(d => {
-      if (!d.success) throw new Error(d.error || 'Failed to update review');
-      return d.data;
+    }).then(async res => {
+      const text = await res.text();
+      let d;
+      try {
+        d = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Server returned error (${res.status}): ${text.substring(0, 100)}`);
+      }
+      if (!res.ok || !d.success) throw new Error(d.error || 'Failed to update review');
+      return d.data || d;
     });
   },
   deleteReview: (id) => {
-    const rawBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
-    const API_HOST = rawBase.replace('/api/v1', '');
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = {};
     const jwt = getJwt();
     if (jwt) headers['Authorization'] = `Bearer ${jwt}`;
     return fetch(`${API_HOST}/api/v1/developer/reviews/${id}`, {
       method: 'DELETE',
       headers,
-    }).then(res => res.json()).then(d => {
-      if (!d.success) throw new Error(d.error || 'Failed to delete review');
-      return d.data;
+    }).then(async res => {
+      const text = await res.text();
+      let d;
+      try {
+        d = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Server returned error (${res.status}): ${text.substring(0, 100)}`);
+      }
+      if (!res.ok || !d.success) throw new Error(d.error || 'Failed to delete review');
+      return d;
     });
   }
 };

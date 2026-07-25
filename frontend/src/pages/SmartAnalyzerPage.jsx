@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, Check, Zap, BarChart3, Users, Brain, Sparkles, ArrowRight, X, MapPin, Mail, Briefcase, CheckCircle, XCircle, ChevronDown, Trophy, Star, Award, Phone, History, Trash2, Calendar } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDropzone } from 'react-dropzone';
+import { BASE } from '../lib/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import SolarSystem from '../components/SolarSystem';
 
@@ -24,7 +25,7 @@ export default function SmartAnalyzerPage() {
   const loadHistory = async () => {
     setStep('history');
     setLoadingHistory(true);
-    const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1");
+    // using imported BASE
     try {
       const headers = {};
       const apiKey = localStorage.getItem("vish_api_key");
@@ -54,7 +55,7 @@ export default function SmartAnalyzerPage() {
   const viewHistoryResults = async (session) => {
     setStep('analyzing');
     setProgress(20);
-    const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1");
+    // using imported BASE
     try {
       const headers = {};
       const apiKey = localStorage.getItem("vish_api_key");
@@ -98,7 +99,7 @@ export default function SmartAnalyzerPage() {
 
   const deleteHistorySession = async (session) => {
     if (!window.confirm(`Are you sure you want to delete "${session.name}" from history?`)) return;
-    const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1");
+    // using imported BASE
     try {
       const headers = { "Content-Type": "application/json" };
       const apiKey = localStorage.getItem("vish_api_key");
@@ -145,7 +146,7 @@ export default function SmartAnalyzerPage() {
     setStep('analyzing');
     setProgress(0);
 
-    const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1");
+    // using imported BASE
 
     // Step 1: Create a temporary session
     let progressVal = 5;

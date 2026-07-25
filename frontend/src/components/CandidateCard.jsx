@@ -17,7 +17,7 @@ const Linkedin = ({ size = 16, className = '' }) => (
   </svg>
 );
 import { toast } from 'react-hot-toast';
-import { candidatesAPI } from '../lib/api';
+import { candidatesAPI, API_HOST } from '../lib/api';
 
 export default function CandidateCard({ candidate, sessionId, rounds = [], onAction, isHighlighted, forceOpenDetails, onCloseDetails }) {
   const [showDetail, setShowDetail] = useState(false);
@@ -178,7 +178,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
   const achievements = activeCandidate?.achievements || rawData.achievements || rawData.awards || activeCandidate?.awards || [];
   const languages = activeCandidate?.languages || rawData?.languages || [];
 
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
+  const apiBase = API_HOST;
   const photoUrl = activeCandidate?.photo_url ? (activeCandidate.photo_url.startsWith('http') || activeCandidate.photo_url.startsWith('data:') ? activeCandidate.photo_url : `${apiBase}${activeCandidate.photo_url}`) : null;
   const resumeUrl = activeCandidate?.resume_url ? (activeCandidate.resume_url.startsWith('http') ? activeCandidate.resume_url : `${apiBase}${activeCandidate.resume_url}`) : null;
 

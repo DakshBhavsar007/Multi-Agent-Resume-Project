@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { authAPI, billingAPI } from '../lib/api';
+import { authAPI, billingAPI, API_HOST } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import PageTransition from '../components/PageTransition';
 import VerificationModal from '../components/VerificationModal';
@@ -87,8 +87,7 @@ export default function SettingsPage() {
   const getFullUrl = (path) => {
     if (!path) return "";
     if (path.startsWith("data:") || path.startsWith("http")) return path;
-    const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
-    return `${apiBase}${path}`;
+    return `${API_HOST}${path}`;
   };
 
   const [logo, setLogo] = useState(company?.logo_path ? getFullUrl(company.logo_path) : (localStorage.getItem('vish_company_logo') || ''));

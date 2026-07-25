@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
-import { seekerAPI, testAPI } from "../../lib/api";
+import { seekerAPI, testAPI, API_HOST } from "../../lib/api";
 import LoadingSkeleton from "../../components/LoadingSkeleton";
 import { 
   Calendar, 
@@ -344,7 +344,7 @@ export default function UserApplications() {
                           <div className="flex items-center gap-3 shrink-0 self-start sm:self-center flex-wrap">
                             {app.offer_letter_url && (
                               <a
-                                href={`${(process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "")}${app.offer_letter_url}`}
+                                href={`${API_HOST}${app.offer_letter_url}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="pill bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 text-xs font-bold transition shadow-sm flex items-center gap-1.5"
