@@ -20,9 +20,10 @@ import {
   MapPin,
   FileText,
   User,
-  Mail
+  Mail,
+  UploadCloud
 } from 'lucide-react';
-import { authAPI, seekerAPI } from '../lib/api';
+import { authAPI, seekerAPI, publicAPI } from '../lib/api';
 import { portalAuth, portalBilling } from '../lib/portalApi';
 import { useAuthStore } from '../stores/authStore';
 import { LocationSelector } from './ui/LocationSelector';
@@ -219,6 +220,37 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
   const [copiedTestSecret, setCopiedTestSecret] = useState(false);
   const [showTestSecret, setShowTestSecret] = useState(false);
   const [showLiveSecret, setShowLiveSecret] = useState(false);
+
+  const [parsingResume, setParsingResume] = useState(false);
+  const [resumeFilePath, setResumeFilePath] = useState(null);
+  const [resumeData, setResumeData] = useState(null);
+
+  const handleAutoFillFromResume = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParsingResume(true);
+    const toastId = toast.loading("Extracting profile details from resume...");
+    try {
+      const data = await publicAPI.parseResume(file);
+      if (data.full_name) setFullName(data.full_name);
+      if (data.email) {
+        setEmail(data.email);
+        setIsEmailVerified(false);
+      }
+      if (data.phone) setPhone(data.phone);
+      if (data.location) setLocationField(data.location);
+      if (data.headline) setHeadline(data.headline);
+      if (data.skills) setSkills(Array.isArray(data.skills) ? data.skills.join(', ') : data.skills);
+      if (data.resume_file_path) setResumeFilePath(data.resume_file_path);
+      if (data.raw_parsed_data) setResumeData(data.raw_parsed_data);
+
+      toast.success("Profile details auto-filled from resume!", { id: toastId });
+    } catch (err) {
+      toast.error(err.message || "Failed to parse resume", { id: toastId });
+    } finally {
+      setParsingResume(false);
+    }
+  };
 
   // Ban & Support Modal State
   const [banned, setBanned] = useState(() => {
@@ -547,7 +579,9 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
             phone,
             phone_verified: phoneVerified,
             email_verified: isEmailVerified,
-            skills: skills ? skills.split(',').map(s => s.trim()) : []
+            skills: skills ? skills.split(',').map(s => s.trim()) : [],
+            resume_file_path: resumeFilePath,
+            resume_data: resumeData,
           });
           seekerAuth.setAuth(data);
           localStorage.setItem('vish_seeker_token', data.seeker_token);
@@ -892,6 +926,30 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                 )}
                 {role === 'seeker' && (
                   <>
+                    {!isLogin && (
+                      <div className="mb-4 p-4 border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-400 rounded-2xl transition-colors text-center group">
+                        <input 
+                          type="file" 
+                          id="auth-register-resume-upload" 
+                          accept=".pdf,.docx,.doc,.txt"
+                          className="hidden" 
+                          onChange={handleAutoFillFromResume}
+                          disabled={parsingResume}
+                        />
+                        <label htmlFor="auth-register-resume-upload" className="cursor-pointer block space-y-1.5">
+                          {parsingResume ? (
+                            <Loader2 className="mx-auto text-blue-600 animate-spin w-6 h-6" />
+                          ) : (
+                            <UploadCloud className="mx-auto text-blue-500 group-hover:scale-110 transition-transform w-6 h-6" />
+                          )}
+                          <div className="text-xs font-bold text-blue-900 flex items-center justify-center gap-1">
+                            <Sparkles size={14} className="text-blue-600" />
+                            <span>{parsingResume ? "Parsing resume details..." : "Auto-fill registration using Resume PDF / DOCX"}</span>
+                          </div>
+                          <p className="text-[10px] text-blue-600 font-medium">Upload resume to extract Name, Email, Phone, Location & Headline automatically</p>
+                        </label>
+                      </div>
+                    )}
                     <div className="input-group">
                       <label>Full Name</label>
                       <input 
