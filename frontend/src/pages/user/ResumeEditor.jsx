@@ -1072,7 +1072,7 @@ export default function ResumeEditor() {
                   const isLocked = isPremium && seeker?.tier !== 'premium';
                   return (
                     <option key={id} value={id}>
-                      {TEMPLATE_META[id].name} {isLocked ? "🔒" : ""}
+                      {TEMPLATE_META[id].name} {isLocked ? " (Pro)" : ""}
                     </option>
                   );
                 })}

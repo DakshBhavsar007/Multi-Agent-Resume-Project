@@ -90,10 +90,10 @@ const bentoCapabilities = [
         <p className="text-xs text-muted-foreground leading-relaxed">
           Protects both recruiters from fraudulent candidate applications and job seekers from phishing or spam recruiter listings.
         </p>
-        <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs space-y-1 text-red-700 dark:text-red-300 font-medium">
-          <div>✓ Cross-checked against known fake experience templates</div>
-          <div>✓ ATS keyword stuffing penalty detection</div>
-          <div>✓ Recruiter email domain verification</div>
+        <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs space-y-1.5 text-red-700 dark:text-red-300 font-medium">
+          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-red-500" /> Cross-checked against known fake experience templates</div>
+          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-red-500" /> ATS keyword stuffing penalty detection</div>
+          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-red-500" /> Recruiter email domain verification</div>
         </div>
       </div>
     )
