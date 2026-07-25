@@ -6,7 +6,7 @@ import {
   Code2, Palette, LineChart, Megaphone, HeartPulse, Wrench, GraduationCap, Building2,
   ShieldCheck, Zap, Quote, Pen, Trash2, X, MessageSquareQuote, Loader2, Target, FileCheck2, BarChart3
 } from "lucide-react";
-import ExpandableBentoGrid from "../../components/ExpandableBentoGrid";
+import FeaturesList from "../../components/FeaturesList";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { jobs, companies } from "../../lib/data";
@@ -766,29 +766,7 @@ function Home() {
       </motion.section>
 
       {/* Platform Capabilities (Expandable Bento Grid) */}
-      <motion.section
-        className="mx-auto max-w-7xl px-6 py-12 border-t border-border/40"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        variants={staggerContainerVariants}
-      >
-        <motion.div variants={fadeInUpVariants} className="text-center max-w-2xl mx-auto mb-10">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-[var(--google-blue)]">
-            Platform Capabilities
-          </div>
-          <h2 className="mt-1.5 font-display text-2xl font-bold tracking-tight sm:text-3xl text-charcoal dark:text-white">
-            Built for candidates, recruiters & developers
-          </h2>
-          <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
-            Click on any card to expand full workflow details, metrics & live API endpoints.
-          </p>
-        </motion.div>
-
-        <motion.div variants={fadeInUpVariants}>
-          <ExpandableBentoGrid items={bentoCapabilities} />
-        </motion.div>
-      </motion.section>
+      <FeaturesList />
 
       {/* Top companies */}
       <motion.section
