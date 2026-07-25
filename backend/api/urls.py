@@ -201,6 +201,7 @@ urlpatterns = [
     path('api/v1/public/reviews', reviews.public_list_reviews, name='public-reviews-list'),
     path('api/v1/public/companies/<str:company_id>/reviews', reviews.public_company_reviews, name='public-company-reviews'),
     path('api/v1/public/seekers/<str:seeker_id>', reviews.public_seeker_profile, name='public-seeker-profile'),
+    path('api/v1/public/developers/<str:dev_id>', reviews.public_developer_profile, name='public-developer-profile'),
     path('api/v1/seeker/reviews', reviews.seeker_reviews_root, name='seeker-reviews-root'),
     path('api/v1/seeker/reviews/mine', reviews.seeker_my_reviews, name='seeker-reviews-mine'),
     path('api/v1/seeker/reviews/<str:review_id>', reviews.seeker_review_detail, name='seeker-reviews-detail'),

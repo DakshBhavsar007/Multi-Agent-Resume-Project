@@ -543,3 +543,32 @@ def recruiter_review_detail(request, review_id):
 
     return JsonResponse(error_response("Method not allowed"), status=405)
 
+
+@csrf_exempt
+def public_developer_profile(request, dev_id):
+    """GET /api/v1/public/developers/<dev_id> — public profile for Developer authors."""
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    dev = DeveloperAccount.objects.filter(id=dev_id).first()
+    if not dev:
+        return JsonResponse(error_response("Developer profile not found"), status=404)
+
+    user_reviews = Review.objects.filter(developer=dev).order_by("-created_at")
+    current_user_id, current_user_type = _extract_user_identity(request)
+    reviews_data = [_serialize_review(r, current_user_id, current_user_type) for r in user_reviews]
+
+    profile_data = {
+        "id": str(dev.id),
+        "full_name": dev.full_name,
+        "headline": "Software Developer & API Builder",
+        "email": dev.email,
+        "is_verified": bool(dev.is_verified),
+        "tier": dev.tier,
+        "reviews": reviews_data,
+        "total_reviews": len(reviews_data),
+        "joined_date": dev.created_at.strftime("%B %Y") if getattr(dev, "created_at", None) else "Member",
+    }
+
+    return JsonResponse(success_response(profile_data))
+

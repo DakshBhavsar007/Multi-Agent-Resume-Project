@@ -87,7 +87,7 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
             )}
             {t.companyId ? (
               <Link 
-                to={`/jobs/company/${t.companyId}`}
+                to={`/jobs/companies/${t.companyId}`}
                 className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 no-underline inline-flex items-center gap-1 hover:bg-blue-500/20 transition-colors"
               >
                 <Building2 size={10} /> {t.targetBadge}
@@ -105,7 +105,16 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
         <div className="testimonial-author flex items-center justify-between w-full">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {t.authorId ? (
-              <Link to={`/jobs/profile/${t.authorId}`} className="flex items-center gap-3 group hover:opacity-85 transition-opacity no-underline text-inherit min-w-0">
+              <Link 
+                to={
+                  t.user_type === "recruiter"
+                    ? `/jobs/companies/${t.authorId}`
+                    : t.user_type === "developer"
+                    ? `/developer/profile/${t.authorId}`
+                    : `/jobs/profile/${t.authorId}`
+                } 
+                className="flex items-center gap-3 group hover:opacity-85 transition-opacity no-underline text-inherit min-w-0"
+              >
                 <AvatarEl />
                 <div className="author-info min-w-0">
                   <h4 className="flex items-center gap-1 font-bold text-sm text-gray-900 dark:text-white truncate">
