@@ -7,6 +7,7 @@ import {
   ShieldCheck, Zap, Quote, Pen, Trash2, X, MessageSquareQuote, Loader2, Target, FileCheck2, BarChart3
 } from "lucide-react";
 import FeaturesList from "../../components/FeaturesList";
+import SolarSystem from "../../components/SolarSystem";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { jobs, companies } from "../../lib/data";
@@ -765,6 +766,25 @@ function Home() {
 
       {/* Platform Capabilities (Expandable Bento Grid) */}
       <FeaturesList />
+
+      {/* 3D Multi-Agent Ecosystem Solar System */}
+      <section className="mx-auto max-w-7xl px-6 py-16 border-t border-border/40 overflow-hidden">
+        <div className="text-center max-w-2xl mx-auto mb-6">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--google-blue)]">
+            AI Ecosystem Core
+          </div>
+          <h2 className="mt-1.5 font-display text-2xl font-bold tracking-tight sm:text-3xl text-charcoal dark:text-white">
+            Powered by multi-agent intelligence
+          </h2>
+          <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
+            Explore how our specialized AI agents revolve around the core matching engine to analyze resumes, detect fraud & deliver real-time insights.
+          </p>
+        </div>
+
+        <div className="py-6">
+          <SolarSystem />
+        </div>
+      </section>
 
       {/* Top companies */}
       <motion.section

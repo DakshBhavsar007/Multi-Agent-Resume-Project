@@ -5,6 +5,7 @@ import { Upload, FileText, Check, Zap, BarChart3, Users, Brain, Sparkles, ArrowR
 import { toast } from 'react-hot-toast';
 import { useDropzone } from 'react-dropzone';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import SolarSystem from '../components/SolarSystem';
 
 export default function SmartAnalyzerPage() {
   const [step, setStep] = useState('idle');
@@ -495,6 +496,22 @@ export default function SmartAnalyzerPage() {
                   </span>
                 </motion.button>
               </div>
+            </div>
+            {/* 3D AI ENGINE ORBIT */}
+            <div className="mt-16 pt-10 border-t border-gray-100 dark:border-zinc-800">
+              <div className="text-center max-w-xl mx-auto mb-6">
+                <span className="px-3.5 py-1 rounded-full bg-accent/10 text-accent font-bold text-xs uppercase tracking-wider">
+                  Multi-Agent Architecture
+                </span>
+                <h3 className="text-2xl font-extrabold text-[#2A2A2A] dark:text-white mt-2">
+                  Multi-agent parsing & scoring engine
+                </h3>
+                <p className="text-gray-500 dark:text-zinc-400 text-xs font-medium mt-1">
+                  Our core AI coordinates resume extraction, semantic skill normalization, and plagiarism detection in real time.
+                </p>
+              </div>
+
+              <SolarSystem />
             </div>
           </motion.div>
         )}

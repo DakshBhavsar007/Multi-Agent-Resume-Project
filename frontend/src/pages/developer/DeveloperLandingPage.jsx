@@ -15,6 +15,7 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Footer } from "../../components/user/site-chrome";
 import { DEVELOPER_PLANS } from "../../lib/plans";
+import SolarSystem from "../../components/SolarSystem";
 
 export default function DeveloperLandingPage() {
   useDocumentTitle(
@@ -412,6 +413,27 @@ const response = await fetch(
            </div>
          </div>
       </section>
+
+      {/* 3D TECH STACK ORBIT */}
+       <section className="py-16 bg-gray-50/50 dark:bg-zinc-900/30 border-b border-gray-100 dark:border-zinc-800/80 overflow-hidden">
+         <div className="max-w-7xl mx-auto px-6">
+           <div className="text-center max-w-2xl mx-auto mb-6">
+             <span className="px-3.5 py-1 rounded-full bg-accent/10 text-accent font-bold text-xs uppercase tracking-wider">
+               Language Agnostic
+             </span>
+             <h2 className="text-3xl font-extrabold text-charcoal dark:text-white mt-2">
+               Plug into any tech stack
+             </h2>
+             <p className="text-gray-500 dark:text-zinc-400 mt-2 text-sm">
+               Our REST API & Webhooks connect natively with React, Python, Node, Go, Rust, Flutter, and custom internal backends.
+             </p>
+           </div>
+
+           <div className="py-4">
+             <SolarSystem />
+           </div>
+         </div>
+       </section>
 
       {/* CODE EXAMPLES */}
       <section className="py-24 max-w-5xl mx-auto px-6" id="docs">
