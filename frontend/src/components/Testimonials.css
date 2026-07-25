@@ -1,11 +1,12 @@
 .testimonials-section {
-  padding: 160px 24px;
+  padding: 120px 24px;
   background: var(--bg);
   position: relative;
   overflow: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Background Decoration for 'Cool' factor */
+/* Background Glow */
 .testimonials-bg-glow {
   position: absolute;
   top: 50%;
@@ -13,31 +14,35 @@
   transform: translate(-50%, -50%);
   width: 800px;
   height: 800px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
   z-index: 0;
   pointer-events: none;
 }
 
 .testimonials-header {
   text-align: center;
-  margin-bottom: 100px;
+  margin-bottom: 70px;
   position: relative;
   z-index: 1;
 }
 
 .testimonials-label {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3em;
-  color: var(--accent);
-  margin-bottom: 16px;
+  color: #2563eb;
+  margin-bottom: 14px;
   display: block;
+}
+
+.dark .testimonials-label {
+  color: #60a5fa;
 }
 
 .testimonials-title {
   font-family: var(--serif);
-  font-size: 64px;
+  font-size: 52px;
   color: var(--text);
   margin: 0;
   letter-spacing: -0.03em;
@@ -59,17 +64,24 @@
 }
 
 .testimonial-card {
-  background: var(--card);
-  padding: 40px;
-  border-radius: 32px;
+  background: var(--bg);
+  padding: 32px;
+  border-radius: 24px;
   border: 1px solid var(--border);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   height: 100%;
   position: relative;
   overflow: hidden;
   transform-style: preserve-3d;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark .testimonial-card {
+  background: #11141b;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .testimonial-card::before {
@@ -78,10 +90,14 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #2563eb, transparent);
   opacity: 0;
   transition: opacity 0.3s;
+}
+
+.dark .testimonial-card::before {
+  background: linear-gradient(90deg, transparent, #60a5fa, transparent);
 }
 
 .testimonial-card:hover::before {
@@ -89,10 +105,10 @@
 }
 
 .testimonial-quote {
-  font-size: 19px;
+  font-size: 17px;
   line-height: 1.6;
   color: var(--text);
-  margin-bottom: 40px;
+  margin-bottom: 32px;
   font-weight: 500;
   letter-spacing: -0.01em;
   position: relative;
@@ -109,26 +125,33 @@
 }
 
 .author-avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--border);
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.dark .author-avatar {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: rgba(96, 165, 250, 0.3);
 }
 
 .author-info h4 {
   margin: 0;
-  font-size: 17px;
+  font-size: 15px;
   color: var(--text);
 }
 
 .author-info p {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
@@ -137,12 +160,13 @@
   position: absolute;
   right: -10px;
   bottom: -10px;
-  color: var(--border-light);
+  color: var(--text-secondary);
+  opacity: 0.08;
   z-index: 1;
 }
 
 .company-logo-strip {
-  margin-top: 120px;
+  margin-top: 100px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -153,14 +177,16 @@
 .company-logo {
   font-family: var(--sans);
   font-weight: 800;
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: -0.05em;
-  color: var(--border-light);
-  transition: color 0.3s;
+  color: var(--text-secondary);
+  opacity: 0.4;
+  transition: opacity 0.3s, color 0.3s;
   cursor: default;
 }
 
 .company-logo:hover {
+  opacity: 1;
   color: var(--text);
 }
 
@@ -175,6 +201,6 @@
     grid-template-columns: 1fr;
   }
   .testimonials-title {
-    font-size: 48px;
+    font-size: 40px;
   }
 }

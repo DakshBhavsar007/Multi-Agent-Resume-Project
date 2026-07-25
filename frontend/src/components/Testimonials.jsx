@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { Quote, Star, Pen, Trash2, MessageSquareQuote, UserCheck, Building2, Code2, Briefcase, ThumbsUp, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Quote, Star, Pen, Trash2, MessageSquareQuote, UserCheck, Building2, Code2, Briefcase, ThumbsUp, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { publicAPI, seekerAPI, recruiterAPI } from '../lib/api';
 import { portalReviews } from '../lib/portalApi';
@@ -41,18 +41,18 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
 
   const AvatarEl = () => (
     t.avatarPath ? (
-      <img src={t.avatarPath} alt={t.author} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} />
+      <img src={t.avatarPath} alt={t.author} className="w-9 h-9 rounded-full object-cover border border-blue-500/20" />
     ) : (
-      <div className="author-avatar" style={{ color: t.color || "#3b82f6" }}>
+      <div className="author-avatar font-bold text-xs">
         {t.initials}
       </div>
     )
   );
 
   const getRoleIcon = (roleType) => {
-    if (roleType === "developer") return <Code2 size={11} className="inline mr-1 text-amber-400" />;
-    if (roleType === "recruiter") return <Building2 size={11} className="inline mr-1 text-emerald-400" />;
-    return <UserCheck size={11} className="inline mr-1 text-blue-400" />;
+    if (roleType === "developer") return <Code2 size={11} className="inline mr-1 text-amber-500 dark:text-amber-400" />;
+    if (roleType === "recruiter") return <Building2 size={11} className="inline mr-1 text-emerald-500 dark:text-emerald-400" />;
+    return <UserCheck size={11} className="inline mr-1 text-blue-500 dark:text-blue-400" />;
   };
 
   return (
@@ -74,26 +74,26 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
         </div>
         
         <div className="flex items-center justify-between mb-4">
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div className="flex items-center gap-1">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} size={14} fill={i < ratingStars ? (t.color || "#f59e0b") : "transparent"} color={t.color || "#f59e0b"} opacity={i < ratingStars ? 0.9 : 0.2} />
+              <Star key={i} size={14} fill={i < ratingStars ? (t.color || "#f59e0b") : "transparent"} color={t.color || "#f59e0b"} opacity={i < ratingStars ? 0.95 : 0.2} />
             ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="flex items-center gap-2">
             {t.createdAt && timeAgo && (
-              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: '500' }}>
+              <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
                 {timeAgo(t.createdAt)}
               </span>
             )}
             {t.companyId ? (
               <Link 
                 to={`/jobs/company/${t.companyId}`}
-                style={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 no-underline inline-flex items-center gap-1 hover:bg-blue-500/20 transition-colors"
               >
                 <Building2 size={10} /> {t.targetBadge}
               </Link>
             ) : (
-              <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 inline-flex items-center gap-1">
                 {t.targetBadge}
               </span>
             )}
@@ -102,19 +102,19 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
 
         <p className="testimonial-quote">"{t.quote}"</p>
         
-        <div className="testimonial-author" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+        <div className="testimonial-author flex items-center justify-between w-full">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             {t.authorId ? (
-              <Link to={`/jobs/profile/${t.authorId}`} className="flex items-center gap-3 group hover:opacity-85 transition-opacity no-underline text-inherit">
+              <Link to={`/jobs/profile/${t.authorId}`} className="flex items-center gap-3 group hover:opacity-85 transition-opacity no-underline text-inherit min-w-0">
                 <AvatarEl />
-                <div className="author-info">
-                  <h4 className="flex items-center gap-1 font-bold">
+                <div className="author-info min-w-0">
+                  <h4 className="flex items-center gap-1 font-bold text-sm text-gray-900 dark:text-white truncate">
                     {t.author}
                     {t.isVerified && <VerifiedBadge size={14} />}
                   </h4>
-                  <p>{t.role}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t.role}</p>
                   {t.roleBadge && (
-                    <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '2px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', marginTop: '4px', display: 'inline-flex', alignItems: 'center' }}>
+                    <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 mt-1 inline-flex items-center">
                       {getRoleIcon(t.user_type)}
                       {t.roleBadge}
                     </span>
@@ -122,16 +122,16 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
                 </div>
               </Link>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <AvatarEl />
-                <div className="author-info">
-                  <h4 className="flex items-center gap-1 font-bold">
+                <div className="author-info min-w-0">
+                  <h4 className="flex items-center gap-1 font-bold text-sm text-gray-900 dark:text-white truncate">
                     {t.author}
                     {t.isVerified && <VerifiedBadge size={14} />}
                   </h4>
-                  <p>{t.role}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t.role}</p>
                   {t.roleBadge && (
-                    <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '2px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', marginTop: '4px', display: 'inline-flex', alignItems: 'center' }}>
+                    <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 mt-1 inline-flex items-center">
                       {getRoleIcon(t.user_type)}
                       {t.roleBadge}
                     </span>
@@ -143,17 +143,17 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
 
           {/* Edit / Delete actions if review is user's own */}
           {t.isOwn && (
-            <div style={{ display: 'flex', gap: '6px', marginLeft: '8px', alignItems: 'center' }}>
+            <div className="flex items-center gap-1.5 ml-2 shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(t); }}
-                style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(96, 165, 250, 0.3)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                className="p-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 cursor-pointer flex items-center justify-center transition-colors"
                 title="Edit review"
               >
                 <Pen size={14} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(t); }}
-                style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(248, 113, 113, 0.3)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                className="p-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 border border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/20 cursor-pointer flex items-center justify-center transition-colors"
                 title="Delete review"
               >
                 <Trash2 size={14} />
@@ -315,30 +315,30 @@ const Testimonials = () => {
         </motion.h2>
 
         {/* Rating Summary Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', marginTop: '24px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '30px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <span style={{ fontSize: '18px', fontWeight: '900', color: '#f59e0b' }}>{avgRating}</span>
-            <div style={{ display: 'flex', gap: '2px' }}>
+        <div className="flex items-center justify-center gap-4 mt-6 flex-wrap">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-200 font-medium text-xs">
+            <span className="text-base font-black text-amber-500">{avgRating}</span>
+            <div className="flex items-center gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} size={14} fill="#f59e0b" color="#f59e0b" />
               ))}
             </div>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: '600', marginLeft: '4px' }}>
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 ml-1">
               {items.length || 48} Verified Reviews
             </span>
           </div>
 
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#10b981', fontWeight: '700', padding: '8px 16px', borderRadius: '30px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <ThumbsUp size={14} /> 98% Recommend Between
           </div>
 
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#60a5fa', fontWeight: '700', padding: '8px 16px', borderRadius: '30px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
             <ShieldCheck size={14} /> 100% Verified Profiles
           </div>
         </div>
 
         {/* Filter Tabs & Write Review Button */}
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="flex gap-2 justify-center mt-6 flex-wrap items-center">
           {[
             { id: "all", label: `All Testimonials (${items.length})` },
             { id: "platform", label: `Between Platform (${platformCount})` },
@@ -348,18 +348,11 @@ const Testimonials = () => {
             <button
               key={tab.id}
               onClick={() => setFilterTab(tab.id)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                border: '1px solid rgba(255,255,255,0.15)',
-                background: filterTab === tab.id ? '#3b82f6' : 'rgba(255,255,255,0.05)',
-                color: '#ffffff',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: filterTab === tab.id ? '0 4px 14px rgba(59, 130, 246, 0.35)' : 'none'
-              }}
+              className={`px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all border ${
+                filterTab === tab.id
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25'
+                  : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/15 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10'
+              }`}
             >
               {tab.label}
             </button>
@@ -371,21 +364,7 @@ const Testimonials = () => {
                 setEditingReview(null);
                 setShowReviewModal(true);
               }}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                border: '1px solid #10b981',
-                background: '#10b981',
-                color: '#ffffff',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
-              }}
+              className="px-4 py-2 rounded-full text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 shadow-md shadow-emerald-500/25 inline-flex items-center gap-1.5 cursor-pointer transition-all"
             >
               <MessageSquareQuote size={14} /> Write a Review
             </button>
@@ -406,27 +385,26 @@ const Testimonials = () => {
         ))}
       </div>
 
-      {companyNames.length > 0 && (
-        <div className="company-logo-strip">
-          {companyNames.map((name, i) => (
-            <span key={i} className="company-logo">{name}</span>
-          ))}
-        </div>
-      )}
+      {/* Company Logo Strip */}
+      <div className="company-logo-strip">
+        {(companyNames.length > 0 ? companyNames : ["META", "GOOGLE", "STRIPE", "VERCEL", "LINEAR", "OPENAI"]).map((logo, idx) => (
+          <span key={idx} className="company-logo">
+            {logo}
+          </span>
+        ))}
+      </div>
 
       {showReviewModal && (
         <WriteReviewModal
-          isOpen={showReviewModal}
+          editingReview={editingReview}
           onClose={() => {
             setShowReviewModal(false);
             setEditingReview(null);
           }}
-          editingReview={editingReview}
-          userRole={userRole}
-          onSubmit={() => {
+          onSuccess={() => {
+            loadReviews();
             setShowReviewModal(false);
             setEditingReview(null);
-            loadReviews();
           }}
         />
       )}
@@ -435,4 +413,3 @@ const Testimonials = () => {
 };
 
 export default Testimonials;
-
