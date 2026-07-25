@@ -235,14 +235,26 @@ def _compute_match_score(seeker_skills: list, job_skills: list, session_id: str 
 
 # ── Public (authenticated seeker) endpoints ────────────────────────────────────
 
+CATEGORY_MAP = {
+    "engineering": ["engineer", "developer", "software", "frontend", "backend", "full-stack", "fullstack", "devops", "systems", "architecture", "coding", "tech", "web", "site reliability", "sre"],
+    "data & ai": ["data", "ai", "ml", "machine learning", "analytics", "data scientist", "nlp", "python", "deep learning", "artificial intelligence", "business intelligence"],
+    "design": ["design", "ui", "ux", "product designer", "creative", "figma", "graphic", "user experience", "visual"],
+    "marketing": ["marketing", "growth", "seo", "content", "brand", "social media", "copywriter", "campaign"],
+    "operations": ["operations", "project manager", "product manager", "agile", "scrum", "lead", "coordinator", "manager", "program manager"],
+    "finance": ["finance", "fintech", "accounting", "banking", "crypto", "tax", "analyst", "investment", "financial"],
+    "healthcare": ["health", "medical", "pharma", "clinical", "bio", "nurse", "doctor", "biotech"],
+    "education": ["education", "tutor", "teacher", "academic", "learning", "instructor", "course", "curriculum"]
+}
+
 @csrf_exempt
 @require_seeker_jwt
 def list_jobs(request):
-    """GET /api/v1/seeker/jobs — list all active public job postings."""
+    """GET /api/v1/seeker/jobs — list all active public job postings with intelligent search."""
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
     try:
-        seeker = request.seeker
+        seeker = getattr(request, "seeker", None)
+        category = request.GET.get("category", "").strip().lower()
         q = request.GET.get("q", "").strip().lower()
         location = request.GET.get("location", "").strip().lower()
         job_type = request.GET.get("job_type", "").strip().lower()
@@ -253,13 +265,32 @@ def list_jobs(request):
             page = 1
             per_page = 10
 
-        from django.db.models import Count
+        from django.db.models import Q, Count
         sessions = Session.objects.filter(status="active").select_related("company").annotate(applicant_count=Count("seeker_applications")).order_by("-created_at")
 
-        if q:
-            sessions = sessions.filter(job_title__icontains=q)
+        search_target = category or q
+        if search_target:
+            terms = CATEGORY_MAP.get(search_target)
+            if not terms:
+                for cat_key, keywords in CATEGORY_MAP.items():
+                    if cat_key in search_target or search_target in cat_key:
+                        terms = keywords
+                        break
+            if terms:
+                q_expr = Q()
+                for term in terms:
+                    q_expr |= Q(job_title__icontains=term) | Q(job_description__icontains=term) | Q(company__name__icontains=term) | Q(inferred_skills__icontains=term)
+                sessions = sessions.filter(q_expr)
+            else:
+                sessions = sessions.filter(
+                    Q(job_title__icontains=search_target) |
+                    Q(job_description__icontains=search_target) |
+                    Q(company__name__icontains=search_target) |
+                    Q(inferred_skills__icontains=search_target)
+                )
+
         if location:
-            sessions = sessions.filter(job_description__icontains=location)
+            sessions = sessions.filter(Q(job_description__icontains=location) | Q(job_title__icontains=location))
 
         # Get seeker's applied session IDs
         applied_ids = set(

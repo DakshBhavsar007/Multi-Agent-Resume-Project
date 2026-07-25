@@ -274,6 +274,13 @@ export default function UserJobs() {
   }, [page]);
 
   useEffect(() => {
+    const qParam = searchParams.get("q") || searchParams.get("category");
+    if (qParam && qParam !== search) {
+      setSearch(qParam);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const params = {};
     if (search) params.q = search;
     if (location) params.location = location;
@@ -416,6 +423,36 @@ export default function UserJobs() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Quick Category Filter Pills */}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 max-w-4xl mx-auto px-4">
+          {[
+            { label: "All Roles", value: "" },
+            { label: "Engineering", value: "Engineering" },
+            { label: "Data & AI", value: "Data & AI" },
+            { label: "Design", value: "Design" },
+            { label: "Marketing", value: "Marketing" },
+            { label: "Healthcare", value: "Healthcare" },
+            { label: "Operations", value: "Operations" },
+            { label: "Education", value: "Education" },
+            { label: "Finance", value: "Finance" },
+          ].map((cat) => {
+            const isActive = (search || "").toLowerCase() === cat.value.toLowerCase();
+            return (
+              <button
+                key={cat.label}
+                onClick={() => setSearch(cat.value)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
+                  isActive
+                    ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
       </section>
 
