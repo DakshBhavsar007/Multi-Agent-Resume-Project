@@ -480,7 +480,8 @@ def developer_review_detail(request, review_id):
     if not review:
         return JsonResponse(error_response("Review not found"), status=404)
 
-    if str(review.developer_id) != str(dev.id):
+    dev_id = getattr(review, "developer_id", None)
+    if not dev_id or str(dev_id) != str(dev.id):
         return JsonResponse(error_response("You can only modify your own reviews"), status=403)
 
     if request.method == "PATCH":
@@ -515,7 +516,8 @@ def recruiter_review_detail(request, review_id):
     if not review:
         return JsonResponse(error_response("Review not found"), status=404)
 
-    if str(review.recruiter_id) != str(recruiter.id):
+    rec_id = getattr(review, "recruiter_id", None)
+    if not rec_id or str(rec_id) != str(recruiter.id):
         return JsonResponse(error_response("You can only modify your own reviews"), status=403)
 
     if request.method == "PATCH":
