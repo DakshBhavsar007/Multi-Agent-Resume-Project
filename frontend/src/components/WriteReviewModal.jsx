@@ -8,6 +8,7 @@ export default function WriteReviewModal({
   isOpen = true,
   onClose,
   onSubmit,
+  onSuccess,
   editingReview = null,
   companyId = null,
   companyName = null,
@@ -86,37 +87,37 @@ export default function WriteReviewModal({
 
     setLoading(true);
     try {
+      let result;
       if (customSubmit) {
-        const res = await customSubmit({ rating, text: text.trim(), company_id: selectedCompanyId || null, role: selectedRole });
+        result = await customSubmit({ rating, text: text.trim(), company_id: selectedCompanyId || null, role: selectedRole });
         toast.success('Review submitted successfully!');
-        if (onSubmit) onSubmit(res);
       } else if (editingReview) {
-        let updated;
         if (selectedRole === 'recruiter') {
-          updated = await recruiterAPI.updateReview(editingReview.id, { rating, text: text.trim() });
+          result = await recruiterAPI.updateReview(editingReview.id, { rating, text: text.trim() });
         } else if (selectedRole === 'developer') {
-          updated = await portalReviews.updateReview(editingReview.id, { rating, text: text.trim() });
+          result = await portalReviews.updateReview(editingReview.id, { rating, text: text.trim() });
         } else {
-          updated = await seekerAPI.updateReview(editingReview.id, { rating, text: text.trim() });
+          result = await seekerAPI.updateReview(editingReview.id, { rating, text: text.trim() });
         }
         toast.success('Review updated successfully!');
-        if (onSubmit) onSubmit(updated);
       } else {
-        let created;
         if (selectedRole === 'recruiter') {
-          created = await recruiterAPI.createReview({ rating, text: text.trim() });
+          result = await recruiterAPI.createReview({ rating, text: text.trim() });
         } else if (selectedRole === 'developer') {
-          created = await portalReviews.createReview({ rating, text: text.trim() });
+          result = await portalReviews.createReview({ rating, text: text.trim() });
         } else {
-          created = await seekerAPI.createReview({
+          result = await seekerAPI.createReview({
             company_id: selectedCompanyId || null,
             rating,
             text: text.trim(),
           });
         }
         toast.success('Review submitted successfully!');
-        if (onSubmit) onSubmit(created);
       }
+
+      if (onSubmit) onSubmit(result);
+      if (onSuccess) onSuccess(result);
+      if (onClose) onClose();
     } catch (err) {
       toast.error(err.message || 'Failed to submit review');
     } finally {
