@@ -142,7 +142,7 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
           <span>Screen resumes with</span>
           <FlipFadeText
             words={["artificial intelligence.", "surgical precision.", "multi-agent scoring.", "instant verification."]}
-            className="text-blue-600 dark:text-blue-400 font-bold"
+            className="hero-title-accent"
           />
         </motion.h1>
 
