@@ -94,8 +94,9 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
       transition={{ duration: 1 }}
     >
       <video
-        className="absolute inset-0 z-0 h-full w-full object-cover pointer-events-none opacity-90 dark:opacity-70"
-        src="https://zxdefgavgwfxastwmmjm.supabase.co/storage/v1/object/public/assets/stillwater.mp4"
+        className="absolute inset-0 z-0 h-full w-full object-cover pointer-events-none opacity-95 dark:opacity-70"
+        style={{ filter: 'blur(2px) saturate(1.06)', transform: 'scale(1.06)' }}
+        src="https://zxdefgavgwfxastwmmjm.supabase.co/storage/v1/object/public/assets/flux.mp4"
         autoPlay
         muted
         loop
@@ -107,7 +108,7 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
         className="absolute inset-0 z-[1] pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse at center, rgba(246,248,244,0.45) 0%, rgba(246,248,244,0) 75%), linear-gradient(to bottom, rgba(246,248,244,0.55) 0%, rgba(246,248,244,0.05) 35%, rgba(246,248,244,0.05) 65%, rgba(246,248,244,0.55) 100%)'
+            'radial-gradient(circle at 50% 44%, rgba(255,255,255,0.90) 0%, rgba(255,255,255,0.70) 30%, rgba(255,255,255,0.35) 58%, rgba(255,255,255,0.12) 100%), linear-gradient(to bottom, rgba(255,255,255,0.85) 0%, transparent 18%, transparent 82%, rgba(255,255,255,0.90) 100%)'
         }}
       />
       <div className="relative z-10 flex flex-col items-center w-full">
