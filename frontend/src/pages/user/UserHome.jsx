@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import FeaturesList from "../../components/FeaturesList";
 import SolarSystem from "../../components/SolarSystem";
+import FlipFadeText from "../../components/ui/flip-fade-text";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { jobs, companies } from "../../lib/data";
@@ -401,33 +402,10 @@ function Home() {
               className="mt-5 font-display text-4xl font-semibold leading-[1.25] tracking-tight sm:text-5xl lg:text-6xl flex flex-wrap items-center justify-center gap-x-[0.25em]"
             >
               <span>Find work that</span>
-              <span className="relative inline-flex overflow-hidden h-[1.2em] w-[4.5em] items-center justify-center align-middle">
-                {!isMounted ? (
-                  <span className="gradient-text font-bold">fits</span>
-                ) : (
-                  words.map((word, index) => (
-                    <motion.span
-                      key={word}
-                      className="absolute gradient-text font-bold"
-                      initial={{ opacity: 0, y: "100%" }}
-                      transition={{ type: "spring", stiffness: 75, damping: 15 }}
-                      animate={
-                        wordIndex === index
-                          ? {
-                            y: 0,
-                            opacity: 1,
-                          }
-                          : {
-                            y: "-100%",
-                            opacity: 0,
-                          }
-                      }
-                    >
-                      {word}
-                    </motion.span>
-                  ))
-                )}
-              </span>
+              <FlipFadeText 
+                words={["fits", "empowers", "matches", "elevates", "deserves"]} 
+                className="gradient-text font-bold text-blue-600 dark:text-blue-400" 
+              />
               <span>you — not the other way around.</span>
             </motion.h1>
             <motion.p

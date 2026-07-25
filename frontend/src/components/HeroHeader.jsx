@@ -3,7 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
-import './HeroHeader.css';
+import FlipFadeText from './ui/flip-fade-text';
 
 const heroImg = '/assets/hero-image.webp';
 
@@ -135,18 +135,12 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
         </div>
       </motion.div>
 
-      <motion.h1 className="hero-title">
-        {words.map((word, i) => (
-          <motion.span 
-            key={i} 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: i * 0.1, ease: [0.21, 0.45, 0.32, 0.9] }}
-            style={{ display: 'inline-block', marginRight: '0.25em' }}
-          >
-            {word}
-          </motion.span>
-        ))}
+      <motion.h1 className="hero-title flex flex-wrap items-center justify-center gap-x-[0.25em]">
+        <span>Screen resumes with</span>
+        <FlipFadeText
+          words={["artificial intelligence.", "surgical precision.", "multi-agent scoring.", "instant verification."]}
+          className="text-blue-600 dark:text-blue-400 font-bold"
+        />
       </motion.h1>
 
       <motion.p 

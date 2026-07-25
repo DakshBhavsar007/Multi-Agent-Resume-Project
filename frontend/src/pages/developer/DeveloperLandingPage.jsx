@@ -16,6 +16,7 @@ import ThemeToggle from "../../components/ThemeToggle";
 import { Footer } from "../../components/user/site-chrome";
 import { DEVELOPER_PLANS } from "../../lib/plans";
 import SolarSystem from "../../components/SolarSystem";
+import FlipFadeText from "../../components/ui/flip-fade-text";
 
 export default function DeveloperLandingPage() {
   useDocumentTitle(
@@ -270,7 +271,11 @@ const response = await fetch(
             <Cpu size={14} /> AI-Powered Talent API
           </span>
           <h1 className="text-4xl lg:text-[48px] font-black text-charcoal dark:text-white leading-[1.1] tracking-tight">
-            Resume Intelligence API<br />for HR Platforms
+            Resume Intelligence API for{" "}
+            <FlipFadeText 
+              words={["HR Platforms", "ATS Systems", "Recruitment Apps", "Talent Pipelines"]} 
+              className="text-amber-500 font-black"
+            />
           </h1>
           <p className="text-lg text-gray-600 dark:text-zinc-400 max-w-[480px] leading-relaxed">
             Parse resumes semantically, match skills intelligently, and rank candidates — all through a simple REST API. Integrate in minutes.
