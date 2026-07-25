@@ -112,7 +112,7 @@ export default function JobSeekerRegisterPage() {
           <h1 className="text-3xl font-black tracking-tight text-accent">Create Account</h1>
         </div>
 
-        {/* ⚡ Resume Upload Auto-Fill Dropzone */}
+        {/* Resume Upload Auto-Fill Dropzone */}
         <div className="mb-4 p-4 border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-400 rounded-2xl transition-colors text-center group">
           <input 
             type="file" 

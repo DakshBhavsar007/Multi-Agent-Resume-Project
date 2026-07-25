@@ -989,7 +989,11 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                             }`}
                             style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
-                            {phoneVerified ? 'Verified ✓' : 'Verify'}
+                            {phoneVerified ? (
+                              <span className="flex items-center gap-1">
+                                <Check size={12} /> Verified
+                              </span>
+                            ) : 'Verify'}
                           </button>
                         )}
                       </div>
@@ -1058,7 +1062,11 @@ const AuthPage = ({ isLogin: initialIsLogin = true }) => {
                     }`}
                     style={{ minWidth: '85px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    {isEmailVerified ? 'Verified ✓' : 'Verify'}
+                    {isEmailVerified ? (
+                      <span className="flex items-center gap-1">
+                        <Check size={12} /> Verified
+                      </span>
+                    ) : 'Verify'}
                   </button>
                 )}
               </div>
