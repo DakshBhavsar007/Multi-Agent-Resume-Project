@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import FlipFadeText from './ui/flip-fade-text';
+import './HeroHeader.css';
 
 const heroImg = '/assets/hero-image.webp';
 
