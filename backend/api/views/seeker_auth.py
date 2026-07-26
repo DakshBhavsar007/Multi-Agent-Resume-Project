@@ -72,7 +72,7 @@ def require_seeker_jwt(view_func):
         if not seeker:
             return JsonResponse(error_response("Account not found"), status=401)
 
-        if seeker.is_banned:
+        if getattr(seeker, "is_banned", False):
             try:
                 redis_client.setex(ban_status_key, 300, "true")
             except Exception:

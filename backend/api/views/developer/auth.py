@@ -135,7 +135,7 @@ def login(request):
             return JsonResponse(error_response("Invalid credentials"), status=401)
 
         comp = Company.objects.filter(email=email).first()
-        if comp and comp.is_banned:
+        if comp and getattr(comp, "is_banned", False):
             return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
 
         payload = {

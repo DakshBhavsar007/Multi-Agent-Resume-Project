@@ -215,7 +215,7 @@ def require_recruiter_jwt(view_func):
                 "error": "Company not found or inactive"
             }, status=401)
 
-        if company.is_banned:
+        if getattr(company, "is_banned", False):
             try:
                 redis_client.setex(ban_status_key, 300, "true")
             except Exception:
@@ -299,7 +299,7 @@ def require_developer_jwt(view_func):
                 "error": "Developer not found"
             }, status=401)
 
-        if developer.is_banned:
+        if getattr(developer, "is_banned", False):
             try:
                 redis_client.setex(ban_status_key, 300, "true")
             except Exception:
