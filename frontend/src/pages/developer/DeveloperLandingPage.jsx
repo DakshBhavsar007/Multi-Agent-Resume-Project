@@ -35,6 +35,24 @@ export default function DeveloperLandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState("Python");
   
+  const [platformStats, setPlatformStats] = useState({
+    resumes_per_min: "500+",
+    latency: "<10ms",
+    uptime: "99.9%",
+    skills: "5,000+"
+  });
+
+  useEffect(() => {
+    fetch("/api/v1/public/platform-stats")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && data.data) {
+          setPlatformStats(data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+  
   const [appsOpen, setAppsOpen] = useState(false);
   const appsDropdownRef = React.useRef(null);
 
@@ -324,19 +342,19 @@ const response = await fetch(
       <section className="w-full bg-[#111111] dark:bg-[#131316] py-8">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-white/20">
            <div className="flex flex-col px-4 text-white">
-             <span className="text-2xl font-bold">500+</span>
+             <span className="text-2xl font-bold">{platformStats.resumes_per_min || "500+"}</span>
              <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Resumes/min</span>
            </div>
            <div className="flex flex-col px-4 text-white">
-             <span className="text-2xl font-bold">&lt;10ms</span>
+             <span className="text-2xl font-bold">{platformStats.latency || "<10ms"}</span>
              <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Latency</span>
            </div>
            <div className="flex flex-col px-4 text-white">
-             <span className="text-2xl font-bold">99.9%</span>
+             <span className="text-2xl font-bold">{platformStats.uptime || "99.9%"}</span>
              <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Uptime</span>
            </div>
            <div className="flex flex-col px-4 text-white">
-             <span className="text-2xl font-bold">5,000+</span>
+             <span className="text-2xl font-bold">{platformStats.skills || "5,000+"}</span>
              <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Skills</span>
            </div>
         </div>

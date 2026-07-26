@@ -201,6 +201,7 @@ urlpatterns = [
     path('api/v1/public/jobs/<str:session_id>/safety-check', jobs.scan_job_safety_public, name='public-jobs-safety-check'),
 
     # ── Reviews & Testimonials ────────────────────────────────────────────────
+    path('api/v1/public/platform-stats', reviews.public_platform_stats, name='public-platform-stats'),
     path('api/v1/public/reviews', reviews.public_list_reviews, name='public-reviews-list'),
     path('api/v1/public/companies/<str:company_id>/reviews', reviews.public_company_reviews, name='public-company-reviews'),
     path('api/v1/public/seekers/<str:seeker_id>', reviews.public_seeker_profile, name='public-seeker-profile'),
