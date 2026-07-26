@@ -1,10 +1,21 @@
 import json
 import logging
+import os
 import re
 import uuid
-from agents.llm import RotateLLMClient
+from agents.llm import RotateLLMClient, get_api_keys
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
+
+# Section keywords used to evaluate text extraction quality
+_SECTION_KEYWORDS = [
+    "experience", "education", "skills", "projects", "summary",
+    "certifications", "languages", "achievements", "work history",
+    "professional summary", "objective", "technical skills",
+    "personal info", "contact", "profile",
+]
+
 
 class AdvancedAtsParsingAgent:
     """
@@ -13,17 +24,93 @@ class AdvancedAtsParsingAgent:
     Parses resume text directly into the schema expected by the React frontend editor,
     extracting summary, skills, experience, education, projects (with techStack),
     certifications, languages, and links.
+
+    Includes:
+    - Gemini Vision OCR fallback for scanned/image-based PDFs
+    - Improved column-aware text extraction without confusing LLM markers
+    - Gemini-first LLM call (no weak 8B model fallback)
     """
     def __init__(self):
         self.client = RotateLLMClient()
 
     @staticmethod
+    def _count_section_keywords(text: str) -> int:
+        """Count how many resume section keywords appear in the text."""
+        text_lower = text.lower()
+        return sum(1 for kw in _SECTION_KEYWORDS if kw in text_lower)
+
+    @staticmethod
+    def _ocr_pdf_with_gemini(file_path: str, max_pages: int = 3) -> str:
+        """
+        OCR fallback for scanned/image-based PDFs using Gemini Vision.
+        Renders each page as a high-res PNG and sends to Gemini for text extraction.
+        Processes up to max_pages pages.
+        """
+        import fitz
+
+        gemini_keys = get_api_keys()
+        if not gemini_keys:
+            logger.warning("No Gemini API keys available for OCR fallback.")
+            return ""
+
+        try:
+            import google.generativeai as genai
+            from PIL import Image
+            import io
+        except ImportError:
+            logger.warning("google-generativeai or Pillow not installed; OCR fallback unavailable.")
+            return ""
+
+        doc = fitz.open(file_path)
+        num_pages = min(len(doc), max_pages)
+        ocr_pages = []
+
+        # Try each Gemini key until one works
+        for key in gemini_keys:
+            try:
+                genai.configure(api_key=key)
+                model = genai.GenerativeModel('gemini-2.5-flash')
+
+                for i in range(num_pages):
+                    page = doc[i]
+                    # Render at 2x resolution for better OCR accuracy
+                    pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+                    img_data = pix.tobytes("png")
+                    img = Image.open(io.BytesIO(img_data))
+
+                    response = model.generate_content([
+                        "Extract ALL text from this resume image exactly as written. "
+                        "Preserve section headings, bullet points, dates, and formatting structure. "
+                        "Do not add markdown wrappers, code fences, or conversational text. "
+                        "Just return the plain text content.",
+                        img
+                    ])
+                    page_text = response.text.strip()
+                    if page_text:
+                        ocr_pages.append(page_text)
+
+                if ocr_pages:
+                    logger.info("Gemini Vision OCR extracted text from %d pages.", len(ocr_pages))
+                    return "\n\n".join(ocr_pages)
+
+            except Exception as e:
+                logger.warning("Gemini Vision OCR failed with key %s...: %s", key[:8], e)
+                continue
+
+        return ""
+
+    @staticmethod
     def extract_text_column_aware(file_path: str) -> str:
         """
-        Column-aware PDF text extraction using PyMuPDF.
-        Splits pages into left and right columns if a vertical layout division is detected.
-        Conserves section integrity for two-column resumes.
-        Falls back to standard get_text() for non-PDF files.
+        Smart PDF text extraction with column awareness and OCR fallback.
+
+        Strategy:
+        1. Try standard get_text("text") — this preserves reading order for most PDFs.
+        2. Try block-based extraction with column detection for two-column layouts.
+        3. Compare both extractions and pick the one with more resume section keywords.
+        4. If both produce < 50 chars (scanned PDF), fall back to Gemini Vision OCR.
+
+        Falls back to standard extraction for non-PDF files.
         """
         import fitz
         from pathlib import Path
@@ -32,48 +119,55 @@ class AdvancedAtsParsingAgent:
         try:
             if ext == ".pdf":
                 doc = fitz.open(file_path)
-                pages_text = []
+
+                # --- Method 1: Standard text extraction (reading order) ---
+                standard_pages = []
+                for page in doc:
+                    standard_pages.append(page.get_text("text") or "")
+                standard_text = "\n\n".join(standard_pages)
+
+                # --- Method 2: Block-based column-aware extraction ---
+                block_pages = []
                 for page in doc:
                     blocks = page.get_text("blocks")
                     # filter out empty blocks and non-text blocks
                     blocks = [b for b in blocks if b[4].strip() and b[6] == 0]
-                    
+
                     page_width = page.rect.width
                     page_height = page.rect.height
-                    
+
                     # Search for best vertical split x between 25% and 75% width
                     best_x = None
                     min_crossings = float('inf')
-                    
+
                     start_x = int(page_width * 0.25)
                     end_x = int(page_width * 0.75)
-                    
+
                     for x in range(start_x, end_x, 5):
                         crossings = 0
                         for b in blocks:
                             x0, y0, x1, y1 = b[0], b[1], b[2], b[3]
-                            # A block crosses if it spans across x, but ignore top headers and bottom footers
                             if y0 >= 120 and y1 <= page_height - 80:
                                 if x0 < x < x1:
                                     crossings += 1
-                        
+
                         if crossings < min_crossings:
                             min_crossings = crossings
                             best_x = x
-                            
+
                     # Treat as two-column if min_crossings is low relative to blocks
                     is_two_column = False
                     if len(blocks) > 4:
                         ratio = min_crossings / len(blocks)
                         if min_crossings <= 2 or ratio < 0.15:
                             is_two_column = True
-                            
+
                     if is_two_column:
                         header_blocks = []
                         footer_blocks = []
                         left_blocks = []
                         right_blocks = []
-                        
+
                         for b in blocks:
                             x0, y0, x1, y1 = b[0], b[1], b[2], b[3]
                             if y0 < 120:
@@ -86,33 +180,53 @@ class AdvancedAtsParsingAgent:
                                     left_blocks.append(b)
                                 else:
                                     right_blocks.append(b)
-                                    
+
                         header_blocks.sort(key=lambda x: (x[1], x[0]))
                         left_blocks.sort(key=lambda x: (x[1], x[0]))
                         right_blocks.sort(key=lambda x: (x[1], x[0]))
                         footer_blocks.sort(key=lambda x: (x[1], x[0]))
-                        
+
+                        # Concatenate without confusing markers — just header, left, right, footer
                         page_text = []
                         for b in header_blocks:
                             page_text.append(b[4].strip())
-                        
-                        page_text.append("[LEFT COLUMN]")
                         for b in left_blocks:
                             page_text.append(b[4].strip())
-                            
-                        page_text.append("[RIGHT COLUMN]")
                         for b in right_blocks:
                             page_text.append(b[4].strip())
-                            
                         for b in footer_blocks:
                             page_text.append(b[4].strip())
-                            
-                        pages_text.append("\n".join(page_text))
+
+                        block_pages.append("\n".join(page_text))
                     else:
                         blocks.sort(key=lambda x: (x[1], x[0]))
-                        pages_text.append("\n".join(b[4].strip() for b in blocks))
-                        
-                return "\n\n".join(pages_text)
+                        block_pages.append("\n".join(b[4].strip() for b in blocks))
+
+                block_text = "\n\n".join(block_pages)
+
+                # --- Pick the better extraction ---
+                standard_len = len(standard_text.strip())
+                block_len = len(block_text.strip())
+
+                # If both are too short, try OCR
+                if standard_len < 50 and block_len < 50:
+                    logger.info("Both text extractions too short (%d, %d chars); attempting Gemini Vision OCR.", standard_len, block_len)
+                    ocr_text = AdvancedAtsParsingAgent._ocr_pdf_with_gemini(file_path)
+                    if ocr_text and len(ocr_text.strip()) >= 50:
+                        return ocr_text
+                    return standard_text  # Return whatever we have
+
+                # Compare by section keyword density
+                standard_kw = AdvancedAtsParsingAgent._count_section_keywords(standard_text)
+                block_kw = AdvancedAtsParsingAgent._count_section_keywords(block_text)
+
+                # Prefer standard text if it has equal or more section keywords
+                # (standard preserves reading order better for exported/re-uploaded PDFs)
+                if standard_kw >= block_kw:
+                    return standard_text
+                else:
+                    return block_text
+
             elif ext in [".docx", ".doc"]:
                 from docx import Document
                 doc = Document(file_path)
@@ -129,7 +243,7 @@ class AdvancedAtsParsingAgent:
         Compress text to save input tokens:
         - Replaces 3+ consecutive newlines with exactly 2 newlines.
         - Trims whitespace from individual lines.
-        - Limits maximum text length.
+        - Limits maximum text length to 16000 chars (~4K tokens for Gemini).
         """
         if not text:
             return ""
@@ -146,9 +260,9 @@ class AdvancedAtsParsingAgent:
             else:
                 consecutive_empty = 0
                 cleaned_lines.append(line)
-        
+
         cleaned_text = "\n".join(cleaned_lines)
-        return cleaned_text[:12000]  # Hard limit to stay within safe token limits
+        return cleaned_text[:16000]  # Increased from 12K to 16K for better extraction
 
     def clean_url(self, url: str) -> str:
         """Helper to ensure URLs are formatted properly with a protocol."""
@@ -166,6 +280,25 @@ class AdvancedAtsParsingAgent:
             return "https://" + url
         return url
 
+    def _create_gemini_client(self):
+        """Create a direct Gemini OpenAI-compatible client, bypassing RotateLLMClient fallback chain."""
+        keys = get_api_keys()
+        if not keys:
+            return None, None
+
+        import time
+        for key in keys:
+            try:
+                client = OpenAI(
+                    api_key=key,
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                    max_retries=0
+                )
+                return client, key
+            except Exception:
+                continue
+        return None, None
+
     async def parse(self, text: str) -> dict:
         preprocessed = self.preprocess_text(text)
         if not preprocessed.strip():
@@ -175,6 +308,10 @@ class AdvancedAtsParsingAgent:
             "You are an elite AI Resume Parsing Agent. The resume text may come from a two-column PDF layout "
             "where text blocks are partially interleaved — contact info, skills, and projects may appear jumbled. "
             "Reconstruct all sections correctly despite the scrambled order.\n\n"
+            "The resume may also be re-uploaded from our own platform. If the text appears scrambled due to PDF "
+            "rendering order, use semantic understanding to reconstruct sections correctly. Look for common section "
+            "headers (Personal Info, Summary, Experience, Education, Projects, Skills, Certifications, Languages) "
+            "and group content under the correct sections.\n\n"
             "CRITICAL OPTIMIZATION: Rewrite and enhance the professional summary, experience bullets, and project "
             "descriptions to make them highly professional and ATS-optimized (by using strong action verbs, including "
             "key industry keywords matching their target/current roles, and formatting for readability).\n\n"
@@ -258,35 +395,94 @@ class AdvancedAtsParsingAgent:
             "7. Return ONLY valid JSON. No markdown. No explanation."
         )
 
-        try:
-            response = self.client.chat.completions.create(
-                model="gemini-2.5-flash",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Resume Text:\n{preprocessed}"}
-                ],
-                temperature=0.0,
-                response_format={"type": "json_object"}
-            )
-            raw = response.choices[0].message.content.strip()
-            
-            # Clean markdown JSON wraps
-            if raw.startswith("```json"):
-                raw = raw[7:]
-            if raw.startswith("```"):
-                raw = raw[3:]
-            if raw.endswith("```"):
-                raw = raw[:-3]
-            raw = raw.strip()
+        # --- Gemini-First Parsing (skip weak 8B fallback models) ---
+        gemini_keys = get_api_keys()
+        import time
 
-            parsed = json.loads(raw)
+        for key in gemini_keys:
+            try:
+                client = OpenAI(
+                    api_key=key,
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                    max_retries=0
+                )
+                gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
+                print(f"[RESUME PARSER] Trying Gemini key {masked_key} with model {gemini_model}", flush=True)
 
-            # Ensure all schema keys exist and default if not
-            return self.normalize_parsed_content(parsed)
+                response = client.chat.completions.create(
+                    model=gemini_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"Resume Text:\n{preprocessed}"}
+                    ],
+                    temperature=0.0,
+                    response_format={"type": "json_object"},
+                    timeout=45.0
+                )
+                raw = response.choices[0].message.content.strip()
+                print(f"[RESUME PARSER] Gemini key {masked_key} succeeded!", flush=True)
 
-        except Exception as e:
-            logger.error("AdvancedAtsParsingAgent parsing failed: %s", e)
-            return self.get_empty_resume_dict()
+                # Clean markdown JSON wraps
+                if raw.startswith("```json"):
+                    raw = raw[7:]
+                if raw.startswith("```"):
+                    raw = raw[3:]
+                if raw.endswith("```"):
+                    raw = raw[:-3]
+                raw = raw.strip()
+
+                parsed = json.loads(raw)
+                return self.normalize_parsed_content(parsed)
+
+            except Exception as e:
+                masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
+                print(f"[RESUME PARSER] Gemini key {masked_key} failed: {e}", flush=True)
+                logger.warning("Gemini parsing failed with key %s: %s", masked_key, e)
+                continue
+
+        # --- Groq Fallback: ONLY use large 70B model (not weak 8B) ---
+        groq_key = os.getenv("GROQ_API_KEY")
+        if groq_key:
+            try:
+                client = OpenAI(
+                    api_key=groq_key,
+                    base_url="https://api.groq.com/openai/v1",
+                    max_retries=0
+                )
+                groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-specdec")
+                print(f"[RESUME PARSER] Falling back to Groq model: {groq_model}", flush=True)
+
+                response = client.chat.completions.create(
+                    model=groq_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"Resume Text:\n{preprocessed}"}
+                    ],
+                    temperature=0.0,
+                    timeout=30.0
+                )
+                raw = response.choices[0].message.content.strip()
+                print(f"[RESUME PARSER] Groq model {groq_model} succeeded!", flush=True)
+
+                if raw.startswith("```json"):
+                    raw = raw[7:]
+                if raw.startswith("```"):
+                    raw = raw[3:]
+                if raw.endswith("```"):
+                    raw = raw[:-3]
+                raw = raw.strip()
+
+                parsed = json.loads(raw)
+                return self.normalize_parsed_content(parsed)
+
+            except Exception as e:
+                print(f"[RESUME PARSER] Groq fallback failed: {e}", flush=True)
+                logger.error("Groq 70B parsing fallback failed: %s", e)
+
+        # All LLM providers exhausted — return empty
+        logger.error("All LLM providers exhausted for resume parsing.")
+        return self.get_empty_resume_dict()
 
     def get_empty_resume_dict(self) -> dict:
         return {
@@ -311,7 +507,7 @@ class AdvancedAtsParsingAgent:
 
     def normalize_parsed_content(self, parsed: dict) -> dict:
         schema = self.get_empty_resume_dict()
-        
+
         # Merge personal info
         p_info = parsed.get("personalInfo") or {}
         if isinstance(p_info, dict):
