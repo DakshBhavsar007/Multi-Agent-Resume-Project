@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Star, ShieldCheck, Terminal } from "lucide-react";
+import { Star, ShieldCheck, Terminal, Pen, Trash2 } from "lucide-react";
 import VerifiedBadge from "../VerifiedBadge";
 import { toast } from "react-hot-toast";
 
@@ -122,6 +122,30 @@ export default function UnifiedReviewsSection({ reviews = [], targetId, ownerTyp
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {rev.is_own && (
+                    <div className="flex items-center gap-1">
+                      {onEditReview && (
+                        <button
+                          type="button"
+                          onClick={() => onEditReview(rev)}
+                          className="p-1 rounded bg-muted hover:bg-muted-foreground/10 text-muted-foreground transition-colors"
+                          title="Edit review"
+                        >
+                          <Pen className="h-3 w-3" />
+                        </button>
+                      )}
+                      {onDeleteReview && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteReview(rev)}
+                          className="p-1 rounded bg-muted hover:bg-red-100 text-red-500 transition-colors"
+                          title="Delete review"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-center gap-0.5 text-amber-500">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star

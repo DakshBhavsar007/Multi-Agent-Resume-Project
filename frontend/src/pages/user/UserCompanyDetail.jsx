@@ -300,7 +300,21 @@ export default function UserCompanyDetail() {
               </div>
 
               <div className="mt-6">
-                <UnifiedReviewsSection reviews={reviews} targetId={companyId} ownerType="company" />
+                <UnifiedReviewsSection 
+                  reviews={reviews} 
+                  targetId={companyId} 
+                  ownerType="company" 
+                  onEditReview={(rev) => { setEditingReview(rev); setShowReviewModal(true); }}
+                  onDeleteReview={async (rev) => {
+                    try {
+                      await seekerAPI.deleteReview(rev.id);
+                      setReviews(prev => prev.filter(x => x.id !== rev.id));
+                      toast.success('Review deleted');
+                    } catch (err) {
+                      toast.error(err.message || 'Failed to delete review');
+                    }
+                  }}
+                />
               </div>
             </div>
           </div>
