@@ -181,7 +181,7 @@ export default function UserCompanyDetail() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             <CompanyLogo 
               name={company.name} 
-              logoPath={company.logo_path || company.logo_url} 
+              logoPath={company.logoPath} 
               color={company.logoColor || '#059669'} 
               size={96} 
               className="rounded-2xl border-2 border-border/80 shadow-md shrink-0" 
