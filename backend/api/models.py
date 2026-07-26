@@ -661,13 +661,15 @@ class Review(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        author = (
-            self.seeker.full_name if self.seeker else
-            self.developer.full_name if self.developer else
-            self.recruiter.name if self.recruiter else "Anonymous"
-        )
-        target = self.company.name if self.company else "Between Platform"
-        return f"{author} ({self.user_type}) → {target} ({self.rating} stars)"
+        try:
+            seeker_name = getattr(self.seeker, "full_name", None) if self.seeker else None
+            dev_name = (getattr(self.developer, "full_name", None) or getattr(self.developer, "company_name", None) or getattr(self.developer, "email", None)) if self.developer else None
+            rec_name = getattr(self.recruiter, "name", None) if self.recruiter else None
+            author = seeker_name or dev_name or rec_name or "Anonymous"
+            target = getattr(self.company, "name", None) if self.company else "Between Platform"
+            return f"{author} ({self.user_type}) → {target} ({self.rating} stars)"
+        except Exception:
+            return f"Review {self.id} ({self.rating} stars)"
 
 
 class AdminBanLog(models.Model):

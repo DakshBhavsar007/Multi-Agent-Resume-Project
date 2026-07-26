@@ -269,42 +269,47 @@ def seeker_reviews_root(request):
         )
 
     try:
-        body = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse(error_response("Invalid JSON body"), status=400)
+        try:
+            body = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse(error_response("Invalid JSON body"), status=400)
 
-    rating = body.get("rating")
-    text = body.get("text", "").strip()
-    company_id = body.get("company_id")
+        rating = body.get("rating")
+        text = body.get("text", "").strip() if isinstance(body.get("text"), str) else ""
+        company_id = body.get("company_id")
 
-    if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
-        return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
-    if not text or len(text) < 10:
-        return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
-    if len(text) > 2000:
-        return JsonResponse(error_response("Review text must be under 2000 characters"), status=400)
+        if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
+            return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
+        if not text or len(text) < 10:
+            return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
+        if len(text) > 2000:
+            return JsonResponse(error_response("Review text must be under 2000 characters"), status=400)
 
-    company = None
-    if company_id:
-        company = Company.objects.filter(id=company_id).first()
-        if not company:
-            return JsonResponse(error_response("Company not found"), status=404)
+        company = None
+        if company_id:
+            company = Company.objects.filter(id=company_id).first()
+            if not company:
+                return JsonResponse(error_response("Company not found"), status=404)
 
-    review = Review.objects.filter(seeker=seeker, company=company).first()
-    if review:
-        review.rating = rating
-        review.text = text
-        review.save()
-    else:
-        review = Review.objects.create(
-            seeker=seeker,
-            company=company,
-            user_type="job_seeker",
-            rating=rating,
-            text=text,
-        )
+        review = Review.objects.filter(seeker=seeker, company=company).first()
+        if review:
+            review.rating = rating
+            review.text = text
+            review.save()
+        else:
+            review = Review.objects.create(
+                seeker=seeker,
+                company=company,
+                user_type="job_seeker",
+                rating=rating,
+                text=text,
+            )
 
-    return JsonResponse(success_response(_serialize_review(review, seeker.id)), status=200 if review else 201)
+        serialized = _serialize_review(review, str(seeker.id), "job_seeker")
+        return JsonResponse(success_response(serialized), status=200 if review else 201)
+    except Exception as e:
+        logger.error(f"Error in seeker_reviews_root: {e}", exc_info=True)
+        return JsonResponse(error_response(f"Failed to process review: {e}"), status=500)
 
 
 # ── Developer Endpoints (Platform Reviews ONLY) ──────────────────────────────
@@ -317,45 +322,50 @@ def developer_reviews_root(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
 
     dev = request.developer
-
-    if not dev.is_verified:
+    is_verified = bool(getattr(dev, "is_verified", True) or getattr(dev, "email_verified", True))
+    if not is_verified:
         return JsonResponse(
             error_response("Only verified developers can submit platform reviews."),
             status=403
         )
 
     try:
-        body = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse(error_response("Invalid JSON body"), status=400)
+        try:
+            body = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse(error_response("Invalid JSON body"), status=400)
 
-    rating = body.get("rating")
-    text = body.get("text", "").strip()
-    company_id = body.get("company_id")
+        rating = body.get("rating")
+        text = body.get("text", "").strip() if isinstance(body.get("text"), str) else ""
+        company_id = body.get("company_id")
 
-    if company_id:
-        return JsonResponse(error_response("Developers can only submit Between platform reviews."), status=400)
+        if company_id:
+            return JsonResponse(error_response("Developers can only submit Between platform reviews."), status=400)
 
-    if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
-        return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
-    if not text or len(text) < 10:
-        return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
+        if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
+            return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
+        if not text or len(text) < 10:
+            return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
 
-    review = Review.objects.filter(developer=dev, company__isnull=True).first()
-    if review:
-        review.rating = rating
-        review.text = text
-        review.save()
-    else:
-        review = Review.objects.create(
-            developer=dev,
-            company=None,
-            user_type="developer",
-            rating=rating,
-            text=text,
-        )
+        review = Review.objects.filter(developer=dev, company__isnull=True).first()
+        if review:
+            review.rating = rating
+            review.text = text
+            review.save()
+        else:
+            review = Review.objects.create(
+                developer=dev,
+                company=None,
+                user_type="developer",
+                rating=rating,
+                text=text,
+            )
 
-    return JsonResponse(success_response(_serialize_review(review, dev.id)), status=200 if review else 201)
+        serialized = _serialize_review(review, str(dev.id), "developer")
+        return JsonResponse(success_response(serialized), status=200 if review else 201)
+    except Exception as e:
+        logger.error(f"Error in developer_reviews_root: {e}", exc_info=True)
+        return JsonResponse(error_response(f"Failed to process review: {e}"), status=500)
 
 
 # ── Recruiter Endpoints (Platform Reviews ONLY) ──────────────────────────────
@@ -368,45 +378,50 @@ def recruiter_reviews_root(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
 
     recruiter = request.company
-
-    if not recruiter.email_verified:
+    is_verified = bool(getattr(recruiter, "email_verified", True))
+    if not is_verified:
         return JsonResponse(
             error_response("Only verified recruiters can submit platform reviews."),
             status=403
         )
 
     try:
-        body = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse(error_response("Invalid JSON body"), status=400)
+        try:
+            body = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse(error_response("Invalid JSON body"), status=400)
 
-    rating = body.get("rating")
-    text = body.get("text", "").strip()
-    company_id = body.get("company_id")
+        rating = body.get("rating")
+        text = body.get("text", "").strip() if isinstance(body.get("text"), str) else ""
+        company_id = body.get("company_id")
 
-    if company_id:
-        return JsonResponse(error_response("Recruiters can only submit Between platform reviews."), status=400)
+        if company_id:
+            return JsonResponse(error_response("Recruiters can only submit Between platform reviews."), status=400)
 
-    if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
-        return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
-    if not text or len(text) < 10:
-        return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
+        if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
+            return JsonResponse(error_response("Rating must be an integer from 1 to 5"), status=400)
+        if not text or len(text) < 10:
+            return JsonResponse(error_response("Review text must be at least 10 characters"), status=400)
 
-    review = Review.objects.filter(recruiter=recruiter, company__isnull=True).first()
-    if review:
-        review.rating = rating
-        review.text = text
-        review.save()
-    else:
-        review = Review.objects.create(
-            recruiter=recruiter,
-            company=None,
-            user_type="recruiter",
-            rating=rating,
-            text=text,
-        )
+        review = Review.objects.filter(recruiter=recruiter, company__isnull=True).first()
+        if review:
+            review.rating = rating
+            review.text = text
+            review.save()
+        else:
+            review = Review.objects.create(
+                recruiter=recruiter,
+                company=None,
+                user_type="recruiter",
+                rating=rating,
+                text=text,
+            )
 
-    return JsonResponse(success_response(_serialize_review(review, recruiter.id)), status=200 if review else 201)
+        serialized = _serialize_review(review, str(recruiter.id), "recruiter")
+        return JsonResponse(success_response(serialized), status=200 if review else 201)
+    except Exception as e:
+        logger.error(f"Error in recruiter_reviews_root: {e}", exc_info=True)
+        return JsonResponse(error_response(f"Failed to process review: {e}"), status=500)
 
 
 # ── Seeker Review Detail & Public Profile ────────────────────────────────────
