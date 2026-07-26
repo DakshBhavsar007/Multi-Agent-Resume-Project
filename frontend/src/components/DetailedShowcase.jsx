@@ -192,63 +192,63 @@ const DetailedShowcase = () => {
       {/* Interactive Watch Demo Modal */}
       <AnimatePresence>
         {showDemoModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md">
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-2xl w-full p-6 text-white shadow-2xl relative"
+              className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-2xl max-w-2xl w-full p-6 text-gray-900 dark:text-white shadow-2xl relative"
             >
               <button 
                 onClick={() => setShowDemoModal(false)}
-                className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition"
+                className="absolute top-4 right-4 p-2 text-gray-400 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
               >
                 <X size={20} />
               </button>
 
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className="px-3 py-1 rounded-full bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-blue-500/20">
                   <Sparkles size={13} /> Live Screening Simulation
                 </span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2 font-display">Between Multi-Agent AI Screening</h3>
-              <p className="text-zinc-400 text-xs mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 font-display">Between Multi-Agent AI Screening</h3>
+              <p className="text-gray-600 dark:text-zinc-400 text-xs mb-6">
                 Watch how 7 specialized AI agents ingest resumes, perform semantic matching, and flag fraud in real-time.
               </p>
 
               {/* Demo Animation Board */}
-              <div className="bg-zinc-900/90 rounded-xl p-5 border border-zinc-800 space-y-4 mb-6">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-800/60 border border-zinc-700/50">
+              <div className="bg-gray-50 dark:bg-zinc-900/90 rounded-xl p-5 border border-gray-200 dark:border-zinc-800 space-y-4 mb-6">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700/50 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm">
+                    <div className="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
                       SC
                     </div>
                     <div>
-                      <div className="font-semibold text-sm text-white">Sophia Chen</div>
-                      <div className="text-xs text-zinc-400">Senior AI Engineer · 5 yrs exp</div>
+                      <div className="font-semibold text-sm text-gray-900 dark:text-white">Sophia Chen</div>
+                      <div className="text-xs text-gray-500 dark:text-zinc-400">Senior AI Engineer · 5 yrs exp</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-emerald-400 font-extrabold text-lg">95%</div>
-                    <div className="text-[10px] text-emerald-500 font-medium">ATS Match</div>
+                    <div className="text-emerald-600 dark:text-emerald-400 font-extrabold text-lg">95%</div>
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium">ATS Match</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800">
-                    <ShieldCheck size={16} className="text-emerald-400 mx-auto mb-1" />
-                    <div className="text-[11px] font-semibold text-white">Legitimacy</div>
-                    <div className="text-[10px] text-emerald-400 font-bold">100 / 100</div>
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 shadow-sm">
+                    <ShieldCheck size={16} className="text-emerald-600 dark:text-emerald-400 mx-auto mb-1" />
+                    <div className="text-[11px] font-semibold text-gray-900 dark:text-white">Legitimacy</div>
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">100 / 100</div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800">
-                    <Sparkles size={16} className="text-blue-400 mx-auto mb-1" />
-                    <div className="text-[11px] font-semibold text-white">Skill Match</div>
-                    <div className="text-[10px] text-blue-400 font-bold">Python, PyTorch</div>
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 shadow-sm">
+                    <Sparkles size={16} className="text-blue-600 dark:text-blue-400 mx-auto mb-1" />
+                    <div className="text-[11px] font-semibold text-gray-900 dark:text-white">Skill Match</div>
+                    <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">Python, PyTorch</div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800">
-                    <Cpu size={16} className="text-purple-400 mx-auto mb-1" />
-                    <div className="text-[11px] font-semibold text-white">AI Interview</div>
-                    <div className="text-[10px] text-purple-400 font-bold">Passed (4.8/5)</div>
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 shadow-sm">
+                    <Cpu size={16} className="text-purple-600 dark:text-purple-400 mx-auto mb-1" />
+                    <div className="text-[11px] font-semibold text-gray-900 dark:text-white">AI Interview</div>
+                    <div className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">Passed (4.8/5)</div>
                   </div>
                 </div>
               </div>
@@ -256,7 +256,7 @@ const DetailedShowcase = () => {
               <div className="flex items-center justify-between pt-2">
                 <button 
                   onClick={() => setShowDemoModal(false)}
-                  className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white transition"
+                  className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition"
                 >
                   Close Preview
                 </button>
