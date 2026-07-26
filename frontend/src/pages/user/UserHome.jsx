@@ -9,6 +9,7 @@ import {
 import FeaturesList from "../../components/FeaturesList";
 import SolarSystem from "../../components/SolarSystem";
 import FlipFadeText from "../../components/ui/flip-fade-text";
+import Testimonials from "../../components/Testimonials";
 import { Header, Footer } from "../../components/user/site-chrome";
 import { CompanyLogo } from "../../components/user/company-logo";
 import { jobs, companies } from "../../lib/data";
@@ -862,156 +863,10 @@ function Home() {
 
       <ScrollingAnimation />
 
-      {/* Testimonials — Dynamic */}
-      <motion.section
-        className="mx-auto max-w-7xl px-6 py-14"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        variants={staggerContainerVariants}
-      >
-        <motion.div variants={fadeInUpVariants} className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-center sm:text-left">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-[var(--google-yellow)]">Stories</div>
-            <h2 className="mt-1.5 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-              Loved by {reviewStats.total_professionals ? `${reviewStats.total_professionals.toLocaleString()}+` : reviewStats.total_reviews ? `${reviewStats.total_reviews.toLocaleString()}+` : '100+'} professionals
-            </h2>
-            {reviewStats.avg_rating > 0 && (
-              <div className="mt-1 flex items-center gap-1.5 justify-center sm:justify-start">
-                <div className="flex items-center gap-0.5">
-                  {[1,2,3,4,5].map(s => (
-                    <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(reviewStats.avg_rating) ? 'fill-[var(--google-yellow)] text-[var(--google-yellow)]' : 'text-muted-foreground/30'}`} />
-                  ))}
-                </div>
-                <span className="text-xs font-semibold text-muted-foreground">{reviewStats.avg_rating} avg</span>
-              </div>
-            )}
-          </div>
-          {(() => {
-            const isRecruiterToken = !!localStorage.getItem('vish_jwt');
-            const isDeveloperToken = !!localStorage.getItem('portal_jwt');
-            const isSeekerToken = !!localStorage.getItem('vish_seeker_token');
-            const isUserLoggedIn = isRecruiterToken || isDeveloperToken || isSeekerToken;
-            const currentRole = isRecruiterToken ? 'recruiter' : isDeveloperToken ? 'developer' : 'job_seeker';
-            const canSubmit = isRecruiterToken || isDeveloperToken || (isSeekerToken && isVerified);
-
-            if (!isUserLoggedIn) return null;
-
-            return (
-              <button
-                onClick={() => {
-                  if (isSeekerToken && !isVerified) {
-                    toast.error('Verify your email and phone to write reviews');
-                    return;
-                  }
-                  setEditingReview(null);
-                  setShowReviewModal(true);
-                }}
-                className={`pill inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors ${
-                  canSubmit
-                    ? 'bg-primary text-primary-foreground hover:opacity-90 cursor-pointer'
-                    : 'bg-muted text-muted-foreground cursor-not-allowed'
-                }`}
-                title={!canSubmit ? 'Verify your account to write reviews' : 'Write a review'}
-              >
-                <MessageSquareQuote className="h-3.5 w-3.5" /> Write a Review
-              </button>
-            );
-          })()}
-        </motion.div>
-        <div className="mt-8 grid gap-3 md:grid-cols-3">
-          {reviews.length === 0 ? (
-            <div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border rounded-2xl">
-              No platform or company reviews submitted yet. Be the first to share your experience!
-            </div>
-          ) : (
-            reviews.slice(0, 6).map((t, idx) => {
-              const accentColors = ["var(--google-blue)", "var(--google-green)", "var(--google-red)", "var(--google-yellow)"];
-              const c = t._color || accentColors[idx % accentColors.length];
-              return (
-                <motion.figure key={t.id} variants={staggerItemVariants} className="rounded-2xl border border-border bg-card p-5 relative group flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <Quote className="h-5 w-5" style={{ color: c }} />
-                      <div className="flex items-center gap-1">
-                        {t.company_name ? (
-                          <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold truncate max-w-[120px]">
-                            {t.company_name}
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
-                            Platform Review
-                          </span>
-                        )}
-                        <div className="flex items-center gap-0.5 ml-1">
-                          {[1,2,3,4,5].map(s => (
-                            <Star key={s} className={`h-3 w-3 ${s <= t.rating ? 'fill-[var(--google-yellow)] text-[var(--google-yellow)]' : 'text-muted-foreground/30'}`} />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <blockquote className="mt-3 text-sm leading-relaxed text-foreground">"{t.text}"</blockquote>
-                  </div>
-
-                  <figcaption className="mt-4 flex items-center justify-between gap-3 pt-3 border-t border-border/40">
-                    {t.author?.id ? (
-                      <Link to={`/jobs/profile/${t.author.id}`} className="flex items-center gap-3 group/author hover:opacity-80 transition-opacity">
-                        {t.author.avatar_path ? (
-                          <img src={t.author.avatar_path} alt={t.author.full_name} className="h-9 w-9 rounded-full object-cover" />
-                        ) : (
-                          <div className="grid h-9 w-9 place-items-center rounded-full text-xs font-semibold text-white" style={{ background: c }}>
-                            {t.author.full_name?.charAt(0)}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold flex items-center gap-0.5">
-                            {t.author.full_name}
-                            {t.author.is_verified && <VerifiedBadge size={14} />}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground">{t.author.headline || "Verified Member"}</div>
-                        </div>
-                      </Link>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <div className="grid h-9 w-9 place-items-center rounded-full text-xs font-semibold text-white" style={{ background: c }}>
-                          {t.author?.full_name?.charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold flex items-center gap-0.5">
-                            {t.author?.full_name}
-                            {t.author?.is_verified && <VerifiedBadge size={14} />}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground">{t.author?.headline || "Verified Member"}</div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Edit/Delete for own reviews */}
-                    {t.is_own && (
-                      <div className="flex items-center gap-1.5 ml-2 shrink-0">
-                        <button
-                          onClick={() => { setEditingReview(t); setShowReviewModal(true); }}
-                          className="p-1.5 rounded-lg bg-muted hover:bg-muted-foreground/10 transition-colors border border-border/40 cursor-pointer"
-                          title="Edit review"
-                        >
-                          <Pen className="h-3.5 w-3.5 text-accent" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteReview(t)}
-                          className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 hover:bg-red-100 transition-colors border border-red-200/50 cursor-pointer"
-                          title="Delete review"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                        </button>
-                      </div>
-                    )}
-                  </figcaption>
-                </motion.figure>
-              );
-            })
-          )}
-        </div>
-      </motion.section>
+      {/* Testimonials — Filtered for Job Seekers */}
+      <section className="py-8">
+        <Testimonials userTypeFilter="job_seeker" />
+      </section>
 
       {/* Write Review Modal */}
       {showReviewModal && (

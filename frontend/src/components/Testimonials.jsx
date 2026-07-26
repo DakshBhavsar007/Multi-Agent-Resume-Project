@@ -176,7 +176,7 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
 };
 
 
-const Testimonials = () => {
+const Testimonials = ({ userTypeFilter }) => {
   const [items, setItems] = useState([]);
   const [apiStats, setApiStats] = useState({ avg_rating: 5.0, total_reviews: 0 });
   const [filterTab, setFilterTab] = useState("all");
@@ -191,7 +191,8 @@ const Testimonials = () => {
   const userRole = isRecruiter ? 'recruiter' : isDeveloper ? 'developer' : 'job_seeker';
 
   const loadReviews = (retryCount = 0) => {
-    publicAPI.listReviews()
+    const params = userTypeFilter ? { user_type: userTypeFilter } : {};
+    publicAPI.listReviews(params)
       .then((data) => {
         if (data.stats) {
           setApiStats(data.stats);

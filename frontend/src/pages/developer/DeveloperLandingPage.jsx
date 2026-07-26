@@ -17,6 +17,7 @@ import { Footer } from "../../components/user/site-chrome";
 import { DEVELOPER_PLANS } from "../../lib/plans";
 import SolarSystem, { TECH_STACK_ORBITS } from "../../components/SolarSystem";
 import FlipFadeText from "../../components/ui/flip-fade-text";
+import Testimonials from "../../components/Testimonials";
 
 export default function DeveloperLandingPage() {
   useDocumentTitle(
@@ -483,69 +484,9 @@ const response = await fetch(
       </section>
 
       {/* DEVELOPER TESTIMONIALS */}
-      <section className="py-20 border-t border-gray-100 dark:border-zinc-800/80 bg-white dark:bg-[#0b0b0d]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-12 text-center sm:text-left">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Developer Reviews</span>
-              <h2 className="text-3xl font-bold text-charcoal dark:text-white mt-2">Loved by Builders & Engineers</h2>
-            </div>
-            {isDevLoggedIn && (
-              <button
-                onClick={() => setShowDevReviewModal(true)}
-                className="px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all shrink-0 cursor-pointer"
-              >
-                <MessageSquareQuote size={16} /> Write Platform Review
-              </button>
-            )}
-          </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {devReviews.map((rev) => (
-                <div key={rev.id} className="bg-gray-50 dark:bg-zinc-900 border border-gray-200/80 dark:border-zinc-800 p-6 rounded-2xl flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-1 mb-3">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star key={s} size={14} className={s <= rev.rating ? "fill-amber-400 text-amber-400" : "text-gray-300 dark:text-zinc-700"} />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-700 dark:text-zinc-300 leading-relaxed italic">"{rev.text}"</p>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-gray-200/60 dark:border-zinc-800 flex items-center justify-between">
-                    {rev.author?.id ? (
-                      <Link to={`/jobs/profile/${rev.author.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity no-underline">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
-                          {rev.author.full_name?.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-charcoal dark:text-white flex items-center gap-1">
-                            {rev.author.full_name}
-                            {rev.author.is_verified && <VerifiedBadge size={13} />}
-                          </div>
-                          <div className="text-[11px] text-gray-400 dark:text-zinc-400">{rev.author.headline || "Developer"}</div>
-                        </div>
-                      </Link>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
-                          {rev.author?.full_name?.charAt(0) || "D"}
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-charcoal dark:text-white flex items-center gap-1">
-                            {rev.author?.full_name}
-                            {rev.author?.is_verified && <VerifiedBadge size={13} />}
-                          </div>
-                          <div className="text-[11px] text-gray-400 dark:text-zinc-400">{rev.author?.headline || "Developer"}</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+      <section className="py-12 border-t border-gray-100 dark:border-zinc-800/80 bg-white dark:bg-[#0b0b0d]">
+        <Testimonials userTypeFilter="developer" />
+      </section>
 
       {/* PRICING */}
       <section className="py-24 bg-gray-50 dark:bg-[#0b0b0d] border-t border-gray-100 dark:border-zinc-800/80" id="pricing">
