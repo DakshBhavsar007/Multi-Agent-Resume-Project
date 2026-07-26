@@ -5,26 +5,31 @@ import { Building2, ShieldCheck, Sparkles, Award } from 'lucide-react';
 import { publicAPI } from '../lib/api';
 import './LogoCloud.css';
 
+const getFullUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("data:") || path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  const apiBase = (import.meta.env?.VITE_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
+  return `${apiBase}${path.startsWith('/') ? '' : '/'}${path}`;
+};
+
 const CompanyLogo = ({ name, logoPath }) => {
   const [hasErr, setHasErr] = useState(false);
-  const isValidLogo = logoPath && 
-    !logoPath.includes("acme.com") && 
-    !logoPath.includes("dhl.com") && 
-    !logoPath.includes("robinhood.com") &&
-    !logoPath.includes("hunter.io") &&
-    !hasErr;
+  const fullUrl = getFullUrl(logoPath);
+  const isValidLogo = fullUrl && !hasErr;
 
   return (
     <div className="logo-item-wrapper flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-100/50 dark:bg-zinc-800/40 border border-gray-200/40 dark:border-zinc-700/40">
       {isValidLogo ? (
         <img 
-          src={logoPath} 
+          src={fullUrl} 
           alt={name} 
-          className="w-5 h-5 rounded object-cover" 
+          className="w-5 h-5 rounded object-cover shrink-0" 
           onError={() => setHasErr(true)}
         />
       ) : (
-        <Building2 className="w-4 h-4 text-blue-500" />
+        <Building2 className="w-4 h-4 text-blue-500 shrink-0" />
       )}
       <span className="logo-name tracking-wider">{name}</span>
     </div>
@@ -71,7 +76,7 @@ const LogoCloud = () => {
         if (fetched.length > 0) {
           const mapped = fetched.map(c => ({
             name: (c.name || c.company_name || "Company").toUpperCase(),
-            logo_path: c.logo_path || c.logoPath || ""
+            logo_path: c.logo_path || c.logoPath || c.logo || c.avatar_path || c.company_logo_path || ""
           }));
           setCompaniesList(mapped);
         }
