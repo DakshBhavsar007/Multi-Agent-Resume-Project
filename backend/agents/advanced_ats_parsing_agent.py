@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import uuid
-from agents.llm import RotateLLMClient, get_api_keys
+from agents.llm import RotateLLMClient, get_api_keys, get_active_gemini_keys, record_bad_key
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
@@ -406,50 +406,49 @@ class AdvancedAtsParsingAgent:
         )
 
         # --- Gemini-First Parsing (skip weak 8B fallback models) ---
-        gemini_keys = get_api_keys()
-        import time
+        active_gemini_keys = get_active_gemini_keys()
+        all_gemini_keys = get_api_keys()
 
-        for key in gemini_keys:
-            try:
-                client = OpenAI(
-                    api_key=key,
-                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-                    max_retries=0
-                )
-                gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-                masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
-                print(f"[RESUME PARSER] Trying Gemini key {masked_key} with model {gemini_model}", flush=True)
+        if active_gemini_keys:
+            for key in active_gemini_keys:
+                try:
+                    client = OpenAI(
+                        api_key=key,
+                        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                        max_retries=0
+                    )
+                    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                    masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
+                    print(f"[RESUME PARSER] Active Keys: {len(active_gemini_keys)}/{len(all_gemini_keys)}. Trying key {masked_key} with model {gemini_model}", flush=True)
 
-                response = client.chat.completions.create(
-                    model=gemini_model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": f"Resume Text:\n{preprocessed}"}
-                    ],
-                    temperature=0.0,
-                    response_format={"type": "json_object"},
-                    timeout=45.0
-                )
-                raw = response.choices[0].message.content.strip()
-                print(f"[RESUME PARSER] Gemini key {masked_key} succeeded!", flush=True)
+                    response = client.chat.completions.create(
+                        model=gemini_model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": f"Resume Text:\n{preprocessed}"}
+                        ],
+                        temperature=0.0,
+                        response_format={"type": "json_object"},
+                        timeout=45.0
+                    )
+                    raw = response.choices[0].message.content.strip()
+                    print(f"[RESUME PARSER] Gemini key {masked_key} succeeded!", flush=True)
 
-                # Clean markdown JSON wraps
-                if raw.startswith("```json"):
-                    raw = raw[7:]
-                if raw.startswith("```"):
-                    raw = raw[3:]
-                if raw.endswith("```"):
-                    raw = raw[:-3]
-                raw = raw.strip()
+                    # Clean markdown JSON wraps
+                    if raw.startswith("```json"):
+                        raw = raw[7:]
+                    if raw.startswith("```"):
+                        raw = raw[3:]
+                    if raw.endswith("```"):
+                        raw = raw[:-3]
+                    raw = raw.strip()
 
-                parsed = json.loads(raw)
-                return self.normalize_parsed_content(parsed)
+                    parsed = json.loads(raw)
+                    return self.normalize_parsed_content(parsed)
 
-            except Exception as e:
-                masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
-                print(f"[RESUME PARSER] Gemini key {masked_key} failed: {e}", flush=True)
-                logger.warning("Gemini parsing failed with key %s: %s", masked_key, e)
-                continue
+                except Exception as e:
+                    record_bad_key(key, e)
+                    continue
 
         # --- Groq Fallback: ONLY use large 70B model (not weak 8B) ---
         groq_key = os.getenv("GROQ_API_KEY")
