@@ -693,6 +693,9 @@ def cross_portal_login(request):
         elif target_role == "developer":
             from api.models import DeveloperAccount, DeveloperAPIKey, BillingSubscription
             dev = DeveloperAccount.objects.filter(email=email).first()
+            if dev and getattr(dev, "is_banned", False):
+                return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
+
             if not dev:
                 # Auto register developer
                 dev = DeveloperAccount.objects.create(
@@ -702,35 +705,42 @@ def cross_portal_login(request):
                     tier="free",
                     is_verified=True
                 )
-                test_secret = "vish_test_" + secrets.token_urlsafe(24)
-                test_public = "vish_pub_test_" + secrets.token_urlsafe(24)
-                live_secret = "vish_live_" + secrets.token_urlsafe(24)
-                live_public = "vish_pub_" + secrets.token_urlsafe(24)
+                try:
+                    test_secret = "vish_test_" + secrets.token_urlsafe(24)
+                    test_public = "vish_pub_test_" + secrets.token_urlsafe(24)
+                    live_secret = "vish_live_" + secrets.token_urlsafe(24)
+                    live_public = "vish_pub_" + secrets.token_urlsafe(24)
 
-                DeveloperAPIKey.objects.create(
-                    developer=dev,
-                    key_name="Test Key",
-                    secret_key=test_secret,
-                    public_key=test_public,
-                    environment="test"
-                )
-                DeveloperAPIKey.objects.create(
-                    developer=dev,
-                    key_name="Production Key",
-                    secret_key=live_secret,
-                    public_key=live_public,
-                    environment="production"
-                )
-                BillingSubscription.objects.create(
-                    developer=dev,
-                    plan="free",
-                    status="active"
-                )
+                    DeveloperAPIKey.objects.create(
+                        developer=dev,
+                        key_name="Test Key",
+                        secret_key=test_secret,
+                        public_key=test_public,
+                        environment="test"
+                    )
+                    DeveloperAPIKey.objects.create(
+                        developer=dev,
+                        key_name="Production Key",
+                        secret_key=live_secret,
+                        public_key=live_public,
+                        environment="production"
+                    )
+                except Exception as key_err:
+                    logger.warning(f"API key creation notice in cross_portal_login: {key_err}")
+
+                try:
+                    BillingSubscription.objects.create(
+                        developer=dev,
+                        plan="free",
+                        status="active"
+                    )
+                except Exception as sub_err:
+                    logger.warning(f"Subscription creation notice in cross_portal_login: {sub_err}")
             
             new_payload = {
                 "developer_id": str(dev.id),
                 "email": dev.email,
-                "tier": dev.tier,
+                "tier": getattr(dev, "tier", "free"),
                 "exp": datetime.utcnow() + timedelta(days=7)
             }
             new_token = jwt.encode(new_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -738,8 +748,10 @@ def cross_portal_login(request):
                 "jwt_token": new_token,
                 "developer_id": str(dev.id),
                 "email": dev.email,
-                "tier": dev.tier,
-                "company_name": dev.company_name
+                "tier": getattr(dev, "tier", "free"),
+                "company_name": getattr(dev, "company_name", "") or email.split("@")[0].capitalize(),
+                "full_name": getattr(dev, "full_name", "") or getattr(dev, "company_name", ""),
+                "is_verified": getattr(dev, "is_verified", True),
             }))
 
         elif target_role == "seeker":
