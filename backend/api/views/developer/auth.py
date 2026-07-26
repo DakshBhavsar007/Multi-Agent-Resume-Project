@@ -118,14 +118,13 @@ def register(request):
 def login(request):
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)
+    email = None
     try:
         data = json.loads(request.body)
         email = data.get("email")
         password = data.get("password")
         if not email or not password:
             return JsonResponse(error_response("Email and password are required"), status=400)
-
-
 
         dev = DeveloperAccount.objects.filter(email=email).first()
         if not dev:
@@ -151,18 +150,19 @@ def login(request):
             "developer_id": str(dev.id),
             "email": dev.email,
             "tier": dev.tier,
-            "is_verified": dev.is_verified,
-            "phone_verified": dev.phone_verified,
-            "company_name": dev.company_name
+            "is_verified": getattr(dev, "is_verified", False),
+            "phone_verified": getattr(dev, "phone_verified", False),
+            "company_name": getattr(dev, "company_name", "")
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
     finally:
-        try:
-            from api.services.brevo_service import track_automation_event
-            track_automation_event(email=email, event_name="developer_login")
-        except Exception:
-            pass
+        if email:
+            try:
+                from api.services.brevo_service import track_automation_event
+                track_automation_event(email=email, event_name="developer_login")
+            except Exception:
+                pass
 
 @csrf_exempt
 @require_developer_jwt

@@ -1,6 +1,7 @@
 import os
 import calendar
 import redis
+import logging
 from datetime import datetime
 from functools import wraps
 from django.http import JsonResponse
@@ -8,6 +9,8 @@ from django.utils import timezone
 from jose import jwt, JWTError
 
 from api.models import Company, APIKey, DeveloperAccount, DeveloperAPIKey
+
+logger = logging.getLogger(__name__)
 
 TIER_LIMITS = {
   "free":       {"parse": 100,   "match": 50,    "chat": 20,    "scan": 0},

@@ -1,7 +1,13 @@
 import time
 import threading
+import logging
+import uuid
+from django.conf import settings
+from django.http import JsonResponse
 from django.utils import timezone
 from api.models import DeveloperAPIKey, APIUsageLog, MonthlyUsageSummary
+
+logger = logging.getLogger(__name__)
 
 class UsageLoggerMiddleware:
     def __init__(self, get_response):

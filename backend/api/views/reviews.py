@@ -225,29 +225,41 @@ def public_company_reviews(request, company_id):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
 
-    company = Company.objects.filter(id=company_id).first()
-    if not company:
-        return JsonResponse(error_response("Company not found"), status=404)
+    try:
+        company = Company.objects.filter(id=company_id).first()
+        if not company:
+            return JsonResponse(error_response("Company not found"), status=404)
 
-    reviews = (
-        Review.objects
-        .filter(company=company)
-        .select_related("seeker", "developer", "recruiter")
-        .order_by("-created_at")[:50]
-    )
+        try:
+            reviews = list(
+                Review.objects
+                .filter(company=company)
+                .select_related("seeker", "developer", "recruiter")
+                .order_by("-created_at")[:50]
+            )
+        except Exception:
+            reviews = list(
+                Review.objects
+                .filter(company=company)
+                .select_related("seeker")
+                .order_by("-created_at")[:50]
+            )
 
-    current_user_id, current_user_type = _extract_user_identity(request)
-    data = [_serialize_review(r, current_user_id, current_user_type) for r in reviews]
+        current_user_id, current_user_type = _extract_user_identity(request)
+        data = [_serialize_review(r, current_user_id, current_user_type) for r in reviews]
 
-    agg = Review.objects.filter(company=company).aggregate(
-        avg_rating=Avg("rating"), total=Count("id")
-    )
+        agg = Review.objects.filter(company=company).aggregate(
+            avg_rating=Avg("rating"), total=Count("id")
+        )
 
-    return JsonResponse(success_response({
-        "reviews": data,
-        "avg_rating": round(agg["avg_rating"] or company.rating, 1),
-        "total_reviews": agg["total"] or 0,
-    }))
+        return JsonResponse(success_response({
+            "reviews": data,
+            "avg_rating": round(agg["avg_rating"] or (company.rating or 4.5), 1),
+            "total_reviews": agg["total"] or 0,
+        }))
+    except Exception as e:
+        logger.error(f"Error in public_company_reviews: {e}", exc_info=True)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
 
 # ── Seeker Endpoints (Companies + Platform Reviews) ─────────────────────────
