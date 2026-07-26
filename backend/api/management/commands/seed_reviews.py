@@ -2,31 +2,57 @@ import random
 from django.core.management.base import BaseCommand
 from api.models import Review, JobSeekerAccount, DeveloperAccount, Company
 
-# Realistic reviews with mixed ratings (5, 4, 3, 4, 5 stars)
-REALISTIC_SEEKER_REVIEWS = [
-    {"rating": 5, "text": "I got my first offer letter at a top tech startup through Between's instant verification feature. Highly recommended!", "is_featured": True},
-    {"rating": 4, "text": "The AI mock interview practice tool gave me great feedback on my tech answers before my final round.", "is_featured": True},
-    {"rating": 5, "text": "Super clean interface! Transparent salary ranges on all job listings helped me negotiate a 30% higher package.", "is_featured": True},
-    {"rating": 4, "text": "Really smooth application tracking system. I received email notifications at every stage of hiring.", "is_featured": False},
-    {"rating": 3, "text": "Good platform overall for tech jobs. Would love to see more remote frontend positions added in future updates.", "is_featured": False},
+
+# ── Realistic Seeker Reviews (varied ratings 1-5) ────────────────────────────
+SEEKER_REVIEWS = [
+    {"rating": 5, "text": "Got my first offer letter through Between's instant resume verification. The AI screening matched me to roles I would have never found on my own.", "is_featured": True},
+    {"rating": 4, "text": "The mock interview tool was genuinely helpful. It gave me targeted feedback on my system design answers before my Google final round.", "is_featured": True},
+    {"rating": 5, "text": "Transparent salary ranges on every listing helped me negotiate a 30% higher package at my new company. Seriously underrated feature.", "is_featured": True},
+    {"rating": 3, "text": "Decent platform for tech job hunting. The application tracker is solid but I wish there were more remote frontend roles listed.", "is_featured": False},
+    {"rating": 4, "text": "Applied to 12 companies in one afternoon. The one-click apply with stored resume profiles saved me hours of repetitive form filling.", "is_featured": False},
+    {"rating": 2, "text": "The platform has potential but some job listings felt outdated. A few companies I applied to had already closed the position weeks ago.", "is_featured": False},
+    {"rating": 5, "text": "Between matched me with a startup I never heard of. Three interviews later, I had an offer 40% above my previous salary. Life changing.", "is_featured": True},
+    {"rating": 4, "text": "Resume builder is clean and professional. Exported it as PDF and got compliments from two separate recruiters on the formatting.", "is_featured": False},
+    {"rating": 3, "text": "Good for experienced developers but entry-level positions are limited. Would appreciate more internship and junior role listings.", "is_featured": False},
+    {"rating": 5, "text": "The AI resume analyzer caught three critical issues in my CV that I missed for years. Fixed them and started getting 3x more callbacks.", "is_featured": True},
+    {"rating": 4, "text": "Followed Acme Labs on the platform and got notified the moment they posted a Senior Backend role. Applied within minutes and got shortlisted.", "is_featured": False},
+    {"rating": 1, "text": "Had trouble with email verification taking too long. Support resolved it eventually but it was frustrating losing two days during active job hunting.", "is_featured": False},
+    {"rating": 5, "text": "The coding assessment rounds are well-designed. Much better than the random HackerRank tests other platforms force on you.", "is_featured": True},
+    {"rating": 4, "text": "Clean interface with zero clutter. I can actually focus on finding roles instead of being bombarded with irrelevant ads and spam.", "is_featured": False},
+    {"rating": 3, "text": "Solid platform overall. The company review section helped me avoid a toxic workplace. Wish more companies had detailed reviews though.", "is_featured": False},
 ]
 
-REALISTIC_DEVELOPER_REVIEWS = [
-    {"rating": 5, "text": "Best website for developers! Got free API keys to build my resume analyzer project and the documentation is top notch.", "is_featured": True},
-    {"rating": 5, "text": "Awesome developer experience. API response times are under 120ms and webhook integration took less than 10 minutes.", "is_featured": True},
-    {"rating": 4, "text": "Robust REST API for candidate parsing. Webhook event signatures are secure and very easy to verify in Python.", "is_featured": False},
-    {"rating": 4, "text": "Great rate limits on the free tier. We integrated Between's ATS scoring endpoints into our internal HR dashboard effortlessly.", "is_featured": False},
+# ── Realistic Developer Reviews (varied ratings 1-5) ─────────────────────────
+DEVELOPER_REVIEWS = [
+    {"rating": 5, "text": "Best developer API I have worked with this year. Got free tier keys, integrated resume parsing in under 2 hours. Documentation is exceptional.", "is_featured": True},
+    {"rating": 5, "text": "API response times consistently under 120ms even during peak hours. Webhook integration for candidate events took less than 10 minutes.", "is_featured": True},
+    {"rating": 4, "text": "Solid REST API for candidate parsing. Webhook event signatures are cryptographically secure and trivially easy to verify in Node.js.", "is_featured": False},
+    {"rating": 4, "text": "Generous rate limits on the free tier. We integrated Between's ATS scoring endpoints into our internal HR dashboard in a single sprint.", "is_featured": False},
+    {"rating": 3, "text": "Good API overall but the SDK only supports Python and JavaScript. Would love to see official Go and Rust client libraries released.", "is_featured": False},
+    {"rating": 5, "text": "The embed widget is a game-changer. Dropped it into our careers page and had a working ATS pipeline in production by end of day.", "is_featured": True},
+    {"rating": 2, "text": "Rate limiting on the free tier felt restrictive for our use case. Had to upgrade to starter within the first week of integration.", "is_featured": False},
+    {"rating": 4, "text": "Detailed API error messages made debugging straightforward. The sandbox environment accurately mirrors production behavior.", "is_featured": False},
+    {"rating": 5, "text": "Built a complete recruitment automation tool using Between's API. The resume analysis endpoint accuracy is genuinely impressive.", "is_featured": True},
+    {"rating": 3, "text": "API is reliable and well-documented. Only complaint is the webhook retry policy could be more configurable for high-volume integrations.", "is_featured": False},
 ]
 
-REALISTIC_RECRUITER_REVIEWS = [
-    {"rating": 5, "text": "Between has completely transformed our engineering hiring process. The AI screening saved us over 120 hours of manual resume vetting!", "is_featured": True},
-    {"rating": 5, "text": "Surgical precision in candidate ranking! Detects fraudulent experience claims instantly before we schedule interviews.", "is_featured": True},
-    {"rating": 4, "text": "High quality applicant pool. The verified badges give us full confidence in candidate credentials from day one.", "is_featured": False},
-    {"rating": 4, "text": "Streamlined candidate assessment rounds. We set up custom MCQ and Coding evaluations in less than 5 minutes.", "is_featured": False},
+# ── Realistic Recruiter / Company Reviews (varied ratings 1-5) ───────────────
+RECRUITER_REVIEWS = [
+    {"rating": 5, "text": "Between transformed our engineering hiring pipeline. The AI screening saved our team over 120 hours of manual resume review last quarter.", "is_featured": True},
+    {"rating": 5, "text": "Surgical precision in candidate ranking. The fraud detection caught three fabricated resumes that our senior recruiters missed completely.", "is_featured": True},
+    {"rating": 4, "text": "High quality applicant pool with verified credentials. The trust badges give us confidence to fast-track candidates through interviews.", "is_featured": False},
+    {"rating": 4, "text": "Custom MCQ and coding evaluation rounds were set up in under 5 minutes. The auto-grading accuracy is remarkably consistent.", "is_featured": False},
+    {"rating": 3, "text": "Decent platform for mid-level hiring but struggled to attract senior architect candidates. The talent pool skews toward early-career professionals.", "is_featured": False},
+    {"rating": 5, "text": "Our time-to-hire dropped from 45 days to 18 days after switching to Between. The ROI paid for itself in the first month.", "is_featured": True},
+    {"rating": 2, "text": "The basic plan works for small teams but lacks advanced analytics. Had to upgrade to see candidate funnel conversion metrics.", "is_featured": False},
+    {"rating": 4, "text": "The applicant tracking dashboard is intuitive and clean. Our non-technical HR team adopted it without any training sessions needed.", "is_featured": False},
+    {"rating": 5, "text": "Posted a Data Scientist role at 9am and had 40 qualified, pre-screened applicants by end of day. No other platform delivers this speed.", "is_featured": True},
+    {"rating": 3, "text": "Good value for the price point. The resume parsing is accurate but occasionally struggles with non-standard PDF formatting.", "is_featured": False},
 ]
+
 
 class Command(BaseCommand):
-    help = "Seeds clean, realistic mixed-rating reviews for Job Seekers, Developers, and Recruiters."
+    help = "Seeds realistic mixed-rating reviews from ALL job seekers, developers, and companies. Skips banned accounts."
 
     def handle(self, *args, **options):
         self.stdout.write("Wiping old reviews and seeding realistic mixed-rating testimonials...")
@@ -38,15 +64,19 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(f"Notice during review wipe: {e}")
 
-        seekers = list(JobSeekerAccount.objects.only("id").all())
-        devs = list(DeveloperAccount.objects.only("id").all())
-        companies = list(Company.objects.only("id").all())
+        seekers = list(JobSeekerAccount.objects.filter(is_banned=False, is_active=True).only("id"))
+        all_devs = list(DeveloperAccount.objects.only("id").all())
+        devs = [d for d in all_devs if not getattr(d, 'is_banned', False)]
+        companies = list(Company.objects.filter(is_banned=False, is_active=True).only("id"))
+
+        self.stdout.write(f"Found: {len(seekers)} seekers, {len(devs)} developers, {len(companies)} companies (all non-banned)")
 
         created_count = 0
 
-        # 1. Seed for Job Seekers
+        # 1. Seed one review per Job Seeker
         for idx, seeker in enumerate(seekers):
-            sample = REALISTIC_SEEKER_REVIEWS[idx % len(REALISTIC_SEEKER_REVIEWS)]
+            sample = SEEKER_REVIEWS[idx % len(SEEKER_REVIEWS)]
+            # Half get platform reviews, half get company reviews
             company_target = companies[idx % len(companies)] if (companies and idx % 2 == 0) else None
             Review.objects.create(
                 seeker=seeker,
@@ -58,9 +88,9 @@ class Command(BaseCommand):
             )
             created_count += 1
 
-        # 2. Seed for Developers
+        # 2. Seed one review per Developer (platform reviews only)
         for idx, dev in enumerate(devs):
-            sample = REALISTIC_DEVELOPER_REVIEWS[idx % len(REALISTIC_DEVELOPER_REVIEWS)]
+            sample = DEVELOPER_REVIEWS[idx % len(DEVELOPER_REVIEWS)]
             Review.objects.create(
                 developer=dev,
                 user_type="developer",
@@ -70,9 +100,9 @@ class Command(BaseCommand):
             )
             created_count += 1
 
-        # 3. Seed for Recruiters / Companies
+        # 3. Seed one review per Company / Recruiter (platform reviews only)
         for idx, comp in enumerate(companies):
-            sample = REALISTIC_RECRUITER_REVIEWS[idx % len(REALISTIC_RECRUITER_REVIEWS)]
+            sample = RECRUITER_REVIEWS[idx % len(RECRUITER_REVIEWS)]
             Review.objects.create(
                 recruiter=comp,
                 user_type="recruiter",
@@ -82,4 +112,13 @@ class Command(BaseCommand):
             )
             created_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f"Successfully seeded {created_count} authentic mixed-rating reviews across all accounts!"))
+        # Summary stats
+        ratings = list(Review.objects.values_list("rating", flat=True))
+        avg = round(sum(ratings) / len(ratings), 2) if ratings else 0
+        dist = {i: ratings.count(i) for i in range(1, 6)}
+        self.stdout.write(f"Rating distribution: {dist}")
+        self.stdout.write(f"Average rating: {avg}")
+        self.stdout.write(self.style.SUCCESS(
+            f"Successfully seeded {created_count} authentic reviews "
+            f"({len(seekers)} seekers + {len(devs)} developers + {len(companies)} companies)!"
+        ))
