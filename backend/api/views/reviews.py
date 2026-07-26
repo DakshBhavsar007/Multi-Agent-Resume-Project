@@ -182,6 +182,9 @@ def public_list_reviews(request):
             except Exception as ser_err:
                 logger.error(f"Failed to serialize review {r.id}: {ser_err}")
 
+        # Put logged in user's own reviews first
+        data.sort(key=lambda x: 0 if x.get("is_own") else 1)
+
         ratings = [r.get("rating", 5) for r in data]
         avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else 5.0
 

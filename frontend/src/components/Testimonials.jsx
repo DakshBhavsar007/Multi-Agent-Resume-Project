@@ -222,6 +222,9 @@ const Testimonials = ({ userTypeFilter }) => {
             size: sizes[idx % sizes.length],
           }));
 
+          // Sort so logged-in user's own reviews appear first
+          mapped.sort((a, b) => (b.isOwn ? 1 : 0) - (a.isOwn ? 1 : 0));
+
           setItems(mapped);
         } else {
           setItems([]);
