@@ -1,13 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Code, ChevronRight, Target, PlayCircle } from 'lucide-react';
+import { Code, ChevronRight, Target, PlayCircle, Star, ShieldCheck, Users } from 'lucide-react';
+import { publicAPI } from '../lib/api';
 import apiImg from '../assets/developer-api.png';
 import dashboardImg from '../assets/spot-dashboard.png';
 import './DetailedShowcase.css';
 
 const DetailedShowcase = () => {
   const navigate = useNavigate();
+  const [liveStats, setLiveStats] = useState({ total_reviews: 74, avg_rating: 4.8, total_professionals: 74 });
+
+  useEffect(() => {
+    publicAPI.listReviews()
+      .then(data => {
+        if (data?.stats) {
+          setLiveStats(data.stats);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="showcase-section-wrapper" id="detailed-showcase">

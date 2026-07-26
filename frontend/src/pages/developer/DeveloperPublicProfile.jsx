@@ -89,8 +89,14 @@ export default function DeveloperPublicProfile() {
         {/* Developer Header Hero */}
         <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-6 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <div className="h-24 w-24 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center text-3xl font-black text-amber-500 shrink-0">
-              {full_name ? full_name.charAt(0).toUpperCase() : 'D'}
+            <div className="h-24 w-24 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 overflow-hidden flex items-center justify-center shrink-0">
+              {profile.avatar_path ? (
+                <img src={profile.avatar_path} alt={full_name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-3xl font-black text-amber-500">
+                  {full_name ? full_name.charAt(0).toUpperCase() : 'D'}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 flex-1 min-w-0">
