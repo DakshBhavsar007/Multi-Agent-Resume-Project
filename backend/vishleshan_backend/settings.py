@@ -106,13 +106,14 @@ if DATABASE_URL:
         conn_health_checks=True,
     )
     db_config['ENGINE'] = 'django.db.backends.postgresql'
-    db_config.setdefault('OPTIONS', {})
-    db_config['OPTIONS']['DISABLE_SERVER_SIDE_CURSORS'] = True
+    db_config['DISABLE_SERVER_SIDE_CURSORS'] = True
     
-    if 'sslmode' not in SYNC_DATABASE_URL and 'sslmode' not in db_config['OPTIONS']:
-        db_sslmode = os.getenv("DB_SSLMODE", "require" if not DEBUG else "")
-        if db_sslmode:
-            db_config['OPTIONS']['sslmode'] = db_sslmode
+    if 'sslmode' not in SYNC_DATABASE_URL:
+        db_config.setdefault('OPTIONS', {})
+        if 'sslmode' not in db_config['OPTIONS']:
+            db_sslmode = os.getenv("DB_SSLMODE", "require" if not DEBUG else "")
+            if db_sslmode:
+                db_config['OPTIONS']['sslmode'] = db_sslmode
 else:
     db_config = {
         'ENGINE': 'django.db.backends.sqlite3',
