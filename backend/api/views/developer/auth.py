@@ -169,20 +169,24 @@ def login(request):
 def get_me(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
-    dev = request.developer
-    return JsonResponse(success_response({
-        "id": str(dev.id),
-        "full_name": getattr(dev, "full_name", "") or dev.company_name,
-        "company_name": dev.company_name,
-        "email": dev.email,
-        "avatar_path": getattr(dev, "avatar_path", "") or "",
-        "tier": dev.tier,
-        "is_verified": dev.is_verified,
-        "phone_verified": dev.phone_verified,
-        "website_url": dev.website_url,
-        "allowed_domains": dev.allowed_domains,
-        "created_at": dev.created_at.isoformat() if dev.created_at else None
-    }))
+    try:
+        dev = request.developer
+        return JsonResponse(success_response({
+            "id": str(dev.id),
+            "full_name": getattr(dev, "full_name", "") or getattr(dev, "company_name", ""),
+            "company_name": getattr(dev, "company_name", ""),
+            "email": getattr(dev, "email", ""),
+            "avatar_path": getattr(dev, "avatar_path", "") or "",
+            "tier": getattr(dev, "tier", "free"),
+            "is_verified": getattr(dev, "is_verified", False),
+            "phone_verified": getattr(dev, "phone_verified", False),
+            "website_url": getattr(dev, "website_url", "") or "",
+            "allowed_domains": getattr(dev, "allowed_domains", []) or [],
+            "created_at": dev.created_at.isoformat() if getattr(dev, "created_at", None) else None
+        }))
+    except Exception as e:
+        logger.error(f"Error in developer get_me: {e}", exc_info=True)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
 @csrf_exempt
 @require_developer_jwt

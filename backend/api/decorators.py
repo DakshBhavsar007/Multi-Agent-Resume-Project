@@ -243,81 +243,93 @@ def require_developer_jwt(view_func):
     """Decorator to enforce Developer JWT (developer portal)."""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return JsonResponse({
-                "success": False,
-                "data": None,
-                "error": "Invalid token format"
-            }, status=401)
-            
-        token = auth_header.split(" ")[1]
         try:
-            if redis_client.exists(f"blacklist:{token}"):
+            auth_header = request.headers.get("Authorization", "")
+            if not auth_header or not auth_header.startswith("Bearer "):
                 return JsonResponse({
                     "success": False,
                     "data": None,
-                    "error": "Token has been blacklisted (logged out)"
+                    "error": "Invalid token format"
                 }, status=401)
-        except Exception:
-            pass
+                
+            token = auth_header.split(" ")[1]
+            try:
+                if redis_client.exists(f"blacklist:{token}"):
+                    return JsonResponse({
+                        "success": False,
+                        "data": None,
+                        "error": "Token has been blacklisted (logged out)"
+                    }, status=401)
+            except Exception:
+                pass
 
-        try:
-            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            developer_id = payload.get("developer_id")
-            if not developer_id:
+            try:
+                payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+                developer_id = payload.get("developer_id")
+                if not developer_id:
+                    return JsonResponse({
+                        "success": False,
+                        "data": None,
+                        "error": "Invalid token payload"
+                    }, status=401)
+            except JWTError:
                 return JsonResponse({
                     "success": False,
                     "data": None,
-                    "error": "Invalid token payload"
+                    "error": "Invalid or expired token"
                 }, status=401)
-        except JWTError:
-            return JsonResponse({
-                "success": False,
-                "data": None,
-                "error": "Invalid or expired token"
-            }, status=401)
 
-        # Check Redis Cache for ban status
-        ban_status_key = f"ban_status:developer:{developer_id}"
-        try:
-            ban_cached = redis_client.get(ban_status_key)
-            if ban_cached == b"true":
+            # Check Redis Cache for ban status
+            ban_status_key = f"ban_status:developer:{developer_id}"
+            try:
+                ban_cached = redis_client.get(ban_status_key)
+                if ban_cached == b"true":
+                    return JsonResponse({
+                        "success": False,
+                        "data": None,
+                        "error": "You are banned by admin. Please contact support."
+                    }, status=403)
+            except Exception:
+                ban_cached = None
+
+            try:
+                developer = DeveloperAccount.objects.filter(id=developer_id).first()
+            except Exception:
+                developer = None
+
+            if not developer:
+                return JsonResponse({
+                    "success": False,
+                    "data": None,
+                    "error": "Developer not found"
+                }, status=401)
+
+            if getattr(developer, "is_banned", False):
+                try:
+                    redis_client.setex(ban_status_key, 300, "true")
+                except Exception:
+                    pass
                 return JsonResponse({
                     "success": False,
                     "data": None,
                     "error": "You are banned by admin. Please contact support."
                 }, status=403)
-        except Exception:
-            ban_cached = None
+            else:
+                if ban_cached is None:
+                    try:
+                        redis_client.setex(ban_status_key, 300, "false")
+                    except Exception:
+                        pass
 
-        developer = DeveloperAccount.objects.filter(id=developer_id).first()
-        if not developer:
+            request.developer = developer
+            return view_func(request, *args, **kwargs)
+        except Exception as err:
+            logger.error(f"Error in require_developer_jwt: {err}", exc_info=True)
             return JsonResponse({
                 "success": False,
                 "data": None,
-                "error": "Developer not found"
+                "error": f"Authentication error: {str(err)}"
             }, status=401)
-
-        if getattr(developer, "is_banned", False):
-            try:
-                redis_client.setex(ban_status_key, 300, "true")
-            except Exception:
-                pass
-            return JsonResponse({
-                "success": False,
-                "data": None,
-                "error": "You are banned by admin. Please contact support."
-            }, status=403)
-        else:
-            if ban_cached is None:
-                try:
-                    redis_client.setex(ban_status_key, 300, "false")
-                except Exception:
-                    pass
-
-        request.developer = developer
-        return view_func(request, *args, **kwargs)
     return _wrapped_view
 
 
