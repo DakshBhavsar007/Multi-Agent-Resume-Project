@@ -6,11 +6,17 @@ export function CompanyLogo({ name, logoPath, color, size = 48, className = "" }
 
   const getFullUrl = (path) => {
     if (!path) return "";
-    if (path.startsWith("data:") || path.startsWith("http")) {
-      return path;
+    let url = path;
+    if (url.includes("logos.hunter.io") || url.includes("logo.clearbit.com")) {
+      const match = url.match(/https?:\/\/[^\/]+\/([^\/\?]+)/);
+      const domain = match ? match[1] : "google.com";
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    }
+    if (url.startsWith("data:") || url.startsWith("http")) {
+      return url;
     }
     const apiBase = (import.meta.env?.VITE_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
-    return `${apiBase}${path.startsWith('/') ? '' : '/'}${path}`;
+    return `${apiBase}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   const fullUrl = getFullUrl(logoPath);

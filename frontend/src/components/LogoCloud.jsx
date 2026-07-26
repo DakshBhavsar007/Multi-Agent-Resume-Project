@@ -5,18 +5,24 @@ import { Building2, ShieldCheck, Sparkles, Award } from 'lucide-react';
 import { publicAPI } from '../lib/api';
 import './LogoCloud.css';
 
-const getFullUrl = (path) => {
+const getFullUrl = (path, name) => {
   if (!path) return "";
-  if (path.startsWith("data:") || path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
+  let url = path;
+  if (url.includes("logos.hunter.io") || url.includes("logo.clearbit.com")) {
+    const match = url.match(/https?:\/\/[^\/]+\/([^\/\?]+)/);
+    const domain = match ? match[1] : (name ? `${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com` : "google.com");
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  }
+  if (url.startsWith("data:") || url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
   }
   const apiBase = (import.meta.env?.VITE_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
-  return `${apiBase}${path.startsWith('/') ? '' : '/'}${path}`;
+  return `${apiBase}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 const CompanyLogo = ({ name, logoPath }) => {
   const [hasErr, setHasErr] = useState(false);
-  const fullUrl = getFullUrl(logoPath);
+  const fullUrl = getFullUrl(logoPath, name);
   const isValidLogo = fullUrl && !hasErr;
 
   return (

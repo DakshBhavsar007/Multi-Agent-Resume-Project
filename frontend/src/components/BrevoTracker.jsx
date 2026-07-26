@@ -11,31 +11,34 @@ export default function BrevoTracker() {
   const developer = usePortalAuthStore((state) => state.developer);
 
   useEffect(() => {
-    const brevoKey = import.meta.env.VITE_BREVO_MA_KEY || 'gqq4aaawytrk7xx4oyj4s62z';
-    if (!brevoKey) return;
+    try {
+      const brevoKey = import.meta.env.VITE_BREVO_MA_KEY;
+      if (!brevoKey) return; // Only load if explicitly configured
 
-    // Load Brevo SDK 2.0 tracker script
-    if (!window.Brevo) {
-      window.Brevo = [];
-      window.Brevo.push([
-        'init',
-        {
-          client_key: brevoKey,
-        },
-      ]);
+      // Load Brevo SDK 2.0 tracker script
+      if (!window.Brevo) {
+        window.Brevo = [];
+        window.Brevo.push([
+          'init',
+          {
+            client_key: brevoKey,
+          },
+        ]);
 
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.async = true;
-      script.src = 'https://cdn.brevo.com/js/sdk-loader.js';
-      
-      const firstScript = document.getElementsByTagName('script')[0];
-      if (firstScript && firstScript.parentNode) {
-        firstScript.parentNode.insertBefore(script, firstScript);
-      } else {
-        document.head.appendChild(script);
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.src = 'https://cdn.brevo.com/js/sdk-loader.js';
+        script.onerror = () => { /* Brevo SDK failed to load — fail silently */ };
+        
+        const firstScript = document.getElementsByTagName('script')[0];
+        if (firstScript && firstScript.parentNode) {
+          firstScript.parentNode.insertBefore(script, firstScript);
+        } else {
+          document.head.appendChild(script);
+        }
       }
-    }
+    } catch { /* Brevo init error — fail silently */ }
   }, []);
 
 
