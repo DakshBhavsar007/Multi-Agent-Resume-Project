@@ -655,22 +655,35 @@ def cross_portal_login(request):
 
         email = email.strip().lower()
         if target_role == "recruiter":
-            company = Company.objects.filter(email=email).first()
+            company = Company.objects.filter(email__iexact=email).first() or Company.objects.filter(email=email).first()
+            if company and getattr(company, "is_banned", False):
+                return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
+
             if not company:
                 # Auto register recruiter
-                company = Company.objects.create(
-                    name=email.split("@")[0].capitalize(),
-                    email=email,
-                    password_hash=pwd_context.hash(secrets.token_urlsafe(16)),
-                    tier="free"
-                )
-                APIKey.objects.create(
-                    company=company,
-                    key_name="Default Key",
-                    secret_key="vish_live_" + secrets.token_urlsafe(24),
-                    public_key="vish_pub_" + secrets.token_urlsafe(24),
-                    environment="production"
-                )
+                try:
+                    company = Company.objects.create(
+                        name=email.split("@")[0].capitalize(),
+                        email=email,
+                        password_hash=pwd_context.hash(secrets.token_urlsafe(16)),
+                        tier="free"
+                    )
+                    try:
+                        APIKey.objects.create(
+                            company=company,
+                            key_name="Default Key",
+                            secret_key="vish_live_" + secrets.token_urlsafe(24),
+                            public_key="vish_pub_" + secrets.token_urlsafe(24),
+                            environment="production"
+                        )
+                    except Exception as key_err:
+                        logger.warning(f"API key creation notice in cross_portal_login: {key_err}")
+                except Exception as comp_create_err:
+                    logger.error(f"Error creating company in cross_portal_login: {comp_create_err}")
+                    company = Company.objects.filter(email__iexact=email).first() or Company.objects.filter(email=email).first()
+
+            if not company:
+                return JsonResponse(error_response("Could not find or create Recruiter account"), status=400)
             
             api_key_obj = APIKey.objects.filter(company_id=company.id, is_active=True).first()
             masked_secret = None
@@ -680,65 +693,72 @@ def cross_portal_login(request):
             new_payload = {
                 "company_id": str(company.id),
                 "email": company.email,
-                "tier": company.tier,
+                "tier": getattr(company, "tier", "free"),
                 "exp": datetime.utcnow() + timedelta(days=7)
             }
             new_token = jwt.encode(new_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
             return JsonResponse(success_response({
                 "jwt_token": new_token,
                 "company_id": str(company.id),
-                "name": company.name,
+                "name": getattr(company, "name", ""),
                 "email": company.email,
-                "tier": company.tier,
+                "tier": getattr(company, "tier", "free"),
                 "api_key": masked_secret
             }))
 
         elif target_role == "developer":
             from api.models import DeveloperAccount, DeveloperAPIKey, BillingSubscription
-            dev = DeveloperAccount.objects.filter(email=email).first()
+            dev = DeveloperAccount.objects.filter(email__iexact=email).first() or DeveloperAccount.objects.filter(email=email).first()
             if dev and getattr(dev, "is_banned", False):
                 return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
 
             if not dev:
                 # Auto register developer
-                dev = DeveloperAccount.objects.create(
-                    company_name=email.split("@")[0].capitalize() + " Dev",
-                    email=email,
-                    password_hash=pwd_context.hash(secrets.token_urlsafe(16)),
-                    tier="free",
-                    is_verified=True
-                )
                 try:
-                    test_secret = "vish_test_" + secrets.token_urlsafe(24)
-                    test_public = "vish_pub_test_" + secrets.token_urlsafe(24)
-                    live_secret = "vish_live_" + secrets.token_urlsafe(24)
-                    live_public = "vish_pub_" + secrets.token_urlsafe(24)
+                    dev = DeveloperAccount.objects.create(
+                        company_name=email.split("@")[0].capitalize() + " Dev",
+                        email=email,
+                        password_hash=pwd_context.hash(secrets.token_urlsafe(16)),
+                        tier="free",
+                        is_verified=True
+                    )
+                    try:
+                        test_secret = "vish_test_" + secrets.token_urlsafe(24)
+                        test_public = "vish_pub_test_" + secrets.token_urlsafe(24)
+                        live_secret = "vish_live_" + secrets.token_urlsafe(24)
+                        live_public = "vish_pub_" + secrets.token_urlsafe(24)
 
-                    DeveloperAPIKey.objects.create(
-                        developer=dev,
-                        key_name="Test Key",
-                        secret_key=test_secret,
-                        public_key=test_public,
-                        environment="test"
-                    )
-                    DeveloperAPIKey.objects.create(
-                        developer=dev,
-                        key_name="Production Key",
-                        secret_key=live_secret,
-                        public_key=live_public,
-                        environment="production"
-                    )
-                except Exception as key_err:
-                    logger.warning(f"API key creation notice in cross_portal_login: {key_err}")
+                        DeveloperAPIKey.objects.create(
+                            developer=dev,
+                            key_name="Test Key",
+                            secret_key=test_secret,
+                            public_key=test_public,
+                            environment="test"
+                        )
+                        DeveloperAPIKey.objects.create(
+                            developer=dev,
+                            key_name="Production Key",
+                            secret_key=live_secret,
+                            public_key=live_public,
+                            environment="production"
+                        )
+                    except Exception as key_err:
+                        logger.warning(f"API key creation notice in cross_portal_login: {key_err}")
 
-                try:
-                    BillingSubscription.objects.create(
-                        developer=dev,
-                        plan="free",
-                        status="active"
-                    )
-                except Exception as sub_err:
-                    logger.warning(f"Subscription creation notice in cross_portal_login: {sub_err}")
+                    try:
+                        BillingSubscription.objects.create(
+                            developer=dev,
+                            plan="free",
+                            status="active"
+                        )
+                    except Exception as sub_err:
+                        logger.warning(f"Subscription creation notice in cross_portal_login: {sub_err}")
+                except Exception as dev_create_err:
+                    logger.error(f"Error creating developer in cross_portal_login: {dev_create_err}")
+                    dev = DeveloperAccount.objects.filter(email__iexact=email).first() or DeveloperAccount.objects.filter(email=email).first()
+
+            if not dev:
+                return JsonResponse(error_response("Could not find or create Developer account"), status=400)
             
             new_payload = {
                 "developer_id": str(dev.id),
@@ -760,34 +780,44 @@ def cross_portal_login(request):
 
         elif target_role == "seeker":
             from api.models import JobSeekerAccount
-            seeker = JobSeekerAccount.objects.filter(email=email, is_active=True).first()
+            seeker = JobSeekerAccount.objects.filter(email__iexact=email, is_active=True).first() or JobSeekerAccount.objects.filter(email=email, is_active=True).first()
+            if seeker and getattr(seeker, "is_banned", False):
+                return JsonResponse(error_response("You are banned by admin. Please contact support."), status=403)
+
             if not seeker:
                 # Auto register seeker
-                seeker = JobSeekerAccount.objects.create(
-                    full_name=email.split("@")[0].capitalize(),
-                    email=email,
-                    password_hash=pwd_context.hash(secrets.token_urlsafe(16)),
-                    tier="free"
-                )
+                try:
+                    seeker = JobSeekerAccount.objects.create(
+                        full_name=email.split("@")[0].capitalize(),
+                        email=email,
+                        password_hash=pwd_context.hash(secrets.token_urlsafe(16)),
+                        tier="free"
+                    )
+                except Exception as seeker_create_err:
+                    logger.error(f"Error creating seeker in cross_portal_login: {seeker_create_err}")
+                    seeker = JobSeekerAccount.objects.filter(email__iexact=email).first() or JobSeekerAccount.objects.filter(email=email).first()
+
+            if not seeker:
+                return JsonResponse(error_response("Could not find or create Job Seeker account"), status=400)
 
             new_payload = {
                 "seeker_id": str(seeker.id),
                 "email": seeker.email,
-                "tier": seeker.tier,
+                "tier": getattr(seeker, "tier", "free"),
                 "exp": datetime.utcnow() + timedelta(days=7),
             }
             new_token = jwt.encode(new_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
             seeker_dict = {
                 "id": str(seeker.id),
-                "full_name": seeker.full_name,
+                "full_name": getattr(seeker, "full_name", ""),
                 "email": seeker.email,
-                "phone": seeker.phone,
-                "location": seeker.location,
-                "headline": seeker.headline,
-                "tier": seeker.tier,
-                "has_resume": bool(seeker.resume_file_path or seeker.resume_data),
-                "skills": seeker.skills,
-                "created_at": seeker.created_at.isoformat() if seeker.created_at else None,
+                "phone": getattr(seeker, "phone", ""),
+                "location": getattr(seeker, "location", ""),
+                "headline": getattr(seeker, "headline", ""),
+                "tier": getattr(seeker, "tier", "free"),
+                "has_resume": bool(getattr(seeker, "resume_file_path", None) or getattr(seeker, "resume_data", None)),
+                "skills": getattr(seeker, "skills", []),
+                "created_at": seeker.created_at.isoformat() if getattr(seeker, "created_at", None) else None,
             }
             return JsonResponse(success_response({
                 "seeker_token": new_token,
@@ -797,6 +827,7 @@ def cross_portal_login(request):
             return JsonResponse(error_response("Invalid target_role"), status=400)
 
     except Exception as e:
+        logger.error(f"Error in cross_portal_login: {e}", exc_info=True)
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
 
