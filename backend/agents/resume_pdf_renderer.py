@@ -23,25 +23,25 @@ TEXT = colors.HexColor("#222222")
 def _styles():
     ss = getSampleStyleSheet()
     return {
-        "name": ParagraphStyle("name", fontName="Helvetica-Bold", fontSize=18,
-                                alignment=TA_CENTER, textColor=NAVY, spaceAfter=4),
-        "title": ParagraphStyle("title", fontName="Helvetica-Bold", fontSize=11,
-                                 alignment=TA_CENTER, textColor=ACCENT, spaceAfter=4),
-        "contact": ParagraphStyle("contact", fontName="Helvetica", fontSize=9,
-                                   alignment=TA_CENTER, textColor=GRAY, spaceAfter=10),
-        "section": ParagraphStyle("section", fontName="Helvetica-Bold", fontSize=11,
-                                   textColor=NAVY, spaceBefore=10, spaceAfter=4,
-                                   borderColor=ACCENT, borderWidth=0, leading=14),
-        "body": ParagraphStyle("body", fontName="Helvetica", fontSize=9.5,
-                                textColor=TEXT, leading=13),
-        "bullet": ParagraphStyle("bullet", fontName="Helvetica", fontSize=9.5,
-                                  textColor=TEXT, leading=13, leftIndent=12),
-        "jobline": ParagraphStyle("jobline", fontName="Helvetica-Bold", fontSize=10.5,
+        "name": ParagraphStyle("name", fontName="Helvetica-Bold", fontSize=16, leading=19,
+                                alignment=TA_CENTER, textColor=NAVY, spaceAfter=2),
+        "title": ParagraphStyle("title", fontName="Helvetica-Bold", fontSize=10, leading=12,
+                                 alignment=TA_CENTER, textColor=ACCENT, spaceAfter=2),
+        "contact": ParagraphStyle("contact", fontName="Helvetica", fontSize=8.5, leading=11,
+                                   alignment=TA_CENTER, textColor=GRAY, spaceAfter=4),
+        "section": ParagraphStyle("section", fontName="Helvetica-Bold", fontSize=9.5, leading=12,
+                                   textColor=NAVY, spaceBefore=4, spaceAfter=1,
+                                   borderColor=ACCENT, borderWidth=0),
+        "body": ParagraphStyle("body", fontName="Helvetica", fontSize=8.5, leading=11,
+                                textColor=TEXT),
+        "bullet": ParagraphStyle("bullet", fontName="Helvetica", fontSize=8.5, leading=11,
+                                  textColor=TEXT, leftIndent=10),
+        "jobline": ParagraphStyle("jobline", fontName="Helvetica-Bold", fontSize=9.5, leading=12,
                                    textColor=NAVY, spaceAfter=1),
-        "dateline": ParagraphStyle("dateline", fontName="Helvetica-Oblique", fontSize=9,
+        "dateline": ParagraphStyle("dateline", fontName="Helvetica-Oblique", fontSize=8.5, leading=11,
                                     textColor=GRAY, alignment=TA_LEFT),
-        "stack": ParagraphStyle("stack", fontName="Helvetica-Oblique", fontSize=8.5,
-                                 textColor=GRAY, spaceAfter=6),
+        "stack": ParagraphStyle("stack", fontName="Helvetica-Oblique", fontSize=8, leading=10,
+                                 textColor=GRAY, spaceAfter=2),
     }
 
 
@@ -50,7 +50,7 @@ def _section_heading(text, styles):
     from reportlab.platypus import HRFlowable
     return [
         Paragraph(text.upper(), styles["section"]),
-        HRFlowable(width="100%", thickness=1.3, color=ACCENT, spaceAfter=6, spaceBefore=0),
+        HRFlowable(width="100%", thickness=1.0, color=ACCENT, spaceAfter=3, spaceBefore=0),
     ]
 
 
@@ -61,7 +61,7 @@ def normalize_resume_content(content: dict) -> dict:
     """
     if not isinstance(content, dict):
         return {}
-        
+
     # If it already looks like the draft schema, return as is
     if "personalInfo" in content:
         return content
@@ -135,7 +135,8 @@ def normalize_resume_content(content: dict) -> dict:
             "name": proj.get("name") or proj.get("title") or "",
             "link": proj.get("link") or proj.get("url") or "",
             "description": proj.get("description", ""),
-            "techStack": tech_list
+            "techStack": tech_list,
+            "bullets": proj.get("bullets") or []
         })
 
     # Certifications mapping
@@ -181,7 +182,8 @@ def normalize_resume_content(content: dict) -> dict:
         "education": education,
         "projects": projects,
         "certifications": certifications,
-        "languages": languages
+        "languages": languages,
+        "columns": content.get("columns", 1)
     }
 
 
@@ -208,8 +210,8 @@ def render_resume_pdf(content: dict, output_path: str):
     styles = _styles()
     doc = SimpleDocTemplate(
         output_path, pagesize=letter,
-        topMargin=0.45 * inch, bottomMargin=0.45 * inch,
-        leftMargin=0.55 * inch, rightMargin=0.55 * inch,
+        topMargin=0.35 * inch, bottomMargin=0.35 * inch,
+        leftMargin=0.4 * inch, rightMargin=0.4 * inch,
     )
     story = []
 
@@ -259,6 +261,7 @@ def render_resume_pdf(content: dict, output_path: str):
                         ))
             else:
                 left_story.append(Paragraph(", ".join(skills), styles["body"]))
+            left_story.append(Spacer(1, 3))
 
         # Education
         if education:
@@ -275,7 +278,7 @@ def render_resume_pdf(content: dict, output_path: str):
                 ))
                 if edu.get("location"):
                     left_story.append(Paragraph(edu["location"], styles["stack"]))
-                left_story.append(Spacer(1, 4))
+                left_story.append(Spacer(1, 3))
 
         # Certifications
         if certifications:
@@ -289,7 +292,7 @@ def render_resume_pdf(content: dict, output_path: str):
                 if cert.get("date"):
                     line += f' ({cert["date"]})'
                 left_story.append(Paragraph(line, styles["body"]))
-                left_story.append(Spacer(1, 4))
+                left_story.append(Spacer(1, 3))
 
         # Languages
         if languages:
@@ -309,6 +312,7 @@ def render_resume_pdf(content: dict, output_path: str):
         if summary:
             right_story += _section_heading("Professional Summary", styles)
             right_story.append(Paragraph(summary, styles["body"]))
+            right_story.append(Spacer(1, 3))
 
         # Experience
         if experience:
@@ -325,10 +329,10 @@ def render_resume_pdf(content: dict, output_path: str):
                 ))
                 bullets = exp.get("bullets", []) or []
                 if bullets:
-                    items = [ListItem(Paragraph(b, styles["bullet"]), leftIndent=12) for b in bullets]
+                    items = [ListItem(Paragraph(b, styles["bullet"]), leftIndent=10) for b in bullets]
                     right_story.append(ListFlowable(items, bulletType="bullet", start="•",
-                                               leftIndent=14, bulletFontSize=8))
-                right_story.append(Spacer(1, 4))
+                                               leftIndent=12, bulletFontSize=7.5))
+                right_story.append(Spacer(1, 3))
 
         # Projects
         if projects:
@@ -337,9 +341,9 @@ def render_resume_pdf(content: dict, output_path: str):
                 right_story.append(Paragraph(proj.get("name", ""), styles["jobline"]))
                 bullets = proj.get("bullets") or ([proj["description"]] if proj.get("description") else [])
                 if bullets:
-                    items = [ListItem(Paragraph(b, styles["bullet"]), leftIndent=12) for b in bullets]
+                    items = [ListItem(Paragraph(b, styles["bullet"]), leftIndent=10) for b in bullets]
                     right_story.append(ListFlowable(items, bulletType="bullet", start="•",
-                                               leftIndent=14, bulletFontSize=8))
+                                               leftIndent=12, bulletFontSize=7.5))
                 tech = proj.get("techStack")
                 if tech:
                     tech_str = ", ".join(tech) if isinstance(tech, list) else tech
@@ -349,13 +353,14 @@ def render_resume_pdf(content: dict, output_path: str):
         # Calculate height of the header
         header_height = 0
         for f in header_flowables:
-            w, h = f.wrap(7.4 * inch, 10000)
+            w, h = f.wrap(7.7 * inch, 10000)
             header_height += h
-        header_height += 15  # buffer for spacing/margins
+        header_height += 10  # buffer for spacing/margins
 
         from reportlab.lib.pagesizes import letter as letter_size
         avail_height = letter_size[1] - doc.topMargin - doc.bottomMargin
-        first_page_avail = avail_height - header_height
+        # Subtract 35pt safety buffer to ensure Table never overflows Page 1
+        first_page_avail = avail_height - header_height - 35
         later_page_avail = avail_height
 
         dummy_canvas = None
@@ -366,11 +371,9 @@ def render_resume_pdf(content: dict, output_path: str):
                 from reportlab.lib.pagesizes import letter as letter_size
                 dummy_canvas = canvas.Canvas(None, pagesize=letter_size)
             
-            # Recursively assign canv to f and child/ListItem flowables if they have list contents
             def assign_canvas(flowable, canv):
                 if not hasattr(flowable, 'canv') or flowable.canv is None:
                     flowable.canv = canv
-                # For ListFlowable and similar container flowables, also assign to their internal children
                 if hasattr(flowable, '_content'):
                     for item in getattr(flowable, '_content', []):
                         assign_canvas(item, canv)
@@ -405,9 +408,9 @@ def render_resume_pdf(content: dict, output_path: str):
         current_avail_left = first_page_avail
 
         for f in left_story:
-            h = get_flowable_height(f, 2.25 * inch)
+            h = get_flowable_height(f, 2.35 * inch)
             if current_page_left:
-                h += 4
+                h += 3
             if not current_page_left or current_left_height + h <= current_avail_left:
                 current_page_left.append(f)
                 current_left_height += h
@@ -425,9 +428,9 @@ def render_resume_pdf(content: dict, output_path: str):
         current_avail_right = first_page_avail
 
         for f in right_story:
-            h = get_flowable_height(f, 4.85 * inch)
+            h = get_flowable_height(f, 5.1 * inch)
             if current_page_right:
-                h += 4
+                h += 3
             if not current_page_right or current_right_height + h <= current_avail_right:
                 current_page_right.append(f)
                 current_right_height += h
@@ -449,7 +452,7 @@ def render_resume_pdf(content: dict, output_path: str):
             p_right = right_pages[i] if i < len(right_pages) else []
 
             # Create table for this page
-            t = Table([[p_left, "", p_right]], colWidths=[2.25 * inch, 0.3 * inch, 4.85 * inch])
+            t = Table([[p_left, "", p_right]], colWidths=[2.35 * inch, 0.25 * inch, 5.1 * inch])
             t.setStyle(TableStyle([
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                 ('LEFTPADDING', (0, 0), (-1, -1), 0),
@@ -467,6 +470,7 @@ def render_resume_pdf(content: dict, output_path: str):
         if summary:
             story += _section_heading("Professional Summary", styles)
             story.append(Paragraph(summary, styles["body"]))
+            story.append(Spacer(1, 3))
 
         # Education
         if education:
@@ -483,6 +487,7 @@ def render_resume_pdf(content: dict, output_path: str):
                 ))
                 if edu.get("location"):
                     story.append(Paragraph(edu["location"], styles["stack"]))
+                story.append(Spacer(1, 3))
 
         # Skills
         if skills:
@@ -493,8 +498,9 @@ def render_resume_pdf(content: dict, output_path: str):
                         story.append(Paragraph(
                             f'<b>{label.title()}:</b> {", ".join(items)}', styles["body"]
                         ))
-        else:
-            story.append(Paragraph(", ".join(skills), styles["body"]))
+            else:
+                story.append(Paragraph(", ".join(skills), styles["body"]))
+            story.append(Spacer(1, 3))
 
         # Experience
         if experience:
@@ -511,10 +517,10 @@ def render_resume_pdf(content: dict, output_path: str):
                 ))
                 bullets = exp.get("bullets", []) or []
                 if bullets:
-                    items = [ListItem(Paragraph(b, styles["bullet"]), leftIndent=12) for b in bullets]
+                    items = [ListItem(Paragraph(b, styles["bullet"]), leftIndent=10) for b in bullets]
                     story.append(ListFlowable(items, bulletType="bullet", start="•",
-                                               leftIndent=14, bulletFontSize=8))
-                story.append(Spacer(1, 4))
+                                               leftIndent=12, bulletFontSize=7.5))
+                story.append(Spacer(1, 3))
 
         # Projects
         if projects:
@@ -523,9 +529,9 @@ def render_resume_pdf(content: dict, output_path: str):
                 story.append(Paragraph(proj.get("name", ""), styles["jobline"]))
                 bullets = proj.get("bullets") or ([proj["description"]] if proj.get("description") else [])
                 if bullets:
-                    items = [ListItem(Paragraph(b, styles["bullet"]), leftIndent=12) for b in bullets]
+                    items = [ListItem(Paragraph(b, styles["bullet"]), leftIndent=10) for b in bullets]
                     story.append(ListFlowable(items, bulletType="bullet", start="•",
-                                               leftIndent=14, bulletFontSize=8))
+                                               leftIndent=12, bulletFontSize=7.5))
                 tech = proj.get("techStack")
                 if tech:
                     tech_str = ", ".join(tech) if isinstance(tech, list) else tech
@@ -544,6 +550,7 @@ def render_resume_pdf(content: dict, output_path: str):
                 if cert.get("date"):
                     line += f' ({cert["date"]})'
                 story.append(Paragraph(line, styles["body"]))
+                story.append(Spacer(1, 3))
 
         # Languages
         if languages:
