@@ -596,6 +596,10 @@ export const publicAPI = {
     const qs = new URLSearchParams(params).toString();
     return publicReq('GET', `/api/v1/public/companies${qs ? '?' + qs : ''}`);
   },
+  getCompanies: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return publicReq('GET', `/api/v1/public/companies${qs ? '?' + qs : ''}`);
+  },
   getCompany: (id) => publicReq('GET', `/api/v1/public/companies/${id}`),
   getMarketTrends: () => publicReq('GET', '/api/v1/public/market-trends'),
   listJobs: (params = {}) => {

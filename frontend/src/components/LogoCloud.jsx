@@ -54,12 +54,13 @@ const LogoCloud = () => {
   const [companiesList, setCompaniesList] = useState(DEFAULT_COMPANIES);
 
   useEffect(() => {
-    publicAPI.getCompanies()
+    publicAPI.getCompanies({ per_page: 50 })
       .then((res) => {
         let fetched = [];
         if (Array.isArray(res)) fetched = res;
-        else if (res && Array.isArray(res.companies)) fetched = res.companies;
-        else if (res && Array.isArray(res.data)) fetched = res.data;
+        else if (res?.data?.companies && Array.isArray(res.data.companies)) fetched = res.data.companies;
+        else if (res?.companies && Array.isArray(res.companies)) fetched = res.companies;
+        else if (res?.data && Array.isArray(res.data)) fetched = res.data;
 
         if (fetched.length > 0) {
           const mapped = fetched.map(c => ({
@@ -69,7 +70,7 @@ const LogoCloud = () => {
           setCompaniesList(mapped);
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error("Error loading logo cloud companies:", err));
   }, []);
 
   const half = Math.ceil(companiesList.length / 2);
