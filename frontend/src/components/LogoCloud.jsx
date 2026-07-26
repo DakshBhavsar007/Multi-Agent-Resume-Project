@@ -27,31 +27,16 @@ const DEFAULT_COMPANIES = [
   { name: "BRIGHT HORIZON", logoPath: "" }
 ];
 
-const MarqueeRow = ({ items, direction = "left", speed = 40 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+const MarqueeRow = ({ items, direction = "left" }) => {
   if (!items || items.length === 0) return null;
+  const marqueeClass = direction === "left" ? "marquee-content-left" : "marquee-content-right";
   return (
-    <div 
-      className="marquee-container"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <motion.div 
-        className="marquee-content"
-        animate={isHovered ? false : { 
-          x: direction === "left" ? ["0%", "-50%"] : ["-50%", "0%"]
-        }}
-        transition={{ 
-          duration: speed, 
-          repeat: Infinity, 
-          ease: "linear"
-        }}
-        style={{ animationPlayState: isHovered ? "paused" : "running" }}
-      >
+    <div className="marquee-container">
+      <div className={marqueeClass}>
         {[...items, ...items, ...items, ...items].map((item, i) => (
           <CompanyLogo key={`${item.name}-${i}`} name={item.name} logoPath={item.logo_path || item.logoPath} />
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 };
