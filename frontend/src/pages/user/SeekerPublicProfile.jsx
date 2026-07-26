@@ -9,6 +9,7 @@ import {
   GraduationCap, Award, MessageSquareQuote, CheckCircle2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import UnifiedReviewsSection from '../../components/common/UnifiedReviewsSection';
 
 function Section({ icon: Icon, title, children, color }) {
   return (
@@ -235,36 +236,7 @@ export default function SeekerPublicProfile() {
 
             {/* Public Reviews Section */}
             <Section icon={MessageSquareQuote} title={`Reviews & Feedback (${profile.reviews?.length || 0})`} color="var(--google-red)">
-              {!profile.reviews || profile.reviews.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No public reviews submitted yet.</p>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {profile.reviews.map((rev) => (
-                    <div key={rev.id} className="bg-muted/40 border border-border rounded-2xl p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-foreground bg-muted px-2 py-0.5 rounded-md">
-                          {rev.company_name || 'Between Platform'}
-                        </span>
-                        <div className="flex items-center gap-0.5">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <Star
-                              key={s}
-                              size={12}
-                              className={s <= rev.rating ? 'fill-[var(--google-yellow)] text-[var(--google-yellow)]' : 'text-muted-foreground/30'}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-xs text-foreground leading-relaxed italic">
-                        "{rev.text}"
-                      </p>
-                      <div className="text-[10px] text-muted-foreground text-right">
-                        {new Date(rev.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <UnifiedReviewsSection reviews={profile.reviews || []} targetId={seekerId} ownerType="seeker" />
             </Section>
 
           </div>

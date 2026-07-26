@@ -8,6 +8,7 @@ import VerifiedBadge from "../../components/VerifiedBadge";
 import { ArrowLeft, MapPin, Users, Users2, Calendar, Star, Globe, Bell, UserCheck, Pen, Trash2, MessageSquareQuote } from "lucide-react";
 import toast from "react-hot-toast";
 import WriteReviewModal from "../../components/WriteReviewModal";
+import UnifiedReviewsSection from "../../components/common/UnifiedReviewsSection";
 
 export default function UserCompanyDetail() {
   const { companyId } = useParams();
@@ -298,94 +299,8 @@ export default function UserCompanyDetail() {
                 )}
               </div>
 
-              <div className="mt-6 space-y-4">
-                {reviews.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">No reviews for {company.name} yet. Be the first to share your experience!</p>
-                ) : (
-                  reviews.map((r) => (
-                    <div key={r.id} className="p-4 rounded-2xl border border-border bg-background relative group">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-0.5">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`h-3.5 w-3.5 ${
-                                star <= r.rating ? 'fill-[var(--google-yellow)] text-[var(--google-yellow)]' : 'text-muted-foreground/30'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-[11px] text-muted-foreground">
-                          {new Date(r.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">"{r.text}"</p>
-                      
-                      {/* Author Info */}
-                      <div className="mt-3 flex items-center justify-between pt-3 border-t border-border/50">
-                        {r.author?.id ? (
-                          <Link to={`/jobs/profile/${r.author.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                            {r.author.avatar_path ? (
-                              <img src={r.author.avatar_path} alt={r.author.full_name} className="h-7 w-7 rounded-full object-cover" />
-                            ) : (
-                              <div className="h-7 w-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold">
-                                {r.author.full_name?.charAt(0)}
-                              </div>
-                            )}
-                            <div>
-                              <div className="text-xs font-semibold flex items-center gap-0.5">
-                                {r.author.full_name}
-                                {r.author.is_verified && <VerifiedBadge size={13} />}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground">{r.author.headline || 'Verified Job Seeker'}</div>
-                            </div>
-                          </Link>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold">
-                              {r.author?.full_name?.charAt(0) || 'U'}
-                            </div>
-                            <div>
-                              <div className="text-xs font-semibold flex items-center gap-0.5">
-                                {r.author?.full_name}
-                                {r.author?.is_verified && <VerifiedBadge size={13} />}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground">{r.author?.headline || 'Verified Job Seeker'}</div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Owner edit/delete */}
-                        {r.is_own && (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => { setEditingReview(r); setShowReviewModal(true); }}
-                              className="p-1 rounded bg-muted hover:bg-muted-foreground/10 text-muted-foreground"
-                              title="Edit review"
-                            >
-                              <Pen className="h-3 w-3" />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await seekerAPI.deleteReview(r.id);
-                                  setReviews(prev => prev.filter(x => x.id !== r.id));
-                                  toast.success('Review deleted');
-                                } catch (err) {
-                                  toast.error(err.message || 'Failed to delete review');
-                                }
-                              }}
-                              className="p-1 rounded bg-muted hover:bg-red-100 text-red-500"
-                              title="Delete review"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
+              <div className="mt-6">
+                <UnifiedReviewsSection reviews={reviews} targetId={companyId} ownerType="company" />
               </div>
             </div>
           </div>
