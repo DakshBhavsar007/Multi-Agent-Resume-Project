@@ -138,6 +138,7 @@ class DeveloperAccount(models.Model):
     password_hash = models.CharField(max_length=500)
     tier = models.CharField(max_length=50, default="free")
     is_verified = models.BooleanField(default=False)
+    is_banned = models.BooleanField(default=False)
     phone = models.CharField(max_length=50, null=True, blank=True)
     phone_verified = models.BooleanField(default=False)
     verification_token = models.CharField(max_length=500, null=True, blank=True)
