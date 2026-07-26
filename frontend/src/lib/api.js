@@ -30,6 +30,10 @@ function getHeaders(isFile=false) {
   if (jwt && jwt !== "undefined" && jwt !== "null") {
     h["Authorization"] = `Bearer ${String(jwt).replace(/[^\x20-\x7E]/g, "")}`;
   }
+  const seekerToken = localStorage.getItem("vish_seeker_token");
+  if (seekerToken && seekerToken !== "undefined" && seekerToken !== "null") {
+    h["X-Seeker-Token"] = String(seekerToken).replace(/[^\x20-\x7E]/g, "");
+  }
   const portalJwt = localStorage.getItem("portal_jwt");
   if (portalJwt && portalJwt !== "undefined" && portalJwt !== "null") {
     h["X-Developer-Token"] = String(portalJwt).replace(/[^\x20-\x7E]/g, "");

@@ -30,11 +30,15 @@ def _extract_user_identity(request):
     primary_type = None
 
     tokens = []
-    auth_header = request.headers.get("Authorization", "")
+    auth_header = request.headers.get("Authorization") or request.META.get("HTTP_AUTHORIZATION") or ""
     if auth_header and auth_header.startswith("Bearer "):
         tokens.append(auth_header.split(" ")[1])
     
-    dev_header = request.headers.get("X-Developer-Token", "")
+    seeker_header = request.headers.get("X-Seeker-Token") or request.META.get("HTTP_X_SEEKER_TOKEN") or ""
+    if seeker_header:
+        tokens.append(seeker_header)
+
+    dev_header = request.headers.get("X-Developer-Token") or request.META.get("HTTP_X_DEVELOPER_TOKEN") or ""
     if dev_header:
         tokens.append(dev_header)
     
@@ -52,8 +56,8 @@ def _extract_user_identity(request):
                 active_identities.add(sid)
                 if not primary_id:
                     primary_id, primary_type = sid, "job_seeker"
-            if payload.get("company_id"):
-                cid = str(payload["company_id"])
+            if payload.get("company_id") or payload.get("recruiter_id"):
+                cid = str(payload.get("company_id") or payload.get("recruiter_id"))
                 active_identities.add(cid)
                 if not primary_id:
                     primary_id, primary_type = cid, "recruiter"
@@ -84,12 +88,16 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
         rec = getattr(review, "recruiter", None)
         seeker = getattr(review, "seeker", None)
 
+        dev_id_str = str(getattr(dev, "id", "") or getattr(review, "developer_id", "") or "")
+        rec_id_str = str(getattr(rec, "id", "") or getattr(review, "recruiter_id", "") or "")
+        seeker_id_str = str(getattr(seeker, "id", "") or getattr(review, "seeker_id", "") or "")
+
         # Check if current user owns this review across any active identities
-        if dev and str(getattr(dev, "id", "")) in active_identities:
+        if dev_id_str and dev_id_str in active_identities:
             is_own = True
-        if rec and str(getattr(rec, "id", "")) in active_identities:
+        if rec_id_str and rec_id_str in active_identities:
             is_own = True
-        if seeker and str(getattr(seeker, "id", "")) in active_identities:
+        if seeker_id_str and seeker_id_str in active_identities:
             is_own = True
 
         if user_type == "developer":
