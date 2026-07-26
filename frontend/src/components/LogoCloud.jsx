@@ -28,12 +28,17 @@ const DEFAULT_COMPANIES = [
 ];
 
 const MarqueeRow = ({ items, direction = "left", speed = 40 }) => {
+  const [isHovered, setIsHovered] = useState(false);
   if (!items || items.length === 0) return null;
   return (
-    <div className="marquee-container">
+    <div 
+      className="marquee-container"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <motion.div 
         className="marquee-content"
-        animate={{ 
+        animate={isHovered ? false : { 
           x: direction === "left" ? ["0%", "-50%"] : ["-50%", "0%"]
         }}
         transition={{ 
@@ -41,6 +46,7 @@ const MarqueeRow = ({ items, direction = "left", speed = 40 }) => {
           repeat: Infinity, 
           ease: "linear"
         }}
+        style={{ animationPlayState: isHovered ? "paused" : "running" }}
       >
         {[...items, ...items, ...items, ...items].map((item, i) => (
           <CompanyLogo key={`${item.name}-${i}`} name={item.name} logoPath={item.logo_path || item.logoPath} />
