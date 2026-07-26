@@ -184,6 +184,7 @@ urlpatterns = [
     path('api/developer/webhooks', dev_webhooks.webhooks_root, name='dev-webhooks-root'),
     path('api/developer/webhooks/<str:webhook_id>', dev_webhooks.webhook_operations, name='dev-webhooks-ops'),
     path('api/developer/webhooks/<str:webhook_id>/test', dev_webhooks.test_webhook, name='dev-webhooks-test'),
+    path('api/developer/webhooks/<str:webhook_id>/test-ping', dev_webhooks.test_webhook, name='dev-webhooks-test-ping'),
     path('api/developer/webhooks/<str:webhook_id>/logs', dev_webhooks.webhook_logs, name='dev-webhooks-logs'),
 
     # ── Developer Portal — Embed ───────────────────────────────────────────────
@@ -204,6 +205,7 @@ urlpatterns = [
     path('api/v1/public/companies/<str:company_id>/reviews', reviews.public_company_reviews, name='public-company-reviews'),
     path('api/v1/public/seekers/<str:seeker_id>', reviews.public_seeker_profile, name='public-seeker-profile'),
     path('api/v1/public/developers/<str:dev_id>', reviews.public_developer_profile, name='public-developer-profile'),
+    path('api/v1/reviews/<str:review_id>/reply', reviews.reply_to_review, name='reviews-reply'),
     path('api/v1/seeker/reviews', reviews.seeker_reviews_root, name='seeker-reviews-root'),
     path('api/v1/seeker/reviews/mine', reviews.seeker_my_reviews, name='seeker-reviews-mine'),
     path('api/v1/seeker/reviews/<str:review_id>', reviews.seeker_review_detail, name='seeker-reviews-detail'),

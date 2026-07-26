@@ -113,6 +113,39 @@ export default function DeveloperUsage() {
          ))}
       </div>
 
+      {/* QUOTA METER & PROGRESS GAUGE */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-8">
+        <h3 className="font-bold text-lg text-charcoal mb-4 flex items-center justify-between">
+          <span>Monthly Quota & Limits</span>
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tier: {summary?.tier || "Free"}</span>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: "Resume Parsing", used: parseUsage, limit: summary?.limits?.parse?.limit || 1000, color: "bg-blue-600" },
+            { label: "Job Matching", used: matchUsage, limit: summary?.limits?.match?.limit || 500, color: "bg-emerald-600" },
+            { label: "AI Chatbot", used: chatUsage, limit: summary?.limits?.chat?.limit || 500, color: "bg-purple-600" },
+            { label: "Fraud Scans", used: scanUsage, limit: summary?.limits?.scan?.limit || 200, color: "bg-amber-600" },
+          ].map((item, idx) => {
+            const pct = Math.min(100, Math.round((item.used / (item.limit || 1)) * 100));
+            return (
+              <div key={idx} className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-between">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-extrabold text-gray-700">{item.label}</span>
+                  <span className="text-xs font-black text-gray-900">{pct}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 overflow-hidden">
+                  <div className={`h-2.5 rounded-full ${item.color} transition-all duration-500`} style={{ width: `${pct}%` }}></div>
+                </div>
+                <div className="flex justify-between text-[11px] font-bold text-gray-500">
+                  <span>{item.used.toLocaleString()} calls used</span>
+                  <span>Limit: {item.limit.toLocaleString()}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* MAIN CHART */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-8">
         <h3 className="font-bold text-lg text-charcoal mb-6">API Traffic</h3>

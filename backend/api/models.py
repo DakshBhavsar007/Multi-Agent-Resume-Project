@@ -654,6 +654,8 @@ class Review(models.Model):
     rating      = models.IntegerField(default=5)   # 1-5 stars
     text        = models.TextField()
     is_featured = models.BooleanField(default=False)
+    official_reply    = models.TextField(null=True, blank=True)
+    official_reply_at = models.DateTimeField(null=True, blank=True)
     created_at  = models.DateTimeField(default=timezone.now)
     updated_at  = models.DateTimeField(auto_now=True)
 

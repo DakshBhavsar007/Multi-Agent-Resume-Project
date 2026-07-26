@@ -144,6 +144,8 @@ def _serialize_review(review, current_user_id=None, current_user_type=None):
         "review_type": "company" if company_id_val else "platform",
         "user_type": user_type,
         "is_featured": getattr(review, "is_featured", False),
+        "official_reply": getattr(review, "official_reply", None),
+        "official_reply_at": getattr(review, "official_reply_at", None).isoformat() if getattr(review, "official_reply_at", None) else None,
         "created_at": created_at_val.isoformat() if created_at_val else "",
         "updated_at": updated_at_val.isoformat() if updated_at_val else "",
         "is_own": is_own,
@@ -640,4 +642,55 @@ def public_developer_profile(request, dev_id):
     except Exception as e:
         logger.error(f"Error fetching developer profile for {dev_id}: {e}")
         return JsonResponse(error_response(f"Failed to load developer profile: {str(e)}"), status=500)
+
+
+@csrf_exempt
+def reply_to_review(request, review_id):
+    """POST /api/v1/reviews/<review_id>/reply — submit an official owner response to a review."""
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    try:
+        data = json.loads(request.body)
+        reply_text = data.get("reply", "").strip() if isinstance(data.get("reply"), str) else ""
+        if not reply_text:
+            return JsonResponse(error_response("Reply text is required"), status=400)
+        if len(reply_text) > 1000:
+            return JsonResponse(error_response("Reply must be under 1000 characters"), status=400)
+
+        review = Review.objects.filter(id=review_id).first()
+        if not review:
+            return JsonResponse(error_response("Review not found"), status=404)
+
+        auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+        if not auth_header.startswith("Bearer "):
+            return JsonResponse(error_response("Authentication required"), status=401)
+        token = auth_header.split(" ", 1)[1]
+
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        except Exception:
+            return JsonResponse(error_response("Invalid or expired token"), status=401)
+
+        dev_id = payload.get("developer_id")
+        comp_id = payload.get("company_id")
+
+        authorized = False
+        if dev_id and review.developer_id and str(review.developer_id) == str(dev_id):
+            authorized = True
+        elif comp_id and review.company_id and str(review.company_id) == str(comp_id):
+            authorized = True
+
+        if not authorized:
+            return JsonResponse(error_response("Only the target developer or company owner can submit an official reply"), status=403)
+
+        review.official_reply = reply_text
+        review.official_reply_at = timezone.now()
+        review.save()
+
+        current_user_id, current_user_type = _extract_user_identity(request)
+        return JsonResponse(success_response(_serialize_review(review, current_user_id, current_user_type)))
+    except Exception as e:
+        logger.error(f"Error replying to review {review_id}: {e}", exc_info=True)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
