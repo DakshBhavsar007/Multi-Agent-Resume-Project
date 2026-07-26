@@ -179,22 +179,13 @@ export default function UserCompanyDetail() {
             style={{ background: `radial-gradient(50% 70% at 20% 0%, color-mix(in oklab, ${company.logoColor} 25%, transparent), transparent)` }}
           />
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-2 border-border/80 bg-card shadow-md overflow-hidden flex items-center justify-center shrink-0">
-              {company.logo_path || company.logo_url ? (
-                <img 
-                  src={company.logo_path || company.logo_url} 
-                  alt={company.name} 
-                  className="h-full w-full object-cover" 
-                />
-              ) : (
-                <div 
-                  className="h-full w-full flex items-center justify-center font-display text-3xl font-black text-white"
-                  style={{ backgroundColor: company.logoColor || '#2563eb' }}
-                >
-                  {company.name ? company.name.charAt(0).toUpperCase() : 'C'}
-                </div>
-              )}
-            </div>
+            <CompanyLogo 
+              name={company.name} 
+              logoPath={company.logo_path || company.logo_url} 
+              color={company.logoColor || '#059669'} 
+              size={96} 
+              className="rounded-2xl border-2 border-border/80 shadow-md shrink-0" 
+            />
 
             <div className="min-w-0 flex-1">
               <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl flex items-center gap-2 flex-wrap">
