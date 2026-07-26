@@ -96,27 +96,32 @@ WSGI_APPLICATION = 'vishleshan_backend.wsgi.application'
 ASGI_APPLICATION = 'vishleshan_backend.asgi.application'
 
 # Database configuration
-DATABASE_URL = os.getenv("DATABASE_URL")
-# Convert asyncpg to standard postgresql engine for Django ORM
-SYNC_DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
-
-db_config = dj_database_url.parse(
-    SYNC_DATABASE_URL,
-    conn_max_age=600,
-    conn_health_checks=True,
-)
-if not DEBUG:
-    # Force TLS/SSL database connection in production
-    if db_config.get('ENGINE') == 'django.db.backends.postgresql' or 'postgresql' in SYNC_DATABASE_URL:
-        db_config.setdefault('OPTIONS', {})
-        db_config['OPTIONS']['sslmode'] = 'require'
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+if DATABASE_URL:
+    SYNC_DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+    conn_max_age = int(os.getenv("CONN_MAX_AGE", "0"))
+    db_config = dj_database_url.parse(
+        SYNC_DATABASE_URL,
+        conn_max_age=conn_max_age,
+        conn_health_checks=True,
+    )
+    db_config['ENGINE'] = 'django.db.backends.postgresql'
+    db_config.setdefault('OPTIONS', {})
+    db_config['OPTIONS']['DISABLE_SERVER_SIDE_CURSORS'] = True
+    
+    if 'sslmode' not in SYNC_DATABASE_URL and 'sslmode' not in db_config['OPTIONS']:
+        db_sslmode = os.getenv("DB_SSLMODE", "require" if not DEBUG else "")
+        if db_sslmode:
+            db_config['OPTIONS']['sslmode'] = db_sslmode
+else:
+    db_config = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 
 DATABASES = {
     'default': db_config
 }
-
-# Use PostgreSQL engine
-DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
