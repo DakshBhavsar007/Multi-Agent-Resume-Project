@@ -59,15 +59,23 @@
   align-items: center;
   gap: 10px;
   color: var(--text);
-  opacity: 0.25;
-  transition: opacity 0.3s ease;
+  opacity: 0.75;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   white-space: nowrap;
-  font-weight: 700;
-  font-size: 20px; /* Smaller logos for compactness */
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dark .logo-item-wrapper {
+  color: #f3f4f6;
+  opacity: 0.85;
 }
 
 .logo-item-wrapper:hover {
   opacity: 1;
+  transform: scale(1.05);
 }
 
 .logo-symbol {

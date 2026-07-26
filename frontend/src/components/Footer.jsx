@@ -27,10 +27,10 @@ const Footer = () => {
     "AI Mock Interview": "/jobs/mock-interview",
     "Premium Plans": "/jobs/billing",
     "Developer Portal": "/developer",
-    "API Documentation": "/developer/docs",
-    "API Keys": "/developer/keys",
-    "Webhooks": "/developer/webhooks",
-    "Usage & Billing": "/developer/billing",
+    "API Documentation": "/developer/portal/docs",
+    "API Keys": "/developer/portal/keys",
+    "Webhooks": "/developer/portal/webhooks",
+    "Usage & Billing": "/developer/portal/usage",
     "Job Seeker Portal": "/jobs",
     "Recruiter Workspace": "/login",
     "Admin Login": "/admin/login",
@@ -38,7 +38,7 @@ const Footer = () => {
     "Contact Support": "/contact",
     "Support & Appeals": "/support",
     "Terms of Service": "/terms",
-    "Privacy Policy": "/terms",
+    "Privacy Policy": "/privacy",
     "Refund Policy": "/refund-policy"
   };
 

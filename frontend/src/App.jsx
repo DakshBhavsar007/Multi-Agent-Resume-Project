@@ -237,6 +237,7 @@ export default function App() {
           <Route path="/contact" element={<SupportPortalPage />} />
           <Route path="/support" element={<SupportPortalPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<TermsPage />} />
           <Route path="/refund-policy" element={<RefundPolicyPage />} />
           <Route path="/forgot-password" element={<ResetPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />

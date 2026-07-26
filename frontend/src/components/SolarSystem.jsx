@@ -287,28 +287,29 @@ export const SolarSystem = React.forwardRef(
               transformStyle: "preserve-3d",
             }}
           >
-            <div className="absolute w-[90px] h-[90px] md:w-[120px] md:h-[120px] rounded-full filter blur-md animate-custom-sun-pulse z-10 bg-teal-500/20" />
+            <div className="absolute w-[90px] h-[90px] md:w-[120px] md:h-[120px] rounded-full filter blur-md animate-custom-sun-pulse z-10 bg-sky-500/30" />
             
-            {centerLogo ? (
-              typeof centerLogo === "string" ? (
-                <img
-                  className="w-14 h-14 md:w-20 md:h-20 rounded-full border-2 border-teal-500/40 shadow-[0_0_30px_rgba(20,184,166,0.3)] z-20 bg-zinc-950 p-2 md:p-3 relative object-contain"
-                  src={centerLogo}
-                  alt={centerLogoAlt}
-                />
+            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-2 border-sky-400/60 shadow-[0_0_40px_rgba(56,189,248,0.5)] z-20 bg-zinc-950/90 backdrop-blur-md flex flex-col items-center justify-center p-2 relative">
+              {centerLogo ? (
+                typeof centerLogo === "string" ? (
+                  <img
+                    className="w-10 h-10 md:w-14 md:h-14 rounded-full object-contain"
+                    src={centerLogo}
+                    alt={centerLogoAlt}
+                  />
+                ) : (
+                  centerLogo
+                )
               ) : (
-                <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-2 border-teal-500/40 shadow-[0_0_30px_rgba(20,184,166,0.3)] z-20 bg-zinc-950 flex items-center justify-center p-2 relative">
-                  {centerLogo}
-                </div>
-              )
-            ) : (
-              <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-2 border-teal-500/40 shadow-[0_0_30px_rgba(20,184,166,0.4)] z-20 bg-zinc-950 flex items-center justify-center p-2 relative">
-                <OrbitIcon className="w-8 h-8 text-teal-400 animate-spin" style={{ animationDuration: '10s' }} />
-              </div>
-            )}
+                <>
+                  <OrbitIcon className="w-7 h-7 md:w-9 md:h-9 text-sky-400 animate-spin" style={{ animationDuration: '12s' }} />
+                  <span className="text-[9px] font-bold tracking-widest text-sky-400 uppercase mt-1">Core AI</span>
+                </>
+              )}
+            </div>
 
-            <div className="absolute w-[110px] h-[110px] md:w-[140px] md:h-[140px] rounded-full border border-dashed border-teal-500/30 animate-custom-spin-cw pointer-events-none" />
-            <div className="absolute w-[150px] h-[150px] md:w-[185px] md:h-[185px] rounded-full border border-dashed border-teal-500/15 animate-custom-spin-ccw pointer-events-none" />
+            <div className="absolute w-[110px] h-[110px] md:w-[140px] md:h-[140px] rounded-full border border-dashed border-sky-400/40 animate-custom-spin-cw pointer-events-none" />
+            <div className="absolute w-[150px] h-[150px] md:w-[185px] md:h-[185px] rounded-full border border-dashed border-blue-500/25 animate-custom-spin-ccw pointer-events-none" />
           </div>
 
           {/* Cosmic Dust Particles */}

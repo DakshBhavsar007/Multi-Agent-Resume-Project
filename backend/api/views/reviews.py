@@ -22,44 +22,77 @@ logger = logging.getLogger(__name__)
 
 
 def _extract_user_identity(request):
-    auth_header = request.headers.get("Authorization", "")
-    token = ""
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ")[1]
-    else:
-        token = request.GET.get("token") or request.GET.get("jwt") or ""
-    if not token or token in ["undefined", "null"]:
-        return None, None
     from api.decorators import JWT_SECRET, JWT_ALGORITHM
     from jose import jwt, JWTError
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("seeker_id"):
-            return str(payload["seeker_id"]), "job_seeker"
-        elif payload.get("company_id"):
-            return str(payload["company_id"]), "recruiter"
-        elif payload.get("developer_id"):
-            return str(payload["developer_id"]), "developer"
-    except JWTError:
-        pass
-    return None, None
+
+    active_identities = set()
+    primary_id = None
+    primary_type = None
+
+    tokens = []
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header and auth_header.startswith("Bearer "):
+        tokens.append(auth_header.split(" ")[1])
+    
+    dev_header = request.headers.get("X-Developer-Token", "")
+    if dev_header:
+        tokens.append(dev_header)
+    
+    query_token = request.GET.get("token") or request.GET.get("jwt") or ""
+    if query_token:
+        tokens.append(query_token)
+
+    for t in tokens:
+        if not t or t in ["undefined", "null"]:
+            continue
+        try:
+            payload = jwt.decode(t, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            if payload.get("seeker_id"):
+                sid = str(payload["seeker_id"])
+                active_identities.add(sid)
+                if not primary_id:
+                    primary_id, primary_type = sid, "job_seeker"
+            if payload.get("company_id"):
+                cid = str(payload["company_id"])
+                active_identities.add(cid)
+                if not primary_id:
+                    primary_id, primary_type = cid, "recruiter"
+            if payload.get("developer_id"):
+                did = str(payload["developer_id"])
+                active_identities.add(did)
+                if not primary_id:
+                    primary_id, primary_type = did, "developer"
+        except JWTError:
+            pass
+
+    return primary_id, primary_type, active_identities
 
 
-def _serialize_review(review, current_user_id=None, current_user_type=None):
+def _serialize_review(review, current_user_id=None, current_user_type=None, active_identities=None):
     """Serialize a Review instance including author profile info and role badges safely."""
     user_type = getattr(review, "user_type", None) or "job_seeker"
     author_info = {}
     is_own = False
+
+    if active_identities is None:
+        active_identities = set()
+    if current_user_id:
+        active_identities.add(str(current_user_id))
 
     try:
         dev = getattr(review, "developer", None)
         rec = getattr(review, "recruiter", None)
         seeker = getattr(review, "seeker", None)
 
+        # Check if current user owns this review across any active identities
+        if dev and str(getattr(dev, "id", "")) in active_identities:
+            is_own = True
+        if rec and str(getattr(rec, "id", "")) in active_identities:
+            is_own = True
+        if seeker and str(getattr(seeker, "id", "")) in active_identities:
+            is_own = True
+
         if user_type == "developer":
-            if dev and current_user_id and current_user_type == "developer":
-                is_own = str(getattr(dev, "id", "")) == str(current_user_id)
-            
             dev_name = getattr(dev, "full_name", None) or getattr(dev, "company_name", None)
             if not dev_name and getattr(dev, "email", None):
                 dev_name = dev.email.split("@")[0].replace(".", " ").title()
@@ -79,9 +112,6 @@ def _serialize_review(review, current_user_id=None, current_user_type=None):
                 "role_badge": "Developer",
             }
         elif user_type == "recruiter":
-            if rec and current_user_id and current_user_type == "recruiter":
-                is_own = str(getattr(rec, "id", "")) == str(current_user_id)
-
             rec_name = getattr(rec, "name", None)
             if not rec_name or rec_name in ["Recruiter", "Verified Member"]:
                 rec_names = ["Apex Logistics", "Northwind Cloud", "Lumen Research", "Bright Horizon", "Ember Health"]
@@ -99,9 +129,6 @@ def _serialize_review(review, current_user_id=None, current_user_type=None):
                 "role_badge": "Recruiter",
             }
         else:  # job_seeker
-            if seeker and current_user_id and current_user_type == "job_seeker":
-                is_own = str(getattr(seeker, "id", "")) == str(current_user_id)
-
             seeker_name = getattr(seeker, "full_name", None) if seeker else None
             if not seeker_name or seeker_name in ["Verified Member"]:
                 seeker_names = ["Rahul Verma", "Ananya Patel", "Vikram Malhotra", "Rohan Mehta", "Neha Gupta"]
@@ -182,11 +209,11 @@ def public_list_reviews(request):
         if user_type in ["job_seeker", "developer", "recruiter"]:
             raw_reviews = [r for r in raw_reviews if getattr(r, "user_type", "job_seeker") == user_type]
 
-        current_user_id, current_user_type = _extract_user_identity(request)
+        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
         data = []
         for r in raw_reviews:
             try:
-                data.append(_serialize_review(r, current_user_id, current_user_type))
+                data.append(_serialize_review(r, current_user_id, current_user_type, active_identities))
             except Exception as ser_err:
                 logger.error(f"Failed to serialize review {r.id}: {ser_err}")
 
@@ -247,8 +274,8 @@ def public_company_reviews(request, company_id):
                 .order_by("-created_at")[:50]
             )
 
-        current_user_id, current_user_type = _extract_user_identity(request)
-        data = [_serialize_review(r, current_user_id, current_user_type) for r in reviews]
+        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
+        data = [_serialize_review(r, current_user_id, current_user_type, active_identities) for r in reviews]
 
         agg = Review.objects.filter(company=company).aggregate(
             avg_rating=Avg("rating"), total=Count("id")
@@ -616,11 +643,11 @@ def public_developer_profile(request, dev_id):
         except Exception:
             user_reviews = []
 
-        current_user_id, current_user_type = _extract_user_identity(request)
+        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
         reviews_data = []
         for r in user_reviews:
             try:
-                reviews_data.append(_serialize_review(r, current_user_id, current_user_type))
+                reviews_data.append(_serialize_review(r, current_user_id, current_user_type, active_identities))
             except Exception:
                 pass
 

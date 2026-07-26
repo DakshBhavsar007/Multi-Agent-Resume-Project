@@ -1,31 +1,34 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Building2, ShieldCheck, Sparkles, Award } from 'lucide-react';
+import { publicAPI } from '../lib/api';
 import './LogoCloud.css';
 
-const CompanyLogo = ({ name, icon }) => (
-  <div className="logo-item-wrapper">
-    <div className="logo-symbol">{icon}</div>
-    <span className="logo-name">{name}</span>
+const CompanyLogo = ({ name, logoPath }) => (
+  <div className="logo-item-wrapper flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-100/50 dark:bg-zinc-800/40 border border-gray-200/40 dark:border-zinc-700/40">
+    {logoPath ? (
+      <img src={logoPath} alt={name} className="w-5 h-5 rounded object-cover" />
+    ) : (
+      <Building2 className="w-4 h-4 text-blue-500" />
+    )}
+    <span className="logo-name tracking-wider">{name}</span>
   </div>
 );
 
-const companies = [
-  { name: "Unity", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z"/></svg> },
-  { name: "Tera AI", icon: <circle cx="10" cy="10" r="8" fill="currentColor" stroke="none" /> },
-  { name: "Capsule", icon: <rect width="20" height="10" rx="5" fill="currentColor" /> },
-  { name: "Caine", icon: <path d="M2 12h20M12 2v20" stroke="currentColor" strokeWidth="2" /> },
-  { name: "Dandelion", icon: <path d="M12 2l2 7h7l-5.5 4 2 7-5.5-4-5.5 4 2-7-5.5-4h7l2-7z" fill="currentColor" /> }
+const DEFAULT_COMPANIES = [
+  { name: "AAAA", logoPath: "" },
+  { name: "AM MANSURI", logoPath: "" },
+  { name: "ACME LABS", logoPath: "" },
+  { name: "AHMAD SURTI", logoPath: "" },
+  { name: "APEX LOGISTICS", logoPath: "" },
+  { name: "NORTHWIND CLOUD", logoPath: "" },
+  { name: "LUMEN RESEARCH", logoPath: "" },
+  { name: "BRIGHT HORIZON", logoPath: "" }
 ];
 
-const institutes = [
-  { name: "BioSpark", icon: <circle cx="10" cy="10" r="10" stroke="currentColor" strokeWidth="2" fill="none"/> },
-  { name: "K & B", icon: <rect x="2" y="2" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none"/> },
-  { name: "LBH Han", icon: <rect x="5" y="5" width="14" height="14" fill="currentColor" /> },
-  { name: "BioSpark", icon: <circle cx="10" cy="10" r="10" stroke="currentColor" strokeWidth="2" fill="none"/> }
-];
-
-const MarqueeRow = ({ items, direction = "left", speed = 60 }) => {
+const MarqueeRow = ({ items, direction = "left", speed = 40 }) => {
+  if (!items || items.length === 0) return null;
   return (
     <div className="marquee-container">
       <motion.div 
@@ -36,13 +39,11 @@ const MarqueeRow = ({ items, direction = "left", speed = 60 }) => {
         transition={{ 
           duration: speed, 
           repeat: Infinity, 
-          ease: "linear",
-          initial: { x: direction === "left" ? "-25%" : "-25%" } // Start offset
+          ease: "linear"
         }}
-        style={{ x: "-25%" }} // Initial static offset to prevent "empty start"
       >
         {[...items, ...items, ...items, ...items].map((item, i) => (
-          <CompanyLogo key={i} name={item.name} icon={item.icon} />
+          <CompanyLogo key={`${item.name}-${i}`} name={item.name} logoPath={item.logo_path || item.logoPath} />
         ))}
       </motion.div>
     </div>
@@ -50,33 +51,48 @@ const MarqueeRow = ({ items, direction = "left", speed = 60 }) => {
 };
 
 const LogoCloud = () => {
+  const [companiesList, setCompaniesList] = useState(DEFAULT_COMPANIES);
+
+  useEffect(() => {
+    publicAPI.getCompanies()
+      .then((res) => {
+        let fetched = [];
+        if (Array.isArray(res)) fetched = res;
+        else if (res && Array.isArray(res.companies)) fetched = res.companies;
+        else if (res && Array.isArray(res.data)) fetched = res.data;
+
+        if (fetched.length > 0) {
+          const mapped = fetched.map(c => ({
+            name: (c.name || c.company_name || "Company").toUpperCase(),
+            logo_path: c.logo_path || c.logoPath || ""
+          }));
+          setCompaniesList(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const half = Math.ceil(companiesList.length / 2);
+  const row1 = companiesList.slice(0, Math.max(half, 3));
+  const row2 = companiesList.slice(Math.max(half, 3));
+
   return (
-    <section className="logo-cloud-section">
+    <section className="logo-cloud-section py-8">
       <div className="logo-cloud-container">
         <motion.p 
-          className="logo-cloud-title"
+          className="logo-cloud-title font-semibold text-xs uppercase tracking-widest text-muted-foreground mb-4"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          Preferred by engineers and scientists at leading startups and public companies.
+          Preferred by recruiters and hiring teams at verified startups & enterprises
         </motion.p>
         
-        <MarqueeRow items={companies} direction="left" speed={40} />
+        <MarqueeRow items={row1.length > 0 ? row1 : DEFAULT_COMPANIES} direction="left" speed={35} />
         
-        <div className="marquee-spacer" />
+        <div className="marquee-spacer my-3" />
         
-        <motion.p 
-          className="logo-cloud-title"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-        >
-          Trusted by top patent practices worldwide.
-        </motion.p>
-        
-        <MarqueeRow items={institutes} direction="right" speed={50} />
+        <MarqueeRow items={row2.length > 0 ? row2 : DEFAULT_COMPANIES} direction="right" speed={45} />
       </div>
     </section>
   );

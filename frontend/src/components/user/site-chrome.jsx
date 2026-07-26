@@ -498,10 +498,10 @@ export function Footer() {
       t: "Developers & API", 
       items: [
         { label: "Developer Portal", to: "/developer" },
-        { label: "API Documentation", to: "/developer/docs" },
-        { label: "API Keys", to: "/developer/keys" },
-        { label: "Webhooks", to: "/developer/webhooks" },
-        { label: "Usage & Billing", to: "/developer/billing" }
+        { label: "API Documentation", to: "/developer/portal/docs" },
+        { label: "API Keys", to: "/developer/portal/keys" },
+        { label: "Webhooks", to: "/developer/portal/webhooks" },
+        { label: "Usage & Billing", to: "/developer/portal/usage" }
       ] 
     },
     { 
@@ -520,7 +520,7 @@ export function Footer() {
         { label: "Contact Support", to: "/contact" },
         { label: "Support & Appeals", to: "/support" },
         { label: "Terms of Service", to: "/terms" },
-        { label: "Privacy Policy", to: "/terms" },
+        { label: "Privacy Policy", to: "/privacy" },
         { label: "Refund Policy", to: "/refund-policy" }
       ] 
     },
