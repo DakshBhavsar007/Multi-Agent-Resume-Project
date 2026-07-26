@@ -163,7 +163,7 @@ def fetch_linkedin_job_details(url: str) -> dict:
         }
 
     # Fallback to LLM extraction if raw HTML exists but standard selectors didn't find all fields
-    llm = RotateLLMClient()
+    llm = RotateLLMClient(agent_name="linkedin_scraper")
     if scraped_successfully and len(html_content) > 200:
         head_match = re.search(r"<head>([\s\S]*?)</head>", html_content)
         body_match = re.search(r"<body>([\s\S]*?)</body>", html_content)

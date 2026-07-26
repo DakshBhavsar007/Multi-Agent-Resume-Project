@@ -28,7 +28,7 @@ GROQ_MODEL = os.environ.get("GROQ_INTERVIEW_MODEL", "llama-3.3-70b-versatile")
 
 class InterviewAgent:
     def __init__(self):
-        self.fallback_client = RotateLLMClient()
+        self.fallback_client = RotateLLMClient(agent_name="interview_agent")
 
     def _call_llm(self, prompt: str, json_mode: bool = True) -> str:
         """Helper to call Groq (if available) or fallback to RotateLLMClient"""

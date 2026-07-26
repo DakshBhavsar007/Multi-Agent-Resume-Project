@@ -1,98 +1,241 @@
 import os
 import logging
-import sys
 import time
-import json
-import random
+import datetime
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
-# File path to persist bad key timestamps across server restarts
-_BAD_KEYS_FILE = os.path.join(os.getenv("UPLOAD_DIR", "uploads"), "llm_bad_keys.json")
-_current_key_idx = 0
-_bad_keys = {}  # maps api_key string -> float timestamp when key becomes eligible again
+# Pacific Time offset (UTC-7 during PDT, UTC-8 during PST)
+# Google resets Gemini quota at midnight Pacific Time
+_PT_UTC_OFFSET_HOURS = -7  # PDT (summer); adjust to -8 for PST if needed
 
 
-def _load_bad_keys():
-    """Load bad key expiry timestamps from persistent JSON file."""
-    global _bad_keys
+def _get_pacific_date():
+    """Returns the current date in Pacific Time (for quota reset alignment with Google)."""
+    utc_now = datetime.datetime.now(datetime.timezone.utc)
+    pt_offset = datetime.timedelta(hours=_PT_UTC_OFFSET_HOURS)
+    pt_now = utc_now + pt_offset
+    return pt_now.date()
+
+
+def _seed_from_env():
+    """
+    Auto-seed GeminiProject + GeminiApiKey from GEMINI_API_KEYS env var
+    if the DB tables are empty (first-time server start).
+    Also seeds AgentModelConfig with default agent assignments.
+    """
+    from api.models import GeminiProject, GeminiApiKey, AgentModelConfig
+
+    # --- Seed Gemini keys from .env if DB is empty ---
+    if GeminiProject.objects.count() == 0:
+        keys_str = os.getenv("GEMINI_API_KEYS", "")
+        keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+        if not keys:
+            single = os.getenv("GEMINI_API_KEY", "")
+            if single.strip():
+                keys.append(single.strip())
+
+        for i, key in enumerate(keys, 1):
+            project_name = f"Gemini-Project-{i}"
+            project, _ = GeminiProject.objects.get_or_create(
+                name=project_name,
+                defaults={"daily_limit": 20, "daily_usage": 0, "rpm_limit": 5}
+            )
+            GeminiApiKey.objects.get_or_create(
+                key=key,
+                defaults={"project": project, "label": f"Key-{i}", "is_active": True}
+            )
+        if keys:
+            print(f"[LLM SEED] Auto-imported {len(keys)} Gemini keys from .env into DB.", flush=True)
+
+    # --- Seed AgentModelConfig if DB is empty ---
+    if AgentModelConfig.objects.count() == 0:
+        default_agents = [
+            ("resume_parser",       "Resume Parser",          "gemini", "groq"),
+            ("inference_agent",     "Candidate Scoring",      "gemini", "groq"),
+            ("parsing_agent",       "Basic Parsing",          "gemini", "groq"),
+            ("resume_enhancer",     "Resume Enhancer",        "groq",   "gemini"),
+            ("interview_agent",     "AI Interview",           "groq",   "gemini"),
+            ("fraud_agent",         "Fraud Detection",        "gemini", "groq"),
+            ("cover_letter",        "Cover Letter",           "groq",   "gemini"),
+            ("chatbot",             "AI Chatbot",             "groq",   "gemini"),
+            ("ats_parser",          "ATS Parser",             "gemini", "groq"),
+            ("ats_compatibility",   "ATS Compatibility",      "gemini", "groq"),
+            ("round_recommendation","Round Recommendation",   "groq",   "gemini"),
+            ("mcq_parser",          "MCQ Paper Parser",       "gemini", "groq"),
+            ("jd_generator",        "JD Generator",           "groq",   "gemini"),
+            ("resume_builder",      "Resume Builder",         "gemini", "groq"),
+            ("round_evaluation",    "Round Evaluation",       "gemini", "groq"),
+            ("linkedin_scraper",    "LinkedIn Scraper",       "groq",   "gemini"),
+            ("celery_resume",       "Celery Resume Tasks",    "gemini", "groq"),
+            ("celery_interview",    "Celery Interview Tasks", "groq",   "gemini"),
+            ("celery_general",      "Celery General Tasks",   "gemini", "groq"),
+        ]
+        for agent_name, display_name, primary, fallback in default_agents:
+            AgentModelConfig.objects.get_or_create(
+                agent_name=agent_name,
+                defaults={
+                    "display_name": display_name,
+                    "primary_provider": primary,
+                    "fallback_provider": fallback,
+                }
+            )
+        print(f"[LLM SEED] Auto-seeded {len(default_agents)} agent model configs.", flush=True)
+
+
+# Flag to prevent seeding multiple times in same process
+_seed_done = False
+
+
+def _ensure_seeded():
+    """Ensure DB is seeded on first access. Called lazily."""
+    global _seed_done
+    if not _seed_done:
+        try:
+            _seed_from_env()
+        except Exception as e:
+            logger.warning("DB seed skipped (tables may not exist yet): %s", e)
+        _seed_done = True
+
+
+def get_agent_config(agent_name: str):
+    """
+    Fetch AgentModelConfig from DB for the given agent.
+    Returns (primary_provider, fallback_provider) tuple.
+    Falls back to ('gemini', 'groq') if not found.
+    """
+    _ensure_seeded()
     try:
-        if os.path.exists(_BAD_KEYS_FILE):
-            with open(_BAD_KEYS_FILE, "r") as f:
-                data = json.load(f)
-                now = time.time()
-                # Keep only unexpired entries
-                _bad_keys = {k: float(v) for k, v in data.items() if float(v) > now}
+        from api.models import AgentModelConfig
+        config = AgentModelConfig.objects.filter(agent_name=agent_name, is_active=True).first()
+        if config:
+            return (config.primary_provider, config.fallback_provider)
     except Exception as e:
-        logger.warning("Failed to load bad keys from file: %s", e)
-        _bad_keys = {}
+        logger.warning("Failed to fetch agent config for %s: %s", agent_name, e)
+    return ("gemini", "groq")
 
 
-def _save_bad_keys():
-    """Save bad key expiry timestamps to persistent JSON file."""
+def get_available_gemini_key():
+    """
+    Returns (api_key_string, GeminiProject instance) for the best available project.
+    Performs lazy Pacific Time midnight reset.
+    Returns (None, None) if no keys are available.
+    """
+    _ensure_seeded()
     try:
-        os.makedirs(os.path.dirname(_BAD_KEYS_FILE), exist_ok=True)
-        with open(_BAD_KEYS_FILE, "w") as f:
-            json.dump(_bad_keys, f)
+        from api.models import GeminiProject, GeminiApiKey
+
+        today_pt = _get_pacific_date()
+        projects = GeminiProject.objects.filter(is_active=True).order_by('daily_usage')
+
+        for project in projects:
+            # Lazy reset: if last_reset is before today (Pacific Time), reset counter
+            if project.last_reset < today_pt:
+                project.daily_usage = 0
+                project.last_reset = today_pt
+                project.save(update_fields=['daily_usage', 'last_reset'])
+                print(f"[LLM ROTATION] Lazy reset for project '{project.name}' (new day in PT).", flush=True)
+
+            # Check if project has remaining quota
+            if project.daily_usage < project.daily_limit:
+                # Get an active key from this project
+                key_obj = GeminiApiKey.objects.filter(project=project, is_active=True).first()
+                if key_obj:
+                    return (key_obj.key, project)
+
+        return (None, None)
     except Exception as e:
-        logger.warning("Failed to save bad keys to file: %s", e)
+        logger.warning("Failed to fetch Gemini key from DB: %s", e)
+        return (None, None)
 
 
-# Initialize bad keys on module import
-_load_bad_keys()
+def record_gemini_usage(project):
+    """Increment daily usage for a project after a successful request."""
+    try:
+        project.daily_usage += 1
+        project.save(update_fields=['daily_usage'])
+    except Exception as e:
+        logger.warning("Failed to record Gemini usage: %s", e)
 
+
+def mark_project_exhausted(project):
+    """Mark a project as fully exhausted (429 response)."""
+    try:
+        project.daily_usage = project.daily_limit
+        project.save(update_fields=['daily_usage'])
+        print(f"[LLM ROTATION] Project '{project.name}' marked EXHAUSTED (429 hit). Usage set to {project.daily_limit}/{project.daily_limit}.", flush=True)
+    except Exception as e:
+        logger.warning("Failed to mark project exhausted: %s", e)
+
+
+def get_all_gemini_stats():
+    """Returns summary stats for logging."""
+    try:
+        from api.models import GeminiProject
+        projects = GeminiProject.objects.filter(is_active=True)
+        total = projects.count()
+        available = sum(1 for p in projects if p.daily_usage < p.daily_limit)
+        return total, available
+    except Exception:
+        return 0, 0
+
+
+# --- Legacy compatibility (used by advanced_ats_parsing_agent directly) ---
 
 def get_api_keys():
-    """Reads Gemini API keys from environment variable as a list."""
-    keys_str = os.getenv("GEMINI_API_KEYS", "")
-    keys = [k.strip() for k in keys_str.split(",") if k.strip()]
-    if not keys:
-        gkey = os.getenv("GEMINI_API_KEY")
-        if gkey and gkey.strip():
-            keys.append(gkey.strip())
-    return keys
+    """Legacy: returns list of all Gemini API key strings from DB."""
+    _ensure_seeded()
+    try:
+        from api.models import GeminiApiKey
+        return list(GeminiApiKey.objects.filter(is_active=True).values_list('key', flat=True))
+    except Exception:
+        # Fallback to .env if DB not available
+        keys_str = os.getenv("GEMINI_API_KEYS", "")
+        keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+        if not keys:
+            gkey = os.getenv("GEMINI_API_KEY")
+            if gkey and gkey.strip():
+                keys.append(gkey.strip())
+        return keys
 
 
 def get_active_gemini_keys():
-    """
-    Returns list of Gemini keys that are currently active and not expired in quota.
-    Filters out keys whose bad_key timestamp is in the future.
-    """
-    all_keys = get_api_keys()
-    now = time.time()
-    active = [k for k in all_keys if _bad_keys.get(k, 0) <= now]
-    return active
+    """Legacy: returns list of Gemini API key strings with remaining quota."""
+    _ensure_seeded()
+    try:
+        from api.models import GeminiProject, GeminiApiKey
+        today_pt = _get_pacific_date()
+        active_keys = []
+        projects = GeminiProject.objects.filter(is_active=True)
+        for project in projects:
+            if project.last_reset < today_pt:
+                project.daily_usage = 0
+                project.last_reset = today_pt
+                project.save(update_fields=['daily_usage', 'last_reset'])
+            if project.daily_usage < project.daily_limit:
+                keys = GeminiApiKey.objects.filter(project=project, is_active=True).values_list('key', flat=True)
+                active_keys.extend(keys)
+        return active_keys
+    except Exception:
+        return get_api_keys()
 
 
-def record_bad_key(key: str, error: Exception or str):
-    """
-    Records a key as bad/exhausted.
-    If the error indicates 429 / QuotaExceeded / ResourceExhausted, marks it bad for 24 Hours (86,400s).
-    Otherwise, marks it bad for 60 Seconds (short rate limit / network error).
-    """
-    global _bad_keys
-    err_str = str(error)
-    now = time.time()
-
-    # Detect 429 or daily quota exhaustion
-    is_daily_quota = any(kw in err_str.lower() for kw in ["429", "quota", "resource_exhausted", "resourceexhausted"])
-
-    if is_daily_quota:
-        # Mark as exhausted for 24 hours (86,400 seconds)
-        expiry = now + 86400.0
-        _bad_keys[key] = expiry
-        masked = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
-        print(f"[LLM ROTATION] Gemini key {masked} hit DAILY QUOTA (429)! Saved to DB/Disk memory (marked bad for 24 hours).", flush=True)
-        logger.warning(f"Gemini key {masked} hit daily quota 429. Marked bad for 24h.")
-    else:
-        # Short 60s cooldown for temporary glitches
-        expiry = now + 60.0
-        _bad_keys[key] = expiry
-        masked = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
-        print(f"[LLM ROTATION] Gemini key {masked} temporary error: {error}. Marked bad for 60s.", flush=True)
-
-    _save_bad_keys()
+def record_bad_key(key: str, error):
+    """Legacy: marks the PROJECT of this key as exhausted if 429, else logs warning."""
+    try:
+        from api.models import GeminiApiKey
+        key_obj = GeminiApiKey.objects.filter(key=key).select_related('project').first()
+        if key_obj:
+            err_str = str(error).lower()
+            is_daily_quota = any(kw in err_str for kw in ["429", "quota", "resource_exhausted", "resourceexhausted"])
+            if is_daily_quota:
+                mark_project_exhausted(key_obj.project)
+            else:
+                masked = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
+                print(f"[LLM ROTATION] Key {masked} temporary error: {error}", flush=True)
+    except Exception as e:
+        logger.warning("record_bad_key failed: %s", e)
 
 
 def get_openai_fallback_key():
@@ -100,128 +243,43 @@ def get_openai_fallback_key():
     return os.getenv("OPENAI_API_KEY")
 
 
+# ─── Main RotateLLMClient ────────────────────────────────────────────────────
+
 class RotateCompletions:
     def __init__(self, client_instance):
         self.client_instance = client_instance
 
     def create(self, **kwargs):
-        all_keys = get_api_keys()
-        active_keys = get_active_gemini_keys()
+        agent_name = self.client_instance._agent_name
+        primary, fallback = get_agent_config(agent_name)
 
-        model = kwargs.get("model", "gemini-1.5-flash")
+        model = kwargs.get("model", "gemini-2.5-flash")
         messages = kwargs.get("messages", [])
         temperature = kwargs.get("temperature", 0.2)
         response_format = kwargs.get("response_format")
         max_tokens = kwargs.get("max_tokens")
-
         timeout = kwargs.get("timeout") or 30.0
-        fallback_timeout = kwargs.get("timeout") or 25.0
 
-        global _current_key_idx
+        providers_to_try = [primary, fallback]
+        last_error = None
 
-        if active_keys:
-            # Pick a starting index to distribute requests evenly across active keys
-            start_idx = _current_key_idx % len(active_keys)
+        for provider in providers_to_try:
+            try:
+                if provider == "gemini":
+                    result = self._try_gemini(model, messages, temperature, response_format, max_tokens, timeout)
+                    if result:
+                        return result
+                elif provider == "groq":
+                    result = self._try_groq(messages, temperature, response_format, max_tokens, timeout)
+                    if result:
+                        return result
+            except Exception as e:
+                last_error = e
+                masked_agent = agent_name or "unknown"
+                print(f"[LLM ROTATION] Agent '{masked_agent}' provider '{provider}' failed: {e}", flush=True)
+                continue
 
-            for attempt in range(len(active_keys)):
-                idx = (start_idx + attempt) % len(active_keys)
-                key = active_keys[idx]
-                masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
-
-                try:
-                    client = OpenAI(
-                        api_key=key,
-                        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-                        max_retries=0
-                    )
-
-                    default_flash = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-                    gemini_model = default_flash
-                    if ("pro" in model.lower() or "gpt-4" in model.lower()) and "mini" not in model.lower():
-                        gemini_model = "gemini-2.5-pro"
-
-                    call_kwargs = {
-                        "model": gemini_model,
-                        "messages": messages,
-                        "temperature": temperature,
-                        "timeout": timeout
-                    }
-                    if response_format:
-                        call_kwargs["response_format"] = response_format
-                    if max_tokens:
-                        call_kwargs["max_tokens"] = max_tokens
-
-                    print(f"[LLM ROTATION] Active Gemini Keys: {len(active_keys)}/{len(all_keys)}. Trying key ({idx+1}/{len(active_keys)}): {masked_key}", flush=True)
-
-                    try:
-                        res = client.chat.completions.create(**call_kwargs)
-                        _current_key_idx = (idx + 1) % len(active_keys)
-                        print(f"[LLM ROTATION] Gemini key {masked_key} succeeded!", flush=True)
-                        return res
-                    except Exception as inner_e:
-                        record_bad_key(key, inner_e)
-                        if gemini_model != default_flash:
-                            print(f"[LLM ROTATION] Retrying {default_flash} on key {masked_key}", flush=True)
-                            call_kwargs["model"] = default_flash
-                            res = client.chat.completions.create(**call_kwargs)
-                            _current_key_idx = (idx + 1) % len(active_keys)
-                            print(f"[LLM ROTATION] Gemini key {masked_key} fallback succeeded!", flush=True)
-                            return res
-                        else:
-                            raise inner_e
-
-                except Exception as e:
-                    record_bad_key(key, e)
-                    continue
-
-            print("[LLM ROTATION] All active Gemini API keys exhausted for today.", flush=True)
-            logger.error("All active Gemini API keys exhausted for today.")
-        else:
-            print(f"[LLM ROTATION] No active Gemini keys (all {len(all_keys)} keys currently in quota cooldown).", flush=True)
-
-        # Fallback to Groq if GROQ_API_KEY is configured
-        groq_key = os.getenv("GROQ_API_KEY")
-        if groq_key:
-            client = OpenAI(
-                api_key=groq_key,
-                base_url="https://api.groq.com/openai/v1",
-                max_retries=0
-            )
-            groq_models = [
-                os.getenv("GROQ_MODEL", "llama-3.3-70b-specdec"),
-                "llama-3.3-70b-versatile",
-                "llama-3.1-8b-instant",
-                "llama3-8b-8192"
-            ]
-
-            seen = set()
-            unique_models = []
-            for m in groq_models:
-                if m not in seen:
-                    unique_models.append(m)
-                    seen.add(m)
-
-            for model_name in unique_models:
-                print(f"[LLM ROTATION] Trying Groq model: {model_name} (timeout={fallback_timeout})", flush=True)
-                try:
-                    call_kwargs = {
-                        "model": model_name,
-                        "messages": messages,
-                        "temperature": temperature,
-                        "timeout": fallback_timeout
-                    }
-                    if response_format:
-                        call_kwargs["response_format"] = response_format
-                    if max_tokens:
-                        call_kwargs["max_tokens"] = min(max_tokens, 4096) if max_tokens else 4096
-                    res = client.chat.completions.create(**call_kwargs)
-                    print(f"[LLM ROTATION] Groq model {model_name} succeeded!", flush=True)
-                    return res
-                except Exception as e:
-                    print(f"[LLM ROTATION] Groq model {model_name} failed: {e}", flush=True)
-                    logger.error(f"Groq model {model_name} failed/rate-limited: {str(e)}")
-
-        # Fallback to OpenAI client if OPENAI_API_KEY is configured
+        # Last resort: OpenAI
         openai_key = get_openai_fallback_key()
         if openai_key:
             try:
@@ -230,7 +288,7 @@ class RotateCompletions:
                     "model": "gpt-4o-mini" if "flash" in model.lower() else model,
                     "messages": messages,
                     "temperature": temperature,
-                    "timeout": fallback_timeout
+                    "timeout": timeout
                 }
                 if response_format:
                     call_kwargs["response_format"] = response_format
@@ -239,9 +297,140 @@ class RotateCompletions:
                 return client.chat.completions.create(**call_kwargs)
             except Exception as e:
                 logger.error(f"OpenAI fallback failed: {str(e)}")
-                raise e
 
-        raise ValueError("No working API keys configured (All Gemini keys failed, and no Groq or OpenAI key exists).")
+        raise ValueError(
+            f"All providers failed for agent '{agent_name}'. "
+            f"Tried: {providers_to_try}. Last error: {last_error}"
+        )
+
+    def _try_gemini(self, model, messages, temperature, response_format, max_tokens, timeout):
+        """Try all available Gemini projects/keys."""
+        total_projects, available_projects = get_all_gemini_stats()
+
+        if available_projects == 0:
+            print(f"[LLM ROTATION] No Gemini projects available ({total_projects} total, all exhausted).", flush=True)
+            return None
+
+        # Try each available project
+        from api.models import GeminiProject, GeminiApiKey
+        today_pt = _get_pacific_date()
+        projects = GeminiProject.objects.filter(is_active=True).order_by('daily_usage')
+
+        for project in projects:
+            # Lazy reset
+            if project.last_reset < today_pt:
+                project.daily_usage = 0
+                project.last_reset = today_pt
+                project.save(update_fields=['daily_usage', 'last_reset'])
+
+            if project.daily_usage >= project.daily_limit:
+                continue
+
+            key_obj = GeminiApiKey.objects.filter(project=project, is_active=True).first()
+            if not key_obj:
+                continue
+
+            key = key_obj.key
+            masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
+
+            try:
+                client = OpenAI(
+                    api_key=key,
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                    max_retries=0
+                )
+
+                default_flash = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                gemini_model = default_flash
+                if ("pro" in model.lower() or "gpt-4" in model.lower()) and "mini" not in model.lower():
+                    gemini_model = "gemini-2.5-pro"
+
+                call_kwargs = {
+                    "model": gemini_model,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "timeout": timeout
+                }
+                if response_format:
+                    call_kwargs["response_format"] = response_format
+                if max_tokens:
+                    call_kwargs["max_tokens"] = max_tokens
+
+                print(
+                    f"[LLM ROTATION] Gemini → Project '{project.name}' "
+                    f"({project.daily_usage}/{project.daily_limit} RPD). "
+                    f"Key: {masked_key}",
+                    flush=True
+                )
+
+                res = client.chat.completions.create(**call_kwargs)
+                record_gemini_usage(project)
+                print(f"[LLM ROTATION] Gemini key {masked_key} succeeded! Usage: {project.daily_usage}/{project.daily_limit}", flush=True)
+                return res
+
+            except Exception as e:
+                err_str = str(e).lower()
+                is_quota = any(kw in err_str for kw in ["429", "quota", "resource_exhausted", "resourceexhausted"])
+                if is_quota:
+                    mark_project_exhausted(project)
+                else:
+                    print(f"[LLM ROTATION] Gemini key {masked_key} error: {e}", flush=True)
+                continue
+
+        print("[LLM ROTATION] All Gemini projects exhausted for today.", flush=True)
+        return None
+
+    def _try_groq(self, messages, temperature, response_format, max_tokens, timeout):
+        """Try Groq with cascading model fallback."""
+        groq_key = os.getenv("GROQ_API_KEY")
+        if not groq_key:
+            print("[LLM ROTATION] No GROQ_API_KEY configured.", flush=True)
+            return None
+
+        client = OpenAI(
+            api_key=groq_key,
+            base_url="https://api.groq.com/openai/v1",
+            max_retries=0
+        )
+
+        groq_models = [
+            os.getenv("GROQ_MODEL", "llama-3.3-70b-specdec"),
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "llama3-8b-8192"
+        ]
+
+        # Deduplicate
+        seen = set()
+        unique_models = []
+        for m in groq_models:
+            if m not in seen:
+                unique_models.append(m)
+                seen.add(m)
+
+        fallback_timeout = min(timeout, 25.0)
+
+        for model_name in unique_models:
+            print(f"[LLM ROTATION] Trying Groq model: {model_name}", flush=True)
+            try:
+                call_kwargs = {
+                    "model": model_name,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "timeout": fallback_timeout
+                }
+                if response_format:
+                    call_kwargs["response_format"] = response_format
+                if max_tokens:
+                    call_kwargs["max_tokens"] = min(max_tokens, 4096)
+                res = client.chat.completions.create(**call_kwargs)
+                print(f"[LLM ROTATION] Groq model {model_name} succeeded!", flush=True)
+                return res
+            except Exception as e:
+                print(f"[LLM ROTATION] Groq model {model_name} failed: {e}", flush=True)
+                logger.error(f"Groq model {model_name} failed: {str(e)}")
+
+        return None
 
 
 class RotateChat:
@@ -250,8 +439,18 @@ class RotateChat:
 
 
 class RotateLLMClient:
-    """Mock OpenAI client that handles API Key rotation and Gemini compatibility."""
-    def __init__(self):
+    """
+    Smart LLM client with DB-driven provider routing and key rotation.
+    
+    Usage:
+        client = RotateLLMClient(agent_name="chatbot")
+        response = client.chat.completions.create(model="gemini-2.5-flash", messages=[...])
+    
+    The agent_name determines which provider (Gemini/Groq) is used as primary
+    and which as fallback, based on AgentModelConfig in the database.
+    """
+    def __init__(self, agent_name: str = "default"):
+        self._agent_name = agent_name
         self.chat = RotateChat(self)
 
     def generate(self, prompt: str, system_prompt: str = None) -> str:
@@ -261,7 +460,7 @@ class RotateLLMClient:
         messages.append({"role": "user", "content": prompt})
 
         response = self.chat.completions.create(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             messages=messages,
             temperature=0.2
         )

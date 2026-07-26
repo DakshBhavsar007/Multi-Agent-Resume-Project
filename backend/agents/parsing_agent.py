@@ -6,7 +6,7 @@ import re
 
 class ResumeParsingAgent:
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="parsing_agent")
         self.upload_dir = os.getenv("UPLOAD_DIR", "/tmp/vishleshan/resumes")
         self.photo_dir = os.getenv("PHOTO_DIR", "/tmp/vishleshan/photos")
         os.makedirs(self.photo_dir, exist_ok=True)

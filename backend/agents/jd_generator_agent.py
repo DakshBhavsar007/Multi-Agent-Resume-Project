@@ -4,7 +4,7 @@ from agents.llm import RotateLLMClient
 
 class JobDescriptionGeneratorAgent:
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="jd_generator")
 
     def generate_jd(self, job_title: str, skills: list, experience_years: int, company_name: str = "Our Company") -> str:
         system = """You are an expert technical recruiter and copywriter.

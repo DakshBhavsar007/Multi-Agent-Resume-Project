@@ -118,7 +118,7 @@ def generate_coding_problems_for_job(job_title, job_description):
     import logging
     logger = logging.getLogger(__name__)
 
-    llm = RotateLLMClient()
+    llm = RotateLLMClient(agent_name="round_evaluation")
     prompt = f"""
 You are an expert software engineering interviewer. Generate exactly 2 programming challenges (one Easy, one Medium) tailored to the following role:
 Job Title: {job_title}

@@ -705,5 +705,57 @@ for model_cls in [SubscriptionPlan, MarketRegionConfig, SalaryTimelineConfig, Gr
     post_delete.connect(clear_config_cache, sender=model_cls)
 
 
+# ─── Gemini API Key Rotation & Agent Model Config ────────────────────────────
+
+class GeminiProject(models.Model):
+    """Tracks a Google Cloud Project and its daily Gemini API quota."""
+    name         = models.CharField(max_length=100, unique=True)
+    daily_limit  = models.IntegerField(default=20, help_text="Max requests per day (free tier = 20 RPD)")
+    daily_usage  = models.IntegerField(default=0, help_text="Requests used today")
+    rpm_limit    = models.IntegerField(default=5, help_text="Max requests per minute")
+    last_reset   = models.DateField(auto_now_add=True, help_text="Date when daily_usage was last reset (Pacific Time)")
+    is_active    = models.BooleanField(default=True)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'gemini_projects'
+        ordering = ['daily_usage']
+
+    def __str__(self):
+        return f"{self.name} ({self.daily_usage}/{self.daily_limit})"
 
 
+class GeminiApiKey(models.Model):
+    """A single Gemini API key linked to a Google Cloud Project."""
+    project      = models.ForeignKey(GeminiProject, on_delete=models.CASCADE, related_name='keys')
+    key          = models.CharField(max_length=255, unique=True)
+    label        = models.CharField(max_length=50, blank=True, help_text="Friendly name (e.g. Key-1)")
+    is_active    = models.BooleanField(default=True)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'gemini_api_keys'
+
+    def __str__(self):
+        masked = self.key[:8] + "..." + self.key[-4:] if len(self.key) > 12 else "***"
+        return f"{self.label or masked} ({self.project.name})"
+
+
+class AgentModelConfig(models.Model):
+    """Per-agent configuration for primary and fallback LLM provider."""
+    PROVIDER_CHOICES = [
+        ('gemini', 'Gemini 2.5 Flash'),
+        ('groq', 'Groq Llama 3.3 70B'),
+    ]
+    agent_name        = models.CharField(max_length=100, unique=True, help_text="Internal agent identifier")
+    display_name      = models.CharField(max_length=100, blank=True, help_text="Human-readable name")
+    primary_provider  = models.CharField(max_length=20, choices=PROVIDER_CHOICES, default='groq')
+    fallback_provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES, default='gemini')
+    is_active         = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'agent_model_config'
+        ordering = ['agent_name']
+
+    def __str__(self):
+        return f"{self.display_name or self.agent_name} → {self.primary_provider} (fallback: {self.fallback_provider})"

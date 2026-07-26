@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class RoundRecommendationAgent:
     def __init__(self):
-        self.llm = RotateLLMClient()
+        self.llm = RotateLLMClient(agent_name="round_recommendation")
 
     def recommend(self, job_title: str, job_description: str) -> dict:
         prompt = f"""

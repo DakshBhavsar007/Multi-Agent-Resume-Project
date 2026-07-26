@@ -5,7 +5,7 @@ from api.models import Candidate, Session, ChatHistory
 
 class RecruiterChatbotAgent:
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="chatbot")
 
     def chat(self, message: str, session_id: str, history: list) -> dict:
         # Step 1: Fetch all candidates for session using Django ORM

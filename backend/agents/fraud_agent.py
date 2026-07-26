@@ -5,7 +5,7 @@ from agents.llm import RotateLLMClient
 
 class FraudDetectionAgent:
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="fraud_agent")
 
     def _extract_text_features(self, text: str) -> list:
         """Extract statistical text features for anomaly detection."""

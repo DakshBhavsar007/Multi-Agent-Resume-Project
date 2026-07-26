@@ -44,7 +44,7 @@ def expand_job_description_if_short(jd_text):
     stripped = jd_text.strip()
     if len(stripped) < 120:
         from agents.llm import RotateLLMClient
-        client = RotateLLMClient()
+        client = RotateLLMClient(agent_name="resume_builder")
         system_prompt = (
             "You are an ATS Job Description Extender. The user provided a very short target job description, title, or query.\n"
             "Generate a professional, standard, and complete job description containing standard responsibilities, "
@@ -699,7 +699,7 @@ def optimize_resume_draft(request):
         # 1. Step 1: Extract keywords & action verbs from job description (or fallback)
         target_keywords = []
         from agents.llm import RotateLLMClient
-        llm = RotateLLMClient()
+        llm = RotateLLMClient(agent_name="resume_builder")
         
         if target_job_desc and target_job_desc.strip():
             # A low-token LLM call to extract keywords

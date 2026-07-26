@@ -3,7 +3,7 @@ from agents.llm import RotateLLMClient
 
 class CoverLetterGeneratorAgent:
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="cover_letter")
 
     def generate_cover_letter(self, seeker_name: str, seeker_skills: list, seeker_experience: list, job_title: str, job_description: str, company_name: str = "the hiring company") -> str:
         system = """You are a professional career coach.

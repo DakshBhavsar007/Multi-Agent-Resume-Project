@@ -197,7 +197,7 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
             
             load_dotenv() # Load environment variables so keys exist
 
-            client = RotateLLMClient()
+            client = RotateLLMClient(agent_name="celery_interview")
             model_to_use = "gemini-1.5-flash"
             
             llm_result = [None]
@@ -409,7 +409,7 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
                     try:
                         from agents.llm import RotateLLMClient
                         import json as py_json
-                        llm = RotateLLMClient()
+                        llm = RotateLLMClient(agent_name="celery_resume")
                         system_prompt = (
                             "You are an expert technical recruiter analyzing a candidate's fit for a job. "
                             "Respond in JSON format with exactly three fields: "
@@ -535,7 +535,7 @@ def enrich_candidates_llm(candidate_ids: list):
                 try:
                     from agents.llm import RotateLLMClient
                     import json as py_json
-                    llm = RotateLLMClient()
+                    llm = RotateLLMClient(agent_name="celery_resume")
                     system_prompt = (
                         "You are an expert technical recruiter analyzing a candidate's fit for a job. "
                         "Respond in JSON format with exactly three fields: "
@@ -809,7 +809,7 @@ def sync_google_form_resumes(session_id: str, job_id: str):
             try:
                 from agents.llm import RotateLLMClient
                 import json as py_json
-                llm = RotateLLMClient()
+                llm = RotateLLMClient(agent_name="celery_resume")
                 system_prompt = (
                     "You are an expert technical recruiter analyzing a candidate's fit for a job. "
                     "Respond in JSON format with exactly three fields: "

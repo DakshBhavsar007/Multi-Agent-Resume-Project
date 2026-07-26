@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class MCQPaperParserAgent:
     def __init__(self):
-        self.llm = RotateLLMClient()
+        self.llm = RotateLLMClient(agent_name="mcq_parser")
 
     def extract_text_from_pdf(self, file_bytes: bytes) -> str:
         """Extract all text from a PDF file."""

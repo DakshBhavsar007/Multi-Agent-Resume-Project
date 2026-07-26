@@ -4,7 +4,7 @@ from agents.llm import RotateLLMClient
 
 class SkillInferenceAgent:
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="inference_agent")
 
     async def infer_from_jd(self, job_description: str) -> dict:
         system = """Expert technical recruiter. 

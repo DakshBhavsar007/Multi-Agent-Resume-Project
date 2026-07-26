@@ -75,7 +75,7 @@ class AtsCompatibilityAgent:
       - ATS Formatting (10%)
     """
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="ats_compatibility")
 
     def _extract_techs_from_text(self, text: str) -> set:
         if not text:

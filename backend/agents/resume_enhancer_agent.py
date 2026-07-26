@@ -95,7 +95,7 @@ class ResumeEnhancerAgent:
     - Returns structured JSON the frontend can render directly.
     """
     def __init__(self):
-        self.llm = RotateLLMClient()
+        self.llm = RotateLLMClient(agent_name="resume_enhancer")
         self.ats_agent = AtsCompatibilityAgent()
 
     def enhance(self, resume_data: dict, job_description: str = "", live_ats_score: int = None) -> dict:

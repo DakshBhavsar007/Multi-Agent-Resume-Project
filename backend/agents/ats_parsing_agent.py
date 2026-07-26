@@ -13,7 +13,7 @@ class AtsParsingAgent:
     eliminating translation mismatch bugs and supporting projects, summaries, and clickable links.
     """
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="ats_parser")
 
     async def parse(self, text: str) -> dict:
         if not text or not text.strip():

@@ -31,7 +31,7 @@ class AdvancedAtsParsingAgent:
     - Gemini-first LLM call (no weak 8B model fallback)
     """
     def __init__(self):
-        self.client = RotateLLMClient()
+        self.client = RotateLLMClient(agent_name="resume_parser")
 
     @staticmethod
     def _count_section_keywords(text: str) -> int:
