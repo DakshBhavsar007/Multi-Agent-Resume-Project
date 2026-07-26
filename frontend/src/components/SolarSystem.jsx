@@ -155,6 +155,8 @@ export const SolarSystem = React.forwardRef(
     ref
   ) => {
     const [hoveredId, setHoveredId] = useState(null);
+    const [isContainerHovered, setIsContainerHovered] = useState(false);
+    const effectivePaused = isPaused || isContainerHovered || hoveredId !== null;
 
     const dustItems = [
       { delay: "-4s", radius: "165px", color: "#00f5d4" },
@@ -169,8 +171,10 @@ export const SolarSystem = React.forwardRef(
     return (
       <div
         ref={ref}
+        onMouseEnter={() => setIsContainerHovered(true)}
+        onMouseLeave={() => setIsContainerHovered(false)}
         className={cn(
-          "relative flex items-center justify-center w-full max-w-[940px] h-[320px] md:h-[450px] perspective-[1200px] select-none overflow-visible mx-auto",
+          "relative flex items-center justify-center w-full max-w-[940px] h-[320px] md:h-[450px] perspective-[1200px] select-none overflow-visible mx-auto cursor-pointer",
           className
         )}
         {...props}
@@ -321,11 +325,11 @@ export const SolarSystem = React.forwardRef(
                 background: dust.color,
                 boxShadow: `0 0 6px ${dust.color}`,
                 animationDelay: dust.delay,
-                animationPlayState: isPaused ? "paused" : "running",
+                animationPlayState: effectivePaused ? "paused" : "running",
                 animationDuration: `${24 / speedMultiplier}s`,
                 "--orbit-radius": dust.radius,
                 "--orbit-duration": `${24 / speedMultiplier}s`,
-                "--orbit-play-state": isPaused ? "paused" : "running",
+                "--orbit-play-state": effectivePaused ? "paused" : "running",
               }}
             />
           ))}
@@ -356,10 +360,10 @@ export const SolarSystem = React.forwardRef(
                       style={{
                         animationDelay: `${delayValue}s`,
                         animationDuration: `${durationValue}s`,
-                        animationPlayState: isPaused ? "paused" : "running",
+                        animationPlayState: effectivePaused ? "paused" : "running",
                         "--orbit-radius": orbit.radiusClass,
                         "--orbit-duration": `${durationValue}s`,
-                        "--orbit-play-state": isPaused ? "paused" : "running",
+                        "--orbit-play-state": effectivePaused ? "paused" : "running",
                         "--hover-color": item.color,
                         zIndex: isHovered ? 30 : 10,
                         transformStyle: "preserve-3d",
@@ -382,26 +386,27 @@ export const SolarSystem = React.forwardRef(
                         style={{
                           animationDelay: `${delayValue}s`,
                           animationDuration: `${durationValue}s`,
-                          animationPlayState: isPaused ? "paused" : "running",
-                          borderColor: isHovered ? item.color : undefined,
+                          animationPlayState: effectivePaused ? "paused" : "running",
+                          backgroundColor: isHovered ? "#09090b" : "rgba(10, 10, 15, 0.85)",
+                          borderColor: isHovered ? item.color : "rgba(255, 255, 255, 0.18)",
                           boxShadow: isHovered 
-                            ? `0 0 20px rgba(0, 0, 0, 0.6), 0 0 15px ${item.color}35`
-                            : undefined,
-                          scale: isHovered ? 1.05 : 1,
+                            ? `0 0 24px rgba(0, 0, 0, 0.9), 0 0 18px ${item.color}60`
+                            : "0 4px 20px rgba(0, 0, 0, 0.5)",
+                          scale: isHovered ? 1.1 : 1,
                           "--orbit-duration": `${durationValue}s`,
-                          "--orbit-play-state": isPaused ? "paused" : "running",
+                          "--orbit-play-state": effectivePaused ? "paused" : "running",
                         }}
                       >
                         <div 
                           className="transition-transform duration-300"
                           style={{
-                            transform: isHovered ? "scale(1.1)" : "scale(1)",
+                            transform: isHovered ? "scale(1.15)" : "scale(1)",
                             color: item.color,
                           }}
                         >
                           {item.svg}
                         </div>
-                        <span className="text-[11px] md:text-[13px] tracking-tight">{item.label}</span>
+                        <span className="text-[11px] md:text-[13px] tracking-tight font-bold text-white">{item.label}</span>
                       </div>
                     </div>
                   );
