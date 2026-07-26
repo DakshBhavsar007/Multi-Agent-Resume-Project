@@ -20,7 +20,10 @@ import {
   Lock,
   Tags,
   AlertOctagon,
-  X
+  X,
+  Upload,
+  Camera,
+  User
 } from "lucide-react";
 import NewKeyModal from "../../components/developer/NewKeyModal";
 import VerificationModal from "../../components/VerificationModal";
@@ -279,7 +282,13 @@ export default function DeveloperKeys({ defaultTab }) {
   
   const [verifyTarget, setVerifyTarget] = useState(null);
   // Profile state
-  const [profile, setProfile] = useState({ name: company_name || "", website: developer?.website_url || "" });
+  const [profile, setProfile] = useState({ 
+    name: company_name || developer?.company_name || "", 
+    fullName: developer?.full_name || "",
+    website: developer?.website_url || "",
+    avatarPath: developer?.avatar_path || ""
+  });
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   
   // Passwords state
   const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
@@ -292,13 +301,34 @@ export default function DeveloperKeys({ defaultTab }) {
     if (developer) {
       setProfile({
         name: developer.company_name || company_name || "",
-        website: developer.website_url || ""
+        fullName: developer.full_name || "",
+        website: developer.website_url || "",
+        avatarPath: developer.avatar_path || ""
       });
       if (developer.allowed_domains) {
         setDomains(developer.allowed_domains);
       }
     }
   }, [developer, company_name]);
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error("File size must be under 5 MB");
+    }
+    setUploadingAvatar(true);
+    try {
+      const data = await portalAuth.uploadAvatar(file);
+      setProfile((prev) => ({ ...prev, avatarPath: data.avatar_path }));
+      setAuth({ avatar_path: data.avatar_path });
+      toast.success("Profile photo updated!");
+    } catch (err) {
+      toast.error(err.message || "Failed to upload profile photo");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const { data: keys, refetch, isLoading } = useQuery({
     queryKey: ["portal-keys"],
@@ -327,10 +357,17 @@ export default function DeveloperKeys({ defaultTab }) {
     e.preventDefault();
     try {
       const data = await portalAuth.updateProfile({
+        full_name: profile.fullName,
         company_name: profile.name,
-        website_url: profile.website
+        website_url: profile.website,
+        avatar_path: profile.avatarPath
       });
-      setAuth({ company_name: data.company_name, website_url: data.website_url });
+      setAuth({ 
+        full_name: data.full_name,
+        company_name: data.company_name, 
+        website_url: data.website_url,
+        avatar_path: data.avatar_path 
+      });
       toast.success("Profile updated");
     } catch (err) {
       toast.error(err.message || "Failed to update profile");
@@ -460,13 +497,67 @@ const data = await response.json();`
           {activeTab === 'profile' && (
             <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] border border-gray-100 p-8 space-y-6">
               <h2 className="text-md font-bold text-charcoal flex items-center gap-2 pb-4 border-b border-gray-100">
-                <Building className="w-5 h-5 text-accent" /> Workspace profile
+                <Building className="w-5 h-5 text-accent" /> Developer & Workspace Profile
               </h2>
+
+              {/* Profile Photo Upload Section */}
+              <div className="flex items-center gap-6 pb-4 border-b border-gray-100">
+                <div className="relative group">
+                  {profile.avatarPath ? (
+                    <img 
+                      src={profile.avatarPath} 
+                      alt="Developer Avatar" 
+                      className="w-20 h-20 rounded-full object-cover border-2 border-blue-500/20 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-blue-50 border-2 border-blue-200 flex items-center justify-center text-blue-600 font-extrabold text-2xl shadow-sm">
+                      {profile.fullName?.charAt(0) || profile.name?.charAt(0) || "D"}
+                    </div>
+                  )}
+                  <label className="absolute bottom-0 right-0 p-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-md transition-transform hover:scale-105">
+                    <Camera size={14} />
+                    <input 
+                      type="file" 
+                      accept="image/png, image/jpeg, image/webp" 
+                      onChange={handleAvatarUpload} 
+                      className="hidden" 
+                      disabled={uploadingAvatar}
+                    />
+                  </label>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Developer Profile Photo</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Upload PNG, JPG, or WEBP (Max 5MB). Photo displays on reviews & public profile.</p>
+                  <label className="inline-flex items-center gap-1.5 mt-2.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-800 cursor-pointer transition-colors">
+                    <Upload size={12} />
+                    {uploadingAvatar ? "Uploading..." : "Upload New Photo"}
+                    <input 
+                      type="file" 
+                      accept="image/png, image/jpeg, image/webp" 
+                      onChange={handleAvatarUpload} 
+                      className="hidden" 
+                      disabled={uploadingAvatar}
+                    />
+                  </label>
+                </div>
+              </div>
+
               <form onSubmit={handleProfileSave} className="flex flex-col gap-5 max-w-lg">
+                <div>
+                   <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5 block pl-0.5">Developer Full Name</label>
+                   <input 
+                     type="text" 
+                     placeholder="e.g. Alex Chen"
+                     value={profile.fullName} 
+                     onChange={e=>setProfile({...profile, fullName: e.target.value})} 
+                     className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 
+                   />
+                </div>
                 <div>
                    <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5 block pl-0.5">Company / Workspace Name</label>
                    <input 
                      type="text" 
+                     placeholder="e.g. Acme Dev Team"
                      value={profile.name} 
                      onChange={e=>setProfile({...profile, name: e.target.value})} 
                      className="w-full p-3 bg-white border border-gray-200 focus:border-accent rounded-xl text-sm font-bold text-charcoal focus:outline-none transition-colors" 

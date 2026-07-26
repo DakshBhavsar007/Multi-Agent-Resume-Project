@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from passlib.context import CryptContext
 from jose import jwt
 
-from api.models import DeveloperAccount, DeveloperAPIKey, BillingSubscription
+from api.models import DeveloperAccount, DeveloperAPIKey, BillingSubscription, Company
 from api.decorators import require_developer_jwt, JWT_SECRET, JWT_ALGORITHM, rate_limit_ip
 from models.schemas import success_response, error_response
 from api.services.email_service import send_welcome_email
@@ -233,3 +233,58 @@ def delete_account(request):
         return JsonResponse(success_response({"message": "Developer account deleted successfully"}))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_developer_jwt
+def upload_avatar(request):
+    """
+    POST /api/developer/auth/upload-avatar or /api/v1/developer/auth/upload-avatar
+    Upload a developer profile photo/avatar. Size limit: 5MB.
+    """
+    if request.method != "POST":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        import os
+        import uuid
+        import base64
+        dev = request.developer
+        file = request.FILES.get("file") or request.FILES.get("avatar")
+        if not file:
+            return JsonResponse(error_response("No file provided"), status=400)
+
+        if file.size > 5 * 1024 * 1024:
+            return JsonResponse(error_response("File size must be under 5 MB"), status=400)
+
+        allowed_ext = (".png", ".jpg", ".jpeg", ".webp")
+        ext = os.path.splitext(file.name.lower())[1]
+        if ext not in allowed_ext:
+            return JsonResponse(error_response("Only PNG, JPG, JPEG, or WEBP images are allowed"), status=400)
+
+        file_content = file.read()
+        mime_type = "image/png" if ext == ".png" else "image/webp" if ext == ".webp" else "image/jpeg"
+        base64_encoded = base64.b64encode(file_content).decode("utf-8")
+        avatar_url_path = f"data:{mime_type};base64,{base64_encoded}"
+
+        try:
+            UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+            dev_dir = os.path.join(UPLOAD_DIR, "developers", str(dev.id))
+            os.makedirs(dev_dir, exist_ok=True)
+            fname = f"avatar_{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(dev_dir, fname)
+            with open(file_path, "wb+") as f:
+                f.write(file_content)
+        except Exception:
+            pass
+
+        dev.avatar_path = avatar_url_path
+        dev.save()
+
+        return JsonResponse(success_response({
+            "message": "Avatar uploaded successfully",
+            "avatar_path": dev.avatar_path
+        }))
+    except Exception as e:
+        logger.error(f"Error uploading developer avatar: {e}", exc_info=True)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+

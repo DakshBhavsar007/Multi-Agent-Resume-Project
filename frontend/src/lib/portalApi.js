@@ -107,7 +107,32 @@ export const portalAuth = {
     }
   },
   getMe: () => req("GET","/auth/me"),
-  updateProfile: (b) => req("PATCH", "/auth/profile", b)
+  updateProfile: (b) => req("PATCH", "/auth/profile", b),
+  uploadAvatar: async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const headers = {};
+    const jwt = getJwt();
+    if (jwt && jwt !== "undefined") {
+      headers["Authorization"] = `Bearer ${String(jwt).replace(/[^\x20-\x7E]/g, "")}`;
+    }
+    const res = await fetch(BASE + "/auth/upload-avatar", {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error(`Server error (${res.status})`);
+    }
+    if (!data.success) {
+      throw new Error(data.error || "Upload failed");
+    }
+    return data.data;
+  }
 }
 
 // Keys

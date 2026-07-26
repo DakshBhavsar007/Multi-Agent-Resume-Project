@@ -624,11 +624,12 @@ def public_developer_profile(request, dev_id):
 
         profile_data = {
             "id": str(dev.id),
-            "full_name": getattr(dev, "full_name", "Developer"),
-            "headline": "Software Developer & API Builder",
+            "full_name": getattr(dev, "full_name", "") or getattr(dev, "company_name", "") or "Developer",
+            "company_name": getattr(dev, "company_name", "") or "",
+            "headline": getattr(dev, "company_name", "") or "Software Developer & API Builder",
             "email": getattr(dev, "email", ""),
             "avatar_path": getattr(dev, "avatar_path", "") or "",
-            "is_verified": bool(getattr(dev, "is_verified", False)),
+            "is_verified": bool(getattr(dev, "is_verified", True)),
             "tier": getattr(dev, "tier", "free"),
             "reviews": reviews_data,
             "total_reviews": len(reviews_data),

@@ -641,6 +641,9 @@ def cross_portal_login(request):
         if not token or not target_role:
             return JsonResponse(error_response("token and target_role are required"), status=400)
 
+        if token and token.startswith("Bearer "):
+            token = token.split(" ", 1)[1]
+
         # Decode token to find email
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -751,6 +754,7 @@ def cross_portal_login(request):
                 "tier": getattr(dev, "tier", "free"),
                 "company_name": getattr(dev, "company_name", "") or email.split("@")[0].capitalize(),
                 "full_name": getattr(dev, "full_name", "") or getattr(dev, "company_name", ""),
+                "avatar_path": getattr(dev, "avatar_path", "") or "",
                 "is_verified": getattr(dev, "is_verified", True),
             }))
 
