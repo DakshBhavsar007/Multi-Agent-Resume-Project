@@ -157,6 +157,10 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'x-api-key',
     'X-API-Key',
+    'x-developer-token',
+    'X-Developer-Token',
+    'x-seeker-token',
+    'X-Seeker-Token',
 ]
 
 # Custom directory configs for uploading/photos
