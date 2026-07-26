@@ -550,25 +550,48 @@ def public_developer_profile(request, dev_id):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
 
-    dev = DeveloperAccount.objects.filter(id=dev_id).first()
-    if not dev:
-        return JsonResponse(error_response("Developer profile not found"), status=404)
+    try:
+        dev = None
+        try:
+            dev = DeveloperAccount.objects.filter(id=dev_id).first()
+        except Exception:
+            import uuid
+            try:
+                dev = DeveloperAccount.objects.filter(id=uuid.UUID(str(dev_id))).first()
+            except Exception:
+                dev = None
 
-    user_reviews = Review.objects.filter(developer=dev).order_by("-created_at")
-    current_user_id, current_user_type = _extract_user_identity(request)
-    reviews_data = [_serialize_review(r, current_user_id, current_user_type) for r in user_reviews]
+        if not dev:
+            return JsonResponse(error_response("Developer profile not found"), status=404)
 
-    profile_data = {
-        "id": str(dev.id),
-        "full_name": dev.full_name,
-        "headline": "Software Developer & API Builder",
-        "email": dev.email,
-        "is_verified": bool(dev.is_verified),
-        "tier": dev.tier,
-        "reviews": reviews_data,
-        "total_reviews": len(reviews_data),
-        "joined_date": dev.created_at.strftime("%B %Y") if getattr(dev, "created_at", None) else "Member",
-    }
+        try:
+            user_reviews = list(Review.objects.filter(developer=dev).order_by("-created_at"))
+        except Exception:
+            user_reviews = []
 
-    return JsonResponse(success_response(profile_data))
+        current_user_id, current_user_type = _extract_user_identity(request)
+        reviews_data = []
+        for r in user_reviews:
+            try:
+                reviews_data.append(_serialize_review(r, current_user_id, current_user_type))
+            except Exception:
+                pass
+
+        profile_data = {
+            "id": str(dev.id),
+            "full_name": getattr(dev, "full_name", "Developer"),
+            "headline": "Software Developer & API Builder",
+            "email": getattr(dev, "email", ""),
+            "avatar_path": getattr(dev, "avatar_path", "") or "",
+            "is_verified": bool(getattr(dev, "is_verified", False)),
+            "tier": getattr(dev, "tier", "free"),
+            "reviews": reviews_data,
+            "total_reviews": len(reviews_data),
+            "joined_date": dev.created_at.strftime("%B %Y") if getattr(dev, "created_at", None) else "Member",
+        }
+
+        return JsonResponse(success_response(profile_data))
+    except Exception as e:
+        logger.error(f"Error fetching developer profile for {dev_id}: {e}")
+        return JsonResponse(error_response(f"Failed to load developer profile: {str(e)}"), status=500)
 

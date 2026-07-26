@@ -191,6 +191,46 @@ def login(request):
 
 @csrf_exempt
 @require_recruiter_jwt
+def update_profile(request):
+    if request.method not in ["PATCH", "POST"]:
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        data = json.loads(request.body)
+        company = request.company
+
+        if "name" in data and data["name"]:
+            company.name = data["name"]
+        if "industry" in data and data["industry"]:
+            company.industry = data["industry"]
+        if "about" in data and data["about"]:
+            company.about = data["about"]
+        if "website_url" in data and data["website_url"]:
+            company.website_url = data["website_url"]
+        if "hq_location" in data and data["hq_location"]:
+            company.hq_location = data["hq_location"]
+        if "company_size" in data and data["company_size"]:
+            company.company_size = data["company_size"]
+        if "logo_path" in data and data["logo_path"] is not None:
+            company.logo_path = data["logo_path"]
+
+        company.save()
+
+        return JsonResponse(success_response({
+            "message": "Company profile updated successfully",
+            "company_id": str(company.id),
+            "name": company.name,
+            "industry": company.industry,
+            "about": company.about,
+            "website_url": company.website_url,
+            "hq_location": company.hq_location,
+            "company_size": company.company_size,
+            "logo_path": company.logo_path,
+        }))
+    except Exception as e:
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+@csrf_exempt
+@require_recruiter_jwt
 def generate_api_key(request):
     if request.method != "POST":
         return JsonResponse(error_response("Method not allowed"), status=405)

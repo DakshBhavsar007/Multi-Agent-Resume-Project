@@ -144,7 +144,8 @@ class DeveloperAccount(models.Model):
     billing_customer_id = models.CharField(max_length=255, null=True, blank=True)
     website_url = models.CharField(max_length=500, null=True, blank=True)
     allowed_domains = models.JSONField(default=list)
-    is_banned = models.BooleanField(default=False, db_index=True)
+    full_name = models.CharField(max_length=255, null=True, blank=True)
+    avatar_path = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

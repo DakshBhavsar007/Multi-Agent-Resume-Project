@@ -172,8 +172,10 @@ def get_me(request):
     dev = request.developer
     return JsonResponse(success_response({
         "id": str(dev.id),
+        "full_name": getattr(dev, "full_name", "") or dev.company_name,
         "company_name": dev.company_name,
         "email": dev.email,
+        "avatar_path": getattr(dev, "avatar_path", "") or "",
         "tier": dev.tier,
         "is_verified": dev.is_verified,
         "phone_verified": dev.phone_verified,
@@ -191,18 +193,24 @@ def patch_me(request):
         data = json.loads(request.body)
         dev = request.developer
         
+        if "full_name" in data and data["full_name"] is not None:
+            dev.full_name = data["full_name"]
         if "company_name" in data and data["company_name"] is not None:
             dev.company_name = data["company_name"]
         if "website_url" in data and data["website_url"] is not None:
             dev.website_url = data["website_url"]
         if "allowed_domains" in data and data["allowed_domains"] is not None:
             dev.allowed_domains = data["allowed_domains"]
+        if "avatar_path" in data and data["avatar_path"] is not None:
+            dev.avatar_path = data["avatar_path"]
 
         dev.save()
 
         return JsonResponse(success_response({
             "message": "Profile updated",
+            "full_name": getattr(dev, "full_name", "") or dev.company_name,
             "company_name": dev.company_name,
+            "avatar_path": getattr(dev, "avatar_path", "") or "",
             "website_url": dev.website_url,
             "allowed_domains": dev.allowed_domains
         }))
