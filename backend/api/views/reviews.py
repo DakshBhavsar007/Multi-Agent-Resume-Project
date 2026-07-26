@@ -67,12 +67,14 @@ def _serialize_review(review, current_user_id=None, current_user_type=None):
                 dev_names = ["Alex Chen", "Priya Sharma", "David Miller", "Sarah Jenkins", "Marcus Vance", "Elena Rostova"]
                 dev_name = dev_names[hash(str(getattr(review, "id", ""))) % len(dev_names)]
 
+            is_verified = bool(getattr(dev, "is_verified", True) or getattr(dev, "email_verified", True)) if dev else True
+
             author_info = {
                 "id": str(getattr(dev, "id", "")) if dev else str(getattr(review, "id", "")),
                 "full_name": dev_name,
                 "headline": getattr(dev, "company_name", None) or "Software Developer & API Builder",
                 "avatar_path": getattr(dev, "avatar_path", "") if dev else "",
-                "is_verified": True,
+                "is_verified": is_verified,
                 "user_type": "developer",
                 "role_badge": "Developer",
             }
@@ -85,12 +87,14 @@ def _serialize_review(review, current_user_id=None, current_user_type=None):
                 rec_names = ["Apex Logistics", "Northwind Cloud", "Lumen Research", "Bright Horizon", "Ember Health"]
                 rec_name = rec_names[hash(str(getattr(review, "id", ""))) % len(rec_names)]
 
+            is_verified = bool(getattr(rec, "email_verified", True)) if rec else True
+
             author_info = {
                 "id": str(getattr(rec, "id", "")) if rec else str(getattr(review, "id", "")),
                 "full_name": rec_name,
                 "headline": f"Recruiter @ {rec_name}",
                 "avatar_path": getattr(rec, "logo_path", "") if rec else "",
-                "is_verified": True,
+                "is_verified": is_verified,
                 "user_type": "recruiter",
                 "role_badge": "Recruiter",
             }
@@ -103,12 +107,14 @@ def _serialize_review(review, current_user_id=None, current_user_type=None):
                 seeker_names = ["Rahul Verma", "Ananya Patel", "Vikram Malhotra", "Rohan Mehta", "Neha Gupta"]
                 seeker_name = seeker_names[hash(str(getattr(review, "id", ""))) % len(seeker_names)]
 
+            is_verified = bool(getattr(seeker, "email_verified", True) and getattr(seeker, "phone_verified", True)) if seeker else True
+
             author_info = {
                 "id": str(getattr(seeker, "id", "")) if seeker else str(getattr(review, "id", "")),
                 "full_name": seeker_name,
                 "headline": getattr(seeker, "headline", "") if seeker else "Job Seeker & Candidate",
                 "avatar_path": getattr(seeker, "avatar_path", "") if seeker else "",
-                "is_verified": True,
+                "is_verified": is_verified,
                 "user_type": "job_seeker",
                 "role_badge": "Job Seeker",
             }

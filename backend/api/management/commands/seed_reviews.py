@@ -75,8 +75,11 @@ class Command(BaseCommand):
 
         # 1. Seed one review per Job Seeker
         for idx, seeker in enumerate(seekers):
+            seeker.email_verified = True
+            seeker.phone_verified = True
+            seeker.save(update_fields=["email_verified", "phone_verified"])
+
             sample = SEEKER_REVIEWS[idx % len(SEEKER_REVIEWS)]
-            # Half get platform reviews, half get company reviews
             company_target = companies[idx % len(companies)] if (companies and idx % 2 == 0) else None
             Review.objects.create(
                 seeker=seeker,
@@ -90,6 +93,9 @@ class Command(BaseCommand):
 
         # 2. Seed one review per Developer (platform reviews only)
         for idx, dev in enumerate(devs):
+            dev.is_verified = True
+            dev.save(update_fields=["is_verified"])
+
             sample = DEVELOPER_REVIEWS[idx % len(DEVELOPER_REVIEWS)]
             Review.objects.create(
                 developer=dev,
@@ -102,6 +108,9 @@ class Command(BaseCommand):
 
         # 3. Seed one review per Company / Recruiter (platform reviews only)
         for idx, comp in enumerate(companies):
+            comp.email_verified = True
+            comp.save(update_fields=["email_verified"])
+
             sample = RECRUITER_REVIEWS[idx % len(RECRUITER_REVIEWS)]
             Review.objects.create(
                 recruiter=comp,
