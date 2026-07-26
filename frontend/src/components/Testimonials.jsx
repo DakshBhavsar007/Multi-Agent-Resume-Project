@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { Quote, Star, Pen, Trash2, MessageSquareQuote, UserCheck, Building2, Code2, Briefcase, ThumbsUp, ShieldCheck } from 'lucide-react';
+import { Quote, Star, Pen, Trash2, MessageSquareQuote, UserCheck, Building2, Code2, Briefcase, ThumbsUp, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { publicAPI, seekerAPI, recruiterAPI } from '../lib/api';
 import { portalReviews } from '../lib/portalApi';
@@ -281,12 +281,19 @@ const Testimonials = ({ userTypeFilter }) => {
   const companyCount = items.filter(t => t.review_type === "company").length;
   const devCount = items.filter(t => t.user_type === "developer").length;
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   const filteredItems = items.filter(t => {
     if (filterTab === "platform") return t.review_type === "platform" || !t.review_type;
     if (filterTab === "company") return t.review_type === "company";
     if (filterTab === "developer") return t.user_type === "developer";
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedItems = filteredItems.slice(startIndex, startIndex + itemsPerPage);
 
   const totalReviewsCount = items.length || apiStats.total_reviews || 0;
 
@@ -378,7 +385,10 @@ const Testimonials = ({ userTypeFilter }) => {
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setFilterTab(tab.id)}
+              onClick={() => {
+                setFilterTab(tab.id);
+                setCurrentPage(1);
+              }}
               className={`px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all border ${
                 filterTab === tab.id
                   ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25'
@@ -404,7 +414,7 @@ const Testimonials = ({ userTypeFilter }) => {
       </div>
 
       <div className="testimonials-grid">
-        {(filteredItems.length > 0 ? filteredItems : items).map((t, i) => (
+        {paginatedItems.map((t, i) => (
           <TestimonialCard
             key={t.id || i}
             t={t}
@@ -415,6 +425,43 @@ const Testimonials = ({ userTypeFilter }) => {
           />
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-8 mb-6">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="p-2 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            title="Previous Page"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`h-8 w-8 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                currentPage === page
+                  ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25"
+                  : "bg-white dark:bg-zinc-900 border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            title="Next Page"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Company Logo Strip */}
       <div className="company-logo-strip">
