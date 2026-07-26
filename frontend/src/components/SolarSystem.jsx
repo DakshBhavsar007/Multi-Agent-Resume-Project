@@ -155,8 +155,6 @@ export const SolarSystem = React.forwardRef(
     ref
   ) => {
     const [hoveredId, setHoveredId] = useState(null);
-    const [isContainerHovered, setIsContainerHovered] = useState(false);
-    const effectivePaused = isPaused || isContainerHovered || hoveredId !== null;
 
     const dustItems = [
       { delay: "-4s", radius: "165px", color: "#00f5d4" },
@@ -171,10 +169,8 @@ export const SolarSystem = React.forwardRef(
     return (
       <div
         ref={ref}
-        onMouseEnter={() => setIsContainerHovered(true)}
-        onMouseLeave={() => setIsContainerHovered(false)}
         className={cn(
-          "relative flex items-center justify-center w-full max-w-[940px] h-[320px] md:h-[450px] perspective-[1200px] select-none overflow-visible mx-auto cursor-pointer",
+          "relative flex items-center justify-center w-full max-w-[940px] h-[320px] md:h-[450px] perspective-[1200px] select-none overflow-visible mx-auto",
           className
         )}
         {...props}
@@ -325,11 +321,11 @@ export const SolarSystem = React.forwardRef(
                 background: dust.color,
                 boxShadow: `0 0 6px ${dust.color}`,
                 animationDelay: dust.delay,
-                animationPlayState: effectivePaused ? "paused" : "running",
+                animationPlayState: isPaused ? "paused" : "running",
                 animationDuration: `${24 / speedMultiplier}s`,
                 "--orbit-radius": dust.radius,
                 "--orbit-duration": `${24 / speedMultiplier}s`,
-                "--orbit-play-state": effectivePaused ? "paused" : "running",
+                "--orbit-play-state": isPaused ? "paused" : "running",
               }}
             />
           ))}
@@ -360,10 +356,10 @@ export const SolarSystem = React.forwardRef(
                       style={{
                         animationDelay: `${delayValue}s`,
                         animationDuration: `${durationValue}s`,
-                        animationPlayState: effectivePaused ? "paused" : "running",
+                        animationPlayState: isPaused ? "paused" : "running",
                         "--orbit-radius": orbit.radiusClass,
                         "--orbit-duration": `${durationValue}s`,
-                        "--orbit-play-state": effectivePaused ? "paused" : "running",
+                        "--orbit-play-state": isPaused ? "paused" : "running",
                         "--hover-color": item.color,
                         zIndex: isHovered ? 30 : 10,
                         transformStyle: "preserve-3d",
@@ -386,7 +382,7 @@ export const SolarSystem = React.forwardRef(
                         style={{
                           animationDelay: `${delayValue}s`,
                           animationDuration: `${durationValue}s`,
-                          animationPlayState: effectivePaused ? "paused" : "running",
+                          animationPlayState: isPaused ? "paused" : "running",
                           backgroundColor: isHovered ? "#09090b" : "rgba(10, 10, 15, 0.85)",
                           borderColor: isHovered ? item.color : "rgba(255, 255, 255, 0.18)",
                           boxShadow: isHovered 
@@ -394,7 +390,7 @@ export const SolarSystem = React.forwardRef(
                             : "0 4px 20px rgba(0, 0, 0, 0.5)",
                           scale: isHovered ? 1.1 : 1,
                           "--orbit-duration": `${durationValue}s`,
-                          "--orbit-play-state": effectivePaused ? "paused" : "running",
+                          "--orbit-play-state": isPaused ? "paused" : "running",
                         }}
                       >
                         <div 
