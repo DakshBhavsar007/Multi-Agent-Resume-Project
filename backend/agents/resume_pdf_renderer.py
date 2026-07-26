@@ -237,11 +237,17 @@ def render_resume_pdf(content: dict, output_path: str):
 
     links = []
     if personal.get("linkedin"):
-        links.append(f'<link href="{personal["linkedin"]}" color="#2E5BBA">LinkedIn</link>')
+        url = personal["linkedin"]
+        disp = url.replace("https://", "").replace("http://", "").replace("www.", "").rstrip("/")
+        links.append(f'<link href="{url}" color="#2E5BBA">{disp}</link>')
     if personal.get("github"):
-        links.append(f'<link href="{personal["github"]}" color="#2E5BBA">GitHub</link>')
+        url = personal["github"]
+        disp = url.replace("https://", "").replace("http://", "").replace("www.", "").rstrip("/")
+        links.append(f'<link href="{url}" color="#2E5BBA">{disp}</link>')
     if personal.get("website"):
-        links.append(f'<link href="{personal["website"]}" color="#2E5BBA">Portfolio</link>')
+        url = personal["website"]
+        disp = url.replace("https://", "").replace("http://", "").replace("www.", "").rstrip("/")
+        links.append(f'<link href="{url}" color="#2E5BBA">{disp}</link>')
     if links:
         header_flowables.append(Paragraph("  |  ".join(links), styles["contact"]))
 

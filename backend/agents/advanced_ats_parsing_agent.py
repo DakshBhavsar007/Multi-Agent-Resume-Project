@@ -216,16 +216,26 @@ class AdvancedAtsParsingAgent:
                         return ocr_text
                     return standard_text  # Return whatever we have
 
+                # Extract all embedded URI links (LinkedIn, GitHub, Portfolio, etc.)
+                embedded_links = []
+                for page in doc:
+                    for l in page.get_links():
+                        uri = l.get("uri")
+                        if uri and uri.strip() and uri.strip() not in embedded_links:
+                            embedded_links.append(uri.strip())
+
                 # Compare by section keyword density
                 standard_kw = AdvancedAtsParsingAgent._count_section_keywords(standard_text)
                 block_kw = AdvancedAtsParsingAgent._count_section_keywords(block_text)
 
                 # Prefer standard text if it has equal or more section keywords
                 # (standard preserves reading order better for exported/re-uploaded PDFs)
-                if standard_kw >= block_kw:
-                    return standard_text
-                else:
-                    return block_text
+                final_text = standard_text if standard_kw >= block_kw else block_text
+
+                if embedded_links:
+                    final_text += "\n\n[EMBEDDED HYPERLINKS IN PDF]\n" + "\n".join(embedded_links)
+
+                return final_text
 
             elif ext in [".docx", ".doc"]:
                 from docx import Document
