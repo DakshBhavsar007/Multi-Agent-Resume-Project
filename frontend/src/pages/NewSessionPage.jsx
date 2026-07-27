@@ -295,11 +295,24 @@ export default function NewSessionPage() {
 
         let salMin = inferred.salary_min != null ? String(inferred.salary_min) : prev.salary_min;
         let salMax = inferred.salary_max != null ? String(inferred.salary_max) : prev.salary_max;
-        if ((!salMin || !salMax) && inferred.salary_range) {
-          const matchLpa = inferred.salary_range.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(?:LPA|L|lakhs?)/i);
-          if (matchLpa) {
-            if (!salMin) salMin = matchLpa[1];
-            if (!salMax) salMax = matchLpa[2];
+
+        if (!salMin || !salMax) {
+          const searchContent = `${inferred.salary_range || ''} ${jdText}`.replace(/[–—]/g, "-").replace(/\bto\b/gi, "-");
+          const lpaMatch = searchContent.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(?:LPA|L|lakhs?)/i);
+          if (lpaMatch) {
+            const v1 = parseFloat(lpaMatch[1]);
+            const v2 = parseFloat(lpaMatch[2]);
+            if (!salMin) salMin = String(v1 < 200 ? Math.round(v1 * 100000) : Math.round(v1));
+            if (!salMax) salMax = String(v2 < 200 ? Math.round(v2 * 100000) : Math.round(v2));
+          } else {
+            const numMatch = searchContent.match(/(?:CTC|Salary)?\s*:?\s*₹?\s*(\d+(?:\.\d+)?)\s*-\s*₹?\s*(\d+(?:\.\d+)?)/i);
+            if (numMatch) {
+              const v1 = parseFloat(numMatch[1]);
+              const v2 = parseFloat(numMatch[2]);
+              const isINR = currency === "INR" || searchContent.includes("₹") || searchContent.includes("LPA");
+              if (!salMin) salMin = String((v1 < 200 && isINR) ? Math.round(v1 * 100000) : Math.round(v1));
+              if (!salMax) salMax = String((v2 < 200 && isINR) ? Math.round(v2 * 100000) : Math.round(v2));
+            }
           }
         }
 

@@ -10,6 +10,56 @@ class SkillInferenceAgent:
     def __init__(self):
         self.client = RotateLLMClient(agent_name="inference_agent")
 
+    def _parse_salary(self, salary_range: str, text: str):
+        search_text = f"{salary_range or ''}\n{text or ''}"
+        currency = "USD"
+        if "₹" in search_text or "LPA" in search_text or "lakh" in search_text.lower() or "inr" in search_text.lower():
+            currency = "INR"
+        elif "€" in search_text or "eur" in search_text.lower():
+            currency = "EUR"
+        elif "£" in search_text or "gbp" in search_text.lower():
+            currency = "GBP"
+        elif "$" in search_text or "usd" in search_text.lower():
+            currency = "USD"
+
+        clean = search_text.replace("–", "-").replace("—", "-").replace(" to ", "-").replace(",", "")
+
+        # Match LPA / Lakhs pattern e.g. 18-30 LPA, 18 - 30 Lakhs, ₹18-30 LPA
+        lpa = re.search(r"(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\s*(?:LPA|L|lakhs?)", clean, re.IGNORECASE)
+        if lpa:
+            v1 = float(lpa.group(1))
+            v2 = float(lpa.group(2))
+            min_val = int(v1 * 100000) if v1 < 200 else int(v1)
+            max_val = int(v2 * 100000) if v2 < 200 else int(v2)
+            return min_val, max_val, "INR"
+
+        lpa_single = re.search(r"(\d+(?:\.\d+)?)\s*(?:LPA|L|lakhs?)", clean, re.IGNORECASE)
+        if lpa_single:
+            v = float(lpa_single.group(1))
+            val = int(v * 100000) if v < 200 else int(v)
+            return val, val, "INR"
+
+        k_match = re.search(r"(\d+(?:\.\d+)?)k\s*-\s*(\d+(?:\.\d+)?)k", clean, re.IGNORECASE)
+        if k_match:
+            v1 = int(float(k_match.group(1)) * 1000)
+            v2 = int(float(k_match.group(2)) * 1000)
+            return v1, v2, currency
+
+        range_match = re.search(r"(?:CTC|Salary)?\s*:?\s*₹?\s*(\d+[\d\.]*)\s*-\s*₹?\s*(\d+[\d\.]*)", clean, re.IGNORECASE)
+        if range_match:
+            try:
+                v1 = float(range_match.group(1))
+                v2 = float(range_match.group(2))
+                if v1 < 200 and currency == "INR":
+                    v1 = v1 * 100000
+                if v2 < 200 and currency == "INR":
+                    v2 = v2 * 100000
+                return int(v1), int(v2), currency
+            except ValueError:
+                pass
+
+        return None, None, currency
+
     def _fallback_extract(self, job_description: str) -> dict:
         """Regex and heuristic fallback parsing when LLM fails or returns Unknown."""
         extracted_role = "Unknown"
@@ -49,6 +99,8 @@ class SkillInferenceAgent:
         if salary_match:
             salary_range = salary_match.group(1).strip()
 
+        sal_min, sal_max, sal_curr = self._parse_salary(salary_range, job_description)
+
         # Employment type
         emp_type = "Full-time"
         emp_match = re.search(r"(?i)(?:type|employment\s*type)\s*:\s*([^\n\r]+)", job_description)
@@ -81,6 +133,9 @@ class SkillInferenceAgent:
             "key_responsibilities": [],
             "industry": "Technology",
             "salary_range": salary_range,
+            "salary_min": sal_min,
+            "salary_max": sal_max,
+            "salary_currency": sal_curr,
             "employment_type": emp_type
         }
 
@@ -100,6 +155,9 @@ class SkillInferenceAgent:
           "key_responsibilities": [string (top 5)],
           "industry": string,
           "salary_range": string (extract salary range, e.g. "₹18-30 LPA" or "$120k - $140k" if specified in job description, default to "Competitive"),
+          "salary_min": integer or null (e.g. 1800000 for 18 LPA),
+          "salary_max": integer or null (e.g. 3000000 for 30 LPA),
+          "salary_currency": "INR"|"USD"|"EUR"|"GBP",
           "employment_type": "Full-time"|"Part-time"|"Contract"|"Internship" (default to "Full-time")
         }}
         
@@ -144,6 +202,13 @@ class SkillInferenceAgent:
 
             if (not parsed.get("salary_range") or parsed.get("salary_range") == "Competitive") and fallback["salary_range"] != "Competitive":
                 parsed["salary_range"] = fallback["salary_range"]
+
+            if parsed.get("salary_min") is None and fallback["salary_min"] is not None:
+                parsed["salary_min"] = fallback["salary_min"]
+            if parsed.get("salary_max") is None and fallback["salary_max"] is not None:
+                parsed["salary_max"] = fallback["salary_max"]
+            if not parsed.get("salary_currency") and fallback["salary_currency"]:
+                parsed["salary_currency"] = fallback["salary_currency"]
 
             return parsed
             
