@@ -13,16 +13,31 @@ import {
   Plus,
   MessageSquareQuote
 } from 'lucide-react';
-import { sessionsAPI, recruiterAPI } from '../lib/api';
+import { sessionsAPI, recruiterAPI, publicAPI } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import WriteReviewModal from '../components/WriteReviewModal';
+import UnifiedReviewsSection from '../components/common/UnifiedReviewsSection';
 import toast from 'react-hot-toast';
 
 export default function DashboardHome() {
   const navigate = useNavigate();
   const { company } = useAuthStore();
-  const [showReviewModal, setShowReviewModal] = React.useState(false);
+  const [companyReviews, setCompanyReviews] = React.useState([]);
+
+  const companyId = company?.id || company?.company_id;
+
+  const loadCompanyReviews = React.useCallback(() => {
+    if (companyId) {
+      publicAPI.getCompanyReviews(companyId)
+        .then((data) => setCompanyReviews(data.reviews || []))
+        .catch(() => {});
+    }
+  }, [companyId]);
+
+  React.useEffect(() => {
+    loadCompanyReviews();
+  }, [loadCompanyReviews]);
 
   const { data: sessionsData, isLoading: sessionsLoading } = useQuery({
     queryKey: ['sessions-all'],
@@ -178,6 +193,37 @@ export default function DashboardHome() {
           )}
         </div>
       </section>
+
+      {/* Company Candidate Reviews & Direct Reply Section */}
+      {companyId && (
+        <section className="bg-white dark:bg-[#121217] border border-gray-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-display text-lg text-charcoal dark:text-white flex items-center gap-2">
+                <MessageSquareQuote className="text-blue-600 dark:text-blue-400" size={20} />
+                Candidate Reviews & Official Responses
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Reviews submitted by candidates for {company?.name || "your company"}. Reply directly as Company Owner.
+              </p>
+            </div>
+            <Link
+              to={`/jobs/companies/${companyId}`}
+              className="text-xs font-bold text-blue-600 hover:underline inline-flex items-center gap-1"
+            >
+              <span>View Public Profile ↗</span>
+            </Link>
+          </div>
+
+          <UnifiedReviewsSection
+            reviews={companyReviews}
+            targetId={companyId}
+            ownerType="company"
+            isCompanyOwner={true}
+            onReplySuccess={loadCompanyReviews}
+          />
+        </section>
+      )}
 
       {showReviewModal && (
         <WriteReviewModal

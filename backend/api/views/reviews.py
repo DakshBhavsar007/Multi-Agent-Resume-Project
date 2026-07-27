@@ -114,11 +114,13 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
 
             is_verified = bool(getattr(dev, "is_verified", True) or getattr(dev, "email_verified", True)) if dev else True
 
+            dev_avatar = getattr(dev, "avatar_path", "") if dev else ""
             author_info = {
                 "id": str(getattr(dev, "id", "")) if dev else str(getattr(review, "id", "")),
                 "full_name": dev_name,
                 "headline": getattr(dev, "company_name", None) or "Software Developer & API Builder",
-                "avatar_path": getattr(dev, "avatar_path", "") if dev else "",
+                "avatar_path": dev_avatar,
+                "avatar_url": dev_avatar,
                 "is_verified": is_verified,
                 "user_type": "developer",
                 "role_badge": "Developer",
@@ -130,12 +132,14 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
                 rec_name = rec_names[hash(str(getattr(review, "id", ""))) % len(rec_names)]
 
             is_verified = bool(getattr(rec, "email_verified", True)) if rec else True
+            rec_avatar = getattr(rec, "logo_path", "") if rec else ""
 
             author_info = {
                 "id": str(getattr(rec, "id", "")) if rec else str(getattr(review, "id", "")),
                 "full_name": rec_name,
                 "headline": f"Recruiter @ {rec_name}",
-                "avatar_path": getattr(rec, "logo_path", "") if rec else "",
+                "avatar_path": rec_avatar,
+                "avatar_url": rec_avatar,
                 "is_verified": is_verified,
                 "user_type": "recruiter",
                 "role_badge": "Recruiter",
@@ -147,12 +151,14 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
                 seeker_name = seeker_names[hash(str(getattr(review, "id", ""))) % len(seeker_names)]
 
             is_verified = bool(getattr(seeker, "email_verified", True) and getattr(seeker, "phone_verified", True)) if seeker else True
+            seeker_avatar = getattr(seeker, "avatar_path", "") if seeker else ""
 
             author_info = {
                 "id": str(getattr(seeker, "id", "")) if seeker else str(getattr(review, "id", "")),
                 "full_name": seeker_name,
                 "headline": getattr(seeker, "headline", "") if seeker else "Job Seeker & Candidate",
-                "avatar_path": getattr(seeker, "avatar_path", "") if seeker else "",
+                "avatar_path": seeker_avatar,
+                "avatar_url": seeker_avatar,
                 "is_verified": is_verified,
                 "user_type": "job_seeker",
                 "role_badge": "Job Seeker",

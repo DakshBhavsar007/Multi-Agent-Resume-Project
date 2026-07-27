@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Star, ShieldCheck, Terminal, Pen, Trash2, MessageSquareQuote } from "lucide-react";
 import VerifiedBadge from "../VerifiedBadge";
 import { toast } from "react-hot-toast";
-import { recruiterAPI } from "../../lib/api";
+import { recruiterAPI, API_HOST } from "../../lib/api";
 
 export default function UnifiedReviewsSection({
   reviews = [],
@@ -125,11 +125,18 @@ export default function UnifiedReviewsSection({
         <div className="space-y-4">
           {sortedReviews.map((rev) => (
             <div key={rev.id} className={`rounded-2xl border p-5 space-y-3 ${rev.is_own ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-muted/30'}`}>
-              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center font-black text-amber-600 text-xs">
-                    {rev.author?.full_name?.charAt(0) || "U"}
-                  </div>
+                  {rev.author?.avatar_url || rev.author?.avatar_path ? (
+                    <img
+                      src={(rev.author.avatar_url || rev.author.avatar_path).startsWith('http') || (rev.author.avatar_url || rev.author.avatar_path).startsWith('data:') ? (rev.author.avatar_url || rev.author.avatar_path) : `${API_HOST}${rev.author.avatar_url || rev.author.avatar_path}`}
+                      alt={rev.author.full_name}
+                      className="h-8 w-8 rounded-full object-cover border border-border shrink-0"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center font-black text-amber-600 text-xs shrink-0">
+                      {rev.author?.full_name?.charAt(0) || "U"}
+                    </div>
+                  )}
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold text-foreground">{rev.author?.full_name || "Verified Member"}</span>
