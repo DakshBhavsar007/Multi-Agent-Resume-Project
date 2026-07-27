@@ -253,7 +253,7 @@ class RotateCompletions:
         agent_name = self.client_instance._agent_name
         primary, fallback = get_agent_config(agent_name)
 
-        model = kwargs.get("model", "gemini-2.5-flash")
+        model = kwargs.get("model", "gemini-1.5-flash")
         messages = kwargs.get("messages", [])
         temperature = kwargs.get("temperature", 0.2)
         response_format = kwargs.get("response_format")
@@ -340,10 +340,13 @@ class RotateCompletions:
                     max_retries=0
                 )
 
-                default_flash = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-                gemini_model = default_flash
-                if ("pro" in model.lower() or "gpt-4" in model.lower()) and "mini" not in model.lower():
-                    gemini_model = "gemini-2.5-pro"
+                if model.lower().startswith("gemini-") and "2.5" not in model.lower():
+                    gemini_model = model
+                else:
+                    default_flash = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+                    gemini_model = default_flash
+                    if ("pro" in model.lower() or "gpt-4" in model.lower()) and "mini" not in model.lower():
+                        gemini_model = "gemini-1.5-pro"
 
                 call_kwargs = {
                     "model": gemini_model,
