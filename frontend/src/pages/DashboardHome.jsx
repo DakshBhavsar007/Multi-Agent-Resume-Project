@@ -145,12 +145,6 @@ export default function DashboardHome() {
             desc="Rank resumes against a job description with AI."
           />
           <QuickAction
-            to="/dashboard/protection"
-            icon={Shield}
-            title="Fraud Detection"
-            desc="Scan resumes and job posts for AI-generated content."
-          />
-          <QuickAction
             to="/dashboard/sessions"
             icon={Layers}
             title="Sessions"

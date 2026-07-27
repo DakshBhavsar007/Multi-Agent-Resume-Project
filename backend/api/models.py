@@ -6,7 +6,6 @@ def default_company_notification_settings():
     return {
         "new_candidate_applied": True,
         "weekly_digest": False,
-        "fraud_alerts": True,
     }
 
 
@@ -249,22 +248,6 @@ class EmbedToken(models.Model):
     class Meta:
         db_table = "embed_tokens"
 
-class FraudScanLog(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, db_column="company_id")
-    candidate_name = models.CharField(max_length=255)
-    role = models.CharField(max_length=255, null=True, blank=True)
-    location = models.CharField(max_length=255, null=True, blank=True)
-    originality_score = models.IntegerField(default=100)
-    ai_probability = models.IntegerField(default=0)
-    plagiarism_score = models.IntegerField(default=0)
-    status = models.CharField(max_length=100, default="Verified Clean")
-    portfolios = models.JSONField(default=list)
-    detailed_checks = models.JSONField(default=dict)
-    created_at = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        db_table = "fraud_scan_logs"
 
 
 # ─── Job Seeker Portal Models ──────────────────────────────────────────────────

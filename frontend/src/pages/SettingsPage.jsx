@@ -41,7 +41,6 @@ export default function SettingsPage() {
   const [notifSettings, setNotifSettings] = useState({
     new_candidate_applied: company?.notification_settings?.new_candidate_applied ?? true,
     weekly_digest: company?.notification_settings?.weekly_digest ?? false,
-    fraud_alerts: company?.notification_settings?.fraud_alerts ?? true,
   });
 
   // Fetch fresh company profile from backend DB on mount to ensure persistent details & verification
@@ -68,7 +67,6 @@ export default function SettingsPage() {
         setNotifSettings({
           new_candidate_applied: company.notification_settings.new_candidate_applied ?? true,
           weekly_digest: company.notification_settings.weekly_digest ?? false,
-          fraud_alerts: company.notification_settings.fraud_alerts ?? true,
         });
       }
     }
@@ -622,7 +620,6 @@ export default function SettingsPage() {
                 {[
                   { key: "new_candidate_applied", label: "New candidate applied", desc: "Get notified when a candidate joins a session.", defaultVal: true },
                   { key: "weekly_digest", label: "Weekly digest", desc: "A summary of activity across sessions.", defaultVal: false },
-                  { key: "fraud_alerts", label: "Fraud alerts", desc: "Immediate alert when a suspicious resume is flagged.", defaultVal: true },
                 ].map((it) => {
                   const isOn = notifSettings[it.key] ?? it.defaultVal;
                   return (

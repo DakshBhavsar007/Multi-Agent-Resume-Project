@@ -39,7 +39,6 @@ export default function Sidebar() {
     { href: '/', label: 'Home Page', icon: Home },
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/smart-analyzer', label: 'Smart Analyzer', icon: Sparkles },
-    { href: '/dashboard/protection', label: 'Protection', icon: Shield },
     { href: '/dashboard/sessions', label: 'Sessions', icon: Layers },
     { href: '/dashboard/settings', label: 'Settings', icon: SettingsIcon },
   ];

@@ -85,7 +85,6 @@ export const DEFAULT_ORBITS = [
     items: [
       { id: "parser", label: "Parsing Agent", color: "#3B82F6", svg: <FileCode2 className="w-5 h-5 text-blue-400" /> },
       { id: "matcher", label: "Semantic Matcher", color: "#10B981", svg: <Sparkles className="w-5 h-5 text-emerald-400" /> },
-      { id: "fraud", label: "Fraud Detector", color: "#EF4444", svg: <Shield className="w-5 h-5 text-red-400" /> },
     ],
   },
   {

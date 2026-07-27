@@ -122,14 +122,6 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
                     <span className="product-dropdown-item-title">Smart Analyzer</span>
                     <span className="product-dropdown-item-desc">Deep-dive candidate profiles</span>
                   </a>
-                  <a 
-                    href="/#detailed-showcase" 
-                    onClick={(e) => { setProductDropdownOpen(false); handleScrollTo(e, 'detailed-showcase'); }} 
-                    className="product-dropdown-item skeuo-dropdown-item"
-                  >
-                    <span className="product-dropdown-item-title">Fraud Protection</span>
-                    <span className="product-dropdown-item-desc">Detect fake resumes & plagiarisms</span>
-                  </a>
                 </div>
               </div>
             );

@@ -64,145 +64,6 @@ def test_random_forest_hiring_prediction():
     }
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Test 2: IsolationForest — Resume Anomaly Detection (fraud_agent.py)
-# ═══════════════════════════════════════════════════════════════════════════
-def test_isolation_forest_resume_anomaly():
-    """
-    Tests IsolationForest on 100 normal and 50 anomalous synthetic resume records.
-    Normal: 1 (inliers), Fraud: -1 (outliers).
-    """
-    from sklearn.ensemble import IsolationForest
-
-    # Generate 100 Normal Resumes
-    normal_char_count = np.random.uniform(1500, 6000, 100)
-    normal_word_count = normal_char_count / np.random.uniform(5.8, 6.2, 100)
-    normal_sentence_count = normal_word_count / np.random.uniform(12, 18, 100)
-    normal_avg_word_len = np.random.uniform(5.5, 6.5, 100)
-    normal_upper_ratio = np.random.uniform(0.05, 0.11, 100)
-    normal_digit_ratio = np.random.uniform(0.01, 0.04, 100)
-    normal_repetition_index = np.random.uniform(0.60, 0.75, 100)
-
-    normal = np.column_stack([
-        normal_char_count, normal_word_count, normal_sentence_count,
-        normal_avg_word_len, normal_upper_ratio, normal_digit_ratio,
-        normal_repetition_index
-    ])
-
-    # Generate 50 Anomalous Resumes
-    # 20 Keyword stuffed (massive counts, low rep)
-    stuff_char = np.random.uniform(30000, 60000, 20)
-    stuff_word = stuff_char / 4.5
-    stuff_sent = np.random.uniform(2, 6, 20)
-    stuff_avg_len = np.random.uniform(4.0, 5.0, 20)
-    stuff_upper = np.random.uniform(0.01, 0.03, 20)
-    stuff_digit = np.random.uniform(0.00, 0.01, 20)
-    stuff_rep = np.random.uniform(0.05, 0.15, 20)
-    anomalous_stuff = np.column_stack([stuff_char, stuff_word, stuff_sent, stuff_avg_len, stuff_upper, stuff_digit, stuff_rep])
-
-    # 30 Spam/digits or short text
-    spam_char = np.random.uniform(100, 400, 30)
-    spam_word = spam_char / 6.0
-    spam_sent = np.random.uniform(1, 4, 30)
-    spam_avg_len = np.random.uniform(3.0, 8.0, 30)
-    spam_upper = np.random.uniform(0.20, 0.60, 30)
-    spam_digit = np.random.uniform(0.50, 0.85, 30)
-    spam_rep = np.random.uniform(0.80, 1.00, 30)
-    anomalous_spam = np.column_stack([spam_char, spam_word, spam_sent, spam_avg_len, spam_upper, spam_digit, spam_rep])
-
-    anomalous = np.vstack([anomalous_stuff, anomalous_spam])
-
-    clf = IsolationForest(contamination=0.05, random_state=42)
-    clf.fit(normal)
-
-    normal_preds = clf.predict(normal)
-    normal_correct = sum(1 for p in normal_preds if p == 1)
-
-    anomalous_preds = clf.predict(anomalous)
-    anomalous_correct = sum(1 for p in anomalous_preds if p == -1)
-
-    total = len(normal) + len(anomalous)
-    correct = normal_correct + anomalous_correct
-    accuracy = (correct / total) * 100
-
-    return {
-        "agent": "FraudDetectionAgent",
-        "model": "IsolationForest",
-        "task": "Resume Anomaly Detection",
-        "accuracy": round(accuracy, 2),
-        "normal_detected": f"{normal_correct}/{len(normal)}",
-        "anomalies_detected": f"{anomalous_correct}/{len(anomalous)}",
-        "total_samples": total,
-    }
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Test 3: IsolationForest — Job Description Anomaly (fraud_agent.py)
-# ═══════════════════════════════════════════════════════════════════════════
-def test_isolation_forest_job_anomaly():
-    """
-    Tests IsolationForest on 100 normal and 50 anomalous synthetic job descriptions.
-    """
-    from sklearn.ensemble import IsolationForest
-
-    # Normal Jobs
-    normal_char_count = np.random.uniform(1000, 4500, 100)
-    normal_word_count = normal_char_count / np.random.uniform(5.8, 6.5, 100)
-    normal_sentence_count = normal_word_count / np.random.uniform(10, 15, 100)
-    normal_avg_word_len = np.random.uniform(5.7, 6.6, 100)
-    normal_upper_ratio = np.random.uniform(0.06, 0.10, 100)
-    normal_digit_ratio = np.random.uniform(0.01, 0.03, 100)
-    normal_repetition_index = np.random.uniform(0.65, 0.76, 100)
-
-    normal = np.column_stack([
-        normal_char_count, normal_word_count, normal_sentence_count,
-        normal_avg_word_len, normal_upper_ratio, normal_digit_ratio,
-        normal_repetition_index
-    ])
-
-    # Anomalies
-    stuff_char = np.random.uniform(50000, 90000, 20)
-    stuff_word = stuff_char / 4.5
-    stuff_sent = np.random.uniform(2, 5, 20)
-    stuff_avg_len = np.random.uniform(4.0, 5.0, 20)
-    stuff_upper = np.random.uniform(0.01, 0.02, 20)
-    stuff_digit = np.random.uniform(0.00, 0.01, 20)
-    stuff_rep = np.random.uniform(0.01, 0.10, 20)
-    anomalous_stuff = np.column_stack([stuff_char, stuff_word, stuff_sent, stuff_avg_len, stuff_upper, stuff_digit, stuff_rep])
-
-    spam_char = np.random.uniform(50, 200, 30)
-    spam_word = spam_char / 6.0
-    spam_sent = np.random.uniform(1, 3, 30)
-    spam_avg_len = np.random.uniform(3.0, 8.0, 30)
-    spam_upper = np.random.uniform(0.30, 0.80, 30)
-    spam_digit = np.random.uniform(0.40, 0.80, 30)
-    spam_rep = np.random.uniform(0.80, 1.00, 30)
-    anomalous_spam = np.column_stack([spam_char, spam_word, spam_sent, spam_avg_len, spam_upper, spam_digit, spam_rep])
-
-    anomalous = np.vstack([anomalous_stuff, anomalous_spam])
-
-    clf = IsolationForest(contamination=0.05, random_state=42)
-    clf.fit(normal)
-
-    normal_preds = clf.predict(normal)
-    normal_correct = sum(1 for p in normal_preds if p == 1)
-
-    anomalous_preds = clf.predict(anomalous)
-    anomalous_correct = sum(1 for p in anomalous_preds if p == -1)
-
-    total = len(normal) + len(anomalous)
-    correct = normal_correct + anomalous_correct
-    accuracy = (correct / total) * 100
-
-    return {
-        "agent": "FraudDetectionAgent",
-        "model": "IsolationForest",
-        "task": "Job Description Anomaly Detection",
-        "accuracy": round(accuracy, 2),
-        "normal_detected": f"{normal_correct}/{len(normal)}",
-        "anomalies_detected": f"{anomalous_correct}/{len(anomalous)}",
-        "total_samples": total,
-    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -531,13 +392,11 @@ if __name__ == "__main__":
 
     tests = [
         ("1", test_random_forest_hiring_prediction),
-        ("2", test_isolation_forest_resume_anomaly),
-        ("3", test_isolation_forest_job_anomaly),
-        ("4", test_logistic_regression_ats_score),
-        ("5", test_gradient_boosting_salary),
-        ("6", test_knn_job_recommendation),
-        ("7", test_tfidf_skill_matching),
-        ("8", test_kmeans_skill_clustering),
+        ("2", test_logistic_regression_ats_score),
+        ("3", test_gradient_boosting_salary),
+        ("4", test_knn_job_recommendation),
+        ("5", test_tfidf_skill_matching),
+        ("6", test_kmeans_skill_clustering),
     ]
 
     results = []

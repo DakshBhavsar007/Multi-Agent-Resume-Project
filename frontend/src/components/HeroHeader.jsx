@@ -152,7 +152,7 @@ const HeroHeader = ({ onStart, isLoggedIn }) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 1 }}
         >
-          Build recruitment workflows that work. Automate screening, detect fraud, and rank candidates with surgical precision — powered by 7 specialized AI agents.
+          Build recruitment workflows that work. Automate screening, rank candidates, and streamline hiring with surgical precision — powered by specialized AI agents.
         </motion.p>
 
         <div className="hero-actions">

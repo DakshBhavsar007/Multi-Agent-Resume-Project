@@ -61,7 +61,6 @@ def upload_models():
     files_to_upload = {
         "salary_model.pkl": os.path.join(models_dir, "salary_model.pkl"),
         "matching_model.pkl": os.path.join(models_dir, "matching_model.pkl"),
-        "fraud_model.pkl": os.path.join(models_dir, "fraud_model.pkl"),
     }
     
     print("\n--- Uploading individual model files ---")

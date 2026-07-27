@@ -64,7 +64,7 @@ export default function LandingPage() {
               Powered by 7 specialized AI agents
             </h2>
             <p className="text-gray-500 dark:text-zinc-400 mt-2 text-sm max-w-lg mx-auto">
-              Explore how specialized agents revolve around the core matching engine to extract skills, detect fraud, and rank candidates in real time.
+              Explore how specialized agents revolve around the core matching engine to extract skills, score candidates, and rank applicants in real time.
             </p>
           </div>
           <SolarSystem />

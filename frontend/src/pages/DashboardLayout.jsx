@@ -64,14 +64,6 @@ const RECRUITER_TOUR_STEPS = [
     placement: 'right',
   },
   {
-    id: 'protection',
-    title: 'Fraud Protection',
-    content: 'Detect fake resumes, plagiarism, and fraudulent applications powered by our AI fraud engine.',
-    icon: Shield,
-    target: '[data-tour="nav-protection"]',
-    placement: 'right',
-  },
-  {
     id: 'settings',
     title: 'Settings & Billing',
     content: 'Manage your company profile, API keys, and upgrade your plan for more sessions and resumes.',
@@ -286,7 +278,6 @@ export default function DashboardLayout() {
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true, tourAttr: 'dashboard-home' },
     { to: "/dashboard/ai-recruiter", label: "AI Recruiter", icon: Bot, tourAttr: 'nav-ai-recruiter' },
     { to: "/dashboard/smart-analyzer", label: "Smart Analyzer", icon: Sparkles, tourAttr: 'nav-smart-analyzer' },
-    { to: "/dashboard/protection", label: "Protection", icon: Shield, tourAttr: 'nav-protection' },
     { to: "/dashboard/sessions", label: "Sessions", icon: Layers, tourAttr: 'nav-sessions' },
     { to: "/dashboard/settings", label: "Settings", icon: SettingsIcon, tourAttr: 'nav-settings' },
   ];
@@ -438,9 +429,6 @@ export default function DashboardLayout() {
                   </button>
                   <button onClick={() => { navigate("/dashboard/smart-analyzer"); setShowGlobalSuggestions(false); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
                     <Bot className="w-3.5 h-3.5 text-gray-500" /> Analyze with AI (Smart Analyzer)
-                  </button>
-                  <button onClick={() => { navigate("/dashboard/protection"); setShowGlobalSuggestions(false); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
-                    <Shield className="w-3.5 h-3.5 text-gray-500" /> View Security & Fraud Logs
                   </button>
                   <button onClick={() => { navigate("/dashboard/sessions"); setShowGlobalSuggestions(false); }} className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 text-charcoal flex items-center gap-2 rounded-lg">
                     <Layers className="w-3.5 h-3.5 text-gray-500" /> View All Sessions

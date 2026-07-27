@@ -890,7 +890,7 @@ def dynamic_data(request):
             "period": "month",
             "features": [
                 "Unlimited dynamic AI resumes",
-                "Deep safety analysis & fraud alerts",
+                "Advanced resume safety analysis",
                 "Unlimited job applications",
                 "Priority matching bypass queue",
                 "Comprehensive keystroke telemetry profiling (unlimited)"
@@ -1049,7 +1049,6 @@ def dynamic_data(request):
             { "id": "candidate-clustering", "title": "Candidate Clustering" },
             { "id": "job-matching", "title": "Job Matching" },
             { "id": "ai-chatbot", "title": "AI Chatbot" },
-            { "id": "fraud-detection", "title": "Fraud Detection" },
             { "id": "webhooks", "title": "Webhooks" },
             { "id": "rate-limits", "title": "Rate Limits & Errors" },
             { "id": "sdks", "title": "SDKs & Examples" }

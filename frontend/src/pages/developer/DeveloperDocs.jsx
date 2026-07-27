@@ -24,7 +24,6 @@ const SECTIONS = [
   { id: "candidate-clustering", title: "Candidate Clustering" },
   { id: "job-matching", title: "Job Matching" },
   { id: "ai-chatbot", title: "AI Chatbot" },
-  { id: "fraud-detection", title: "Fraud Detection" },
   { id: "webhooks", title: "Webhooks" },
   { id: "rate-limits", title: "Rate Limits & Errors" },
   { id: "sdks", title: "SDKs & Examples" }
@@ -98,7 +97,7 @@ export default function DeveloperDocs() {
     const allIds = [
       "getting-started","authentication","sessions",
       "resume-ingestion","file-upload","gmail-sync","google-drive","ats-import",
-      "candidates","candidate-clustering","job-matching","ai-chatbot","fraud-detection",
+      "candidates","candidate-clustering","job-matching","ai-chatbot",
       "webhooks","rate-limits","sdks"
     ];
     const observer = new IntersectionObserver(
@@ -150,11 +149,6 @@ export default function DeveloperDocs() {
        setRequestBodyJson(JSON.stringify({ job_title: "Senior React Developer", job_description: "5+ years React, TypeScript...", top_k: 5 }, null, 2));
      } else if (endpoint.path === "/api/v1/chat") {
        setRequestBodyJson(JSON.stringify({ message: "Find React devs with 3+ years experience", session_id: "" }, null, 2));
-     } else if (endpoint.path === "/api/v1/protection/scan") {
-       setPortfolioUrl("https://github.com/torvalds");
-       setJobTitle("Senior Linux Kernel Developer");
-       setJobDescription("We are looking for an expert C developer with deep Linux kernel experience.");
-       setRequestBodyJson("{}");
      } else {
        setRequestBodyJson("{}");
      }
@@ -210,26 +204,6 @@ export default function DeveloperDocs() {
         }
         body = new FormData();
         body.append("file", selectedFile);
-      } else if (pgEndpoint?.path === "/api/v1/protection/scan") {
-        body = new FormData();
-        body.append("scan_type", scanType);
-        if (scanType === "user") {
-          if (selectedFile) {
-            body.append("file", selectedFile);
-          }
-          if (portfolioUrl) {
-            body.append("url", portfolioUrl);
-          }
-          if (!selectedFile && !portfolioUrl) {
-            throw new Error("Please upload a resume file or enter a portfolio URL to scan.");
-          }
-        } else {
-          if (!jobTitle || !jobDescription) {
-            throw new Error("Job title and description are required for job scanning.");
-          }
-          body.append("job_title", jobTitle);
-          body.append("job_description", jobDescription);
-        }
       } else if (pgEndpoint?.method === "POST" && requestBodyJson) {
         headers["Content-Type"] = "application/json";
         try {
@@ -631,95 +605,7 @@ export default function DeveloperDocs() {
                </div>
             </div>
           </section>
-<section id="fraud-detection" className="mb-16 pt-8 border-t border-gray-200">
-            <h2 className="text-3xl font-black text-charcoal mb-4">Fraud Detection</h2>
-            <p className="text-gray-600 font-medium mb-6 leading-relaxed">
-              Scan candidate portfolios/resumes or job descriptions for plagiarism, AI-generated content probability, and structural manipulations. Available only on Starter, Business, and Enterprise tiers.
-            </p>
-            
-            <div className="flex items-center gap-3 mb-4">
-               <span className="bg-blue-100 text-amber-600 font-black text-[10px] px-2 py-1 uppercase tracking-widest rounded">POST</span>
-               <h3 className="font-mono text-lg font-bold text-gray-800">/api/v1/protection/scan</h3>
-               <button onClick={() => openPlayground({method:'POST', path:'/api/v1/protection/scan'})} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors shadow-sm"><Play size={12}/> Try It</button>
-            </div>
-            
-            <h4 className="font-bold text-charcoal text-sm uppercase mb-3 text-gray-400">Parameters</h4>
-            <div className="overflow-x-auto mb-6">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead>
-                  <tr className="border-b-2 border-gray-100 text-charcoal font-bold bg-gray-50">
-                    <th className="p-3 rounded-tl-xl">Name</th>
-                    <th className="p-3">Type</th>
-                    <th className="p-3">Required</th>
-                    <th className="p-3 w-full rounded-tr-xl">Description</th>
-                  </tr>
-                </thead>
-                <tbody className="text-gray-500 font-medium">
-                  <tr className="border-b border-gray-50">
-                    <td className="p-3 font-mono text-charcoal">scan_type</td>
-                    <td className="p-3 text-blue-500">string</td>
-                    <td className="p-3 text-gray-400">No</td>
-                    <td className="p-3">Type of target to scan. Options: <code>user</code> (default) or <code>job</code>.</td>
-                  </tr>
-                  <tr className="border-b border-gray-50">
-                    <td className="p-3 font-mono text-charcoal">file</td>
-                    <td className="p-3 text-blue-500">binary</td>
-                    <td className="p-3 text-gray-400">No</td>
-                    <td className="p-3">The candidate resume file (for <code>user</code> type).</td>
-                  </tr>
-                  <tr className="border-b border-gray-50">
-                    <td className="p-3 font-mono text-charcoal">url</td>
-                    <td className="p-3 text-blue-500">string</td>
-                    <td className="p-3 text-gray-400">No</td>
-                    <td className="p-3">A Github repository or portfolio URL (for <code>user</code> type).</td>
-                  </tr>
-                  <tr className="border-b border-gray-50">
-                    <td className="p-3 font-mono text-charcoal">job_title</td>
-                    <td className="p-3 text-blue-500">string</td>
-                    <td className="p-3 text-gray-400">No</td>
-                    <td className="p-3">The job title (required if <code>scan_type</code> is <code>job</code>).</td>
-                  </tr>
-                  <tr className="border-b border-gray-50">
-                    <td className="p-3 font-mono text-charcoal">job_description</td>
-                    <td className="p-3 text-blue-500">string</td>
-                    <td className="p-3 text-gray-400">No</td>
-                    <td className="p-3">The job description body text (required if <code>scan_type</code> is <code>job</code>).</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-               <div className="flex flex-col">
-                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1">Request Example</span>
-                 <SyntaxHighlighter language="bash" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px", flex: 1, margin: 0 }}>
-{`curl -X POST "https://api.between.indevs.in/api/v1/protection/scan" \\
-  -H "X-API-Key: YOUR_KEY" \\
-  -d '{
-    "scan_type": "job",
-    "job_title": "Frontend Lead",
-    "job_description": "We are seeking a React developer..."
-  }'`}
-                 </SyntaxHighlighter>
-               </div>
-               <div className="flex flex-col">
-                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1">Response Example</span>
-                 <SyntaxHighlighter language="json" style={vs2015} customStyle={{ borderRadius: "12px", padding: "16px", fontSize: "12px", flex: 1, margin: 0 }}>
-{`{
-  "success": true,
-  "data": {
-    "originality_score": 94,
-    "ai_probability": 6,
-    "plagiarism_score": 5,
-    "status": "Verified Clean",
-    "portfolios": ["React Project Showcase"],
-    "summary": "Document is original with low AI probability."
-  }
-}`}
-                 </SyntaxHighlighter>
-               </div>
-            </div>
-          </section>
 
           
           <section id="webhooks" className="mb-16 pt-8 border-t border-gray-200">
@@ -739,7 +625,6 @@ export default function DeveloperDocs() {
                 <tbody className="text-gray-500 font-medium">
                   <tr className="border-b border-gray-50"><td className="p-3 font-mono text-charcoal">resume.parsed</td><td className="p-3">A resume has been fully parsed and structured data is ready.</td></tr>
                   <tr className="border-b border-gray-50"><td className="p-3 font-mono text-charcoal">resume.failed</td><td className="p-3">Resume parsing failed. Includes error details.</td></tr>
-                  <tr className="border-b border-gray-50"><td className="p-3 font-mono text-charcoal">scan.completed</td><td className="p-3">A fraud/safety scan has completed with results.</td></tr>
                   <tr className="border-b border-gray-50"><td className="p-3 font-mono text-charcoal">ingest.batch_done</td><td className="p-3">All files in a batch ingestion have been processed.</td></tr>
                 </tbody>
               </table>
@@ -953,7 +838,7 @@ console.log(matches.data.matches);`}
                     </div>
                  )}
 
-                 {pgEndpoint?.method === "POST" && pgEndpoint?.path !== "/api/v1/parse" && pgEndpoint?.path !== "/api/v1/protection/scan" && (
+                 {pgEndpoint?.method === "POST" && pgEndpoint?.path !== "/api/v1/parse" && (
                     <div className="flex flex-col gap-1 flex-1 min-h-[150px]">
                       <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Request Body (JSON)</label>
                       <textarea 
@@ -974,68 +859,6 @@ console.log(matches.data.matches);`}
                         className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl outline-none text-xs text-gray-600 dark:text-zinc-400" 
                       />
                     </div>
-                 )}
-
-                 {pgEndpoint?.path === "/api/v1/protection/scan" && (
-                   <>
-                     <div className="flex flex-col gap-1">
-                       <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Scan Type</label>
-                       <select 
-                         value={scanType} 
-                         onChange={(e)=>setScanType(e.target.value)}
-                         className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl outline-none text-xs text-gray-700 dark:text-zinc-300 font-bold"
-                       >
-                         <option value="user">User Scan (Resume/Portfolio)</option>
-                         <option value="job">Job Scan (Posting Info)</option>
-                       </select>
-                     </div>
-
-                     {scanType === "user" ? (
-                       <>
-                         <div className="flex flex-col gap-1">
-                           <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">File Body (Optional)</label>
-                           <input 
-                             type="file" 
-                             onChange={(e)=>setSelectedFile(e.target.files[0])}
-                             className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl outline-none text-xs text-gray-600 dark:text-zinc-400" 
-                           />
-                         </div>
-                         <div className="flex flex-col gap-1">
-                           <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Portfolio URL (Optional)</label>
-                           <input 
-                             type="url" 
-                             placeholder="https://github.com/..." 
-                             value={portfolioUrl}
-                             onChange={(e)=>setPortfolioUrl(e.target.value)}
-                             className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-semibold dark:text-zinc-200" 
-                           />
-                         </div>
-                       </>
-                     ) : (
-                       <>
-                         <div className="flex flex-col gap-1">
-                           <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Job Title</label>
-                           <input 
-                             type="text" 
-                             placeholder="Frontend Engineer" 
-                             value={jobTitle}
-                             onChange={(e)=>setJobTitle(e.target.value)}
-                             className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-semibold dark:text-zinc-200" 
-                           />
-                         </div>
-                         <div className="flex flex-col gap-1">
-                           <label className="text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest pl-1">Job Description</label>
-                           <textarea 
-                             rows="3"
-                             placeholder="We are looking for..." 
-                             value={jobDescription}
-                             onChange={(e)=>setJobDescription(e.target.value)}
-                             className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:border-accent outline-none text-xs font-semibold resize-none dark:text-zinc-200" 
-                           />
-                         </div>
-                       </>
-                     )}
-                   </>
                  )}
                </div>
  

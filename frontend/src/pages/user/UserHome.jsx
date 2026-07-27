@@ -78,29 +78,6 @@ const bentoCapabilities = [
     )
   },
   {
-    id: "fraud-protection",
-    title: "AI Fraud Protection",
-    subtitle: "Plagiarism & fake resume scanner",
-    description: "AI-powered scanning detects plagiarism, fake experience, ATS keyword stuffing, and suspicious domain patterns.",
-    tag: "SECURITY",
-    color: "#ef4444",
-    icon: <ShieldCheck className="h-6 w-6" />,
-    link: "/jobs/dashboard",
-    content: (
-      <div className="space-y-3">
-        <h4 className="font-bold text-sm text-charcoal dark:text-white">Active Protection Shield</h4>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Protects both recruiters from fraudulent candidate applications and job seekers from phishing or spam recruiter listings.
-        </p>
-        <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs space-y-1.5 text-red-700 dark:text-red-300 font-medium">
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-red-500" /> Cross-checked against known fake experience templates</div>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-red-500" /> ATS keyword stuffing penalty detection</div>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-red-500" /> Recruiter email domain verification</div>
-        </div>
-      </div>
-    )
-  },
-  {
     id: "developer-portal",
     title: "Developer REST API",
     subtitle: "Tiered API keys & webhooks",
@@ -761,7 +738,7 @@ function Home() {
             Powered by multi-agent intelligence
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
-            Explore how our specialized AI agents revolve around the core matching engine to analyze resumes, detect fraud & deliver real-time insights.
+            Explore how our specialized AI agents revolve around the core matching engine to analyze resumes, score candidates & deliver real-time insights.
           </p>
         </div>
 

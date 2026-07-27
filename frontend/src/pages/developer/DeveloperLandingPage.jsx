@@ -22,7 +22,7 @@ import Testimonials from "../../components/Testimonials";
 export default function DeveloperLandingPage() {
   useDocumentTitle(
     "Developer Hub",
-    "Integrate ATS scoring, resume parser, and fraud protection APIs into your own candidate sourcing tools."
+    "Integrate ATS scoring, resume parser, and candidate matching APIs into your own sourcing tools."
   );
   const socialLinks = [
     { href: "#", ariaLabel: "LinkedIn", tooltip: "LinkedIn", color: "#0A66C2" },

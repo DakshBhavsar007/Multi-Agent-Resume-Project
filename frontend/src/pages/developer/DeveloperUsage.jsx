@@ -124,7 +124,6 @@ export default function DeveloperUsage() {
             { label: "Resume Parsing", used: parseUsage, limit: summary?.limits?.parse?.limit || 1000, color: "bg-blue-600" },
             { label: "Job Matching", used: matchUsage, limit: summary?.limits?.match?.limit || 500, color: "bg-emerald-600" },
             { label: "AI Chatbot", used: chatUsage, limit: summary?.limits?.chat?.limit || 500, color: "bg-purple-600" },
-            { label: "Fraud Scans", used: scanUsage, limit: summary?.limits?.scan?.limit || 200, color: "bg-amber-600" },
           ].map((item, idx) => {
             const pct = Math.min(100, Math.round((item.used / (item.limit || 1)) * 100));
             return (

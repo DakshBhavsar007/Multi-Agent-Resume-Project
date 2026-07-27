@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 "limits": {"resumes": -1, "applications": -1},
                 "features": [
                     "Unlimited dynamic AI resumes",
-                    "Deep safety analysis & fraud alerts",
+                    "Advanced resume safety analysis",
                     "Unlimited job applications",
                     "Priority matching bypass queue",
                     "Comprehensive keystroke telemetry profiling (unlimited)"

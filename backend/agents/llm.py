@@ -114,7 +114,6 @@ def _seed_from_env():
             ("parsing_agent",       "Basic Parsing",          "gemini", "groq"),
             ("resume_enhancer",     "Resume Enhancer",        "groq",   "gemini"),
             ("interview_agent",     "AI Interview",           "groq",   "gemini"),
-            ("fraud_agent",         "Fraud Detection",        "gemini", "groq"),
             ("cover_letter",        "Cover Letter",           "groq",   "gemini"),
             ("chatbot",             "AI Chatbot",             "groq",   "gemini"),
             ("ats_parser",          "ATS Parser",             "gemini", "groq"),

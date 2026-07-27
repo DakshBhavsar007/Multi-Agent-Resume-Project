@@ -126,26 +126,6 @@ const FeaturesList = () => {
       )
     },
     { 
-      id: "fraud-detection",
-      title: "Fraud Detection", 
-      description: "AI-powered scanning detects plagiarism, fake resumes, ATS keyword stuffing, and phishing job posts.", 
-      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
-      color: "#ef4444", tag: "SECURITY", size: "small",
-      link: "/jobs/dashboard",
-      details: (
-        <div className="space-y-4">
-          <p className="text-sm font-medium leading-relaxed text-charcoal dark:text-gray-200">
-            Active threat scanning safeguards both job seekers and recruiters. Detects plagiarized experience, ATS white-text keyword stuffing, and unauthorized company impersonators.
-          </p>
-          <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-300">
-            <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-red-500 shrink-0" /> Cross-checks experience claims against verified template databases</li>
-            <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-red-500 shrink-0" /> Penalizes keyword stuffing & hidden white text</li>
-            <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-red-500 shrink-0" /> Recruiter company domain authentication</li>
-          </ul>
-        </div>
-      )
-    },
-    { 
       id: "developer-api",
       title: "Developer API", 
       description: "Full REST API with tiered subscriptions, rate limiting, and interactive documentation.", 

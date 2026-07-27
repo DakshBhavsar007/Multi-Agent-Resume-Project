@@ -13,7 +13,6 @@ from api.views import (
     ingest,
     apikey_auth,
     jobs,
-    protection,
     seeker_auth,
     seeker_resume,
     seeker_jobs,
@@ -216,12 +215,10 @@ urlpatterns = [
     path('api/v1/recruiter/reviews/<str:review_id>', reviews.recruiter_review_detail, name='recruiter-reviews-detail'),
     path('api/v1/recruiter/company-reviews/<str:review_id>', reviews.company_manage_review, name='company-manage-review'),
 
-    # ── Protection & Fraud Detection ──────────────────────────────────────────
+    # ── Parse / Match / Chat (API-key gated) ─────────────────────────────────
     path('api/v1/parse', parse.parse_resume, name='api-parse'),
     path('api/v1/match', parse.global_match, name='api-global-match'),
     path('api/v1/chat', parse.global_chat, name='api-global-chat'),
-    path('api/v1/protection/scan', protection.scan_portfolio, name='protection-scan'),
-    path('api/v1/protection/history', protection.get_scan_history, name='protection-history'),
 
     # ── Job Seeker Auth ────────────────────────────────────────────────────────
     path('api/v1/seeker/auth/register', seeker_auth.register, name='seeker-auth-register'),

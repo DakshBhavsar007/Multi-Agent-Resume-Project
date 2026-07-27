@@ -356,26 +356,7 @@ export const publicJobsAPI = {
   scanSafetyArbitrary: (payload) => req("POST", "/public/jobs/scan-safety", payload)
 };
 
-// PROTECTION / FRAUD DETECTION
-export const protectionAPI = {
-  scan: (payload) => {
-    if (payload instanceof FormData) {
-      return req("POST", "/protection/scan", payload, true);
-    }
-    if (payload && payload.file) {
-      const fd = new FormData();
-      fd.append("file", payload.file);
-      if (payload.scan_type) fd.append("scan_type", payload.scan_type);
-      if (payload.url) fd.append("url", payload.url);
-      if (payload.job_title) fd.append("job_title", payload.job_title);
-      if (payload.job_description) fd.append("job_description", payload.job_description);
-      if (payload.location) fd.append("location", payload.location);
-      return req("POST", "/protection/scan", fd, true);
-    }
-    return req("POST", "/protection/scan", payload);
-  },
-  history: () => req("GET", "/protection/history")
-};
+
 
 // ── SEEKER API ─────────────────────────────────────────────────────────────────
 // Uses a separate seeker_token from localStorage (never the recruiter JWT)

@@ -39,7 +39,7 @@ DEVELOPER_REVIEWS = [
 # ── Realistic Recruiter / Company Reviews (varied ratings 1-5) ───────────────
 RECRUITER_REVIEWS = [
     {"rating": 5, "text": "Between transformed our engineering hiring pipeline. The AI screening saved our team over 120 hours of manual resume review last quarter.", "is_featured": True},
-    {"rating": 5, "text": "Surgical precision in candidate ranking. The fraud detection caught three fabricated resumes that our senior recruiters missed completely.", "is_featured": True},
+    {"rating": 5, "text": "Surgical precision in candidate ranking. The AI screening caught three fabricated resumes that our senior recruiters missed completely.", "is_featured": True},
     {"rating": 4, "text": "High quality applicant pool with verified credentials. The trust badges give us confidence to fast-track candidates through interviews.", "is_featured": False},
     {"rating": 4, "text": "Custom MCQ and coding evaluation rounds were set up in under 5 minutes. The auto-grading accuracy is remarkably consistent.", "is_featured": False},
     {"rating": 3, "text": "Decent platform for mid-level hiring but struggled to attract senior architect candidates. The talent pool skews toward early-career professionals.", "is_featured": False},
