@@ -572,7 +572,7 @@ export default function DashboardLayout() {
               </span>
             </div>
             <Link to="/dashboard/settings" className="w-9 h-9 shrink-0 rounded-full overflow-hidden hover:shadow-sm transition block border border-black/5">
-              <CompanyLogo name={company?.name || 'Company'} logoPath={company?.logo_path} size={36} />
+              <CompanyLogo name={company?.name || 'Company'} logoPath={company?.logo_path || company?.logo || company?.logoPath || company?.avatar_path} size={36} />
             </Link>
           </div>
         </div>
