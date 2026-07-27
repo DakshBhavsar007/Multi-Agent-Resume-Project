@@ -24,6 +24,7 @@ export default function DashboardHome() {
   const navigate = useNavigate();
   const { company } = useAuthStore();
   const [companyReviews, setCompanyReviews] = React.useState([]);
+  const [showReviewModal, setShowReviewModal] = React.useState(false);
 
   const companyId = company?.id || company?.company_id;
 
