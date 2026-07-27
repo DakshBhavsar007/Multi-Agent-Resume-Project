@@ -125,6 +125,7 @@ export default function UnifiedReviewsSection({
         <div className="space-y-4">
           {sortedReviews.map((rev) => (
             <div key={rev.id} className={`rounded-2xl border p-5 space-y-3 ${rev.is_own ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-muted/30'}`}>
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {rev.author?.avatar_url || rev.author?.avatar_path ? (
                     <img
