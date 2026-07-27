@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Bookmark, Share2, Calendar, Briefcase, DollarSign, Users, CheckCircle2, ChevronRight, X, RefreshCw, AlertCircle, Award, Building, Lightbulb, Sparkles, MapPin, Key, Check, Bot, Phone, TrendingUp, Code, Star, Shield } from 'lucide-react';
 import { publicJobsAPI } from '../lib/api';
+import { CompanyLogo } from '../components/user/company-logo';
 import JobsNavbar from '../components/JobsNavbar';
 import ResumeUploadModal from '../components/ResumeUploadModal';
 import { toast } from 'react-hot-toast';
@@ -362,9 +363,7 @@ export default function JobDetailsPage() {
             {/* Header card matching inspiratio_ui5.jpeg top block */}
             <div className="bg-white border border-[#e6dfcd] p-6 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-[#f5f4ef] border border-[#e6dfcd] text-[#2563EB] text-xl font-bold rounded-2xl flex items-center justify-center uppercase shadow-inner">
-                  {job.company_name[0]}
-                </div>
+                <CompanyLogo name={job.company_name || job.company} logoPath={job.company_logo_path || job.logoPath} size={64} />
                 <div className="space-y-1">
                   <h1 className="text-2xl font-extrabold text-[#2A2A2A] leading-tight">{job.job_title}</h1>
                   <p className="text-sm text-[#5c5c5c] font-medium flex items-center gap-1.5">

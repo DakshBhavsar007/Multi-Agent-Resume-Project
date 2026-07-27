@@ -179,7 +179,8 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
   const languages = activeCandidate?.languages || rawData?.languages || [];
 
   const apiBase = API_HOST;
-  const photoUrl = activeCandidate?.photo_url ? (activeCandidate.photo_url.startsWith('http') || activeCandidate.photo_url.startsWith('data:') ? activeCandidate.photo_url : `${apiBase}${activeCandidate.photo_url}`) : null;
+  const rawPhoto = activeCandidate?.photo_url || activeCandidate?.avatar_path || activeCandidate?.avatar_url || candidate?.photo_url || candidate?.avatar_path || candidate?.avatar_url;
+  const photoUrl = rawPhoto ? (rawPhoto.startsWith('http') || rawPhoto.startsWith('data:') ? rawPhoto : `${apiBase}${rawPhoto.startsWith('/') ? '' : '/'}${rawPhoto}`) : null;
   const resumeUrl = activeCandidate?.resume_url ? (activeCandidate.resume_url.startsWith('http') ? activeCandidate.resume_url : `${apiBase}${activeCandidate.resume_url}`) : null;
 
   // Key Highlights logic

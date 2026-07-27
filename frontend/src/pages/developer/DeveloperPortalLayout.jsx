@@ -321,26 +321,51 @@ export default function DeveloperPortalLayout() {
         </div>
 
         {/* User Card - hide when collapsed */}
-        {!sidebarCollapsed ? (
-          <div className="p-3 border-t border-gray-200 dark:border-[#222226] bg-gray-50/50 dark:bg-zinc-900/50">
-             <UsageProgress />
+        {(() => {
+          const devAvatar = developer?.avatar_path || developer?.logo_path || developer?.avatar_url;
+          const apiBase = (import.meta.env?.VITE_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
+          const devAvatarUrl = devAvatar ? (devAvatar.startsWith('http') || devAvatar.startsWith('data:') ? devAvatar : `${apiBase}${devAvatar.startsWith('/') ? '' : '/'}${devAvatar}`) : null;
+          return !sidebarCollapsed ? (
+            <div className="p-3 border-t border-gray-200 dark:border-[#222226] bg-gray-50/50 dark:bg-zinc-900/50">
+              <UsageProgress />
               <div className="flex items-center gap-2 pt-3 mt-2 border-t border-gray-200/60">
-                <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter shrink-0 cursor-default">
-                  {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
-                </div>
+                {devAvatarUrl ? (
+                  <img
+                    src={devAvatarUrl}
+                    alt={company_name || "Developer"}
+                    className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter shrink-0 cursor-default">
+                    {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="text-xs font-bold truncate text-charcoal">{company_name || "Developer"}</span>
                   <span className="text-[10px] text-gray-500 truncate font-semibold">{developer?.email || "developer@example.com"}</span>
                 </div>
               </div>
-          </div>
-        ) : (
-          <div className="p-3 border-t border-gray-200 dark:border-[#222226] bg-gray-50/50 dark:bg-zinc-900/50 flex justify-center">
-            <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter cursor-default" title={company_name || "Developer"}>
-              {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="p-3 border-t border-gray-200 dark:border-[#222226] bg-gray-50/50 dark:bg-zinc-900/50 flex justify-center">
+              {devAvatarUrl ? (
+                <img
+                  src={devAvatarUrl}
+                  alt={company_name || "Developer"}
+                  className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0"
+                  title={company_name || "Developer"}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-bold text-sm tracking-tighter cursor-default" title={company_name || "Developer"}>
+                  {(company_name || developer?.email || "D").substring(0, 2).toUpperCase()}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
       </aside>
 
       {/* Main Content */}

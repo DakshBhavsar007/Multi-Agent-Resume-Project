@@ -1274,9 +1274,23 @@ export default function FraudDetectionPage() {
                       }`}
                     >
                       <td className="py-4 px-4 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#f5f4ef] border border-[#e6dfcd] text-[#2563EB] font-extrabold flex items-center justify-center uppercase shadow-inner shrink-0">
-                          {isJob ? "J" : (nameDisplay ? nameDisplay[0] : "C")}
-                        </div>
+                        {(() => {
+                          const candPhoto = cand.avatar_path || cand.photo_url || cand.logo_path;
+                          const apiBase = (import.meta.env?.VITE_API_URL || "http://127.0.0.1:8000/api/v1").replace("/api/v1", "");
+                          const candPhotoUrl = candPhoto ? (candPhoto.startsWith('http') || candPhoto.startsWith('data:') ? candPhoto : `${apiBase}${candPhoto.startsWith('/') ? '' : '/'}${candPhoto}`) : null;
+                          return candPhotoUrl ? (
+                            <img
+                              src={candPhotoUrl}
+                              alt={nameDisplay}
+                              className="w-9 h-9 rounded-full object-cover border border-[#e6dfcd] shrink-0"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-[#f5f4ef] border border-[#e6dfcd] text-[#2563EB] font-extrabold flex items-center justify-center uppercase shadow-inner shrink-0 text-xs">
+                              {isJob ? "J" : (nameDisplay ? nameDisplay[0] : "C")}
+                            </div>
+                          );
+                        })()}
                         <div>
                           <p className="font-bold text-[#2A2A2A]">{nameDisplay}</p>
                           <p className="text-[10px] text-gray-400 mt-0.5">

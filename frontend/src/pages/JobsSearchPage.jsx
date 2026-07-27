@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, SlidersHorizontal, Check, RefreshCw, X, Bookmark, FileText, Upload, Sparkles, Briefcase, DollarSign, Building, Key, AlertCircle, Lightbulb, Bot, Phone, TrendingUp, Code, Star } from 'lucide-react';
 import { publicJobsAPI } from '../lib/api';
+import { CompanyLogo } from '../components/user/company-logo';
 import JobsNavbar from '../components/JobsNavbar';
 import ResumeUploadModal from '../components/ResumeUploadModal';
 import { toast } from 'react-hot-toast';
@@ -648,9 +649,7 @@ export default function JobsSearchPage() {
                   >
                     {/* Job Info Left Side */}
                     <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-[#f5f4ef] border border-[#e6dfcd] text-[#2563EB] font-bold rounded-xl flex items-center justify-center uppercase shadow-inner shrink-0">
-                        {job.company_name[0]}
-                      </div>
+                      <CompanyLogo name={job.company_name} logoPath={job.company_logo_path || job.logo_path} size={48} />
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
                           <h3 className="font-bold text-base text-[#2A2A2A] hover:underline cursor-pointer" onClick={() => navigate(`/jobs/${job.id}`)}>
