@@ -161,6 +161,8 @@ CORS_ALLOW_HEADERS = [
     'X-Developer-Token',
     'x-seeker-token',
     'X-Seeker-Token',
+    'x-recruiter-token',
+    'X-Recruiter-Token',
 ]
 
 # Custom directory configs for uploading/photos
