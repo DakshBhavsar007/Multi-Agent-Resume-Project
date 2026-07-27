@@ -32,7 +32,21 @@ def chat(request, session_id):
         result = agent.chat(message, session_id, history)
 
         return JsonResponse(success_response(result))
+    except ValueError as ve:
+        err_msg = str(ve)
+        if "All providers failed" in err_msg or "quota" in err_msg.lower():
+            return JsonResponse(
+                error_response("AI Chatbot is temporarily unavailable due to LLM provider rate limits. Please try again in a few moments."),
+                status=503
+            )
+        return JsonResponse(error_response(f"Chat error: {err_msg}"), status=400)
     except Exception as e:
+        err_msg = str(e)
+        if "All providers failed" in err_msg or "quota" in err_msg.lower():
+            return JsonResponse(
+                error_response("AI Chatbot is temporarily unavailable due to LLM provider rate limits. Please try again in a few moments."),
+                status=503
+            )
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
 @csrf_exempt

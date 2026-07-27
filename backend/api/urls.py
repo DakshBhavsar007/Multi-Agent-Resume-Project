@@ -83,13 +83,13 @@ urlpatterns = [
     # ── Sessions ───────────────────────────────────────────────────────────────
     # session_root handles both GET (list) and POST (create)
     path('api/v1/sessions', sessions.session_root, name='sessions-root'),
+    path('api/v1/sessions/generate-jd', sessions.generate_jd, name='sessions-generate-jd'),
     # session_detail handles GET (retrieve), PATCH (update), DELETE (archive)
     path('api/v1/sessions/<str:session_id>', sessions.session_detail, name='sessions-detail'),
     path('api/v1/sessions/<str:session_id>/criteria', sessions.set_criteria, name='sessions-criteria'),
     path('api/v1/sessions/<str:session_id>/infer-skills', sessions.infer_skills, name='sessions-infer-skills'),
     # Frontend calls: POST /sessions/{id}/match-all
     path('api/v1/sessions/<str:session_id>/match-all', sessions.trigger_match_all, name='sessions-match-all'),
-    path('api/v1/sessions/generate-jd', sessions.generate_jd, name='sessions-generate-jd'),
 
     # ── Candidates ─────────────────────────────────────────────────────────────
     path('api/v1/sessions/<str:session_id>/candidates',

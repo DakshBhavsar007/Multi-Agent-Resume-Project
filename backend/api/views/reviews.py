@@ -12,6 +12,7 @@ import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg, Count
+from django.core.cache import cache
 
 from api.models import Review, JobSeekerAccount, Company, DeveloperAccount
 from api.views.seeker_auth import require_seeker_jwt
@@ -19,6 +20,14 @@ from api.decorators import require_developer_jwt, require_company_jwt
 from models.schemas import success_response, error_response
 
 logger = logging.getLogger(__name__)
+
+
+def _sanitize_avatar(url_or_path):
+    if not url_or_path or not isinstance(url_or_path, str):
+        return ""
+    if url_or_path.startswith("data:image/") or len(url_or_path) > 500:
+        return ""
+    return url_or_path
 
 
 def _extract_user_identity(request):
@@ -114,7 +123,7 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
 
             is_verified = bool(getattr(dev, "is_verified", True) or getattr(dev, "email_verified", True)) if dev else True
 
-            dev_avatar = getattr(dev, "avatar_path", "") if dev else ""
+            dev_avatar = _sanitize_avatar(getattr(dev, "avatar_path", "") if dev else "")
             author_info = {
                 "id": str(getattr(dev, "id", "")) if dev else str(getattr(review, "id", "")),
                 "full_name": dev_name,
@@ -132,7 +141,7 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
                 rec_name = rec_names[hash(str(getattr(review, "id", ""))) % len(rec_names)]
 
             is_verified = bool(getattr(rec, "email_verified", True)) if rec else True
-            rec_avatar = getattr(rec, "logo_path", "") if rec else ""
+            rec_avatar = _sanitize_avatar(getattr(rec, "logo_path", "") if rec else "")
 
             author_info = {
                 "id": str(getattr(rec, "id", "")) if rec else str(getattr(review, "id", "")),
@@ -151,7 +160,7 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
                 seeker_name = seeker_names[hash(str(getattr(review, "id", ""))) % len(seeker_names)]
 
             is_verified = bool(getattr(seeker, "email_verified", True) and getattr(seeker, "phone_verified", True)) if seeker else True
-            seeker_avatar = getattr(seeker, "avatar_path", "") if seeker else ""
+            seeker_avatar = _sanitize_avatar(getattr(seeker, "avatar_path", "") if seeker else "")
 
             author_info = {
                 "id": str(getattr(seeker, "id", "")) if seeker else str(getattr(review, "id", "")),
@@ -216,15 +225,31 @@ def public_list_reviews(request):
     try:
         review_type = request.GET.get("type")        # "platform" or "company"
         user_type   = request.GET.get("user_type")   # "job_seeker", "developer", "recruiter"
+        try:
+            limit = min(int(request.GET.get("limit", 20)), 50)
+        except (ValueError, TypeError):
+            limit = 20
+        try:
+            page = max(int(request.GET.get("page", 1)), 1)
+        except (ValueError, TypeError):
+            page = 1
+
+        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
+
+        cache_key = f"public_reviews_list_{review_type}_{user_type}_{limit}_{page}" if not current_user_id else None
+        if cache_key:
+            cached_res = cache.get(cache_key)
+            if cached_res:
+                return JsonResponse(cached_res)
 
         # Safely query reviews without breaking if developer_id or recruiter_id columns are missing in DB
         try:
             qs = Review.objects.all().select_related("seeker", "developer", "recruiter", "company")
-            raw_reviews = list(qs.order_by("-is_featured", "-created_at")[:50])
+            raw_reviews = list(qs.order_by("-is_featured", "-created_at")[:100])
         except Exception as query_err:
             logger.warning(f"Fallback query for reviews without developer/recruiter joins: {query_err}")
             qs = Review.objects.all().select_related("seeker", "company")
-            raw_reviews = list(qs.order_by("-is_featured", "-created_at")[:50])
+            raw_reviews = list(qs.order_by("-is_featured", "-created_at")[:100])
 
         if review_type == "platform":
             raw_reviews = [r for r in raw_reviews if getattr(r, "company_id", None) is None]
@@ -234,7 +259,6 @@ def public_list_reviews(request):
         if user_type in ["job_seeker", "developer", "recruiter"]:
             raw_reviews = [r for r in raw_reviews if getattr(r, "user_type", "job_seeker") == user_type]
 
-        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
         data = []
         for r in raw_reviews:
             try:
@@ -253,14 +277,26 @@ def public_list_reviews(request):
         total_comps = Company.objects.count()
         total_prof = total_seekers + total_devs + total_comps
 
-        return JsonResponse(success_response({
-            "reviews": data,
+        paged_data = data[(page - 1) * limit : page * limit]
+
+        resp_payload = success_response({
+            "reviews": paged_data,
             "stats": {
                 "avg_rating": avg_rating,
                 "total_reviews": len(data),
                 "total_professionals": max(total_prof, len(data), 1),
+            },
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total": len(data)
             }
-        }))
+        })
+
+        if cache_key:
+            cache.set(cache_key, resp_payload, 60)
+
+        return JsonResponse(resp_payload)
     except Exception as e:
         logger.error(f"Error in public_list_reviews: {e}")
         return JsonResponse(success_response({
@@ -285,32 +321,60 @@ def public_company_reviews(request, company_id):
             return JsonResponse(error_response("Company not found"), status=404)
 
         try:
+            limit = min(int(request.GET.get("limit", 20)), 50)
+        except (ValueError, TypeError):
+            limit = 20
+        try:
+            page = max(int(request.GET.get("page", 1)), 1)
+        except (ValueError, TypeError):
+            page = 1
+
+        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
+
+        cache_key = f"public_company_reviews_{company_id}_{limit}_{page}" if not current_user_id else None
+        if cache_key:
+            cached_res = cache.get(cache_key)
+            if cached_res:
+                return JsonResponse(cached_res)
+
+        try:
             reviews = list(
                 Review.objects
                 .filter(company=company)
                 .select_related("seeker", "developer", "recruiter")
-                .order_by("-created_at")[:50]
+                .order_by("-created_at")[:100]
             )
         except Exception:
             reviews = list(
                 Review.objects
                 .filter(company=company)
                 .select_related("seeker")
-                .order_by("-created_at")[:50]
+                .order_by("-created_at")[:100]
             )
 
-        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
         data = [_serialize_review(r, current_user_id, current_user_type, active_identities) for r in reviews]
 
         agg = Review.objects.filter(company=company).aggregate(
             avg_rating=Avg("rating"), total=Count("id")
         )
 
-        return JsonResponse(success_response({
-            "reviews": data,
+        paged_data = data[(page - 1) * limit : page * limit]
+
+        resp_payload = success_response({
+            "reviews": paged_data,
             "avg_rating": round(agg["avg_rating"] or (company.rating or 4.5), 1),
             "total_reviews": agg["total"] or 0,
-        }))
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total": agg["total"] or len(data)
+            }
+        })
+
+        if cache_key:
+            cache.set(cache_key, resp_payload, 60)
+
+        return JsonResponse(resp_payload)
     except Exception as e:
         logger.error(f"Error in public_company_reviews: {e}", exc_info=True)
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

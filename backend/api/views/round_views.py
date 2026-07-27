@@ -192,10 +192,71 @@ Return ONLY valid JSON in this format:
                 }
             )
             problems_to_save.append({"slug": problem.slug, "difficulty": problem.difficulty})
+
+        if not problems_to_save:
+            return _fallback_coding_problems(job_title)
+
         return problems_to_save
     except Exception as e:
-        logger.error("generate_coding_problems_for_job failed: %s", e)
-        return None
+        logger.error("generate_coding_problems_for_job failed, using fallback problems: %s", e)
+        return _fallback_coding_problems(job_title)
+
+
+def _fallback_coding_problems(job_title):
+    from api.models import CodingProblem
+    fallback_data = [
+        {
+            "title": f"Array Two Sum - {job_title or 'Engineering'}",
+            "slug": "two-sum-challenge",
+            "difficulty": "easy",
+            "description": "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.",
+            "examples": [{"input": "nums = [2,7,11,15], target = 9", "output": "[0,1]"}],
+            "constraints": ["2 <= nums.length <= 10^4", "-10^9 <= nums[i] <= 10^9"],
+            "starter_code": {
+                "python": "def two_sum(nums, target):\n    # Write your solution here\n    pass",
+                "javascript": "function twoSum(nums, target) {\n    // Write your solution here\n}"
+            },
+            "test_cases": [
+                {"input": {"nums": [2, 7, 11, 15], "target": 9}, "expected_output": [0, 1]},
+                {"input": {"nums": [3, 2, 4], "target": 6}, "expected_output": [1, 2]}
+            ],
+            "tags": ["array", "hash-table"]
+        },
+        {
+            "title": f"Valid Parentheses - {job_title or 'Engineering'}",
+            "slug": "valid-parentheses-challenge",
+            "difficulty": "medium",
+            "description": "Given a string `s` containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.",
+            "examples": [{"input": "s = '()[]{}'", "output": "true"}],
+            "constraints": ["1 <= s.length <= 10^4"],
+            "starter_code": {
+                "python": "def is_valid(s):\n    # Write your solution here\n    pass",
+                "javascript": "function isValid(s) {\n    // Write your solution here\n}"
+            },
+            "test_cases": [
+                {"input": {"s": "()[]{}"}, "expected_output": True},
+                {"input": {"s": "(]"}, "expected_output": False}
+            ],
+            "tags": ["stack", "string"]
+        }
+    ]
+    saved = []
+    for item in fallback_data:
+        problem, _ = CodingProblem.objects.get_or_create(
+            slug=item["slug"],
+            defaults={
+                "title": item["title"],
+                "difficulty": item["difficulty"],
+                "description": item["description"],
+                "examples": item["examples"],
+                "constraints": item["constraints"],
+                "starter_code": item["starter_code"],
+                "test_cases": item["test_cases"],
+                "tags": item["tags"]
+            }
+        )
+        saved.append({"slug": problem.slug, "difficulty": problem.difficulty})
+    return saved
 
 
 def auto_progress_candidate(candidate, session, round_score):
@@ -319,8 +380,11 @@ def create_session_rounds(request, session_id):
                         coding_problems = custom_probs
                 except Exception as e:
                     logger.error("Failed to generate custom coding problems: %s", e)
+                    coding_problems = _fallback_coding_problems(session.job_title)
 
-        # Fallback to empty list if coding_problems is None to satisfy SQLite NOT NULL constraint
+            if not coding_problems:
+                coding_problems = _fallback_coding_problems(session.job_title)
+
         if coding_problems is None:
             coding_problems = []
 

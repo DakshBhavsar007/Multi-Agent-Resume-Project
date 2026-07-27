@@ -136,7 +136,9 @@ class SkillInferenceAgent:
             "salary_min": sal_min,
             "salary_max": sal_max,
             "salary_currency": sal_curr,
-            "employment_type": emp_type
+            "employment_type": emp_type,
+            "ai_degraded": True,
+            "is_fallback": True
         }
 
     async def infer_from_jd(self, job_description: str) -> dict:
@@ -210,6 +212,8 @@ class SkillInferenceAgent:
             if not parsed.get("salary_currency") and fallback["salary_currency"]:
                 parsed["salary_currency"] = fallback["salary_currency"]
 
+            parsed["ai_degraded"] = False
+            parsed["is_fallback"] = False
             return parsed
             
         except Exception as e:
