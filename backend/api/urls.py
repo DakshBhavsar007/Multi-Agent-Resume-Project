@@ -214,6 +214,7 @@ urlpatterns = [
     path('api/v1/developer/reviews/<str:review_id>', reviews.developer_review_detail, name='dev-reviews-detail'),
     path('api/v1/recruiter/reviews', reviews.recruiter_reviews_root, name='recruiter-reviews-root'),
     path('api/v1/recruiter/reviews/<str:review_id>', reviews.recruiter_review_detail, name='recruiter-reviews-detail'),
+    path('api/v1/recruiter/company-reviews/<str:review_id>', reviews.company_manage_review, name='company-manage-review'),
 
     # ── Protection & Fraud Detection ──────────────────────────────────────────
     path('api/v1/parse', parse.parse_resume, name='api-parse'),

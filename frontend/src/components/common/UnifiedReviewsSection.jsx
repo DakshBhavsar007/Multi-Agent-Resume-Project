@@ -1,21 +1,37 @@
 import React, { useState } from "react";
-import { Star, ShieldCheck, Terminal, Pen, Trash2 } from "lucide-react";
+import { Star, ShieldCheck, Terminal, Pen, Trash2, MessageSquareQuote } from "lucide-react";
 import VerifiedBadge from "../VerifiedBadge";
 import { toast } from "react-hot-toast";
+import { recruiterAPI } from "../../lib/api";
 
-export default function UnifiedReviewsSection({ reviews = [], targetId, ownerType = "developer", onReplySuccess }) {
+export default function UnifiedReviewsSection({
+  reviews = [],
+  targetId,
+  ownerType = "developer",
+  onEditReview,
+  onDeleteReview,
+  onReplySuccess,
+  isCompanyOwner = false,
+}) {
   const [selectedRating, setSelectedRating] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
   const [replyingReviewId, setReplyingReviewId] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [submittingReply, setSubmittingReply] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState(null);
 
   const filteredReviews = reviews.filter((r) => {
     if (selectedRating === "all") return true;
     return String(r.rating) === String(selectedRating);
   });
 
+  // Sort: own reviews first, then by user preference
   const sortedReviews = [...filteredReviews].sort((a, b) => {
+    // Own reviews always first
+    const ownA = a.is_own ? 1 : 0;
+    const ownB = b.is_own ? 1 : 0;
+    if (ownA !== ownB) return ownB - ownA;
+
     if (sortBy === "highest") return (b.rating || 5) - (a.rating || 5);
     if (sortBy === "lowest") return (a.rating || 5) - (b.rating || 5);
     return new Date(b.created_at || 0) - new Date(a.created_at || 0);
@@ -25,19 +41,7 @@ export default function UnifiedReviewsSection({ reviews = [], targetId, ownerTyp
     if (!replyText.trim()) return toast.error("Reply text is required");
     setSubmittingReply(true);
     try {
-      const jwt = localStorage.getItem("portal_jwt") || localStorage.getItem("vish_jwt");
-      const headers = { "Content-Type": "application/json" };
-      if (jwt) headers["Authorization"] = `Bearer ${jwt}`;
-
-      const res = await fetch(`/api/v1/reviews/${reviewId}/reply`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ reply: replyText.trim() })
-      });
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || "Failed to submit reply");
-      }
+      await recruiterAPI.replyToCompanyReview(reviewId, replyText.trim());
       toast.success("Official response published!");
       setReplyingReviewId(null);
       setReplyText("");
@@ -46,6 +50,20 @@ export default function UnifiedReviewsSection({ reviews = [], targetId, ownerTyp
       toast.error(err.message || "Failed to submit reply");
     } finally {
       setSubmittingReply(false);
+    }
+  };
+
+  const handleCompanyDelete = async (rev) => {
+    if (!window.confirm("Are you sure you want to remove this review from your company page?")) return;
+    setDeletingReviewId(rev.id);
+    try {
+      await recruiterAPI.deleteCompanyReview(rev.id);
+      toast.success("Review removed");
+      if (onReplySuccess) onReplySuccess(); // refresh
+    } catch (err) {
+      toast.error(err.message || "Failed to remove review");
+    } finally {
+      setDeletingReviewId(null);
     }
   };
 
@@ -106,7 +124,7 @@ export default function UnifiedReviewsSection({ reviews = [], targetId, ownerTyp
       {sortedReviews.length > 0 ? (
         <div className="space-y-4">
           {sortedReviews.map((rev) => (
-            <div key={rev.id} className="rounded-2xl border border-border/60 bg-muted/30 p-5 space-y-3">
+            <div key={rev.id} className={`rounded-2xl border p-5 space-y-3 ${rev.is_own ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-muted/30'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center font-black text-amber-600 text-xs">
@@ -116,12 +134,16 @@ export default function UnifiedReviewsSection({ reviews = [], targetId, ownerTyp
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold text-foreground">{rev.author?.full_name || "Verified Member"}</span>
                       {rev.author?.is_verified && <VerifiedBadge size={14} />}
+                      {rev.is_own && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">You</span>
+                      )}
                     </div>
                     <span className="text-[10px] text-muted-foreground">{rev.author?.role_badge || "Member"}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {/* Author's own edit/delete buttons */}
                   {rev.is_own && (
                     <div className="flex items-center gap-1">
                       {onEditReview && (
@@ -146,6 +168,21 @@ export default function UnifiedReviewsSection({ reviews = [], targetId, ownerTyp
                       )}
                     </div>
                   )}
+
+                  {/* Company owner: delete reviews about their company (not their own) */}
+                  {isCompanyOwner && !rev.is_own && rev.is_company_owner && (
+                    <button
+                      type="button"
+                      onClick={() => handleCompanyDelete(rev)}
+                      disabled={deletingReviewId === rev.id}
+                      className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-colors text-[10px] font-bold inline-flex items-center gap-1"
+                      title="Remove this review (company owner)"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      {deletingReviewId === rev.id ? "..." : "Remove"}
+                    </button>
+                  )}
+
                   <div className="flex items-center gap-0.5 text-amber-500">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
@@ -177,45 +214,92 @@ export default function UnifiedReviewsSection({ reviews = [], targetId, ownerTyp
                 </div>
               ) : (
                 <div className="pt-1">
-                  {replyingReviewId === rev.id ? (
-                    <div className="mt-2 p-3 rounded-xl bg-card border border-border space-y-2">
-                      <textarea
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        placeholder="Write your official response..."
-                        rows={2}
-                        className="w-full p-2 bg-muted/40 border border-border rounded-lg text-xs font-medium focus:outline-none"
-                      />
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setReplyingReviewId(null)}
-                          className="px-3 py-1 rounded-lg text-xs font-semibold text-muted-foreground hover:bg-muted"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleReplySubmit(rev.id)}
-                          disabled={submittingReply}
-                          className="px-3 py-1 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                          {submittingReply ? "Publishing..." : "Publish Reply"}
-                        </button>
+                  {/* Company owner can reply to reviews about their company */}
+                  {isCompanyOwner && rev.is_company_owner && !rev.is_own ? (
+                    replyingReviewId === rev.id ? (
+                      <div className="mt-2 p-3 rounded-xl bg-card border border-border space-y-2">
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Write your official response..."
+                          rows={2}
+                          maxLength={1000}
+                          className="w-full p-2 bg-muted/40 border border-border rounded-lg text-xs font-medium focus:outline-none"
+                        />
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">{replyText.length}/1000</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setReplyingReviewId(null)}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold text-muted-foreground hover:bg-muted"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleReplySubmit(rev.id)}
+                              disabled={submittingReply}
+                              className="px-3 py-1 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90"
+                            >
+                              {submittingReply ? "Publishing..." : "Publish Reply"}
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReplyingReviewId(rev.id);
-                        setReplyText("");
-                      }}
-                      className="text-[11px] font-bold text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      <Terminal className="h-3 w-3" /> Reply as Owner
-                    </button>
-                  )}
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyingReviewId(rev.id);
+                          setReplyText("");
+                        }}
+                        className="text-[11px] font-bold text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        <MessageSquareQuote className="h-3 w-3" /> Reply as Company Owner
+                      </button>
+                    )
+                  ) : ownerType === "developer" && !rev.is_own ? (
+                    replyingReviewId === rev.id ? (
+                      <div className="mt-2 p-3 rounded-xl bg-card border border-border space-y-2">
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Write your official response..."
+                          rows={2}
+                          className="w-full p-2 bg-muted/40 border border-border rounded-lg text-xs font-medium focus:outline-none"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setReplyingReviewId(null)}
+                            className="px-3 py-1 rounded-lg text-xs font-semibold text-muted-foreground hover:bg-muted"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleReplySubmit(rev.id)}
+                            disabled={submittingReply}
+                            className="px-3 py-1 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90"
+                          >
+                            {submittingReply ? "Publishing..." : "Publish Reply"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyingReviewId(rev.id);
+                          setReplyText("");
+                        }}
+                        className="text-[11px] font-bold text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        <Terminal className="h-3 w-3" /> Reply as Owner
+                      </button>
+                    )
+                  ) : null}
                 </div>
               )}
             </div>

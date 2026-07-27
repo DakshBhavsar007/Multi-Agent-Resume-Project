@@ -101,6 +101,16 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
         </div>
 
         <p className="testimonial-quote">"{t.quote}"</p>
+
+        {/* Official Response */}
+        {t.officialReply && (
+          <div className="mt-2 mb-1 p-2.5 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/15 text-[11px]">
+            <div className="font-bold text-blue-600 dark:text-blue-400 inline-flex items-center gap-1 mb-1">
+              <ShieldCheck size={12} /> Official Response
+            </div>
+            <p className="text-gray-600 dark:text-gray-400">{t.officialReply}</p>
+          </div>
+        )}
         
         <div className="testimonial-author flex items-center justify-between w-full">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -120,6 +130,7 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
                   <h4 className="flex items-center gap-1 font-bold text-sm text-gray-900 dark:text-white truncate">
                     {t.author}
                     {t.isVerified && <VerifiedBadge size={14} />}
+                    {t.isOwn && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">You</span>}
                   </h4>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t.role}</p>
                   {t.roleBadge && (
@@ -137,6 +148,7 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
                   <h4 className="flex items-center gap-1 font-bold text-sm text-gray-900 dark:text-white truncate">
                     {t.author}
                     {t.isVerified && <VerifiedBadge size={14} />}
+                    {t.isOwn && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">You</span>}
                   </h4>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t.role}</p>
                   {t.roleBadge && (
@@ -217,6 +229,7 @@ const Testimonials = ({ userTypeFilter }) => {
             user_type: r.user_type,
             createdAt: r.created_at,
             isOwn: r.is_own,
+            officialReply: r.official_reply || null,
             rawReview: r,
             color: colors[idx % colors.length],
             size: sizes[idx % sizes.length],

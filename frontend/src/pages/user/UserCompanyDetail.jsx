@@ -27,6 +27,12 @@ export default function UserCompanyDetail() {
   })();
   const isVerified = !!(seekerData?.email_verified && seekerData?.phone_verified);
 
+  // Check if current user is company owner (recruiter)
+  const recruiterCompany = (() => {
+    try { return JSON.parse(localStorage.getItem('vish_company') || 'null'); } catch { return null; }
+  })();
+  const isCompanyOwner = !!(recruiterCompany && String(recruiterCompany.id) === String(companyId));
+
   useEffect(() => {
     if (!companyId) return;
     publicAPI.getCompanyReviews(companyId)
@@ -304,6 +310,7 @@ export default function UserCompanyDetail() {
                   reviews={reviews} 
                   targetId={companyId} 
                   ownerType="company" 
+                  isCompanyOwner={isCompanyOwner}
                   onEditReview={(rev) => { setEditingReview(rev); setShowReviewModal(true); }}
                   onDeleteReview={async (rev) => {
                     try {
@@ -313,6 +320,12 @@ export default function UserCompanyDetail() {
                     } catch (err) {
                       toast.error(err.message || 'Failed to delete review');
                     }
+                  }}
+                  onReplySuccess={() => {
+                    // Reload reviews after reply or company delete
+                    publicAPI.getCompanyReviews(companyId)
+                      .then((data) => setReviews(data.reviews || []))
+                      .catch(() => {});
                   }}
                 />
               </div>

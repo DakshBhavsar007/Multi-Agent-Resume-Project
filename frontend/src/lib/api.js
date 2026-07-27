@@ -580,9 +580,18 @@ async function publicReq(method, path) {
     const seekerToken = localStorage.getItem('vish_seeker_token');
     const recruiterToken = localStorage.getItem('vish_jwt');
     const developerToken = localStorage.getItem('portal_jwt');
+
+    // Send primary token as Authorization
     const token = seekerToken || recruiterToken || developerToken;
     if (token && token !== "null" && token !== "undefined") {
       headers['Authorization'] = `Bearer ${String(token).replace(/[^\x20-\x7E]/g, "")}`;
+    }
+    // Send additional tokens for multi-identity detection (is_own, sorting)
+    if (seekerToken && seekerToken !== "null" && seekerToken !== "undefined") {
+      headers['X-Seeker-Token'] = String(seekerToken).replace(/[^\x20-\x7E]/g, "");
+    }
+    if (developerToken && developerToken !== "null" && developerToken !== "undefined") {
+      headers['X-Developer-Token'] = String(developerToken).replace(/[^\x20-\x7E]/g, "");
     }
   }
   const opts = {
@@ -707,6 +716,50 @@ export const recruiterAPI = {
   createReview: (b) => req('POST', '/recruiter/reviews', b),
   updateReview: (id, b) => req('PATCH', `/recruiter/reviews/${id}`, b),
   deleteReview: (id) => req('DELETE', `/recruiter/reviews/${id}`),
+  // Company owner: manage reviews about their company
+  deleteCompanyReview: (id) => req('DELETE', `/recruiter/company-reviews/${id}`),
+  replyToCompanyReview: (id, reply) => req('POST', `/recruiter/company-reviews/${id}`, { reply }),
+};
+
+export const developerReviewAPI = {
+  createReview: (b) => {
+    const token = localStorage.getItem('portal_jwt');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && token !== 'null' && token !== 'undefined') {
+      headers['Authorization'] = `Bearer ${String(token).replace(/[^\x20-\x7E]/g, "")}`;
+      headers['X-Developer-Token'] = String(token).replace(/[^\x20-\x7E]/g, "");
+    }
+    return fetch(`${API_HOST}/api/v1/developer/reviews`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(b),
+    }).then(r => r.json()).then(d => { if (!d.success) throw new Error(d.error || 'Failed'); return d.data; });
+  },
+  updateReview: (id, b) => {
+    const token = localStorage.getItem('portal_jwt');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && token !== 'null' && token !== 'undefined') {
+      headers['Authorization'] = `Bearer ${String(token).replace(/[^\x20-\x7E]/g, "")}`;
+      headers['X-Developer-Token'] = String(token).replace(/[^\x20-\x7E]/g, "");
+    }
+    return fetch(`${API_HOST}/api/v1/developer/reviews/${id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(b),
+    }).then(r => r.json()).then(d => { if (!d.success) throw new Error(d.error || 'Failed'); return d.data; });
+  },
+  deleteReview: (id) => {
+    const token = localStorage.getItem('portal_jwt');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && token !== 'null' && token !== 'undefined') {
+      headers['Authorization'] = `Bearer ${String(token).replace(/[^\x20-\x7E]/g, "")}`;
+      headers['X-Developer-Token'] = String(token).replace(/[^\x20-\x7E]/g, "");
+    }
+    return fetch(`${API_HOST}/api/v1/developer/reviews/${id}`, {
+      method: 'DELETE',
+      headers,
+    }).then(r => r.json()).then(d => { if (!d.success) throw new Error(d.error || 'Failed'); return d.data; });
+  },
 };
 
 

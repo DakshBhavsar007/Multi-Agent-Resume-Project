@@ -170,6 +170,12 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
     created_at_val = getattr(review, "created_at", None)
     updated_at_val = getattr(review, "updated_at", None)
 
+    # Check if current user is the owner of the target company (for Reply/Delete)
+    is_company_owner = False
+    if company_id_val and active_identities:
+        if str(company_id_val) in active_identities:
+            is_company_owner = True
+
     return {
         "id": str(getattr(review, "id", "")),
         "rating": getattr(review, "rating", 5),
@@ -184,6 +190,7 @@ def _serialize_review(review, current_user_id=None, current_user_type=None, acti
         "created_at": created_at_val.isoformat() if created_at_val else "",
         "updated_at": updated_at_val.isoformat() if updated_at_val else "",
         "is_own": is_own,
+        "is_company_owner": is_company_owner,
         "author": author_info,
     }
 
@@ -622,6 +629,52 @@ def recruiter_review_detail(request, review_id):
     elif request.method == "DELETE":
         review.delete()
         return JsonResponse(success_response({"message": "Review deleted"}))
+
+    return JsonResponse(error_response("Method not allowed"), status=405)
+
+
+# ── Company Owner: Delete & Reply to Reviews About Their Company ──────────────
+
+@csrf_exempt
+@require_company_jwt
+def company_manage_review(request, review_id):
+    """
+    DELETE /api/v1/recruiter/company-reviews/<review_id> — company owner deletes a review about their company.
+    POST   /api/v1/recruiter/company-reviews/<review_id> — company owner replies to a review about their company.
+    """
+    company = request.company
+    review = Review.objects.filter(id=review_id).first()
+    if not review:
+        return JsonResponse(error_response("Review not found"), status=404)
+
+    # Company can only manage reviews that are ABOUT their company
+    if not review.company_id or str(review.company_id) != str(company.id):
+        return JsonResponse(error_response("You can only manage reviews about your company"), status=403)
+
+    if request.method == "DELETE":
+        review.delete()
+        return JsonResponse(success_response({"message": "Review removed by company owner"}))
+
+    elif request.method == "POST":
+        # Official reply
+        try:
+            body = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse(error_response("Invalid JSON body"), status=400)
+
+        reply_text = body.get("reply", "").strip() if isinstance(body.get("reply"), str) else ""
+        if not reply_text:
+            return JsonResponse(error_response("Reply text is required"), status=400)
+        if len(reply_text) > 1000:
+            return JsonResponse(error_response("Reply must be under 1000 characters"), status=400)
+
+        from django.utils import timezone as tz
+        review.official_reply = reply_text
+        review.official_reply_at = tz.now()
+        review.save()
+
+        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
+        return JsonResponse(success_response(_serialize_review(review, current_user_id, current_user_type, active_identities)))
 
     return JsonResponse(error_response("Method not allowed"), status=405)
 
