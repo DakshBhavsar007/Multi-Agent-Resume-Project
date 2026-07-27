@@ -270,25 +270,49 @@ export default function NewSessionPage() {
       setLastAnalyzedJD(jdText);
       
       setFormData(prev => {
-        const title = inferred.inferred_role || prev.job_title || "Draft";
-        const name = prev.name || `${title} Session`;
+        const isValidInferredRole = inferred.inferred_role && inferred.inferred_role !== "Unknown" && inferred.inferred_role.trim() !== "";
+        
+        let title = prev.job_title;
+        if (isValidInferredRole) {
+          title = inferred.inferred_role;
+        } else if (title === "Unknown") {
+          title = "";
+        }
 
-        // Detect currency: if JD has ₹ / LPA symbols or inferred currency is INR → INR, else as returned
-        const inferredCurrency = inferred.salary_currency; // "INR" | "USD" | "GBP" | "EUR" | null
+        let name = prev.name;
+        if (!name || name === "Unknown Session" || name === "Draft Session" || name.endsWith(" Session")) {
+          if (title) {
+            name = `${title} Session`;
+          }
+        }
+
+        let inferredCurrency = inferred.salary_currency;
+        if (!inferredCurrency && (jdText.includes("₹") || jdText.includes("LPA") || (inferred.salary_range && (inferred.salary_range.includes("₹") || inferred.salary_range.includes("LPA"))))) {
+          inferredCurrency = "INR";
+        }
         const validCurrencies = ["INR", "USD", "GBP", "EUR"];
         const currency = validCurrencies.includes(inferredCurrency) ? inferredCurrency : prev.salary_currency;
 
+        let salMin = inferred.salary_min != null ? String(inferred.salary_min) : prev.salary_min;
+        let salMax = inferred.salary_max != null ? String(inferred.salary_max) : prev.salary_max;
+        if ((!salMin || !salMax) && inferred.salary_range) {
+          const matchLpa = inferred.salary_range.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(?:LPA|L|lakhs?)/i);
+          if (matchLpa) {
+            if (!salMin) salMin = matchLpa[1];
+            if (!salMax) salMax = matchLpa[2];
+          }
+        }
+
         return {
           ...prev,
-          name,
-          job_title: title,
-          required_skills: inferred.required_skills || [],
-          nice_to_have: inferred.nice_to_have_skills || [],
-          preferred_locations: inferred.preferred_locations || [],
-          min_experience: inferred.minimum_experience_years || 0,
-          // Salary auto-fill — only override if AI actually extracted salary
-          salary_min: inferred.salary_min != null ? String(inferred.salary_min) : prev.salary_min,
-          salary_max: inferred.salary_max != null ? String(inferred.salary_max) : prev.salary_max,
+          name: name || prev.name,
+          job_title: title || prev.job_title,
+          required_skills: (inferred.required_skills && inferred.required_skills.length > 0) ? inferred.required_skills : prev.required_skills,
+          nice_to_have: (inferred.nice_to_have_skills && inferred.nice_to_have_skills.length > 0) ? inferred.nice_to_have_skills : prev.nice_to_have,
+          preferred_locations: (inferred.preferred_locations && inferred.preferred_locations.length > 0) ? inferred.preferred_locations : prev.preferred_locations,
+          min_experience: inferred.minimum_experience_years !== undefined ? inferred.minimum_experience_years : prev.min_experience,
+          salary_min: salMin,
+          salary_max: salMax,
           salary_currency: currency
         };
       });
@@ -314,8 +338,6 @@ export default function NewSessionPage() {
     if (!jd || !jd.trim()) {
       setFormData(prev => ({
         ...prev,
-        name: "",
-        job_title: "",
         required_skills: [],
         nice_to_have: [],
         preferred_locations: [],
@@ -327,17 +349,6 @@ export default function NewSessionPage() {
     }
 
     if (!isAdvancedJD(jd)) {
-      setFormData(prev => ({
-        ...prev,
-        name: "",
-        job_title: "",
-        required_skills: [],
-        nice_to_have: [],
-        preferred_locations: [],
-        min_experience: 0
-      }));
-      setInferredData(null);
-      setLastAnalyzedJD("");
       return;
     }
 
@@ -590,7 +601,7 @@ export default function NewSessionPage() {
                 <div className="mt-4 border-[1.5px] border-green-200 bg-green-50 rounded-xl p-4">
                   <div className="text-green-800 font-medium text-sm mb-3 flex items-center gap-1.5">
                     <Check className="w-4 h-4 text-green-600 shrink-0" />
-                    <span>AI found requirements for: {formData.job_title}</span>
+                    <span>AI found requirements for: {(formData.job_title && formData.job_title !== "Unknown") ? formData.job_title : (formData.name && formData.name !== "Unknown Session" ? formData.name : "this role")}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.required_skills.map((s, i) => (

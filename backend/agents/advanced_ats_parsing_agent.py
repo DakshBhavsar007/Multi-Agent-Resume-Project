@@ -417,7 +417,9 @@ class AdvancedAtsParsingAgent:
                         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
                         max_retries=0
                     )
-                    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+                    if "2.5" in gemini_model:
+                        gemini_model = "gemini-2.0-flash"
                     masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
                     print(f"[RESUME PARSER] Active Keys: {len(active_gemini_keys)}/{len(all_gemini_keys)}. Trying key {masked_key} with model {gemini_model}", flush=True)
 

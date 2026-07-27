@@ -2,6 +2,8 @@ import os
 import logging
 import time
 import datetime
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
@@ -9,6 +11,21 @@ logger = logging.getLogger(__name__)
 # Pacific Time offset (UTC-7 during PDT, UTC-8 during PST)
 # Google resets Gemini quota at midnight Pacific Time
 _PT_UTC_OFFSET_HOURS = -7  # PDT (summer); adjust to -8 for PST if needed
+
+_db_executor = ThreadPoolExecutor(max_workers=4)
+
+
+def _run_sync_in_thread(func, *args, **kwargs):
+    """Executes a synchronous function in a separate thread if an async event loop is running, preventing SynchronousOnlyOperation."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        return _db_executor.submit(func, *args, **kwargs).result()
+    else:
+        return func(*args, **kwargs)
 
 
 def _get_pacific_date():
@@ -90,13 +107,15 @@ _seed_done = False
 
 def _ensure_seeded():
     """Ensure DB is seeded on first access. Called lazily."""
-    global _seed_done
-    if not _seed_done:
-        try:
-            _seed_from_env()
-        except Exception as e:
-            logger.warning("DB seed skipped (tables may not exist yet): %s", e)
-        _seed_done = True
+    def _inner():
+        global _seed_done
+        if not _seed_done:
+            try:
+                _seed_from_env()
+            except Exception as e:
+                logger.warning("DB seed skipped (tables may not exist yet): %s", e)
+            _seed_done = True
+    _run_sync_in_thread(_inner)
 
 
 def get_agent_config(agent_name: str):
@@ -105,15 +124,17 @@ def get_agent_config(agent_name: str):
     Returns (primary_provider, fallback_provider) tuple.
     Falls back to ('gemini', 'groq') if not found.
     """
-    _ensure_seeded()
-    try:
-        from api.models import AgentModelConfig
-        config = AgentModelConfig.objects.filter(agent_name=agent_name, is_active=True).first()
-        if config:
-            return (config.primary_provider, config.fallback_provider)
-    except Exception as e:
-        logger.warning("Failed to fetch agent config for %s: %s", agent_name, e)
-    return ("gemini", "groq")
+    def _inner():
+        _ensure_seeded()
+        try:
+            from api.models import AgentModelConfig
+            config = AgentModelConfig.objects.filter(agent_name=agent_name, is_active=True).first()
+            if config:
+                return (config.primary_provider, config.fallback_provider)
+        except Exception as e:
+            logger.warning("Failed to fetch agent config for %s: %s", agent_name, e)
+        return ("gemini", "groq")
+    return _run_sync_in_thread(_inner)
 
 
 def get_available_gemini_key():
@@ -122,63 +143,71 @@ def get_available_gemini_key():
     Performs lazy Pacific Time midnight reset.
     Returns (None, None) if no keys are available.
     """
-    _ensure_seeded()
-    try:
-        from api.models import GeminiProject, GeminiApiKey
+    def _inner():
+        _ensure_seeded()
+        try:
+            from api.models import GeminiProject, GeminiApiKey
 
-        today_pt = _get_pacific_date()
-        projects = GeminiProject.objects.filter(is_active=True).order_by('daily_usage')
+            today_pt = _get_pacific_date()
+            projects = GeminiProject.objects.filter(is_active=True).order_by('daily_usage')
 
-        for project in projects:
-            # Lazy reset: if last_reset is before today (Pacific Time), reset counter
-            if project.last_reset < today_pt:
-                project.daily_usage = 0
-                project.last_reset = today_pt
-                project.save(update_fields=['daily_usage', 'last_reset'])
-                print(f"[LLM ROTATION] Lazy reset for project '{project.name}' (new day in PT).", flush=True)
+            for project in projects:
+                # Lazy reset: if last_reset is before today (Pacific Time), reset counter
+                if project.last_reset < today_pt:
+                    project.daily_usage = 0
+                    project.last_reset = today_pt
+                    project.save(update_fields=['daily_usage', 'last_reset'])
+                    print(f"[LLM ROTATION] Lazy reset for project '{project.name}' (new day in PT).", flush=True)
 
-            # Check if project has remaining quota
-            if project.daily_usage < project.daily_limit:
-                # Get an active key from this project
-                key_obj = GeminiApiKey.objects.filter(project=project, is_active=True).first()
-                if key_obj:
-                    return (key_obj.key, project)
+                # Check if project has remaining quota
+                if project.daily_usage < project.daily_limit:
+                    # Get an active key from this project
+                    key_obj = GeminiApiKey.objects.filter(project=project, is_active=True).first()
+                    if key_obj:
+                        return (key_obj.key, project)
 
-        return (None, None)
-    except Exception as e:
-        logger.warning("Failed to fetch Gemini key from DB: %s", e)
-        return (None, None)
+            return (None, None)
+        except Exception as e:
+            logger.warning("Failed to fetch Gemini key from DB: %s", e)
+            return (None, None)
+    return _run_sync_in_thread(_inner)
 
 
 def record_gemini_usage(project):
     """Increment daily usage for a project after a successful request."""
-    try:
-        project.daily_usage += 1
-        project.save(update_fields=['daily_usage'])
-    except Exception as e:
-        logger.warning("Failed to record Gemini usage: %s", e)
+    def _inner():
+        try:
+            project.daily_usage += 1
+            project.save(update_fields=['daily_usage'])
+        except Exception as e:
+            logger.warning("Failed to record Gemini usage: %s", e)
+    _run_sync_in_thread(_inner)
 
 
 def mark_project_exhausted(project):
     """Mark a project as fully exhausted (429 response)."""
-    try:
-        project.daily_usage = project.daily_limit
-        project.save(update_fields=['daily_usage'])
-        print(f"[LLM ROTATION] Project '{project.name}' marked EXHAUSTED (429 hit). Usage set to {project.daily_limit}/{project.daily_limit}.", flush=True)
-    except Exception as e:
-        logger.warning("Failed to mark project exhausted: %s", e)
+    def _inner():
+        try:
+            project.daily_usage = project.daily_limit
+            project.save(update_fields=['daily_usage'])
+            print(f"[LLM ROTATION] Project '{project.name}' marked EXHAUSTED (429 hit). Usage set to {project.daily_limit}/{project.daily_limit}.", flush=True)
+        except Exception as e:
+            logger.warning("Failed to mark project exhausted: %s", e)
+    _run_sync_in_thread(_inner)
 
 
 def get_all_gemini_stats():
     """Returns summary stats for logging."""
-    try:
-        from api.models import GeminiProject
-        projects = GeminiProject.objects.filter(is_active=True)
-        total = projects.count()
-        available = sum(1 for p in projects if p.daily_usage < p.daily_limit)
-        return total, available
-    except Exception:
-        return 0, 0
+    def _inner():
+        try:
+            from api.models import GeminiProject
+            projects = GeminiProject.objects.filter(is_active=True)
+            total = projects.count()
+            available = sum(1 for p in projects if p.daily_usage < p.daily_limit)
+            return total, available
+        except Exception:
+            return 0, 0
+    return _run_sync_in_thread(_inner)
 
 
 # --- Legacy compatibility (used by advanced_ats_parsing_agent directly) ---
@@ -245,6 +274,26 @@ def get_openai_fallback_key():
 
 # ─── Main RotateLLMClient ────────────────────────────────────────────────────
 
+def _get_active_projects_and_keys():
+    def _inner():
+        from api.models import GeminiProject, GeminiApiKey
+        today_pt = _get_pacific_date()
+        results = []
+        projects = GeminiProject.objects.filter(is_active=True).order_by('daily_usage')
+        for project in projects:
+            if project.last_reset < today_pt:
+                project.daily_usage = 0
+                project.last_reset = today_pt
+                project.save(update_fields=['daily_usage', 'last_reset'])
+            if project.daily_usage >= project.daily_limit:
+                continue
+            key_obj = GeminiApiKey.objects.filter(project=project, is_active=True).first()
+            if key_obj:
+                results.append((project, key_obj.key))
+        return results
+    return _run_sync_in_thread(_inner)
+
+
 class RotateCompletions:
     def __init__(self, client_instance):
         self.client_instance = client_instance
@@ -253,7 +302,7 @@ class RotateCompletions:
         agent_name = self.client_instance._agent_name
         primary, fallback = get_agent_config(agent_name)
 
-        model = kwargs.get("model", "gemini-2.5-flash")
+        model = kwargs.get("model", "gemini-2.0-flash")
         messages = kwargs.get("messages", [])
         temperature = kwargs.get("temperature", 0.2)
         response_format = kwargs.get("response_format")
@@ -311,26 +360,9 @@ class RotateCompletions:
             print(f"[LLM ROTATION] No Gemini projects available ({total_projects} total, all exhausted).", flush=True)
             return None
 
-        # Try each available project
-        from api.models import GeminiProject, GeminiApiKey
-        today_pt = _get_pacific_date()
-        projects = GeminiProject.objects.filter(is_active=True).order_by('daily_usage')
+        active_items = _get_active_projects_and_keys()
 
-        for project in projects:
-            # Lazy reset
-            if project.last_reset < today_pt:
-                project.daily_usage = 0
-                project.last_reset = today_pt
-                project.save(update_fields=['daily_usage', 'last_reset'])
-
-            if project.daily_usage >= project.daily_limit:
-                continue
-
-            key_obj = GeminiApiKey.objects.filter(project=project, is_active=True).first()
-            if not key_obj:
-                continue
-
-            key = key_obj.key
+        for project, key in active_items:
             masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
 
             try:
@@ -340,10 +372,12 @@ class RotateCompletions:
                     max_retries=0
                 )
 
-                default_flash = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                default_flash = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+                if "2.5" in default_flash:
+                    default_flash = "gemini-2.0-flash"
                 gemini_model = default_flash
                 if ("pro" in model.lower() or "gpt-4" in model.lower()) and "mini" not in model.lower():
-                    gemini_model = "gemini-2.5-pro"
+                    gemini_model = "gemini-1.5-pro"
 
                 call_kwargs = {
                     "model": gemini_model,
@@ -357,7 +391,7 @@ class RotateCompletions:
                     call_kwargs["max_tokens"] = max_tokens
 
                 print(
-                    f"[LLM ROTATION] Gemini → Project '{project.name}' "
+                    f"[LLM ROTATION] Gemini -> Project '{project.name}' "
                     f"({project.daily_usage}/{project.daily_limit} RPD). "
                     f"Key: {masked_key}",
                     flush=True
