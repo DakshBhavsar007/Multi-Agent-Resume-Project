@@ -1091,3 +1091,71 @@ def send_parse_quota_warning_to_recruiter(
     )
     return send_email(to_email=recruiter_email, subject=subject, html_body=html_email, text_body=text_body)
 
+
+def send_new_review_notification_to_company(
+    company_email: str,
+    company_name: str,
+    seeker_name: str,
+    rating: int,
+    review_text: str,
+    company_id: str,
+) -> bool:
+    """
+    Notify a company recruiter via email that a job seeker has submitted a new review for their company.
+    """
+    subject = f"New {rating}-Star Company Review from {seeker_name} — Between AI"
+    title = "New Review Received"
+    subtitle = f"Company: {company_name}"
+    badge = "New Company Review"
+    cta_url = f"{FRONTEND_URL}/jobs/companies/{company_id}"
+
+    # Rating stars HTML
+    stars_html = "".join([
+        '<span style="color: #f59e0b; font-size: 18px; line-height: 1;">★</span>' if i < rating
+        else '<span style="color: #cbd5e1; font-size: 18px; line-height: 1;">☆</span>'
+        for i in range(5)
+    ])
+
+    body_html = f"""
+    <p>Hi <strong>{company_name}</strong>,</p>
+    <p>A candidate on Between has just submitted a new review for your company.</p>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 12px; width: 60%;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Reviewer</p>
+                    <p style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">{seeker_name}</p>
+                </td>
+                <td style="padding-bottom: 12px; width: 40%; text-align: right;">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Rating</p>
+                    <div style="margin: 0;">{stars_html} <strong style="font-size: 14px; color: #0f172a; margin-left: 4px;">{rating}/5</strong></div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-top: 8px; border-top: 1px dashed #cbd5e1;">
+                    <p style="margin: 8px 0 4px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Review Text</p>
+                    <p style="margin: 0; font-size: 14px; color: #334155; font-style: italic; line-height: 1.6;">"{review_text}"</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <p style="font-size: 13px; color: #64748b;">
+        You can view this review and publish an official response directly on your company profile page.
+    </p>
+    """
+
+    text_body = f"Hi {company_name},\n\n{seeker_name} left a {rating}-star review for your company:\n\n\"{review_text}\"\n\nView and respond: {cta_url}\n\n— Between AI Platform"
+    
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="View Company Profile & Respond",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=company_email, subject=subject, html_body=html_email, text_body=text_body)
+
+

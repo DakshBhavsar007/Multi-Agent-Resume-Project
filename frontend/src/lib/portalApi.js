@@ -1,8 +1,14 @@
 function getRawApiBase() {
   if (typeof window !== "undefined") {
-    const viteApiUrl = import.meta.env?.VITE_API_URL;
-    if (viteApiUrl) return viteApiUrl;
-    const host = window.location.origin;
+    let viteApiUrl = import.meta.env?.VITE_API_URL;
+    if (viteApiUrl) {
+      viteApiUrl = viteApiUrl.replace(/\/+$/, "");
+      if (!viteApiUrl.endsWith("/api/v1")) {
+        viteApiUrl += "/api/v1";
+      }
+      return viteApiUrl;
+    }
+    const host = window.location.origin.replace(/\/+$/, "");
     if (host.includes("localhost") || host.includes("127.0.0.1")) {
       return "http://127.0.0.1:8000/api/v1";
     }

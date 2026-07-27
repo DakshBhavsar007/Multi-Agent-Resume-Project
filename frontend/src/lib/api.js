@@ -3,12 +3,16 @@ import { toast } from 'react-hot-toast';
 
 export const getApiBase = () => {
   if (typeof window !== "undefined") {
-    // If we have a custom API URL in Vite env (for development or specific staging)
-    const viteApiUrl = import.meta.env?.VITE_API_URL;
-    if (viteApiUrl) return viteApiUrl;
+    let viteApiUrl = import.meta.env?.VITE_API_URL;
+    if (viteApiUrl) {
+      viteApiUrl = viteApiUrl.replace(/\/+$/, "");
+      if (!viteApiUrl.endsWith("/api/v1")) {
+        viteApiUrl += "/api/v1";
+      }
+      return viteApiUrl;
+    }
 
-    // Otherwise, if we are on a custom domain, use the current origin
-    const host = window.location.origin;
+    const host = window.location.origin.replace(/\/+$/, "");
     if (host.includes("localhost") || host.includes("127.0.0.1")) {
       return "http://127.0.0.1:8000/api/v1";
     }

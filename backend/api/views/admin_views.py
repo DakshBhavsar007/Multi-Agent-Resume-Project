@@ -572,3 +572,55 @@ def admin_unban_from_ticket(request):
     except Exception as e:
         logger.error("Admin ticket unban error: %s", e)
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_admin_jwt
+def admin_llm_status(request):
+    """
+    GET /api/v1/admin/llm-status — returns all Gemini projects, API keys usage, and Agent model configs.
+    """
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+
+    try:
+        from api.models import GeminiProject, AgentModelConfig
+        from agents.llm import _ensure_seeded, _get_pacific_date
+
+        _ensure_seeded()
+
+        projects_data = []
+        for p in GeminiProject.objects.all().order_by("name"):
+            key_obj = p.keys.first()
+            masked_key = (key_obj.key[:8] + "..." + key_obj.key[-4:]) if (key_obj and len(key_obj.key) > 12) else "N/A"
+            projects_data.append({
+                "id": str(p.id),
+                "name": p.name,
+                "daily_limit": p.daily_limit,
+                "daily_usage": p.daily_usage,
+                "rpm_limit": p.rpm_limit,
+                "is_active": p.is_active,
+                "key_preview": masked_key,
+                "last_reset": p.last_reset.isoformat() if p.last_reset else None,
+            })
+
+        agents_data = []
+        for a in AgentModelConfig.objects.all().order_by("agent_name"):
+            agents_data.append({
+                "id": str(a.id),
+                "agent_name": a.agent_name,
+                "display_name": a.display_name,
+                "primary_provider": a.primary_provider,
+                "fallback_provider": a.fallback_provider,
+                "is_active": a.is_active,
+            })
+
+        return JsonResponse(success_response({
+            "pacific_date": str(_get_pacific_date()),
+            "projects": projects_data,
+            "agents": agents_data,
+        }))
+    except Exception as e:
+        logger.error(f"Error fetching admin LLM status: {e}")
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+

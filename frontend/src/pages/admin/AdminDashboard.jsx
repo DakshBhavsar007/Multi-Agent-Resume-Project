@@ -66,6 +66,8 @@ export default function AdminDashboard() {
     return adminAuth.adminToken || localStorage.getItem('admin_jwt') || '';
   };
 
+  const [llmStatus, setLlmStatus] = useState(null);
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -87,6 +89,15 @@ export default function AdminDashboard() {
           adminAuth.clearAdminAuth();
           navigate('/admin/login');
         }
+      }
+
+      // Fetch LLM Quotas Status
+      const llmRes = await fetch(`${API_HOST}/api/v1/admin/llm-status`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const llmData = await llmRes.json();
+      if (llmData.success) {
+        setLlmStatus(llmData.data);
       }
     } catch (err) {
       toast.error('Connection error: Failed to reach admin backend');
@@ -385,6 +396,12 @@ export default function AdminDashboard() {
                   </span>
                 )}
               </button>
+              <button 
+                onClick={() => { setActiveTab('llm'); setSearchQuery(''); }}
+                className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'llm' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+              >
+                LLM Quotas & Models
+              </button>
             </div>
 
             <div className="relative w-full sm:max-w-xs">
@@ -406,6 +423,108 @@ export default function AdminDashboard() {
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="w-8 h-8 rounded-full border-2 border-t-slate-600 dark:border-t-zinc-400 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
               <p className="text-slate-500 dark:text-zinc-500 text-sm font-medium">Fetching database records...</p>
+            </div>
+          ) : activeTab === 'llm' ? (
+            <div className="space-y-8">
+              {/* Gemini Projects Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>🧠 Gemini API Projects & Quota Usage</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                      20 RPD daily free-tier quota per project &bull; Pacific Time Midnight Reset (Today: {llmStatus?.pacific_date || 'Active'})
+                    </p>
+                  </div>
+                  <a
+                    href={`${API_HOST}/admin/api/geminiproject/`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition inline-flex items-center gap-1.5 border border-slate-700"
+                  >
+                    <span>Open Django Admin ↗</span>
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(llmStatus?.projects || []).map((proj) => {
+                    const pct = Math.min(100, Math.round((proj.daily_usage / proj.daily_limit) * 100));
+                    const isExhausted = proj.daily_usage >= proj.daily_limit;
+                    return (
+                      <div key={proj.id} className="p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-sm text-slate-900 dark:text-white">{proj.name}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${proj.is_active && !isExhausted ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                            {isExhausted ? 'EXHAUSTED' : proj.is_active ? 'ACTIVE' : 'INACTIVE'}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs font-semibold">
+                            <span className="text-slate-500 dark:text-zinc-400">Daily RPD Usage</span>
+                            <span className={isExhausted ? 'text-red-500 font-bold' : 'text-slate-700 dark:text-zinc-200'}>
+                              {proj.daily_usage} / {proj.daily_limit} ({pct}%)
+                            </span>
+                          </div>
+                          <div className="h-2 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-red-500' : pct >= 75 ? 'bg-amber-500' : 'bg-blue-600'}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-200/60 dark:border-zinc-800/60 flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
+                          <span>Key: {proj.key_preview}</span>
+                          <span>RPM Limit: {proj.rpm_limit}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Agent Model Assignments Table */}
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-3">
+                  🤖 Agent Primary & Fallback Routing Table
+                </h3>
+                <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 rounded-xl">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 font-bold text-slate-700 dark:text-zinc-300">
+                        <th className="p-3">Agent System Name</th>
+                        <th className="p-3">Display Name</th>
+                        <th className="p-3">Primary Provider</th>
+                        <th className="p-3">Fallback Provider</th>
+                        <th className="p-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 font-medium">
+                      {(llmStatus?.agents || []).map((ag) => (
+                        <tr key={ag.id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/50">
+                          <td className="p-3 font-mono text-blue-600 dark:text-blue-400 font-bold">{ag.agent_name}</td>
+                          <td className="p-3 text-slate-900 dark:text-zinc-100">{ag.display_name}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${ag.primary_provider === 'gemini' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
+                              {ag.primary_provider === 'gemini' ? '🧠 Gemini' : '⚡ Groq'}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${ag.fallback_provider === 'gemini' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
+                              {ag.fallback_provider === 'gemini' ? '🧠 Gemini' : '⚡ Groq'}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className="text-emerald-500 font-bold">Active</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-20 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">

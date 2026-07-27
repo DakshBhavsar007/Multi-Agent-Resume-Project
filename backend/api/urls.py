@@ -350,6 +350,7 @@ urlpatterns = [
     path('api/v1/admin/tickets/resolve', admin_views.resolve_support_ticket, name='admin-tickets-resolve'),
     path('api/v1/admin/tickets/reply', admin_views.admin_ticket_reply, name='admin-ticket-reply'),
     path('api/v1/admin/tickets/unban', admin_views.admin_unban_from_ticket, name='admin-ticket-unban'),
+    path('api/v1/admin/llm-status', admin_views.admin_llm_status, name='admin-llm-status'),
     path('api/v1/support/ticket', admin_views.create_support_ticket, name='support-ticket-create'),
     path('api/v1/support/lookup', admin_views.public_ticket_lookup, name='support-ticket-lookup'),
     path('api/v1/support/ticket/<str:ticket_id>/reply', admin_views.public_ticket_reply, name='support-ticket-reply'),

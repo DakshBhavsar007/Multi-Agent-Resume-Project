@@ -347,6 +347,7 @@ def seeker_reviews_root(request):
             if not company:
                 return JsonResponse(error_response("Company not found"), status=404)
 
+        review_created = False
         review = Review.objects.filter(seeker=seeker, company=company).first()
         if review:
             review.rating = rating
@@ -360,9 +361,46 @@ def seeker_reviews_root(request):
                 rating=rating,
                 text=text,
             )
+            review_created = True
+
+        # Send in-app notification & email to company recruiter if review is for a company
+        if review_created and company:
+            try:
+                from api.models import Notification
+                from api.services.email_service import send_new_review_notification_to_company
+                import threading
+
+                seeker_name = getattr(seeker, "full_name", "A Candidate")
+                company_name = getattr(company, "name", "Company")
+
+                # In-app notification
+                Notification.objects.create(
+                    company=company,
+                    type="general",
+                    title=f"New {rating}★ Review from {seeker_name}",
+                    message=f'"{text[:120]}..."',
+                    link=f"/jobs/companies/{company.id}"
+                )
+
+                # Async Email sending
+                if getattr(company, "email", None):
+                    threading.Thread(
+                        target=send_new_review_notification_to_company,
+                        kwargs={
+                            "company_email": company.email,
+                            "company_name": company_name,
+                            "seeker_name": seeker_name,
+                            "rating": rating,
+                            "review_text": text,
+                            "company_id": str(company.id),
+                        },
+                        daemon=True
+                    ).start()
+            except Exception as notif_err:
+                logger.warning(f"Failed to create review notification/email: {notif_err}")
 
         serialized = _serialize_review(review, str(seeker.id), "job_seeker")
-        return JsonResponse(success_response(serialized), status=200 if review else 201)
+        return JsonResponse(success_response(serialized), status=200 if not review_created else 201)
     except Exception as e:
         logger.error(f"Error in seeker_reviews_root: {e}", exc_info=True)
         return JsonResponse(error_response(f"Failed to process review: {e}"), status=500)
