@@ -60,6 +60,14 @@ def session_root(request):
                 status=status_val
             )
 
+            # Trigger in-app & email notifications for company followers
+            if status_val == "active" and job_title != "Smart Analyzer Session":
+                try:
+                    from api.services.notification_service import notify_followers_of_new_job
+                    notify_followers_of_new_job(new_session)
+                except Exception as notify_err:
+                    print(f"Failed to notify followers of new job: {notify_err}", flush=True)
+
             return JsonResponse(success_response({
                 "id": str(new_session.id),
                 "name": new_session.name,
@@ -260,6 +268,7 @@ def session_detail(request, session_id):
                                 "status": "pending"
                             }
                         )
+            became_active = False
             if "status" in data and data["status"] is not None:
                 if data["status"] == "active" and session.status != "active":
                     active_count = Session.objects.filter(company=request.company, status="active").count()
@@ -268,10 +277,18 @@ def session_detail(request, session_id):
                         return JsonResponse(error_response("Starter (Free) plan is limited to 1 active session. Please upgrade your plan to activate more sessions."), status=403)
                     elif company_tier == "business" and active_count >= 5:
                         return JsonResponse(error_response("Business plan is limited to 5 active sessions. Please upgrade to Enterprise plan to activate more sessions."), status=403)
+                    became_active = True
                 session.status = data["status"]
 
             session.updated_at = timezone.now()
             session.save()
+
+            if became_active and session.job_title != "Smart Analyzer Session":
+                try:
+                    from api.services.notification_service import notify_followers_of_new_job
+                    notify_followers_of_new_job(session)
+                except Exception as notify_err:
+                    print(f"Failed to notify followers on job activation: {notify_err}", flush=True)
 
             return JsonResponse(success_response({
                 "message": "Session updated",
