@@ -289,26 +289,6 @@ def send_application_confirmation_to_seeker(
 
     email_sent = send_email(to_email=seeker_email, subject=subject, html_body=html_email, text_body=text_body)
 
-    # Brevo CRM Integration
-    try:
-        from api.models import JobSeekerAccount
-        seeker = JobSeekerAccount.objects.filter(email=seeker_email).first()
-        phone = seeker.phone if seeker else ""
-        from api.services.brevo_service import sync_contact, track_automation_event
-        sync_contact(
-            email=seeker_email,
-            first_name=seeker_name.split()[0] if seeker_name else "",
-            last_name=" ".join(seeker_name.split()[1:]) if len(seeker_name.split()) > 1 else "",
-            phone=phone,
-            attributes={"LATEST_APPLIED_JOB": job_title}
-        )
-        track_automation_event(
-            email=seeker_email,
-            event_name="job_applied",
-            properties={"job_title": job_title, "company_name": company_name}
-        )
-    except Exception as err:
-        logger.warning("Brevo confirmation sync/event failed: %s", err)
 
     return email_sent
 
@@ -457,33 +437,6 @@ def send_status_update_to_seeker(
 
     email_sent = send_email(to_email=seeker_email, subject=subject, html_body=html_email, text_body=text_body)
 
-    # Brevo CRM / SMS Integration
-    try:
-        from api.models import JobSeekerAccount
-        seeker = JobSeekerAccount.objects.filter(email=seeker_email).first()
-        if seeker:
-            from api.services.brevo_service import send_sms, sync_contact, track_automation_event
-            sync_contact(
-                email=seeker_email,
-                attributes={"LATEST_APPLICATION_STATUS": new_status.title()}
-            )
-            
-            if seeker.phone:
-                sms_status_text = {
-                    "shortlisted": "shortlisted",
-                    "rejected": "updated (not moving forward)",
-                    "hired": "offered"
-                }.get(new_status, new_status)
-                sms_msg = f"Hi {seeker_name}, your application for {job_title} at {company_name} ({match_score_display} match) status is now {sms_status_text}. Details: {cta_url}"
-                send_sms(recipient_phone=seeker.phone, message_content=sms_msg)
-                
-            track_automation_event(
-                email=seeker_email,
-                event_name="application_status_updated",
-                properties={"status": new_status, "job_title": job_title, "company_name": company_name}
-            )
-    except Exception as err:
-        logger.warning("Brevo additional status update notifications failed: %s", err)
 
     return email_sent
 
@@ -604,29 +557,6 @@ def send_welcome_email(
 
     email_sent = send_email(to_email=user_email, subject=subject, html_body=html_email, text_body=text_body)
 
-    # Brevo CRM Integration
-    try:
-        from api.services.brevo_service import sync_contact, track_automation_event
-        first_name = user_name.split()[0] if user_name else ""
-        last_name = " ".join(user_name.split()[1:]) if len(user_name.split()) > 1 else ""
-        
-        attributes = {"USER_ROLE": role_label, "SIGNUP_SOURCE": "direct"}
-        if custom_attributes:
-            attributes.update(custom_attributes)
-
-        sync_contact(
-            email=user_email,
-            first_name=first_name,
-            last_name=last_name,
-            attributes=attributes
-        )
-        track_automation_event(
-            email=user_email,
-            event_name=f"{role}_signup",
-            properties={"role": role, "name": user_name}
-        )
-    except Exception as err:
-        logger.warning("Brevo welcome sync failed for %s: %s", user_email, err)
 
     return email_sent
 

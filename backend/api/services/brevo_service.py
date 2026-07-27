@@ -90,70 +90,13 @@ def send_whatsapp(contact_phone: str, text_content: str = None, template_id: int
 
 def sync_contact(email: str, first_name: str = "", last_name: str = "", phone: str = "", list_ids: list = None, attributes: dict = None) -> dict:
     """
-    Create or update a contact in Brevo CRM.
+    No-op: Brevo CRM contact sync has been disabled.
     """
-    if not BREVO_API_KEY:
-        logger.warning("Brevo API key not set. Contact sync skipped.")
-        return {"status": "error", "message": "API key not set"}
-
-    url = "https://api.brevo.com/v3/contacts"
-    
-    # Standard Brevo attributes are usually FIRSTNAME, LASTNAME, SMS
-    contact_attributes = {
-        "FIRSTNAME": first_name,
-        "LASTNAME": last_name,
-    }
-    if phone:
-        contact_attributes["SMS"] = phone
-    
-    if attributes:
-        contact_attributes.update(attributes)
-
-    payload = {
-        "email": email,
-        "attributes": contact_attributes,
-        "updateEnabled": True, # Automatically updates contact if they already exist
-    }
-
-    if list_ids:
-        payload["listIds"] = list_ids
-
-    try:
-        response = httpx.post(url, headers=HEADERS, json=payload, timeout=10.0)
-        response.raise_for_status()
-        return response.json()
-    except Exception as exc:
-        logger.error("Failed to sync contact %s in Brevo: %s", email, exc)
-        return {"status": "error", "message": str(exc)}
+    return {"status": "disabled", "message": "Brevo CRM contact sync is disabled."}
 
 def track_automation_event(email: str, event_name: str, properties: dict = None, event_data: dict = None) -> dict:
     """
-    Track a server-side custom event for Marketing Automation workflows.
+    No-op: Brevo Marketing Automation event tracking has been disabled.
     """
-    if not BREVO_MA_KEY:
-        logger.warning("Brevo MA key not set. Event tracking skipped.")
-        return {"status": "error", "message": "MA key not set"}
+    return {"status": "disabled", "message": "Brevo automation tracking is disabled."}
 
-    url = "https://in-automate.brevo.com/api/v2/trackEvent"
-    ma_headers = {
-        "accept": "application/json",
-        "content-type": "application/json",
-        "ma-key": BREVO_MA_KEY,
-    }
-
-    payload = {
-        "email": email,
-        "event": event_name,
-    }
-    if properties:
-        payload["properties"] = properties
-    if event_data:
-        payload["eventdata"] = event_data
-
-    try:
-        response = httpx.post(url, headers=ma_headers, json=payload, timeout=10.0)
-        response.raise_for_status()
-        return {"status": "success", "message": "Event tracked"}
-    except Exception as exc:
-        logger.error("Failed to track Brevo event %s for %s: %s", event_name, email, exc)
-        return {"status": "error", "message": str(exc)}

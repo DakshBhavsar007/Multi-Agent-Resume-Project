@@ -188,13 +188,6 @@ def login(request):
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
-    finally:
-        # Track login event in Brevo (non-blocking, best-effort)
-        try:
-            from api.services.brevo_service import track_automation_event
-            track_automation_event(email=email, event_name="recruiter_login")
-        except Exception:
-            pass
 
 @csrf_exempt
 @require_recruiter_jwt

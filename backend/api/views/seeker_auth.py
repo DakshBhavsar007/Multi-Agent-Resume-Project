@@ -261,12 +261,6 @@ def login(request):
     except Exception as e:
         logger.error("Seeker login error: %s", e)
         return JsonResponse(error_response(f"Server error: {e}"), status=500)
-    finally:
-        try:
-            from api.services.brevo_service import track_automation_event
-            track_automation_event(email=email, event_name="seeker_login")
-        except Exception:
-            pass
 
 
 @csrf_exempt
