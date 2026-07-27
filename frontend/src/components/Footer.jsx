@@ -22,7 +22,6 @@ const Footer = () => {
     "Find Jobs": "/jobs/search",
     "Explore Companies": "/jobs/companies",
     "AI Resume Builder": "/resume-builder",
-    "Hiring Safety": "/jobs/safety-checker",
     "Market Trends": "/jobs/trends",
     "AI Mock Interview": "/jobs/mock-interview",
     "Premium Plans": "/jobs/billing",

@@ -408,27 +408,6 @@ export default function JobsLandingPage() {
           </div>
         </section>
 
-        {/* Hiring Safety Banner */}
-        <section className="bg-gradient-to-br from-[#F0F6FF] to-[#F8FAFC] border border-[#BFDBFE] p-8 md:p-12 rounded-3xl shadow-sm flex flex-col lg:flex-row justify-between items-center gap-8">
-          <div className="space-y-3 max-w-3xl text-left">
-            <span className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-gray-200">
-              Safety Verification
-            </span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-charcoal tracking-tight leading-tight">
-              Verify your job application safety before applying
-            </h2>
-            <p className="text-gray-500 font-medium text-sm leading-relaxed">
-              Recruitment scams, phishing links, and ghost job listings are on the rise. Run our real-time hiring safety audit to check company domain authenticity, scam likelihood, and text originality.
-            </p>
-          </div>
-          <button
-            onClick={() => navigate('/jobs/safety-checker')}
-            className="bg-charcoal hover:bg-black text-white px-6 py-3.5 rounded-xl font-bold text-xs transition-all shadow-md active:scale-95 shrink-0 flex items-center gap-2"
-          >
-            <span>Scan External Job Listing</span>
-            <ChevronRight size={14} />
-          </button>
-        </section>
 
         {/* Market Insights Section matching inspiratio_ui2.jpeg */}
         <section className="space-y-8">

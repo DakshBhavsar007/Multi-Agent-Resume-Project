@@ -39,7 +39,6 @@ const UserHome = lazy(() => import('./pages/user/UserHome'));
 const UserJobs = lazy(() => import('./pages/user/UserJobs'));
 const UserJobDetail = lazy(() => import('./pages/user/UserJobDetail'));
 const JobsTrendsPage = lazy(() => import('./pages/JobsTrendsPage'));
-const JobSeekerSafetyPage = lazy(() => import('./pages/JobSeekerSafetyPage'));
 const ResumeBuilderLanding = lazy(() => import('./pages/user/ResumeBuilderLanding'));
 const ResumeEditor = lazy(() => import('./pages/user/ResumeEditor'));
 const MockInterviewPage = lazy(() => import('./pages/user/MockInterviewPage'));
@@ -171,7 +170,7 @@ export default function App() {
           window.location.href = '/developer/login';
         } else if (path.startsWith('/jobs/applications') || path.startsWith('/jobs/resume') || path.startsWith('/jobs/notifications') || path.startsWith('/jobs')) {
           // If they are on a seeker page, go back to jobs login
-          if (path !== '/jobs' && path !== '/jobs/search' && path !== '/jobs/trends' && path !== '/jobs/safety-checker') {
+          if (path !== '/jobs' && path !== '/jobs/search' && path !== '/jobs/trends') {
             window.location.href = '/jobs/login';
           }
         } else if (path.startsWith('/dashboard')) {
@@ -237,12 +236,10 @@ export default function App() {
           <Route path="/forgot-password" element={<ResetPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/careers" element={<Navigate to="/jobs" replace />} />
-          <Route path="/hiring-safety" element={<Navigate to="/jobs/safety-checker" replace />} />
 
           {/* Job Seeker Routes */}
           <Route path="/jobs" element={<UserHome />} />
           <Route path="/jobs/search" element={<UserJobs />} />
-          <Route path="/jobs/safety-checker" element={<JobSeekerSafetyPage />} />
           <Route path="/jobs/trends" element={<JobsTrendsPage />} />
           <Route path="/jobs/companies" element={<UserCompanies />} />
           <Route path="/jobs/companies/:companyId" element={<UserCompanyDetail />} />

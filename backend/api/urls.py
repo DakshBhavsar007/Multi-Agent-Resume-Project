@@ -194,10 +194,8 @@ urlpatterns = [
 
     # ── Public Job Seeker Portal ───────────────────────────────────────────────
     path('api/v1/public/jobs', jobs.list_public_jobs, name='public-jobs-list'),
-    path('api/v1/public/jobs/scan-safety', jobs.scan_safety_arbitrary_public, name='public-jobs-scan-safety'),
     path('api/v1/public/jobs/<str:session_id>', jobs.get_public_job, name='public-jobs-detail'),
     path('api/v1/public/jobs/<str:session_id>/apply', jobs.apply_public_job, name='public-jobs-apply'),
-    path('api/v1/public/jobs/<str:session_id>/safety-check', jobs.scan_job_safety_public, name='public-jobs-safety-check'),
 
     # ── Reviews & Testimonials ────────────────────────────────────────────────
     path('api/v1/public/platform-stats', reviews.public_platform_stats, name='public-platform-stats'),

@@ -206,7 +206,7 @@ export default function JobsNavbar({ onUploadClick }) {
             <button
               onClick={() => setToolsOpen(!toolsOpen)}
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                isActive('/jobs/resume') || isActive('/jobs/companies') || isActive('/jobs/trends') || isActive('/jobs/safety-checker')
+                isActive('/jobs/resume') || isActive('/jobs/companies') || isActive('/jobs/trends')
                   ? 'text-[#111111] bg-gray-100 font-semibold'
                   : 'text-[#5c5c5c] hover:text-[#2A2A2A]'
               }`}
@@ -254,18 +254,6 @@ export default function JobsNavbar({ onUploadClick }) {
                 >
                   <TrendingUp size={14} className="text-gray-400 shrink-0 transition-colors" />
                   <span className="transition-colors">Market Trends</span>
-                </Link>
-                <Link
-                  to="/jobs/safety-checker"
-                  onClick={() => setToolsOpen(false)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm skeuo-dropdown-item ${
-                    isActive('/jobs/safety-checker')
-                      ? 'bg-[#faf9f6] dark:bg-[#212126] text-[#111111] font-semibold dark:text-[#f3f4f6]'
-                      : 'text-[#5c5c5c]'
-                  }`}
-                >
-                  <Shield size={14} className="text-gray-400 shrink-0 transition-colors" />
-                  <span className="transition-colors">Hiring Safety</span>
                 </Link>
               </div>
             )}

@@ -351,9 +351,7 @@ export const publicJobsAPI = {
     const fd = new FormData();
     fd.append("file", file);
     return req("POST", "/public/jobs/parse-only/apply", fd, true);
-  },
-  verifySafety: (id) => req("POST", `/public/jobs/${id}/safety-check`),
-  scanSafetyArbitrary: (payload) => req("POST", "/public/jobs/scan-safety", payload)
+  }
 };
 
 

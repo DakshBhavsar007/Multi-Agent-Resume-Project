@@ -662,13 +662,12 @@ export default function DeveloperDocs() {
                     <th className="p-3">Parses/mo</th>
                     <th className="p-3">Match Ops/mo</th>
                     <th className="p-3">Chat Queries/mo</th>
-                    <th className="p-3">Safety Scans/mo</th>
                   </tr>
                 </thead>
                 <tbody className="text-gray-600 font-medium">
-                  <tr className="border-b border-gray-50"><td className="p-3 font-bold text-charcoal">Free</td><td className="p-3">100</td><td className="p-3">500</td><td className="p-3">100</td><td className="p-3">0</td></tr>
-                  <tr className="border-b border-gray-50"><td className="p-3 font-bold text-accent">Starter</td><td className="p-3">1,000</td><td className="p-3">10,000</td><td className="p-3">2,000</td><td className="p-3">100</td></tr>
-                  <tr className="border-b border-gray-0"><td className="p-3 font-bold text-blue-600">Business</td><td className="p-3">10,000</td><td className="p-3">Unlimited</td><td className="p-3">Unlimited</td><td className="p-3">1,000</td></tr>
+                  <tr className="border-b border-gray-50"><td className="p-3 font-bold text-charcoal">Free</td><td className="p-3">100</td><td className="p-3">500</td><td className="p-3">100</td></tr>
+                  <tr className="border-b border-gray-50"><td className="p-3 font-bold text-accent">Starter</td><td className="p-3">1,000</td><td className="p-3">10,000</td><td className="p-3">2,000</td></tr>
+                  <tr className="border-b border-gray-0"><td className="p-3 font-bold text-blue-600">Business</td><td className="p-3">10,000</td><td className="p-3">Unlimited</td><td className="p-3">Unlimited</td></tr>
                 </tbody>
               </table>
             </div>

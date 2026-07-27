@@ -104,12 +104,6 @@ export default function JobDetailsPage() {
   const [similarJobs, setSimilarJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [seekerProfile, setSeekerProfile] = useState(null);
-
-  // Safety check states
-  const [safetyReport, setSafetyReport] = useState(null);
-  const [checkingSafety, setCheckingSafety] = useState(false);
-
   // Apply Modal states
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [applyFile, setApplyFile] = useState(null);
@@ -151,31 +145,10 @@ export default function JobDetailsPage() {
       const allJobs = await publicJobsAPI.list();
       const filtered = allJobs.filter(j => j.id !== id).slice(0, 2);
       setSimilarJobs(filtered);
-
-      // Fetch safety check report (non-blocking)
-      try {
-        const report = await publicJobsAPI.verifySafety(id);
-        setSafetyReport(report);
-      } catch (e) {
-        // Silent fail if not scanned before
-      }
     } catch (err) {
       toast.error("Failed to load job details");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleRunSafetyCheck = async () => {
-    setCheckingSafety(true);
-    try {
-      const report = await publicJobsAPI.verifySafety(id);
-      setSafetyReport(report);
-      toast.success("Hiring safety report generated!");
-    } catch (err) {
-      toast.error(err.message || "Failed to verify safety rating");
-    } finally {
-      setCheckingSafety(false);
     }
   };
 
@@ -556,104 +529,6 @@ export default function JobDetailsPage() {
           {/* Right column - Job Summary and Similar Jobs */}
           <div className="lg:col-span-4 space-y-6">
 
-            {/* AI Safety Verification Audit */}
-            <div className="bg-white border border-[#e6dfcd] p-6 rounded-3xl shadow-sm space-y-4">
-              <div className="flex items-center space-x-2">
-                <Shield className="text-[#2563EB] w-5 h-5" />
-                <h3 className="font-bold text-sm text-[#2A2A2A]">Legitimacy Verification</h3>
-              </div>
-              
-               {safetyReport ? (
-                <div className="space-y-3.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[#5c5c5c]">Trust Score:</span>
-                    <span className={`text-sm font-black ${
-                      safetyReport.originality_score >= 80 ? "text-emerald-500" : safetyReport.originality_score >= 60 ? "text-amber-500" : "text-red-500"
-                    }`}>
-                      {safetyReport.originality_score}/100
-                    </span>
-                  </div>
-                  <div className="w-full bg-[#f5f4ef] rounded-full h-1.5 overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        safetyReport.originality_score >= 80 ? "bg-emerald-500" : safetyReport.originality_score >= 60 ? "bg-amber-500" : "bg-red-500"
-                      }`}
-                      style={{ width: `${safetyReport.originality_score}%` }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-center text-[9px] font-bold">
-                    <div className="bg-[#f5f4ef]/60 p-2 rounded-lg border border-[#e6dfcd]">
-                      <p className="text-gray-400 font-extrabold uppercase">Risk Level</p>
-                      <p className={`text-xs font-black mt-0.5 ${
-                        (safetyReport.risk_level || "Low") === "High" ? "text-red-500" :
-                        (safetyReport.risk_level || "Low") === "Medium" ? "text-amber-500" : "text-emerald-500"
-                      }`}>
-                        {safetyReport.risk_level || (safetyReport.originality_score >= 80 ? "Low" : safetyReport.originality_score >= 60 ? "Medium" : "High")}
-                      </p>
-                    </div>
-                    <div className="bg-[#f5f4ef]/60 p-2 rounded-lg border border-[#e6dfcd]">
-                      <p className="text-gray-400 font-extrabold uppercase">Verified Co.</p>
-                      <p className={`text-xs font-black mt-0.5 ${
-                        (safetyReport.verified_company || "Yes") === "Yes" ? "text-emerald-500" : "text-red-500"
-                      }`}>
-                        {safetyReport.verified_company || (safetyReport.originality_score >= 70 ? "Yes" : "No")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="text-[11px] font-medium leading-relaxed bg-[#f5f4ef]/40 border border-[#e6dfcd] p-2.5 rounded-xl text-[#5c5c5c]">
-                    <strong>Audit Status:</strong> {safetyReport.status}<br />
-                    <span className="text-[10px] text-gray-400">Scan date: {new Date(safetyReport.created_at).toLocaleDateString()}</span>
-                  </div>
-
-                  {safetyReport.flags && safetyReport.flags.length > 0 && (
-                    <div className="space-y-1">
-                      <p className="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Risk Assessment Flags:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {safetyReport.flags.map((flag, i) => (
-                          <span key={i} className="bg-red-50 border border-red-100 text-red-700 text-[9px] px-1.5 py-0.5 rounded font-semibold">
-                            {flag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <button
-                    onClick={handleRunSafetyCheck}
-                    disabled={checkingSafety}
-                    className="w-full bg-[#f5f4ef] hover:bg-[#e6dfcd] border border-[#e6dfcd] text-xs font-bold py-2 rounded-xl transition-all flex items-center justify-center space-x-1"
-                  >
-                    <RefreshCw size={12} className={checkingSafety ? "animate-spin" : ""} />
-                    <span>Run New Audit</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-[#5c5c5c] leading-relaxed">
-                    Verify that this job posting is legitimate and free from fake template patterns or phishing scams.
-                  </p>
-                  <button
-                    onClick={handleRunSafetyCheck}
-                    disabled={checkingSafety}
-                    className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-bold text-xs py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center space-x-2"
-                  >
-                    {checkingSafety ? (
-                      <>
-                        <RefreshCw size={14} className="animate-spin" />
-                        <span>Generating report...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Shield size={14} />
-                        <span>Verify Hiring Legitimacy</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
             
             {/* Job Summary card */}
             <div className="bg-white border border-[#e6dfcd] p-6 rounded-3xl shadow-sm space-y-6">
