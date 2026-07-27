@@ -67,6 +67,20 @@ export default function UnifiedReviewsSection({
     }
   };
 
+  const handleDeleteReply = async (reviewId) => {
+    if (!window.confirm("Are you sure you want to remove your official response?")) return;
+    setSubmittingReply(true);
+    try {
+      await recruiterAPI.deleteCompanyReply(reviewId);
+      toast.success("Official response removed");
+      if (onReplySuccess) onReplySuccess();
+    } catch (err) {
+      toast.error(err.message || "Failed to remove reply");
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
+
   return (
     <div className="space-y-6 w-full">
       {/* FILTER & SORT BAR */}
@@ -142,7 +156,7 @@ export default function UnifiedReviewsSection({
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold text-foreground">{rev.author?.full_name || "Verified Member"}</span>
                       {rev.author?.is_verified && <VerifiedBadge size={14} />}
-                      {rev.is_own && (
+                      {rev.is_own && !isCompanyOwner && (
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">You</span>
                       )}
                     </div>
@@ -177,8 +191,8 @@ export default function UnifiedReviewsSection({
                     </div>
                   )}
 
-                  {/* Company owner: delete reviews about their company (not their own) */}
-                  {isCompanyOwner && !rev.is_own && rev.is_company_owner && (
+                  {/* Company owner: delete reviews about their company */}
+                  {isCompanyOwner && rev.is_company_owner && (
                     <button
                       type="button"
                       onClick={() => handleCompanyDelete(rev)}
@@ -208,22 +222,51 @@ export default function UnifiedReviewsSection({
               <p className="text-sm text-foreground italic pl-1 font-medium">"{rev.text}"</p>
 
               {/* Official Response Section */}
-              {rev.official_reply ? (
+              {rev.official_reply && replyingReviewId !== rev.id ? (
                 <div className="mt-3 p-3.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 text-xs space-y-1">
                   <div className="flex items-center justify-between font-bold text-blue-600 dark:text-blue-400">
                     <span className="inline-flex items-center gap-1">
                       <ShieldCheck className="h-3.5 w-3.5" /> Official Response
                     </span>
-                    <span className="text-[10px] opacity-75">
-                      {rev.official_reply_at ? new Date(rev.official_reply_at).toLocaleDateString() : ""}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] opacity-75">
+                        {rev.official_reply_at ? new Date(rev.official_reply_at).toLocaleDateString() : ""}
+                      </span>
+                      {isCompanyOwner && rev.is_company_owner && (
+                        <div className="flex items-center gap-1 ml-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplyingReviewId(rev.id);
+                              setReplyText(rev.official_reply);
+                            }}
+                            className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition-colors"
+                            title="Edit official response"
+                          >
+                            <Pen className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteReply(rev.id)}
+                            disabled={submittingReply}
+                            className="p-1 rounded hover:bg-red-100 text-red-500 transition-colors"
+                            title="Delete official response"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <p className="text-muted-foreground">{rev.official_reply}</p>
                 </div>
-              ) : (
+              ) : null}
+
+              {/* Reply Form / Button when no official reply or currently editing */}
+              {(!rev.official_reply || replyingReviewId === rev.id) && (
                 <div className="pt-1">
                   {/* Company owner can reply to reviews about their company */}
-                  {isCompanyOwner && rev.is_company_owner && !rev.is_own ? (
+                  {isCompanyOwner && rev.is_company_owner ? (
                     replyingReviewId === rev.id ? (
                       <div className="mt-2 p-3 rounded-xl bg-card border border-border space-y-2">
                         <textarea
@@ -250,7 +293,7 @@ export default function UnifiedReviewsSection({
                               disabled={submittingReply}
                               className="px-3 py-1 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90"
                             >
-                              {submittingReply ? "Publishing..." : "Publish Reply"}
+                              {submittingReply ? "Publishing..." : rev.official_reply ? "Update Response" : "Publish Reply"}
                             </button>
                           </div>
                         </div>
@@ -260,11 +303,11 @@ export default function UnifiedReviewsSection({
                         type="button"
                         onClick={() => {
                           setReplyingReviewId(rev.id);
-                          setReplyText("");
+                          setReplyText(rev.official_reply || "");
                         }}
                         className="text-[11px] font-bold text-primary hover:underline inline-flex items-center gap-1"
                       >
-                        <MessageSquareQuote className="h-3 w-3" /> Reply as Company Owner
+                        <MessageSquareQuote className="h-3 w-3" /> {rev.official_reply ? "Edit Official Response" : "Reply as Company Owner"}
                       </button>
                     )
                   ) : ownerType === "developer" && !rev.is_own ? (

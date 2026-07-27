@@ -727,6 +727,7 @@ export const recruiterAPI = {
   // Company owner: manage reviews about their company
   deleteCompanyReview: (id) => req('DELETE', `/recruiter/company-reviews/${id}`),
   replyToCompanyReview: (id, reply) => req('POST', `/recruiter/company-reviews/${id}`, { reply }),
+  deleteCompanyReply: (id) => req('POST', `/recruiter/company-reviews/${id}`, { action: 'delete_reply' }),
 };
 
 export const developerReviewAPI = {

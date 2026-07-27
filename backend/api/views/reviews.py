@@ -704,11 +704,19 @@ def company_manage_review(request, review_id):
         return JsonResponse(success_response({"message": "Review removed by company owner"}))
 
     elif request.method == "POST":
-        # Official reply
+        # Official reply or delete reply
         try:
             body = json.loads(request.body)
         except (json.JSONDecodeError, ValueError):
             return JsonResponse(error_response("Invalid JSON body"), status=400)
+
+        action = body.get("action", "")
+        if action == "delete_reply":
+            review.official_reply = None
+            review.official_reply_at = None
+            review.save()
+            current_user_id, current_user_type, active_identities = _extract_user_identity(request)
+            return JsonResponse(success_response(_serialize_review(review, current_user_id, current_user_type, active_identities)))
 
         reply_text = body.get("reply", "").strip() if isinstance(body.get("reply"), str) else ""
         if not reply_text:
