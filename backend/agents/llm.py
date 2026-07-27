@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 import time
 import datetime
@@ -8,6 +9,37 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+
+# Global cache for Groq model/key exhaustion tracking: (key_hash, model_name) -> unix timestamp
+_GROQ_EXHAUSTED_UNTIL = {}
+
+
+def _parse_retry_seconds(err_str: str) -> int:
+    """
+    Parses retry-after duration from Groq 429 error messages like:
+    'Please try again in 43m41s', 'Please try again in 1m20.5s', 'try again in 500ms', etc.
+    Returns seconds to wait (default 600s if unparseable).
+    """
+    err_lower = err_str.lower()
+    total_seconds = 0
+
+    m_min = re.search(r'(\d+)\s*m(?:in)?s?', err_lower)
+    m_sec = re.search(r'(\d+)\s*s(?:ec)?s?', err_lower)
+
+    if m_min:
+        total_seconds += int(m_min.group(1)) * 60
+    if m_sec:
+        total_seconds += int(m_sec.group(1))
+
+    if total_seconds > 0:
+        return total_seconds
+
+    m_raw = re.search(r'retry\s*after\s*(\d+)', err_lower)
+    if m_raw:
+        return int(m_raw.group(1))
+
+    return 600
+
 
 # Ensure .env is loaded into environment for LLM keys
 _env_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -428,7 +460,7 @@ class RotateCompletions:
         return None
 
     def _try_groq(self, messages, temperature, response_format, max_tokens, timeout):
-        """Try Groq/Grok with cascading model fallback and multi-key support."""
+        """Try Groq/Grok with cascading model fallback, in-memory rate-limit exhaustion tracking, and multi-key support."""
         from dotenv import load_dotenv
         _env_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         _env_file = os.path.join(_env_dir, ".env")
@@ -436,26 +468,36 @@ class RotateCompletions:
             load_dotenv(_env_file, override=True)
         load_dotenv(override=True)
 
-        raw_keys = (
-            os.getenv("GROQ_API_KEY") or
-            os.getenv("GROK_API_KEY") or
-            os.getenv("GROQ_API_KEYS") or
-            os.getenv("GROK_API_KEYS") or
-            ""
-        )
-        keys = [k.strip() for k in raw_keys.split(",") if k.strip()]
+        raw_keys_list = [
+            os.getenv("GROQ_API_KEYS", ""),
+            os.getenv("GROK_API_KEYS", ""),
+            os.getenv("GROQ_API_KEY", ""),
+            os.getenv("GROK_API_KEY", ""),
+        ]
+        keys = []
+        for raw in raw_keys_list:
+            if raw:
+                for k in raw.split(","):
+                    k_str = k.strip()
+                    if k_str and k_str not in keys:
+                        keys.append(k_str)
 
         if not keys:
             print("[LLM ROTATION] No GROQ_API_KEY / GROK_API_KEY configured in environment or .env.", flush=True)
             return None
 
-        groq_models = [
-            os.getenv("GROQ_MODEL", os.getenv("GROK_MODEL", "llama-3.3-70b-versatile")),
-            "llama-3.3-70b-versatile",
+        # Clean rotation model list:
+        # 1. High-speed, high-quota instant model first (llama-3.1-8b-instant)
+        # 2. Versatile fallback model second (llama-3.3-70b-versatile)
+        # Decommissioned models (llama-3.2-11b-vision-preview, mixtral-8x7b-32768) ARE REMOVED to prevent wasted round-trips!
+        custom_override = os.getenv("GROQ_MODEL", os.getenv("GROK_MODEL", "")).strip()
+        groq_models = []
+        if custom_override:
+            groq_models.append(custom_override)
+        groq_models.extend([
             "llama-3.1-8b-instant",
-            "llama-3.2-11b-vision-preview",
-            "mixtral-8x7b-32768"
-        ]
+            "llama-3.3-70b-versatile"
+        ])
 
         seen = set()
         unique_models = []
@@ -465,8 +507,10 @@ class RotateCompletions:
                 seen.add(m)
 
         fallback_timeout = min(timeout, 25.0)
+        now = time.time()
 
         for key in keys:
+            key_hash = key[:10]
             masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
             client = OpenAI(
                 api_key=key,
@@ -475,6 +519,17 @@ class RotateCompletions:
             )
 
             for model_name in unique_models:
+                cache_key = (key_hash, model_name)
+                exhaust_until = _GROQ_EXHAUSTED_UNTIL.get(cache_key, 0)
+                if now < exhaust_until:
+                    remaining_mins = int((exhaust_until - now) / 60)
+                    print(
+                        f"[LLM ROTATION] Skipping Groq model '{model_name}' (key {masked_key}) "
+                        f"— marked EXHAUSTED for ~{remaining_mins}m more.",
+                        flush=True
+                    )
+                    continue
+
                 print(f"[LLM ROTATION] Trying Groq/Grok model '{model_name}' with key {masked_key}", flush=True)
                 try:
                     call_kwargs = {
@@ -491,8 +546,29 @@ class RotateCompletions:
                     print(f"[LLM ROTATION] Groq/Grok model '{model_name}' (key {masked_key}) succeeded!", flush=True)
                     return res
                 except Exception as e:
-                    print(f"[LLM ROTATION] Groq/Grok model '{model_name}' (key {masked_key}) failed: {e}", flush=True)
-                    logger.error(f"Groq/Grok model {model_name} failed: {str(e)}")
+                    err_str = str(e)
+                    err_lower = err_str.lower()
+                    is_rate_limit = any(kw in err_lower for kw in ["429", "rate_limit", "quota", "tpd", "tpm", "tokens per day", "requests per day"])
+                    is_invalid_model = any(kw in err_lower for kw in ["400", "decommissioned", "does not exist", "model_not_found"])
+
+                    if is_rate_limit:
+                        retry_secs = _parse_retry_seconds(err_str)
+                        _GROQ_EXHAUSTED_UNTIL[cache_key] = time.time() + retry_secs + 5
+                        print(
+                            f"[LLM ROTATION] Groq model '{model_name}' (key {masked_key}) hit 429 limit! "
+                            f"Marked exhausted for {retry_secs}s.",
+                            flush=True
+                        )
+                    elif is_invalid_model:
+                        _GROQ_EXHAUSTED_UNTIL[cache_key] = time.time() + 86400 * 30
+                        print(
+                            f"[LLM ROTATION] Groq model '{model_name}' is decommissioned or invalid (400). "
+                            f"Disabled permanently.",
+                            flush=True
+                        )
+                    else:
+                        print(f"[LLM ROTATION] Groq/Grok model '{model_name}' (key {masked_key}) failed: {e}", flush=True)
+                    logger.warning(f"Groq/Grok model {model_name} failed: {str(e)}")
 
         return None
 

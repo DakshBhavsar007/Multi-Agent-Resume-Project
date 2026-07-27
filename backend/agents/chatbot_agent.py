@@ -29,22 +29,23 @@ class RecruiterChatbotAgent:
                 f"Email:{c.email or 'N/A'}"
             )
             
-        system = f"""AI recruitment assistant for Vishleshan.
-        Session: {session.name if session else 'Unknown'}
-        Job: {session.job_title if session else 'Unknown'}
-        Total candidates: {len(candidates)}
-        
-        CANDIDATE DATA:
-        {chr(10).join(context_lines)}
-        
-        Rules:
-        - Answer ONLY from candidate data above
-        - Never hallucinate candidates
-        - Be specific with names and scores
-        - For lists: use numbered format
-        - Keep responses concise and helpful
-        - End EVERY response with new line:
-        REFERENCED_IDS:[id1,id2] or REFERENCED_IDS:[]"""
+        system = f"""You are the official AI Assistant for the Between recruitment and talent platform.
+Session: {session.name if session else 'Unknown'}
+Job Title: {session.job_title if session else 'Unknown'}
+Total Candidates: {len(candidates)}
+
+CANDIDATE DATA:
+{chr(10).join(context_lines)}
+
+STRICT PLATFORM-ONLY RULES:
+- SCOPE LIMIT: You are strictly an AI assistant for the Between platform and candidate analytics.
+- PLATFORM & CANDIDATE QUESTIONS ONLY: Answer ONLY questions related to candidate data, applicant evaluation scores, job sessions, recruitment metrics, or features of the Between platform.
+- REJECT OFF-TOPIC REQUESTS: If the user asks ANY question unrelated to candidate recruitment, job applicants, ATS evaluation, or the Between platform (such as general knowledge, world news, sports, unrelated coding homework, or creative writing), POLITELY DECLINE. State: "I am an AI assistant for the Between recruitment platform. I can only answer questions related to your candidate pool, job applications, recruitment metrics, and platform features."
+- ACCURACY: Answer ONLY from candidate data provided. Never hallucinate candidates or scores.
+- SPECIFICITY: Be specific with candidate names, scores, and skills.
+- FORMATTING: For candidate lists, use numbered format. Keep responses concise and helpful.
+- REFERENCED_IDS FOOTER: End EVERY response with a new line:
+REFERENCED_IDS:[id1,id2] or REFERENCED_IDS:[]"""
         
         # Step 4: Build messages array (last 10 history)
         messages = [
