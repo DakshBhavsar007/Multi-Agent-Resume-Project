@@ -44,6 +44,17 @@ export default function SettingsPage() {
     fraud_alerts: company?.notification_settings?.fraud_alerts ?? true,
   });
 
+  // Fetch fresh company profile from backend DB on mount to ensure persistent details & verification
+  useEffect(() => {
+    authAPI.getProfile()
+      .then((data) => {
+        if (data) {
+          setAuth({ ...company, ...data, jwt_token: localStorage.getItem("vish_jwt") });
+        }
+      })
+      .catch((err) => console.warn("Could not fetch fresh company profile:", err));
+  }, []);
+
   useEffect(() => {
     if (company) {
       if (company.name) setCompanyName(company.name);

@@ -18,7 +18,12 @@ import {
   Send,
   ShieldCheck,
   X,
-  RefreshCw
+  RefreshCw,
+  Brain,
+  Zap,
+  Bot,
+  ExternalLink,
+  Cpu
 } from 'lucide-react';
 import { useAdminAuthStore } from '../../stores/adminAuthStore';
 import { API_HOST } from '../../lib/api';
@@ -431,7 +436,8 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>🧠 Gemini API Projects & Quota Usage</span>
+                      <Brain className="w-5 h-5 text-purple-500" />
+                      <span>Gemini API Projects & Quota Usage</span>
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                       20 RPD daily free-tier quota per project &bull; Pacific Time Midnight Reset (Today: {llmStatus?.pacific_date || 'Active'})
@@ -443,7 +449,8 @@ export default function AdminDashboard() {
                     rel="noreferrer"
                     className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition inline-flex items-center gap-1.5 border border-slate-700"
                   >
-                    <span>Open Django Admin ↗</span>
+                    <span>Open Django Admin</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
 
@@ -487,8 +494,9 @@ export default function AdminDashboard() {
 
               {/* Agent Model Assignments Table */}
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-3">
-                  🤖 Agent Primary & Fallback Routing Table
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-blue-500" />
+                  <span>Agent Primary & Fallback Routing Table</span>
                 </h3>
                 <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 rounded-xl">
                   <table className="w-full text-left border-collapse text-xs">
@@ -507,13 +515,21 @@ export default function AdminDashboard() {
                           <td className="p-3 font-mono text-blue-600 dark:text-blue-400 font-bold">{ag.agent_name}</td>
                           <td className="p-3 text-slate-900 dark:text-zinc-100">{ag.display_name}</td>
                           <td className="p-3">
-                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${ag.primary_provider === 'gemini' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
-                              {ag.primary_provider === 'gemini' ? '🧠 Gemini' : '⚡ Groq'}
+                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase inline-flex items-center gap-1 ${ag.primary_provider === 'gemini' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
+                              {ag.primary_provider === 'gemini' ? (
+                                <><Brain className="w-3 h-3" /> Gemini</>
+                              ) : (
+                                <><Zap className="w-3 h-3" /> Groq</>
+                              )}
                             </span>
                           </td>
                           <td className="p-3">
-                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${ag.fallback_provider === 'gemini' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
-                              {ag.fallback_provider === 'gemini' ? '🧠 Gemini' : '⚡ Groq'}
+                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase inline-flex items-center gap-1 ${ag.fallback_provider === 'gemini' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
+                              {ag.fallback_provider === 'gemini' ? (
+                                <><Brain className="w-3 h-3" /> Gemini</>
+                              ) : (
+                                <><Zap className="w-3 h-3" /> Groq</>
+                              )}
                             </span>
                           </td>
                           <td className="p-3">

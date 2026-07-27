@@ -576,8 +576,8 @@ def public_seeker_profile(request, seeker_id):
     is_verified = bool(seeker.email_verified and seeker.phone_verified)
     user_reviews = Review.objects.filter(seeker=seeker).select_related("company").order_by("-created_at")
 
-    current_user_id, current_user_type = _extract_user_identity(request)
-    reviews_data = [_serialize_review(r, current_user_id, current_user_type) for r in user_reviews]
+    current_user_id, current_user_type, active_identities = _extract_user_identity(request)
+    reviews_data = [_serialize_review(r, current_user_id, current_user_type, active_identities) for r in user_reviews]
 
     profile_data = {
         "id": str(seeker.id),
@@ -814,8 +814,8 @@ def reply_to_review(request, review_id):
         review.official_reply_at = timezone.now()
         review.save()
 
-        current_user_id, current_user_type = _extract_user_identity(request)
-        return JsonResponse(success_response(_serialize_review(review, current_user_id, current_user_type)))
+        current_user_id, current_user_type, active_identities = _extract_user_identity(request)
+        return JsonResponse(success_response(_serialize_review(review, current_user_id, current_user_type, active_identities)))
     except Exception as e:
         logger.error(f"Error replying to review {review_id}: {e}", exc_info=True)
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

@@ -171,12 +171,19 @@ def login(request):
         return JsonResponse(success_response({
             "jwt_token": token,
             "company_id": str(company.id),
+            "id": str(company.id),
             "name": company.name,
             "email": company.email,
             "tier": company.tier,
             "email_verified": company.email_verified,
             "phone_verified": company.phone_verified,
             "logo_path": company.logo_path,
+            "industry": company.industry,
+            "about": company.about,
+            "website_url": company.website_url,
+            "hq_location": company.hq_location,
+            "company_size": company.company_size,
+            "founded_year": getattr(company, "founded_year", None),
             "api_key": masked_secret
         }))
     except Exception as e:
@@ -200,16 +207,18 @@ def update_profile(request):
 
         if "name" in data and data["name"]:
             company.name = data["name"]
-        if "industry" in data and data["industry"]:
+        if "industry" in data:
             company.industry = data["industry"]
-        if "about" in data and data["about"]:
+        if "about" in data:
             company.about = data["about"]
-        if "website_url" in data and data["website_url"]:
+        if "website_url" in data:
             company.website_url = data["website_url"]
-        if "hq_location" in data and data["hq_location"]:
+        if "hq_location" in data:
             company.hq_location = data["hq_location"]
-        if "company_size" in data and data["company_size"]:
+        if "company_size" in data:
             company.company_size = data["company_size"]
+        if "founded_year" in data:
+            company.founded_year = data["founded_year"]
         if "logo_path" in data and data["logo_path"] is not None:
             company.logo_path = data["logo_path"]
 
@@ -218,12 +227,18 @@ def update_profile(request):
         return JsonResponse(success_response({
             "message": "Company profile updated successfully",
             "company_id": str(company.id),
+            "id": str(company.id),
             "name": company.name,
+            "email": company.email,
+            "tier": company.tier,
+            "email_verified": company.email_verified,
+            "phone_verified": company.phone_verified,
             "industry": company.industry,
             "about": company.about,
             "website_url": company.website_url,
             "hq_location": company.hq_location,
             "company_size": company.company_size,
+            "founded_year": getattr(company, "founded_year", None),
             "logo_path": company.logo_path,
         }))
     except Exception as e:
