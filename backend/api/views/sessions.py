@@ -15,6 +15,35 @@ def _verify_session_ownership(session, company):
     if str(session.company_id) != str(company.id):
         raise PermissionError("Access denied")
 
+def _get_effective_company_tier(company):
+    """
+    Returns the company's active plan tier ('free', 'business', 'enterprise').
+    Checks CompanyBillingSubscription first (if active and not expired),
+    syncs company.tier, and returns the effective tier string.
+    """
+    try:
+        from api.models import CompanyBillingSubscription
+        sub = CompanyBillingSubscription.objects.filter(company_id=company.id).first()
+        if sub:
+            from django.utils import timezone
+            now = timezone.now()
+            is_active = (sub.status == "active")
+            if sub.current_period_end:
+                sub_end = sub.current_period_end if sub.current_period_end.tzinfo else timezone.make_aware(sub.current_period_end)
+                if now >= sub_end:
+                    is_active = False
+
+            if is_active and sub.plan:
+                plan_tier = sub.plan.lower()
+                if (company.tier or "").lower() != plan_tier:
+                    company.tier = plan_tier
+                    company.save(update_fields=["tier"])
+                return plan_tier
+    except Exception:
+        pass
+
+    return (company.tier or "free").lower()
+
 @csrf_exempt
 @require_api_key
 def session_root(request):
@@ -45,7 +74,7 @@ def session_root(request):
             status_val = "analysis" if job_title == "Smart Analyzer Session" else "active"
             if status_val == "active":
                 active_count = Session.objects.filter(company=request.company, status="active").count()
-                company_tier = (request.company.tier or "free").lower()
+                company_tier = _get_effective_company_tier(request.company)
                 if company_tier == "free" and active_count >= 1:
                     return JsonResponse(error_response("Starter (Free) plan is limited to 1 active session. Please upgrade your plan for more active sessions."), status=403)
                 elif company_tier == "business" and active_count >= 5:
@@ -272,7 +301,7 @@ def session_detail(request, session_id):
             if "status" in data and data["status"] is not None:
                 if data["status"] == "active" and session.status != "active":
                     active_count = Session.objects.filter(company=request.company, status="active").count()
-                    company_tier = (request.company.tier or "free").lower()
+                    company_tier = _get_effective_company_tier(request.company)
                     if company_tier == "free" and active_count >= 1:
                         return JsonResponse(error_response("Starter (Free) plan is limited to 1 active session. Please upgrade your plan to activate more sessions."), status=403)
                     elif company_tier == "business" and active_count >= 5:

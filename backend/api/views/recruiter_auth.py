@@ -332,11 +332,13 @@ def revoke_api_key(request, key_id):
 def me(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
+    from api.views.sessions import _get_effective_company_tier
+    effective_tier = _get_effective_company_tier(request.company)
     return JsonResponse(success_response({
         "id": str(request.company.id),
         "name": request.company.name,
         "email": request.company.email,
-        "tier": request.company.tier,
+        "tier": effective_tier,
         "email_verified": request.company.email_verified,
         "phone_verified": request.company.phone_verified,
         "logo_path": request.company.logo_path,

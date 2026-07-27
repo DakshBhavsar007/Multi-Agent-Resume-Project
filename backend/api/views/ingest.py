@@ -540,8 +540,8 @@ def ats_import(request):
             df = pd.read_excel(path)
             records = df.to_dict("records")
 
-        total_candidates = Candidate.objects.filter(session__company=request.company).count()
-        tier_lower = (session.company.tier or 'free').lower()
+        from api.views.sessions import _get_effective_company_tier
+        tier_lower = _get_effective_company_tier(session.company)
         if tier_lower == 'free':
             candidate_limit = 100
         elif tier_lower == 'business':
@@ -553,7 +553,7 @@ def ats_import(request):
             try: os.remove(path)
             except: pass
             return JsonResponse(error_response(
-                f"Your '{session.company.tier}' plan limit of {candidate_limit} total resumes has been exceeded or would be exceeded by this batch. "
+                f"Your '{tier_lower.capitalize()}' plan limit of {candidate_limit} total resumes has been exceeded or would be exceeded by this batch. "
                 f"Currently you have {total_candidates} resumes. Please upgrade your plan."
             ), status=403)
 
