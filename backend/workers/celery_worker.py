@@ -71,7 +71,8 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
                 
             # --- GEMINI OCR FALLBACK FOR IMAGE-BASED PDFS ---
             if len(text.strip()) < 50:
-                gemini_key = os.getenv("GEMINI_API_KEY")
+                from agents.llm import get_available_gemini_key, record_gemini_usage
+                gemini_key, gemini_project = get_available_gemini_key()
                 if gemini_key:
                     try:
                         import google.generativeai as genai
@@ -97,6 +98,7 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
                         
                         if ocr_text:
                             text = "\n".join(ocr_text)
+                            record_gemini_usage(gemini_project)
                     except Exception as e:
                         print("Gemini OCR Failed:", str(e))
             try:
