@@ -119,7 +119,7 @@ export default function SeekerPublicProfile() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             {profile.avatar_path ? (
               <img
-                src={profile.avatar_path}
+                src={profile.avatar_path.startsWith('http') || profile.avatar_path.startsWith('data:') ? profile.avatar_path : `${API_HOST}${profile.avatar_path}`}
                 alt={profile.full_name}
                 className="w-20 h-20 rounded-full object-cover border-2 border-border shadow-md shrink-0"
               />

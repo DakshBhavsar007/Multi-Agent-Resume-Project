@@ -38,6 +38,10 @@ def _extract_user_identity(request):
     if seeker_header:
         tokens.append(seeker_header)
 
+    recruiter_header = request.headers.get("X-Recruiter-Token") or request.META.get("HTTP_X_RECRUITER_TOKEN") or ""
+    if recruiter_header:
+        tokens.append(recruiter_header)
+
     dev_header = request.headers.get("X-Developer-Token") or request.META.get("HTTP_X_DEVELOPER_TOKEN") or ""
     if dev_header:
         tokens.append(dev_header)

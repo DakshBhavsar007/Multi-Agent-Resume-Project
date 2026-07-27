@@ -204,6 +204,7 @@ export const authAPI = {
     return d
   },
   getMe: () => req("GET","/auth/me"),
+  getProfile: () => req("GET","/auth/me"),
   updateProfile: (b) => req("POST","/auth/update-profile",b),
   uploadLogo: (file) => {
     const formData = new FormData();
@@ -593,6 +594,9 @@ async function publicReq(method, path) {
     // Send additional tokens for multi-identity detection (is_own, sorting)
     if (seekerToken && seekerToken !== "null" && seekerToken !== "undefined") {
       headers['X-Seeker-Token'] = String(seekerToken).replace(/[^\x20-\x7E]/g, "");
+    }
+    if (recruiterToken && recruiterToken !== "null" && recruiterToken !== "undefined") {
+      headers['X-Recruiter-Token'] = String(recruiterToken).replace(/[^\x20-\x7E]/g, "");
     }
     if (developerToken && developerToken !== "null" && developerToken !== "undefined") {
       headers['X-Developer-Token'] = String(developerToken).replace(/[^\x20-\x7E]/g, "");

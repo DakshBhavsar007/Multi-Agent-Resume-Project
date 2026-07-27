@@ -148,11 +148,16 @@ def login(request):
         return JsonResponse(success_response({
             "jwt_token": token,
             "developer_id": str(dev.id),
+            "id": str(dev.id),
+            "full_name": getattr(dev, "full_name", "") or getattr(dev, "company_name", ""),
+            "company_name": getattr(dev, "company_name", ""),
             "email": dev.email,
             "tier": dev.tier,
-            "is_verified": getattr(dev, "is_verified", False),
-            "phone_verified": getattr(dev, "phone_verified", False),
-            "company_name": getattr(dev, "company_name", "")
+            "avatar_path": getattr(dev, "avatar_path", "") or "",
+            "website_url": getattr(dev, "website_url", "") or "",
+            "is_verified": getattr(dev, "is_verified", True),
+            "email_verified": getattr(dev, "email_verified", True),
+            "phone_verified": getattr(dev, "phone_verified", True),
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

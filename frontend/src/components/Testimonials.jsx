@@ -127,11 +127,13 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
               >
                 <AvatarEl />
                 <div className="author-info min-w-0">
-                  <h4 className="flex items-center gap-1 font-bold text-sm text-gray-900 dark:text-white truncate">
-                    {t.author}
-                    {t.isVerified && <VerifiedBadge size={14} />}
-                    {t.isOwn && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">You</span>}
-                  </h4>
+                  <div className="flex items-center gap-1.5 min-w-0 max-w-full">
+                    <span className="font-bold text-sm text-gray-900 dark:text-white truncate max-w-[140px] inline-block">
+                      {t.author}
+                    </span>
+                    {t.isVerified && <VerifiedBadge size={14} className="shrink-0" />}
+                    {t.isOwn && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0">You</span>}
+                  </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t.role}</p>
                   {t.roleBadge && (
                     <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 mt-1 inline-flex items-center">
@@ -145,11 +147,13 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
               <div className="flex items-center gap-3 min-w-0">
                 <AvatarEl />
                 <div className="author-info min-w-0">
-                  <h4 className="flex items-center gap-1 font-bold text-sm text-gray-900 dark:text-white truncate">
-                    {t.author}
-                    {t.isVerified && <VerifiedBadge size={14} />}
-                    {t.isOwn && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">You</span>}
-                  </h4>
+                  <div className="flex items-center gap-1.5 min-w-0 max-w-full">
+                    <span className="font-bold text-sm text-gray-900 dark:text-white truncate max-w-[140px] inline-block">
+                      {t.author}
+                    </span>
+                    {t.isVerified && <VerifiedBadge size={14} className="shrink-0" />}
+                    {t.isOwn && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0">You</span>}
+                  </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t.role}</p>
                   {t.roleBadge && (
                     <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 mt-1 inline-flex items-center">
