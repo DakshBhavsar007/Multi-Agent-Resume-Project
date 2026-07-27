@@ -5,8 +5,16 @@ import datetime
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from openai import OpenAI
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+
+# Ensure .env is loaded into environment for LLM keys
+_env_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_env_file = os.path.join(_env_dir, ".env")
+if os.path.exists(_env_file):
+    load_dotenv(_env_file, override=True)
+load_dotenv(override=True)
 
 # Pacific Time offset (UTC-7 during PDT, UTC-8 during PST)
 # Google resets Gemini quota at midnight Pacific Time
