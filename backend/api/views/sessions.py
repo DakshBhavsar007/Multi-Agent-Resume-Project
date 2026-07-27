@@ -204,7 +204,6 @@ def session_detail(request, session_id):
                 # Synchronize SessionRound database table to match updated rounds
                 from api.models import SessionRound, ApplicantRoundAttempt
                 import secrets
-                from django.utils import timezone
                 from datetime import timedelta
 
                 # Delete existing rounds
