@@ -424,6 +424,13 @@ class RotateCompletions:
 
     def _try_groq(self, messages, temperature, response_format, max_tokens, timeout):
         """Try Groq with cascading model fallback."""
+        from dotenv import load_dotenv
+        _env_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        _env_file = os.path.join(_env_dir, ".env")
+        if os.path.exists(_env_file):
+            load_dotenv(_env_file, override=True)
+        load_dotenv(override=True)
+
         groq_key = os.getenv("GROQ_API_KEY")
         if not groq_key:
             print("[LLM ROTATION] No GROQ_API_KEY configured.", flush=True)
