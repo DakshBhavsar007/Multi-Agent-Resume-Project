@@ -5,14 +5,33 @@ from datetime import datetime, timedelta, timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from jose import jwt
-from api.models import Company, JobSeekerAccount, Session, SupportTicket, AdminBanLog, DeveloperAccount
-from api.decorators import require_admin_jwt, JWT_SECRET, JWT_ALGORITHM, rate_limit_ip, redis_client
+from api.models import Company, JobSeekerAccount, Session, SupportTicket, AdminBanLog, DeveloperAccount, AdminAuditLog, GroqApiKey, GeminiProject, AgentModelConfig, Candidate
+from api.decorators import require_admin_jwt, require_admin_role, JWT_SECRET, JWT_ALGORITHM, rate_limit_ip, redis_client
+from api.utils.security import encrypt_api_key, decrypt_api_key, mask_api_key
 from django.utils.html import escape
 from django.utils import timezone
 from models.schemas import success_response, error_response
 from api.services.email_service import send_support_ticket_confirmation
 
 logger = logging.getLogger(__name__)
+
+
+def log_admin_action(request, action: str, target_type: str = "", target_id: str = "", details: dict = None):
+    """Helper to record server-side admin audit logs."""
+    try:
+        ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip() or request.META.get('REMOTE_ADDR', 'unknown')
+        AdminAuditLog.objects.create(
+            admin_email=getattr(request, 'admin_email', 'admin@between.com'),
+            admin_role=getattr(request, 'admin_role', 'super_admin'),
+            action=action,
+            target_type=target_type,
+            target_id=str(target_id),
+            details=details or {},
+            ip_address=ip
+        )
+    except Exception as e:
+        logger.warning("Failed to log admin action: %s", e)
+
 
 @csrf_exempt
 def admin_login(request):
@@ -623,4 +642,214 @@ def admin_llm_status(request):
     except Exception as e:
         logger.error(f"Error fetching admin LLM status: {e}")
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_admin_role("super_admin", "support_staff")
+def admin_sessions_list(request):
+    """GET /api/v1/admin/sessions — list all sessions with stats."""
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        sessions_qs = Session.objects.all().order_by("-created_at")
+        results = []
+        for s in sessions_qs:
+            company = Company.objects.filter(id=s.company_id).first()
+            cand_count = Candidate.objects.filter(session=s).count()
+            results.append({
+                "id": str(s.id),
+                "title": s.title,
+                "job_title": s.job_title,
+                "company_name": company.name if company else "N/A",
+                "status": getattr(s, "status", "active"),
+                "candidate_count": cand_count,
+                "rounds_count": s.rounds.count() if hasattr(s, "rounds") else 0,
+                "created_at": s.created_at.isoformat() if s.created_at else None
+            })
+        return JsonResponse(success_response(results))
+    except Exception as e:
+        logger.error("Admin sessions list error: %s", e)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_admin_role("super_admin")
+def admin_audit_logs(request):
+    """GET /api/v1/admin/audit-logs — paginated admin action logs."""
+    if request.method != "GET":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        page = int(request.GET.get("page", 1))
+        limit = int(request.GET.get("limit", 50))
+        offset = (page - 1) * limit
+
+        logs_qs = AdminAuditLog.objects.all().order_by("-timestamp")
+        total = logs_qs.count()
+        logs_page = logs_qs[offset:offset + limit]
+
+        data = []
+        for l in logs_page:
+            data.append({
+                "id": str(l.id),
+                "admin_email": l.admin_email,
+                "admin_role": l.admin_role,
+                "action": l.action,
+                "target_type": l.target_type,
+                "target_id": l.target_id,
+                "details": l.details,
+                "ip_address": l.ip_address,
+                "timestamp": l.timestamp.isoformat() if l.timestamp else None
+            })
+        return JsonResponse(success_response({"total": total, "page": page, "logs": data}))
+    except Exception as e:
+        logger.error("Admin audit logs error: %s", e)
+        return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_admin_role("super_admin")
+def admin_groq_keys(request):
+    """GET/POST/DELETE /api/v1/admin/groq-keys — manage encrypted Groq API keys."""
+    if request.method == "GET":
+        try:
+            keys = GroqApiKey.objects.all().order_by("-created_at")
+            results = []
+            for k in keys:
+                dec = decrypt_api_key(k.encrypted_key)
+                results.append({
+                    "id": str(k.id),
+                    "label": k.label,
+                    "masked_key": mask_api_key(dec),
+                    "is_active": k.is_active,
+                    "usage_count": k.usage_count,
+                    "last_used_at": k.last_used_at.isoformat() if k.last_used_at else None,
+                    "created_at": k.created_at.isoformat() if k.created_at else None
+                })
+            return JsonResponse(success_response(results))
+        except Exception as e:
+            return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
+
+    elif request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            raw_key = (data.get("key") or "").strip()
+            label = (data.get("label") or "Groq Key").strip()
+            if not raw_key:
+                return JsonResponse(error_response("API key string is required"), status=400)
+
+            enc = encrypt_api_key(raw_key)
+            obj = GroqApiKey.objects.create(
+                encrypted_key=enc,
+                label=label,
+                is_active=True
+            )
+            log_admin_action(request, "add_groq_key", target_type="groq_key", target_id=str(obj.id), details={"label": label})
+
+            return JsonResponse(success_response({
+                "id": str(obj.id),
+                "label": obj.label,
+                "masked_key": mask_api_key(raw_key),
+                "is_active": obj.is_active,
+                "usage_count": 0
+            }))
+        except Exception as e:
+            return JsonResponse(error_response(f"Failed to add Groq key: {str(e)}"), status=500)
+
+    elif request.method == "DELETE":
+        try:
+            data = json.loads(request.body)
+            key_id = data.get("id")
+            if not key_id:
+                return JsonResponse(error_response("Key id required"), status=400)
+
+            k = GroqApiKey.objects.filter(id=key_id).first()
+            if not k:
+                return JsonResponse(error_response("Groq key not found"), status=404)
+
+            k.is_active = False
+            k.save(update_fields=["is_active"])
+            log_admin_action(request, "deactivate_groq_key", target_type="groq_key", target_id=str(k.id))
+            return JsonResponse(success_response({"message": "Groq API key deactivated"}))
+        except Exception as e:
+            return JsonResponse(error_response(f"Delete failed: {str(e)}"), status=500)
+
+    return JsonResponse(error_response("Method not allowed"), status=405)
+
+
+@csrf_exempt
+@require_admin_role("super_admin")
+def admin_toggle_gemini_project(request):
+    """PATCH /api/v1/admin/gemini-projects — toggle active state or limits of a Gemini project."""
+    if request.method != "PATCH":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        data = json.loads(request.body)
+        project_id = data.get("id")
+        is_active = data.get("is_active")
+
+        project = GeminiProject.objects.filter(id=project_id).first()
+        if not project:
+            return JsonResponse(error_response("Gemini project not found"), status=404)
+
+        if is_active is not None:
+            project.is_active = bool(is_active)
+
+        if "daily_limit" in data:
+            project.daily_limit = int(data["daily_limit"])
+
+        project.save()
+        log_admin_action(request, "update_gemini_project", target_type="gemini_project", target_id=str(project.id), details=data)
+
+        return JsonResponse(success_response({
+            "id": str(project.id),
+            "name": project.name,
+            "is_active": project.is_active,
+            "daily_limit": project.daily_limit
+        }))
+    except Exception as e:
+        return JsonResponse(error_response(f"Update failed: {str(e)}"), status=500)
+
+
+@csrf_exempt
+@require_admin_role("super_admin")
+def admin_update_agent_config(request):
+    """PATCH /api/v1/admin/agent-config — update primary/fallback provider for an agent."""
+    if request.method != "PATCH":
+        return JsonResponse(error_response("Method not allowed"), status=405)
+    try:
+        data = json.loads(request.body)
+        agent_id = data.get("id")
+        agent_name = data.get("agent_name")
+        primary_provider = data.get("primary_provider")
+        fallback_provider = data.get("fallback_provider")
+
+        agent = None
+        if agent_id:
+            agent = AgentModelConfig.objects.filter(id=agent_id).first()
+        elif agent_name:
+            agent = AgentModelConfig.objects.filter(agent_name=agent_name).first()
+
+        if not agent:
+            return JsonResponse(error_response("Agent config not found"), status=404)
+
+        if primary_provider:
+            agent.primary_provider = primary_provider
+        if fallback_provider:
+            agent.fallback_provider = fallback_provider
+        if "is_active" in data:
+            agent.is_active = bool(data["is_active"])
+
+        agent.save()
+        log_admin_action(request, "update_agent_config", target_type="agent_config", target_id=str(agent.id), details=data)
+
+        return JsonResponse(success_response({
+            "id": str(agent.id),
+            "agent_name": agent.agent_name,
+            "primary_provider": agent.primary_provider,
+            "fallback_provider": agent.fallback_provider,
+            "is_active": agent.is_active
+        }))
+    except Exception as e:
+        return JsonResponse(error_response(f"Agent config update failed: {str(e)}"), status=500)
+
 

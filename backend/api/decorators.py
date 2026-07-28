@@ -519,6 +519,7 @@ def require_admin_jwt(view_func):
                     "error": "Admin access required"
                 }, status=403)
             request.admin_email = payload.get("email")
+            request.admin_role = payload.get("role", "super_admin")
         except JWTError:
             return JsonResponse({
                 "success": False,
@@ -528,5 +529,24 @@ def require_admin_jwt(view_func):
             
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+
+
+def require_admin_role(*allowed_roles):
+    """Server-side RBAC decorator for Admin endpoints."""
+    def decorator(view_func):
+        @require_admin_jwt
+        @wraps(view_func)
+        def _wrapped(request, *args, **kwargs):
+            role = getattr(request, 'admin_role', 'super_admin')
+            if role not in allowed_roles:
+                return JsonResponse({
+                    "success": False,
+                    "data": None,
+                    "error": f"Insufficient admin privileges. Requires role in: {allowed_roles}"
+                }, status=403)
+            return view_func(request, *args, **kwargs)
+        return _wrapped
+    return decorator
+
 
 

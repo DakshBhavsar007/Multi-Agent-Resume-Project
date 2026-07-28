@@ -20,77 +20,85 @@ import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
 
 // Robust Salary Parsing & Conversion Helpers
 const parseSalary = (salaryStr) => {
-  if (!salaryStr || salaryStr.toLowerCase() === "competitive") {
-    return { min: null, max: null, currency: null };
+  if (!salaryStr) return { min: null, max: null, currency: null, isFlexible: true };
+  const lowerStr = salaryStr.toLowerCase().trim();
+  if (
+    lowerStr.includes("negotiable") || 
+    lowerStr.includes("competitive") || 
+    lowerStr.includes("disclosed") ||
+    lowerStr.includes("best in industry")
+  ) {
+    return { min: null, max: null, currency: null, isFlexible: true };
   }
 
-  // Detect currency
   let currency = "USD";
-  if (salaryStr.includes("₹") || salaryStr.toLowerCase().includes("lpa") || salaryStr.toLowerCase().includes("inr")) {
+  if (lowerStr.includes("₹") || lowerStr.includes("rs") || lowerStr.includes("lpa") || lowerStr.includes("inr") || lowerStr.includes("lakh")) {
     currency = "INR";
-  } else if (salaryStr.includes("£") || salaryStr.toLowerCase().includes("gbp")) {
+  } else if (lowerStr.includes("£") || lowerStr.includes("gbp")) {
     currency = "GBP";
-  } else if (salaryStr.includes("€") || salaryStr.toLowerCase().includes("eur")) {
+  } else if (lowerStr.includes("€") || lowerStr.includes("eur")) {
     currency = "EUR";
   }
 
-  const cleanStr = salaryStr.replace(/,/g, "");
-  const pattern = /([0-9.]+)\s*([a-zA-Z\s]*)/g;
-  let match;
-  const values = [];
+  const isMonthly = lowerStr.includes("/month") || lowerStr.includes("/mo") || lowerStr.includes("pm") || lowerStr.includes("p.m.");
+  const isHourly = lowerStr.includes("/hr") || lowerStr.includes("/hour");
 
-  while ((match = pattern.exec(cleanStr)) !== null) {
-    const num = parseFloat(match[1]);
-    if (isNaN(num)) continue;
-    
-    const suffix = (match[2] || "").toLowerCase().trim();
+  const nums = lowerStr.replace(/,/g, "").match(/\d+(?:\.\d+)?/g);
+  if (!nums || nums.length === 0) {
+    return { min: null, max: null, currency, isFlexible: true };
+  }
+
+  const rawValues = nums.map(n => parseFloat(n)).filter(n => !isNaN(n));
+  if (rawValues.length === 0) return { min: null, max: null, currency, isFlexible: true };
+
+  const normalized = rawValues.map(num => {
     let val = num;
+    if (isMonthly) {
+      val = num * 12;
+    } else if (isHourly) {
+      val = num * 2000;
+    }
 
     if (currency === "INR") {
-      // Unit is Lakhs (LPA)
-      if (suffix.includes("k")) {
-        // e.g. 18k -> 18,000 rupees -> 0.18 Lakhs
-        val = (num * 1000) / 100000;
+      if (lowerStr.includes("l") || lowerStr.includes("lakh") || lowerStr.includes("lpa")) {
+        val = num;
       } else if (num >= 1000) {
-        // e.g. 150000 -> 1.5 Lakhs
         val = num / 100000;
       }
     } else {
-      // Unit is Thousands (k) for USD, GBP, EUR
-      if (suffix.includes("k")) {
+      if (lowerStr.includes("k")) {
         val = num;
       } else if (num >= 1000) {
         val = num / 1000;
       }
     }
-    values.push(val);
-  }
+    return val;
+  });
 
-  const min = values[0] || null;
-  const max = values[1] || min;
+  const min = normalized[0];
+  const max = normalized[1] || min;
 
-  return { min, max, currency };
+  return { min: Math.min(min, max), max: Math.max(min, max), currency, isFlexible: false };
 };
 
 const convertSalaryToCurrency = (val, fromCurrency, toCurrency) => {
-  if (fromCurrency === toCurrency) return val;
+  if (!val || fromCurrency === toCurrency) return val;
   
-  const toUSD = {
+  const toUSDThousands = {
     USD: 1.0,
-    INR: 1.2, 
-    GBP: 1.25, 
-    EUR: 1.1,  
+    INR: 1.2,
+    GBP: 1.27,
+    EUR: 1.08,
   };
-  
-  const valInUSD = val * (toUSD[fromCurrency] || 1.0);
-  return valInUSD / (toUSD[toCurrency] || 1.0);
+
+  const valInUSDThousands = val * (toUSDThousands[fromCurrency] || 1.0);
+  return valInUSDThousands / (toUSDThousands[toCurrency] || 1.0);
 };
 
 const salaryFilterFn = (salaryRange, minVal, filterCurrencyCode) => {
-  if (!salaryRange || salaryRange.toLowerCase() === "competitive") return true;
-  
+  if (minVal === 0) return true;
   const parsed = parseSalary(salaryRange);
-  if (!parsed.min) return true;
+  if (parsed.isFlexible || parsed.max === null) return true;
   
   const jobCurrency = parsed.currency || "USD";
   const convertedMax = convertSalaryToCurrency(parsed.max, jobCurrency, filterCurrencyCode);

@@ -71,7 +71,8 @@ def session_root(request):
                     "passing_score": r.get("passing_score", 50)
                 })
 
-            status_val = "analysis" if job_title == "Smart Analyzer Session" else "active"
+            requested_status = data.get("status", "active")
+            status_val = "analysis" if job_title == "Smart Analyzer Session" else (requested_status if requested_status in ["active", "draft"] else "active")
             if status_val == "active":
                 active_count = Session.objects.filter(company=request.company, status="active").count()
                 company_tier = _get_effective_company_tier(request.company)

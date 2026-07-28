@@ -78,11 +78,12 @@ def _get_pacific_date():
 
 def _seed_from_env():
     """
-    Auto-seed GeminiProject + GeminiApiKey from GEMINI_API_KEYS env var
+    Auto-seed GeminiProject + GeminiApiKey and GroqApiKey from env vars
     if the DB tables are empty (first-time server start).
     Also seeds AgentModelConfig with default agent assignments.
     """
-    from api.models import GeminiProject, GeminiApiKey, AgentModelConfig
+    from api.models import GeminiProject, GeminiApiKey, AgentModelConfig, GroqApiKey
+    from api.utils.security import encrypt_api_key
 
     # --- Seed Gemini keys from .env if DB is empty ---
     if GeminiProject.objects.count() == 0:
@@ -105,6 +106,32 @@ def _seed_from_env():
             )
         if keys:
             print(f"[LLM SEED] Auto-imported {len(keys)} Gemini keys from .env into DB.", flush=True)
+
+    # --- Seed Groq keys from .env if DB is empty ---
+    if GroqApiKey.objects.count() == 0:
+        raw_keys_list = [
+            os.getenv("GROQ_API_KEYS", ""),
+            os.getenv("GROK_API_KEYS", ""),
+            os.getenv("GROQ_API_KEY", ""),
+            os.getenv("GROK_API_KEY", ""),
+        ]
+        gkeys = []
+        for raw in raw_keys_list:
+            if raw:
+                for k in raw.split(","):
+                    k_str = k.strip()
+                    if k_str and k_str not in gkeys:
+                        gkeys.append(k_str)
+        for i, gk in enumerate(gkeys, 1):
+            enc = encrypt_api_key(gk)
+            if enc:
+                GroqApiKey.objects.get_or_create(
+                    encrypted_key=enc,
+                    defaults={"label": f"Groq-Key-{i}", "is_active": True}
+                )
+        if gkeys:
+            print(f"[LLM SEED] Auto-imported {len(gkeys)} Groq keys from .env into encrypted DB.", flush=True)
+
 
     # --- Seed AgentModelConfig if DB is empty ---
     if AgentModelConfig.objects.count() == 0:
@@ -459,36 +486,50 @@ class RotateCompletions:
         return None
 
     def _try_groq(self, messages, temperature, response_format, max_tokens, timeout):
-        """Try Groq/Grok with cascading model fallback, in-memory rate-limit exhaustion tracking, and multi-key support."""
-        from dotenv import load_dotenv
-        _env_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        _env_file = os.path.join(_env_dir, ".env")
-        if os.path.exists(_env_file):
-            load_dotenv(_env_file, override=True)
-        load_dotenv(override=True)
-
-        raw_keys_list = [
-            os.getenv("GROQ_API_KEYS", ""),
-            os.getenv("GROK_API_KEYS", ""),
-            os.getenv("GROQ_API_KEY", ""),
-            os.getenv("GROK_API_KEY", ""),
-        ]
+        """Try Groq/Grok with cascading model fallback, DB-stored encrypted key rotation, and atomic counter updates."""
+        _ensure_seeded()
         keys = []
-        for raw in raw_keys_list:
-            if raw:
-                for k in raw.split(","):
-                    k_str = k.strip()
-                    if k_str and k_str not in keys:
-                        keys.append(k_str)
+        key_objs = []
+        try:
+            from api.models import GroqApiKey
+            from api.utils.security import decrypt_api_key
+            from django.db.models import F
+            db_keys = list(GroqApiKey.objects.filter(is_active=True).order_by('usage_count'))
+            for obj in db_keys:
+                dec = decrypt_api_key(obj.encrypted_key)
+                if dec and dec not in keys:
+                    keys.append(dec)
+                    key_objs.append((dec, obj))
+        except Exception as db_err:
+            logger.warning("Failed to fetch Groq keys from DB: %s", db_err)
 
         if not keys:
-            print("[LLM ROTATION] No GROQ_API_KEY / GROK_API_KEY configured in environment or .env.", flush=True)
+            from dotenv import load_dotenv
+            _env_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            _env_file = os.path.join(_env_dir, ".env")
+            if os.path.exists(_env_file):
+                load_dotenv(_env_file, override=True)
+            load_dotenv(override=True)
+
+            raw_keys_list = [
+                os.getenv("GROQ_API_KEYS", ""),
+                os.getenv("GROK_API_KEYS", ""),
+                os.getenv("GROQ_API_KEY", ""),
+                os.getenv("GROK_API_KEY", ""),
+            ]
+            for raw in raw_keys_list:
+                if raw:
+                    for k in raw.split(","):
+                        k_str = k.strip()
+                        if k_str and k_str not in keys:
+                            keys.append(k_str)
+                            key_objs.append((k_str, None))
+
+        if not keys:
+            print("[LLM ROTATION] No GROQ_API_KEY configured in DB or .env.", flush=True)
             return None
 
         # Clean rotation model list:
-        # 1. High-speed, high-quota instant model first (llama-3.1-8b-instant)
-        # 2. Versatile fallback model second (llama-3.3-70b-versatile)
-        # Decommissioned models (llama-3.2-11b-vision-preview, mixtral-8x7b-32768) ARE REMOVED to prevent wasted round-trips!
         custom_override = os.getenv("GROQ_MODEL", os.getenv("GROK_MODEL", "")).strip()
         groq_models = []
         if custom_override:
@@ -508,7 +549,7 @@ class RotateCompletions:
         fallback_timeout = min(timeout, 25.0)
         now = time.time()
 
-        for key in keys:
+        for key, key_obj in key_objs:
             key_hash = key[:10]
             masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "..."
             client = OpenAI(
@@ -543,7 +584,24 @@ class RotateCompletions:
                         call_kwargs["max_tokens"] = min(max_tokens, 4096)
                     res = client.chat.completions.create(**call_kwargs)
                     print(f"[LLM ROTATION] Groq/Grok model '{model_name}' (key {masked_key}) succeeded!", flush=True)
+                    
+                    # Atomic usage increment if key_obj exists
+                    if key_obj:
+                        def _inc_usage():
+                            try:
+                                from api.models import GroqApiKey
+                                from django.db.models import F
+                                from django.utils import timezone
+                                GroqApiKey.objects.filter(id=key_obj.id).update(
+                                    usage_count=F('usage_count') + 1,
+                                    last_used_at=timezone.now()
+                                )
+                            except Exception as inc_err:
+                                logger.warning("Failed to increment Groq key usage count: %s", inc_err)
+                        _run_sync_in_thread(_inc_usage)
+
                     return res
+
                 except Exception as e:
                     err_str = str(e)
                     err_lower = err_str.lower()

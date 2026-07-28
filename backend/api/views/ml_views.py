@@ -72,8 +72,8 @@ def ats_score_view(request):
         if not resume_text or not job_description:
             return JsonResponse(error_response("Both resume_text and job_description or job_id are required"), status=400)
             
-        agent = ResumeQualityAgent()
-        result = agent.calculate_ats_score(resume_text, job_description)
+        from api.services.ats_service import calculate_unified_ats_score
+        result = calculate_unified_ats_score({}, job_description, resume_text=resume_text)
         return JsonResponse(success_response(result))
     except Exception as e:
         return JsonResponse(error_response(f"ATS scoring failed: {e}"), status=500)

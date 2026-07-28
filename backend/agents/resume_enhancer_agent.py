@@ -106,8 +106,9 @@ class ResumeEnhancerAgent:
 
             # Calculate base score if not provided
             if live_ats_score is None:
-                base_report = self.ats_agent.analyze(None, resume_data, jd_text)
-                base_score = base_report.get("overallScore", 70)
+                from api.services.ats_service import calculate_unified_ats_score
+                base_report = calculate_unified_ats_score(resume_data, jd_text)
+                base_score = base_report.get("overall_score", 70)
             else:
                 base_score = int(live_ats_score)
 

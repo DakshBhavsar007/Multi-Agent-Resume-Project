@@ -25,6 +25,7 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
   const [expanded, setExpanded] = useState(false);
   const [detailedCandidate, setDetailedCandidate] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
 
   useEffect(() => {
     if (forceOpenDetails) {
@@ -203,8 +204,8 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
         {/* HEADER: Avatar + Name + Score */}
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center font-bold text-white overflow-hidden shadow-sm" style={{ backgroundColor: getHashColor(candidate?.name) }}>
-            {photoUrl ? (
-              <img src={photoUrl} alt={candidate.name} className="w-full h-full object-cover" />
+            {photoUrl && !photoError ? (
+              <img src={photoUrl} alt={candidate.name} onError={() => setPhotoError(true)} className="w-full h-full object-cover" />
             ) : (
               getInitials(candidate?.name)
             )}

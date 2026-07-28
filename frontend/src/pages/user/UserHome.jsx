@@ -858,65 +858,6 @@ function Home() {
         />
       )}
 
-      {/* For employers + Seekers split */}
-      <motion.section
-        className="mx-auto max-w-7xl px-6 pb-14"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        variants={staggerContainerVariants}
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <motion.div
-            variants={slideInLeftVariants}
-            className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-7"
-          >
-            <div
-              aria-hidden
-              className="absolute inset-0 -z-10"
-              style={{ background: "radial-gradient(60% 70% at 0% 100%, color-mix(in oklab, var(--google-blue) 16%, transparent), transparent 70%)" }}
-            />
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              <Sparkles className="h-3 w-3 text-[var(--google-blue)]" /> For job seekers
-            </div>
-            <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight sm:text-3xl">Your next chapter starts here</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Upload your resume once. We'll match you with roles that fit your skills and energy.</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link to="/jobs/upload-resume" className="pill inline-flex items-center gap-1.5 bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:opacity-90">
-                <FileUp className="h-3.5 w-3.5" /> Upload resume
-              </Link>
-              <Link to="/jobs/search" className="pill inline-flex items-center gap-1.5 border border-border bg-background px-4 py-2 text-xs font-medium hover:bg-muted">
-                <Briefcase className="h-3.5 w-3.5" /> Browse jobs
-              </Link>
-            </div>
-          </motion.div>
-
-          <motion.div
-            variants={slideInRightVariants}
-            className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-7"
-          >
-            <div
-              aria-hidden
-              className="absolute inset-0 -z-10"
-              style={{ background: "radial-gradient(60% 70% at 100% 0%, color-mix(in oklab, var(--google-green) 16%, transparent), transparent 70%)" }}
-            />
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              <Building2 className="h-3 w-3 text-[var(--google-green)]" /> For employers
-            </div>
-            <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight sm:text-3xl">Hire calmer, faster</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Reach {reviewStats.total_professionals ? `${reviewStats.total_professionals.toLocaleString()}+` : 'verified'} pre-screened candidates with salary-transparent listings and one clean dashboard.</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link to="/jobs/companies" className="pill inline-flex items-center gap-1.5 bg-foreground px-4 py-2 text-xs font-medium text-background hover:opacity-90">
-                Post a job
-              </Link>
-              <Link to="/jobs/companies" className="pill inline-flex items-center gap-1.5 border border-border bg-background px-4 py-2 text-xs font-medium hover:bg-muted">
-                See pricing
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </motion.section>
-
       <Footer />
     </div>
   );

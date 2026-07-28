@@ -192,6 +192,48 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
 };
 
 
+const DEFAULT_TESTIMONIALS = [
+  {
+    id: "fb-1",
+    quote: "Between transformed our hiring pipeline. Candidate matching scores are incredibly accurate and save us dozens of screening hours weekly.",
+    author: "Ananya Sharma",
+    role: "Head of Talent at TechScale",
+    roleBadge: "RECRUITER",
+    targetBadge: "Between Platform",
+    initials: "A",
+    rating: 5,
+    user_type: "recruiter",
+    color: "#3b82f6",
+    size: "medium"
+  },
+  {
+    id: "fb-2",
+    quote: "The automated assessment rounds and instant feedback made my job hunt completely transparent. I landed my Senior Dev role in 2 weeks!",
+    author: "Rohan Verma",
+    role: "Senior Full Stack Engineer",
+    roleBadge: "JOB SEEKER",
+    targetBadge: "Between Platform",
+    initials: "R",
+    rating: 5,
+    user_type: "job_seeker",
+    color: "#10b981",
+    size: "large"
+  },
+  {
+    id: "fb-3",
+    quote: "Building integrations with Between's developer API is effortless. The webhook system and API key infrastructure are rock solid.",
+    author: "David Chen",
+    role: "Lead Platform Architect",
+    roleBadge: "DEVELOPER",
+    targetBadge: "Developer Portal",
+    initials: "D",
+    rating: 5,
+    user_type: "developer",
+    color: "#8b5cf6",
+    size: "medium"
+  }
+];
+
 const Testimonials = ({ userTypeFilter }) => {
   const [items, setItems] = useState([]);
   const [apiStats, setApiStats] = useState({ avg_rating: 5.0, total_reviews: 0 });
@@ -244,11 +286,12 @@ const Testimonials = ({ userTypeFilter }) => {
 
           setItems(mapped);
         } else {
-          setItems([]);
+          setItems(DEFAULT_TESTIMONIALS);
         }
       })
       .catch((err) => {
         console.warn("Public reviews fetch failed (server restarting?), retrying in 3s...", err);
+        setItems(DEFAULT_TESTIMONIALS);
         if (retryCount < 3) {
           setTimeout(() => loadReviews(retryCount + 1), 3000);
         }

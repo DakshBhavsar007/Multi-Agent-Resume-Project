@@ -72,15 +72,19 @@ export default function AdminDashboard() {
   };
 
   const [llmStatus, setLlmStatus] = useState(null);
+  const [adminSessions, setAdminSessions] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [groqKeys, setGroqKeys] = useState([]);
+  const [newGroqKey, setNewGroqKey] = useState('');
+  const [newGroqLabel, setNewGroqLabel] = useState('');
+  const [addingGroqKey, setAddingGroqKey] = useState(false);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
       const token = getAdminToken();
       const response = await fetch(`${API_HOST}/api/v1/admin/dashboard`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const resData = await response.json();
       if (resData.success) {
@@ -96,7 +100,7 @@ export default function AdminDashboard() {
         }
       }
 
-      // Fetch LLM Quotas Status
+      // Fetch LLM Status
       const llmRes = await fetch(`${API_HOST}/api/v1/admin/llm-status`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -104,10 +108,124 @@ export default function AdminDashboard() {
       if (llmData.success) {
         setLlmStatus(llmData.data);
       }
+
+      // Fetch Sessions
+      const sessRes = await fetch(`${API_HOST}/api/v1/admin/sessions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const sessData = await sessRes.json();
+      if (sessData.success) {
+        setAdminSessions(sessData.data);
+      }
+
+      // Fetch Audit Logs
+      const auditRes = await fetch(`${API_HOST}/api/v1/admin/audit-logs`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const auditData = await auditRes.json();
+      if (auditData.success) {
+        setAuditLogs(auditData.data.logs || []);
+      }
+
+      // Fetch Groq Keys
+      const groqRes = await fetch(`${API_HOST}/api/v1/admin/groq-keys`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const groqData = await groqRes.json();
+      if (groqData.success) {
+        setGroqKeys(groqData.data || []);
+      }
     } catch (err) {
-      toast.error('Connection error: Failed to reach admin backend');
+      toast.error('Network error loading dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddGroqKey = async (e) => {
+    e.preventDefault();
+    if (!newGroqKey.trim()) return toast.error('Key string required');
+    setAddingGroqKey(true);
+    try {
+      const token = getAdminToken();
+      const res = await fetch(`${API_HOST}/api/v1/admin/groq-keys`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ key: newGroqKey.trim(), label: newGroqLabel.trim() || 'Groq Key' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Groq API Key encrypted & saved!');
+        setNewGroqKey('');
+        setNewGroqLabel('');
+        fetchDashboardData();
+      } else {
+        toast.error(data.error || 'Failed to add Groq key');
+      }
+    } catch (err) {
+      toast.error('Failed to add Groq key');
+    } finally {
+      setAddingGroqKey(false);
+    }
+  };
+
+  const handleDeactivateGroqKey = async (id) => {
+    try {
+      const token = getAdminToken();
+      const res = await fetch(`${API_HOST}/api/v1/admin/groq-keys`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Groq key deactivated');
+        fetchDashboardData();
+      } else {
+        toast.error(data.error || 'Failed to deactivate key');
+      }
+    } catch (err) {
+      toast.error('Error deactivating key');
+    }
+  };
+
+  const handleToggleGeminiProject = async (id, currentActive) => {
+    try {
+      const token = getAdminToken();
+      const res = await fetch(`${API_HOST}/api/v1/admin/gemini-projects`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ id, is_active: !currentActive })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Gemini project state updated');
+        fetchDashboardData();
+      } else {
+        toast.error(data.error || 'Failed to toggle project');
+      }
+    } catch (err) {
+      toast.error('Error toggling project');
+    }
+  };
+
+  const handleUpdateAgentConfig = async (id, primary, fallback) => {
+    try {
+      const token = getAdminToken();
+      const res = await fetch(`${API_HOST}/api/v1/admin/agent-config`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ id, primary_provider: primary, fallback_provider: fallback })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Agent model configuration updated');
+        fetchDashboardData();
+      } else {
+        toast.error(data.error || 'Failed to update agent config');
+      }
+    } catch (err) {
+      toast.error('Error updating agent config');
     }
   };
 
@@ -377,35 +495,59 @@ export default function AdminDashboard() {
         {/* Tabs and Controls */}
         <section className="bg-white dark:bg-[#121217] border border-slate-200/80 dark:border-zinc-800/80 rounded-2xl p-6 shadow-sm dark:shadow-xl flex flex-col gap-6 transition-colors">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 dark:border-zinc-800/60 pb-6">
-            <div className="flex gap-2 p-1 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 self-start">
+            <div className="flex flex-wrap gap-2 p-1 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 self-start">
               <button 
                 onClick={() => { setActiveTab('seekers'); setSearchQuery(''); }}
-                className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'seekers' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm transition ${activeTab === 'seekers' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
               >
                 Job Seekers
               </button>
               <button 
                 onClick={() => { setActiveTab('recruiters'); setSearchQuery(''); }}
-                className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'recruiters' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm transition ${activeTab === 'recruiters' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
               >
                 Recruiters
               </button>
               <button 
                 onClick={() => { setActiveTab('tickets'); setSearchQuery(''); }}
-                className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'tickets' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm transition ${activeTab === 'tickets' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
               >
                 Support Tickets
                 {stats.open_tickets > 0 && (
-                  <span className="ml-2 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
                     {stats.open_tickets}
                   </span>
                 )}
               </button>
               <button 
-                onClick={() => { setActiveTab('llm'); setSearchQuery(''); }}
-                className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'llm' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+                onClick={() => { setActiveTab('sessions'); setSearchQuery(''); }}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm transition ${activeTab === 'sessions' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
               >
-                LLM Quotas & Models
+                Sessions
+              </button>
+              <button 
+                onClick={() => { setActiveTab('llm'); setSearchQuery(''); }}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm transition ${activeTab === 'llm' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+              >
+                Gemini LLM
+              </button>
+              <button 
+                onClick={() => { setActiveTab('groq-keys'); setSearchQuery(''); }}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm transition ${activeTab === 'groq-keys' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+              >
+                Groq Keys
+              </button>
+              <button 
+                onClick={() => { setActiveTab('agent-config'); setSearchQuery(''); }}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm transition ${activeTab === 'agent-config' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+              >
+                Agent Config
+              </button>
+              <button 
+                onClick={() => { setActiveTab('audit-log'); setSearchQuery(''); }}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm transition ${activeTab === 'audit-log' ? 'bg-white text-slate-900 dark:bg-zinc-100 dark:text-zinc-950 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium'}`}
+              >
+                Audit Log
               </button>
             </div>
 
@@ -506,7 +648,7 @@ export default function AdminDashboard() {
                         <th className="p-3">Display Name</th>
                         <th className="p-3">Primary Provider</th>
                         <th className="p-3">Fallback Provider</th>
-                        <th className="p-3">Status</th>
+                        <th className="p-3">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 font-medium">
@@ -515,22 +657,24 @@ export default function AdminDashboard() {
                           <td className="p-3 font-mono text-blue-600 dark:text-blue-400 font-bold">{ag.agent_name}</td>
                           <td className="p-3 text-slate-900 dark:text-zinc-100">{ag.display_name}</td>
                           <td className="p-3">
-                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase inline-flex items-center gap-1 ${ag.primary_provider === 'gemini' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
-                              {ag.primary_provider === 'gemini' ? (
-                                <><Brain className="w-3 h-3" /> Gemini</>
-                              ) : (
-                                <><Zap className="w-3 h-3" /> Groq</>
-                              )}
-                            </span>
+                            <select
+                              value={ag.primary_provider}
+                              onChange={(e) => handleUpdateAgentConfig(ag.id, e.target.value, ag.fallback_provider)}
+                              className="bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-bold text-slate-900 dark:text-zinc-100"
+                            >
+                              <option value="groq">Groq (Llama 3.3 70B)</option>
+                              <option value="gemini">Gemini (2.5 Flash)</option>
+                            </select>
                           </td>
                           <td className="p-3">
-                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase inline-flex items-center gap-1 ${ag.fallback_provider === 'gemini' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
-                              {ag.fallback_provider === 'gemini' ? (
-                                <><Brain className="w-3 h-3" /> Gemini</>
-                              ) : (
-                                <><Zap className="w-3 h-3" /> Groq</>
-                              )}
-                            </span>
+                            <select
+                              value={ag.fallback_provider}
+                              onChange={(e) => handleUpdateAgentConfig(ag.id, ag.primary_provider, e.target.value)}
+                              className="bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-bold text-slate-900 dark:text-zinc-100"
+                            >
+                              <option value="gemini">Gemini (2.5 Flash)</option>
+                              <option value="groq">Groq (Llama 3.3 70B)</option>
+                            </select>
                           </td>
                           <td className="p-3">
                             <span className="text-emerald-500 font-bold">Active</span>
@@ -541,6 +685,168 @@ export default function AdminDashboard() {
                   </table>
                 </div>
               </div>
+            </div>
+          ) : activeTab === 'sessions' ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 font-bold text-slate-700 dark:text-zinc-300">
+                    <th className="p-3">Session Title</th>
+                    <th className="p-3">Company</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3">Candidates</th>
+                    <th className="p-3">Rounds</th>
+                    <th className="p-3">Created</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 font-medium">
+                  {adminSessions.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/50">
+                      <td className="p-3 font-bold text-slate-900 dark:text-white">{s.title || s.job_title}</td>
+                      <td className="p-3 text-slate-600 dark:text-zinc-400">{s.company_name}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${s.status === 'draft' ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
+                          {s.status}
+                        </span>
+                      </td>
+                      <td className="p-3 font-bold text-slate-900 dark:text-zinc-200">{s.candidate_count}</td>
+                      <td className="p-3 text-slate-600 dark:text-zinc-400">{s.rounds_count}</td>
+                      <td className="p-3 text-slate-500 dark:text-zinc-500">{s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : activeTab === 'groq-keys' ? (
+            <div className="space-y-6">
+              <form onSubmit={handleAddGroqKey} className="p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-col md:flex-row gap-3 items-end">
+                <div className="flex-1 space-y-1 w-full">
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Groq API Key (Fernet Encrypted in DB)</label>
+                  <input
+                    type="password"
+                    placeholder="gsk_..."
+                    value={newGroqKey}
+                    onChange={(e) => setNewGroqKey(e.target.value)}
+                    className="w-full bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-zinc-100"
+                  />
+                </div>
+                <div className="w-full md:w-48 space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Key Label</label>
+                  <input
+                    type="text"
+                    placeholder="Key-1 (Production)"
+                    value={newGroqLabel}
+                    onChange={(e) => setNewGroqLabel(e.target.value)}
+                    className="w-full bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-zinc-100"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={addingGroqKey}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition"
+                >
+                  {addingGroqKey ? 'Encrypting & Saving...' : 'Add Groq Key'}
+                </button>
+              </form>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {groqKeys.map((gk) => (
+                  <div key={gk.id} className="p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-slate-900 dark:text-white">{gk.label}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${gk.is_active ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                        {gk.is_active ? 'ACTIVE' : 'INACTIVE'}
+                      </span>
+                    </div>
+                    <div className="text-xs font-mono text-slate-600 dark:text-zinc-400">
+                      Key: {gk.masked_key}
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-500 dark:text-zinc-500 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                      <span>Usage count: {gk.usage_count}</span>
+                      {gk.is_active && (
+                        <button
+                          onClick={() => handleDeactivateGroqKey(gk.id)}
+                          className="text-red-500 hover:underline font-bold"
+                        >
+                          Deactivate
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : activeTab === 'agent-config' ? (
+            <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 rounded-xl">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 font-bold text-slate-700 dark:text-zinc-300">
+                    <th className="p-3">Agent System Name</th>
+                    <th className="p-3">Display Name</th>
+                    <th className="p-3">Primary Provider</th>
+                    <th className="p-3">Fallback Provider</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 font-medium">
+                  {(llmStatus?.agents || []).map((ag) => (
+                    <tr key={ag.id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/50">
+                      <td className="p-3 font-mono text-blue-600 dark:text-blue-400 font-bold">{ag.agent_name}</td>
+                      <td className="p-3 text-slate-900 dark:text-zinc-100">{ag.display_name}</td>
+                      <td className="p-3">
+                        <select
+                          value={ag.primary_provider}
+                          onChange={(e) => handleUpdateAgentConfig(ag.id, e.target.value, ag.fallback_provider)}
+                          className="bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-bold text-slate-900 dark:text-zinc-100"
+                        >
+                          <option value="groq">Groq (Llama 3.3 70B)</option>
+                          <option value="gemini">Gemini (2.5 Flash)</option>
+                        </select>
+                      </td>
+                      <td className="p-3">
+                        <select
+                          value={ag.fallback_provider}
+                          onChange={(e) => handleUpdateAgentConfig(ag.id, ag.primary_provider, e.target.value)}
+                          className="bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-bold text-slate-900 dark:text-zinc-100"
+                        >
+                          <option value="gemini">Gemini (2.5 Flash)</option>
+                          <option value="groq">Groq (Llama 3.3 70B)</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : activeTab === 'audit-log' ? (
+            <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 rounded-xl">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 font-bold text-slate-700 dark:text-zinc-300">
+                    <th className="p-3">Timestamp</th>
+                    <th className="p-3">Admin Email</th>
+                    <th className="p-3">Role</th>
+                    <th className="p-3">Action</th>
+                    <th className="p-3">Target</th>
+                    <th className="p-3">IP Address</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 font-medium">
+                  {auditLogs.map((l) => (
+                    <tr key={l.id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/50">
+                      <td className="p-3 text-slate-500 dark:text-zinc-400">{l.timestamp ? new Date(l.timestamp).toLocaleString() : 'N/A'}</td>
+                      <td className="p-3 font-bold text-slate-900 dark:text-white">{l.admin_email}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20 uppercase">
+                          {l.admin_role}
+                        </span>
+                      </td>
+                      <td className="p-3 font-mono text-purple-600 dark:text-purple-400 font-bold">{l.action}</td>
+                      <td className="p-3 text-slate-700 dark:text-zinc-300">{l.target_type} ({l.target_id || 'N/A'})</td>
+                      <td className="p-3 font-mono text-slate-500 dark:text-zinc-500">{l.ip_address}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-20 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">

@@ -24,7 +24,29 @@ export default function SessionsPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortFilter, setSortFilter] = useState("Newest");
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const [draftConfirmSession, setDraftConfirmSession] = useState(null);
   const menuRef = useRef(null);
+
+  const handleToggleStatus = async (session, targetStatus) => {
+    setActiveMenuId(null);
+    if (targetStatus === "draft" && (session.total_candidates || session.candidate_count || 0) > 0) {
+      setDraftConfirmSession(session);
+      return;
+    }
+    await executeStatusChange(session.id, targetStatus);
+  };
+
+  const executeStatusChange = async (sessionId, targetStatus) => {
+    try {
+      await sessionsAPI.update(sessionId, { status: targetStatus });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      toast.success(`Session status updated to ${targetStatus}`);
+    } catch (err) {
+      toast.error(err.message || "Failed to update session status");
+    } finally {
+      setDraftConfirmSession(null);
+    }
+  };
 
   // Click outside to close dropdown menu
   useEffect(() => {
@@ -238,6 +260,23 @@ export default function SessionsPage() {
                           <FolderOpen size={13} className="text-gray-400" />
                           Open Session
                         </button>
+                        {session.status === "active" ? (
+                          <button 
+                            onClick={() => handleToggleStatus(session, "draft")}
+                            className="w-full px-4 py-2 text-left text-xs font-semibold text-amber-600 hover:bg-amber-50 flex items-center gap-2"
+                          >
+                            <Archive size={13} className="text-amber-500" />
+                            Move to Draft
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => handleToggleStatus(session, "active")}
+                            className="w-full px-4 py-2 text-left text-xs font-semibold text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+                          >
+                            <FolderOpen size={13} className="text-emerald-500" />
+                            Publish Active
+                          </button>
+                        )}
                         <button 
                           onClick={async () => {
                             setActiveMenuId(null);
@@ -276,25 +315,25 @@ export default function SessionsPage() {
                 </div>
 
                 {/* STATUS BADGE */}
-                <div className="mt-2.5">
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${style.text}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${style.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`}></span>
                     {style.label}
                   </span>
                 </div>
 
-                {/* BOTTOM STATS ROW */}
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  <div className="bg-gray-50/50 border border-gray-100 rounded-xl py-2 px-1 text-center">
-                    <div className="text-md font-extrabold text-charcoal">{session.total_candidates || 0}</div>
-                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Total</div>
+                {/* STATS FOOTER */}
+                <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-gray-100 text-center">
+                  <div>
+                    <div className="text-base font-bold text-charcoal">{session.total_candidates || 0}</div>
+                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Applied</div>
                   </div>
-                  <div className="bg-green-50/20 border border-green-50/50 rounded-xl py-2 px-1 text-center">
-                    <div className="text-md font-extrabold text-[#22C55E]">{session.hired || 0}</div>
+                  <div>
+                    <div className="text-base font-bold text-[#22C55E]">{session.hired || 0}</div>
                     <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Hired</div>
                   </div>
-                  <div className="bg-red-50/20 border border-red-50/50 rounded-xl py-2 px-1 text-center">
-                    <div className="text-md font-extrabold text-[#EF4444]">{session.rejected || 0}</div>
+                  <div>
+                    <div className="text-base font-bold text-[#EF4444]">{session.rejected || 0}</div>
                     <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Rejected</div>
                   </div>
                 </div>
@@ -315,6 +354,40 @@ export default function SessionsPage() {
           >
             Create Session
           </button>
+        </div>
+      )}
+
+      {/* DRAFT CONVERT CONFIRMATION MODAL */}
+      {draftConfirmSession && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex items-center gap-3 text-amber-600">
+              <div className="p-2.5 bg-amber-50 rounded-xl">
+                <Archive size={22} />
+              </div>
+              <h3 className="text-lg font-bold text-charcoal">Convert Session to Draft?</h3>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              This session <strong>"{draftConfirmSession.job_title || draftConfirmSession.name}"</strong> currently has <strong>{draftConfirmSession.total_candidates || draftConfirmSession.candidate_count || 0} active candidate(s)</strong>.
+            </p>
+            <p className="text-xs text-amber-700 bg-amber-50 p-3 rounded-xl border border-amber-200">
+              Moving to Draft will unpublish the job listing and temporarily pause candidate assessment links until republished.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setDraftConfirmSession(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 hover:bg-gray-50 text-gray-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => executeStatusChange(draftConfirmSession.id, "draft")}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow transition"
+              >
+                Confirm & Move to Draft
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

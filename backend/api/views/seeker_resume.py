@@ -564,59 +564,43 @@ def check_ats_score(request):
         else:
             active_resume_data = resume_data
 
-        # Use the deterministic AtsCompatibilityAgent
-        from agents.ats_compatibility_agent import AtsCompatibilityAgent
-        ats_agent = AtsCompatibilityAgent()
-        report = ats_agent.analyze(None, active_resume_data, job_description)
-        
-        score = report.get("overallScore", 0)
-        
-        # Calculate verdict
-        if score >= 90:
-            verdict = "Excellent Match"
-        elif score >= 80:
-            verdict = "Good Match"
-        elif score >= 60:
-            verdict = "Fair Match"
-        else:
-            verdict = "Poor Match"
-            
-        bd = report.get("detailed_breakdown", {})
-        fmt_score = bd.get("ats_formatting", {}).get("score", 100)
-        fmt_issues = bd.get("ats_formatting", {}).get("issues", [])
-        
-        kw_score = bd.get("keyword_match", {}).get("score", 100)
-        matched_kws = bd.get("keyword_match", {}).get("matched", [])
-        
-        edu_score = bd.get("education_match", {}).get("score", 100)
-        
-        # Build standard output checks matching frontend expectations
-        if fmt_score >= 90:
-            format_check = "Passed (Clean headers & margins)"
-        else:
-            format_check = f"Needs Improvement ({len(fmt_issues)} formatting warnings)"
-            
-        if kw_score >= 80:
-            keyword_check = "Passed (Critical keywords integrated)"
-        else:
-            keyword_check = "Needs Improvement (Missing target keywords)"
-            
-        if edu_score >= 90:
-            structure_check = "Passed (Standard sections & credentials detected)"
-        else:
-            structure_check = "Needs Improvement (Degree match warning)"
-            
+        # Use the deterministic unified ATS scoring engine
+        from api.services.ats_service import calculate_unified_ats_score
+        report = calculate_unified_ats_score(active_resume_data, job_description)
+
+        score = report.get("overall_score", 0)
+        verdict = report.get("verdict", "Fair Match")
+        categories_dict = {c["name"]: c for c in report.get("categories", [])}
+
+        fmt_cat = categories_dict.get("formatting", {})
+        kw_cat = categories_dict.get("keyword_match", {})
+        impact_cat = categories_dict.get("content_impact", {})
+
+        fmt_pct = (fmt_cat.get("score", 0) / max(1, fmt_cat.get("max", 25))) * 100
+        kw_pct = (kw_cat.get("score", 0) / max(1, kw_cat.get("max", 35))) * 100
+        impact_pct = (impact_cat.get("score", 0) / max(1, impact_cat.get("max", 20))) * 100
+
+        format_check = "Passed (Clean headers & margins)" if fmt_pct >= 80 else "Needs Improvement (Formatting warnings)"
+        keyword_check = "Passed (Critical keywords integrated)" if kw_pct >= 70 else "Needs Improvement (Missing target keywords)"
+        structure_check = "Passed (Standard sections & credentials detected)" if impact_pct >= 60 else "Needs Improvement (Enhance bullet metrics)"
+
         result_json = {
             "score": score,
+            "overall_score": score,
             "verdict": verdict,
-            "matched_keywords": matched_kws,
+            "matched_keywords": report.get("matched_keywords", []),
+            "missing_keywords": report.get("missing_keywords", []),
+            "categories": report.get("categories", []),
             "format_check": format_check,
             "keyword_check": keyword_check,
             "structure_check": structure_check,
-            "recommendations": report.get("topSuggestions", [])
+            "recommendations": report.get("suggestions", []),
+            "suggestions": report.get("suggestions", []),
+            "migration_note": report.get("migration_note")
         }
-        
+
         return JsonResponse(success_response(result_json))
+
         
     except Exception as e:
         logger.error("ATS checking error: %s", e)

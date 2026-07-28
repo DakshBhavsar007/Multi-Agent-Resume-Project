@@ -742,3 +742,40 @@ class AgentModelConfig(models.Model):
 
     def __str__(self):
         return f"{self.display_name or self.agent_name} → {self.primary_provider} (fallback: {self.fallback_provider})"
+
+
+# ─── Groq API Keys & Admin Audit Logging ────────────────────────────────────
+
+class GroqApiKey(models.Model):
+    """Encrypted Groq API Keys for model rotation."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    encrypted_key = models.TextField(help_text="Fernet-encrypted API key")
+    label = models.CharField(max_length=100, blank=True)
+    is_active = models.BooleanField(default=True)
+    usage_count = models.IntegerField(default=0, help_text="Atomic usage counter")
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "groq_api_keys"
+        ordering = ["usage_count"]
+
+    def __str__(self):
+        return f"{self.label or 'Groq Key'} (used {self.usage_count} times)"
+
+
+class AdminAuditLog(models.Model):
+    """Server-side audit log for admin actions."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    admin_email = models.CharField(max_length=255)
+    admin_role = models.CharField(max_length=50, default="super_admin")
+    action = models.CharField(max_length=100)  # e.g. "ban_user", "update_api_key", "toggle_agent"
+    target_type = models.CharField(max_length=50, blank=True)  # "seeker", "groq_key", "agent_config"
+    target_id = models.CharField(max_length=255, blank=True)
+    details = models.JSONField(default=dict)
+    ip_address = models.CharField(max_length=45, blank=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "admin_audit_log"
+        ordering = ["-timestamp"]

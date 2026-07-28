@@ -174,18 +174,19 @@ def ats_check(request):
         _user_check_times[user_id] = times
         
         # 3. Perform Analysis
-        agent = AtsCompatibilityAgent()
-        report = agent.analyze(resume_text, parsed_data, target_job_desc)
-        
+        from api.services.ats_service import calculate_unified_ats_score
+        report = calculate_unified_ats_score(parsed_data, target_job_desc or "", resume_text=resume_text)
+        report["overallScore"] = report.get("overall_score", 0)  # Alias for existing builder UI
+
         # Cache Result
         _ats_check_cache[cache_key] = report
-        
+
         # Save to DB if loaded from a draft
         if draft:
-            draft.ats_score = report.get("overallScore")
+            draft.ats_score = report.get("overall_score")
             draft.ats_report = report
             draft.save(update_fields=["ats_score", "ats_report"])
-            
+
         return JsonResponse(success_response(report))
         
     except Exception as e:

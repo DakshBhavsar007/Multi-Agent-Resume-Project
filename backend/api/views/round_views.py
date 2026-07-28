@@ -255,16 +255,17 @@ def _fallback_coding_problems(job_title):
                 "tags": item["tags"]
             }
         )
-        saved.append({"slug": problem.slug, "difficulty": problem.difficulty})
+        saved.append(problem)
     return saved
 
 
-def auto_progress_candidate(candidate, session, round_score):
+def auto_progress_candidate(candidate, session, round_score, attempt=None):
     """
     Automatically updates candidate round progress based on score.
     Passing threshold is read from SessionRound, defaulting to 50%.
+    Includes idempotency guards, application status sync, and notifications.
     """
-    from api.models import SessionRound, ApplicantRoundAttempt
+    from api.models import SessionRound, ApplicantRoundAttempt, Notification, JobApplication
     from django.utils import timezone
     from datetime import timedelta
     import secrets
@@ -274,20 +275,32 @@ def auto_progress_candidate(candidate, session, round_score):
     rounds = session.rounds or []
     max_round = len(rounds) if rounds else 1
     
-    current_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first()
+    current_round_idx = candidate.current_round_index or 1
+    if attempt and candidate.current_round_index > attempt.round.round_number:
+        logger.info("Candidate %s already progressed past round %s", candidate.id, attempt.round.round_number)
+        return
+
+    current_sr = SessionRound.objects.filter(session=session, round_number=current_round_idx).first()
     passing_threshold = current_sr.passing_score if current_sr else 50
     
+    app = JobApplication.objects.filter(candidate=candidate).first()
+    company_name = session.company.name if session.company else "Between Partner"
+
     if round_score >= passing_threshold:
         if candidate.current_round_index < max_round:
             candidate.current_round_index += 1
             candidate.status = "forwarded"
             candidate.save(update_fields=['current_round_index', 'status'])
+
+            if app:
+                app.status = "shortlisted"
+                app.save(update_fields=['status'])
             
             # Pre-generate next round attempt proactively
             next_sr = SessionRound.objects.filter(session=session, round_number=candidate.current_round_index).first()
             if next_sr:
                 token = secrets.token_urlsafe(32)
-                ApplicantRoundAttempt.objects.get_or_create(
+                next_attempt, _ = ApplicantRoundAttempt.objects.get_or_create(
                     candidate=candidate,
                     round=next_sr,
                     defaults={
@@ -296,12 +309,36 @@ def auto_progress_candidate(candidate, session, round_score):
                         "status": "pending"
                     }
                 )
+
+                # Send in-app notification to seeker
+                if app and app.seeker:
+                    Notification.objects.create(
+                        seeker=app.seeker,
+                        type="shortlisted",
+                        title=f"Passed Round: {current_sr.name if current_sr else 'Assessment'}!",
+                        message=f"Congratulations! You scored {round_score}% and advanced to {next_sr.name} for {session.job_title} at {company_name}.",
+                        link=f"/jobs/applications?app_id={app.id}",
+                    )
         else:
             candidate.status = "forwarded"
             candidate.save(update_fields=['status'])
+            if app:
+                app.status = "hired"
+                app.save(update_fields=['status'])
+                if app.seeker:
+                    Notification.objects.create(
+                        seeker=app.seeker,
+                        type="hired",
+                        title=f"All Assessment Rounds Completed!",
+                        message=f"Congratulations! You completed all rounds for {session.job_title} at {company_name}.",
+                        link=f"/jobs/applications?app_id={app.id}",
+                    )
     else:
         candidate.status = "rejected"
         candidate.save(update_fields=['status'])
+        if app:
+            app.status = "rejected"
+            app.save(update_fields=['status'])
 
 
 @csrf_exempt
@@ -929,242 +966,30 @@ def run_code(request):
     if not test_cases:
         return JsonResponse(success_response({"all_passed": True, "results": []}))
 
-    run_results = []
-    all_passed = True
-    user_stdout = ""
-    user_stderr = ""
-    elapsed_seconds = 0.0
-    peak_memory_kb = 0
+    func_name = None
+    if problem.starter_code and isinstance(problem.starter_code, dict):
+        match = re.search(r'(?:def|function)\s+([a-zA-Z0-9_]+)\s*\(', problem.starter_code.get(language, ""))
+        if match:
+            func_name = match.group(1)
 
-    try:
-        if language == "python":
-            import json as py_json
-            import re
-            import time
-            inputs = [tc["input"] for tc in test_cases]
-            inputs_json = py_json.dumps(inputs)
-            
-            func_name = None
-            if problem.starter_code and isinstance(problem.starter_code, dict):
-                match = re.search(r'def\s+([a-zA-Z0-9_]+)\s*\(', problem.starter_code.get("python", ""))
-                if match:
-                    func_name = match.group(1)
-            
-            if func_name:
-                call_code = f"{func_name}(**inp)"
-            else:
-                call_code = PROBLEM_CALL_MAPPING.get(slug, {}).get("python", "None")
+    call_override = PROBLEM_CALL_MAPPING.get(slug, {}).get(language)
 
-            runner_code = f"""
-import json
-import sys
-import tracemalloc
-
-# User submitted code
-{code}
-
-inputs = json.loads('''{inputs_json}''')
-results = []
-tracemalloc.start()
-
-for idx, inp in enumerate(inputs):
-    try:
-        res = {call_code}
-        results.append({{"success": True, "output": res}})
-    except Exception as e:
-        results.append({{"success": False, "error": str(e)}})
-
-current, peak = tracemalloc.get_traced_memory()
-tracemalloc.stop()
-
-print("___TEST_RESULTS___")
-print(json.dumps({{"results": results, "peak_memory_bytes": peak}}))
-"""
-            with tempfile.NamedTemporaryFile(suffix=".py", delete=False, mode="w", encoding="utf-8") as f:
-                f.write(runner_code)
-                temp_filename = f.name
-
-            try:
-                start_time = time.perf_counter()
-                proc = subprocess.run(
-                    ["python", temp_filename],
-                    capture_output=True,
-                    text=True,
-                    timeout=2.5
-                )
-                end_time = time.perf_counter()
-                elapsed_seconds = end_time - start_time
-                stdout = proc.stdout
-                stderr = proc.stderr
-
-                if "___TEST_RESULTS___" in stdout:
-                    parts = stdout.split("___TEST_RESULTS___")
-                    user_stdout = parts[0].strip()
-                    payload = py_json.loads(parts[1].strip())
-                    outputs = payload.get("results", [])
-                    peak_memory_kb = int(payload.get("peak_memory_bytes", 0) / 1024)
-
-                    for idx, out in enumerate(outputs):
-                        tc = test_cases[idx]
-                        expected = tc.get("expected_output")
-                        
-                        if out.get("success"):
-                            actual = out.get("output")
-                            if is_custom_run:
-                                run_results.append({
-                                    "passed": True,
-                                    "input": tc["input"],
-                                    "expected": None,
-                                    "actual": actual
-                                })
-                            else:
-                                passed = (actual == expected)
-                                run_results.append({
-                                    "passed": passed,
-                                    "input": tc["input"],
-                                    "expected": expected,
-                                    "actual": actual
-                                })
-                                if not passed:
-                                    all_passed = False
-                        else:
-                            all_passed = False
-                            run_results.append({
-                                "passed": False,
-                                "input": tc["input"],
-                                "expected": expected,
-                                "error": out.get("error")
-                            })
-                else:
-                    all_passed = False
-                    user_stderr = stderr or stdout or "Execution failed with exit code"
-                    run_results.append({
-                        "passed": False,
-                        "error": user_stderr
-                    })
-            finally:
-                os.remove(temp_filename)
-
-        elif language in ["javascript", "js"]:
-            import json as js_json
-            import re
-            import time
-            inputs = [tc["input"] for tc in test_cases]
-            inputs_json = js_json.dumps(inputs)
-            
-            func_name = None
-            if problem.starter_code and isinstance(problem.starter_code, dict):
-                match = re.search(r'function\s+([a-zA-Z0-9_]+)\s*\(', problem.starter_code.get("javascript", ""))
-                if match:
-                    func_name = match.group(1)
-            
-            if func_name:
-                call_code = f"{func_name}(...Object.values(inp))"
-            else:
-                call_code = PROBLEM_CALL_MAPPING.get(slug, {}).get("javascript", "null")
-
-            runner_code = f"""
-const fs = require('fs');
-
-# User submitted code
-{code}
-
-const inputs = JSON.parse('{inputs_json}');
-const results = [];
-for (let idx = 0; idx < inputs.length; idx++) {{
-    const inp = inputs[idx];
-    try {{
-        const res = {call_code};
-        results.push({{success: true, output: res}});
-    }} catch (e) {{
-        results.push({{success: false, error: e.message}});
-    }}
-}}
-
-const peak = process.memoryUsage().rss;
-console.log("___TEST_RESULTS___");
-console.log(JSON.stringify({{ results: results, peak_memory_bytes: peak }}));
-"""
-            with tempfile.NamedTemporaryFile(suffix=".js", delete=False, mode="w", encoding="utf-8") as f:
-                f.write(runner_code)
-                temp_filename = f.name
-
-            try:
-                start_time = time.perf_counter()
-                proc = subprocess.run(
-                    ["node", temp_filename],
-                    capture_output=True,
-                    text=True,
-                    timeout=2.5
-                )
-                end_time = time.perf_counter()
-                elapsed_seconds = end_time - start_time
-                stdout = proc.stdout
-                stderr = proc.stderr
-
-                if "___TEST_RESULTS___" in stdout:
-                    parts = stdout.split("___TEST_RESULTS___")
-                    user_stdout = parts[0].strip()
-                    payload = js_json.loads(parts[1].strip())
-                    outputs = payload.get("results", [])
-                    peak_memory_kb = int(payload.get("peak_memory_bytes", 0) / 1024)
-
-                    for idx, out in enumerate(outputs):
-                        tc = test_cases[idx]
-                        expected = tc.get("expected_output")
-
-                        if out.get("success"):
-                            actual = out.get("output")
-                            if is_custom_run:
-                                run_results.append({
-                                    "passed": True,
-                                    "input": tc["input"],
-                                    "expected": None,
-                                    "actual": actual
-                                })
-                            else:
-                                passed = (actual == expected)
-                                run_results.append({
-                                    "passed": passed,
-                                    "input": tc["input"],
-                                    "expected": expected,
-                                    "actual": actual
-                                })
-                                if not passed:
-                                    all_passed = False
-                        else:
-                            all_passed = False
-                            run_results.append({
-                                "passed": False,
-                                "input": tc["input"],
-                                "expected": expected,
-                                "error": out.get("error")
-                            })
-                else:
-                    all_passed = False
-                    user_stderr = stderr or stdout or "Execution failed with exit code"
-                    run_results.append({
-                        "passed": False,
-                        "error": user_stderr
-                    })
-            finally:
-                os.remove(temp_filename)
-        else:
-            return JsonResponse(error_response("Supported execution languages are Python and JavaScript"), status=400)
-
-    except subprocess.TimeoutExpired:
-        all_passed = False
-        run_results = [{"passed": False, "error": "Execution Timed Out (Limit: 2.5 seconds)"}]
-    except Exception as e:
-        all_passed = False
-        run_results = [{"passed": False, "error": f"Internal Runner Error: {str(e)}"}]
+    from api.services.piston_sandbox import execute_in_piston
+    all_passed, run_results, user_stdout, user_stderr, elapsed_seconds, peak_memory_kb = execute_in_piston(
+        code=code,
+        language=language,
+        test_cases=test_cases,
+        func_name=func_name,
+        call_code_override=call_override,
+        is_custom_run=is_custom_run
+    )
 
     return JsonResponse(success_response({
         "all_passed": all_passed,
         "results": run_results,
         "user_stdout": user_stdout,
         "user_stderr": user_stderr,
-        "execution_time_sec": round(elapsed_seconds, 3),
+        "execution_time_sec": elapsed_seconds,
         "memory_usage_kb": peak_memory_kb
     }))
 
@@ -1703,242 +1528,23 @@ def execute_problem_code(problem, code, language, custom_input_raw=None):
     if not test_cases:
         return True, [], "", "", 0.0, 0
 
-    run_results = []
-    all_passed = True
-    user_stdout = ""
-    user_stderr = ""
-    elapsed_seconds = 0.0
-    peak_memory_kb = 0
+    func_name = None
+    if problem.starter_code and isinstance(problem.starter_code, dict):
+        match = re.search(r'(?:def|function)\s+([a-zA-Z0-9_]+)\s*\(', problem.starter_code.get(language, ""))
+        if match:
+            func_name = match.group(1)
 
-    try:
-        if language == "python":
-            import json as py_json
-            import re
-            import time
-            import tempfile
-            import subprocess
-            import os
-            inputs = [tc["input"] for tc in test_cases]
-            inputs_json = py_json.dumps(inputs)
-            
-            func_name = None
-            if problem.starter_code and isinstance(problem.starter_code, dict):
-                match = re.search(r'def\s+([a-zA-Z0-9_]+)\s*\(', problem.starter_code.get("python", ""))
-                if match:
-                    func_name = match.group(1)
-            
-            if func_name:
-                call_code = f"{func_name}(**inp)"
-            else:
-                call_code = PROBLEM_CALL_MAPPING.get(problem.slug, {}).get("python", "None")
+    call_override = PROBLEM_CALL_MAPPING.get(problem.slug, {}).get(language)
 
-            runner_code = f"""
-import json
-import sys
-import tracemalloc
-
-# User submitted code
-{code}
-
-inputs = json.loads('''{inputs_json}''')
-results = []
-tracemalloc.start()
-
-for idx, inp in enumerate(inputs):
-    try:
-        res = {call_code}
-        results.append({{"success": True, "output": res}})
-    except Exception as e:
-        results.append({{"success": False, "error": str(e)}})
-
-current, peak = tracemalloc.get_traced_memory()
-tracemalloc.stop()
-
-print("___TEST_RESULTS___")
-print(json.dumps({{"results": results, "peak_memory_bytes": peak}}))
-"""
-            with tempfile.NamedTemporaryFile(suffix=".py", delete=False, mode="w", encoding="utf-8") as f:
-                f.write(runner_code)
-                temp_filename = f.name
-
-            try:
-                start_time = time.perf_counter()
-                proc = subprocess.run(
-                    ["python", temp_filename],
-                    capture_output=True,
-                    text=True,
-                    timeout=2.5
-                )
-                end_time = time.perf_counter()
-                elapsed_seconds = end_time - start_time
-                stdout = proc.stdout
-                stderr = proc.stderr
-
-                if "___TEST_RESULTS___" in stdout:
-                    parts = stdout.split("___TEST_RESULTS___")
-                    user_stdout = parts[0].strip()
-                    payload = py_json.loads(parts[1].strip())
-                    outputs = payload.get("results", [])
-                    peak_memory_kb = int(payload.get("peak_memory_bytes", 0) / 1024)
-
-                    for idx, out in enumerate(outputs):
-                        tc = test_cases[idx]
-                        expected = tc.get("expected_output")
-                        
-                        if out.get("success"):
-                            actual = out.get("output")
-                            if is_custom_run:
-                                run_results.append({
-                                    "passed": True,
-                                    "input": tc["input"],
-                                    "expected": None,
-                                    "actual": actual
-                                })
-                            else:
-                                passed = (actual == expected)
-                                run_results.append({
-                                    "passed": passed,
-                                    "input": tc["input"],
-                                    "expected": expected,
-                                    "actual": actual
-                                })
-                                if not passed:
-                                    all_passed = False
-                        else:
-                            all_passed = False
-                            run_results.append({
-                                "passed": False,
-                                "input": tc["input"],
-                                "expected": expected,
-                                "error": out.get("error")
-                            })
-                else:
-                    all_passed = False
-                    user_stderr = stderr or stdout or "Execution failed with exit code"
-                    run_results.append({
-                        "passed": False,
-                        "error": user_stderr
-                    })
-            finally:
-                os.remove(temp_filename)
-
-        elif language in ["javascript", "js"]:
-            import json as js_json
-            import re
-            import time
-            import tempfile
-            import subprocess
-            import os
-            inputs = [tc["input"] for tc in test_cases]
-            inputs_json = js_json.dumps(inputs)
-            
-            func_name = None
-            if problem.starter_code and isinstance(problem.starter_code, dict):
-                match = re.search(r'function\s+([a-zA-Z0-9_]+)\s*\(', problem.starter_code.get("javascript", ""))
-                if match:
-                    func_name = match.group(1)
-            
-            if func_name:
-                call_code = f"{func_name}(...Object.values(inp))"
-            else:
-                call_code = PROBLEM_CALL_MAPPING.get(problem.slug, {}).get("javascript", "null")
-
-            runner_code = f"""
-const fs = require('fs');
-
-# User submitted code
-{code}
-
-const inputs = JSON.parse('{inputs_json}');
-const results = [];
-for (let idx = 0; idx < inputs.length; idx++) {{
-    const inp = inputs[idx];
-    try {{
-        const res = {call_code};
-        results.push({{success: true, output: res}});
-    }} catch (e) {{
-        results.push({{success: false, error: e.message}});
-    }}
-}}
-
-console.log("___TEST_RESULTS___");
-console.log(JSON.stringify({{results: results, peak_memory_bytes: 0}}));
-"""
-            with tempfile.NamedTemporaryFile(suffix=".js", delete=False, mode="w", encoding="utf-8") as f:
-                f.write(runner_code)
-                temp_filename = f.name
-
-            try:
-                start_time = time.perf_counter()
-                proc = subprocess.run(
-                    ["node", temp_filename],
-                    capture_output=True,
-                    text=True,
-                    timeout=2.5
-                )
-                end_time = time.perf_counter()
-                elapsed_seconds = end_time - start_time
-                stdout = proc.stdout
-                stderr = proc.stderr
-
-                if "___TEST_RESULTS___" in stdout:
-                    parts = stdout.split("___TEST_RESULTS___")
-                    user_stdout = parts[0].strip()
-                    payload = js_json.loads(parts[1].strip())
-                    outputs = payload.get("results", [])
-                    peak_memory_kb = int(payload.get("peak_memory_bytes", 0) / 1024)
-
-                    for idx, out in enumerate(outputs):
-                        tc = test_cases[idx]
-                        expected = tc.get("expected_output")
-
-                        if out.get("success"):
-                            actual = out.get("output")
-                            if is_custom_run:
-                                run_results.append({
-                                    "passed": True,
-                                    "input": tc["input"],
-                                    "expected": None,
-                                    "actual": actual
-                                })
-                            else:
-                                passed = (actual == expected)
-                                run_results.append({
-                                    "passed": passed,
-                                    "input": tc["input"],
-                                    "expected": expected,
-                                    "actual": actual
-                                })
-                                if not passed:
-                                    all_passed = False
-                        else:
-                            all_passed = False
-                            run_results.append({
-                                "passed": False,
-                                "input": tc["input"],
-                                "expected": expected,
-                                "error": out.get("error")
-                            })
-                else:
-                    all_passed = False
-                    user_stderr = stderr or stdout or "Execution failed with exit code"
-                    run_results.append({
-                        "passed": False,
-                        "error": user_stderr
-                    })
-            finally:
-                os.remove(temp_filename)
-        else:
-            raise ValueError("Supported execution languages are Python and JavaScript")
-
-    except subprocess.TimeoutExpired:
-        all_passed = False
-        run_results = [{"passed": False, "error": "Execution Timed Out (Limit: 2.5 seconds)"}]
-    except Exception as e:
-        all_passed = False
-        run_results = [{"passed": False, "error": f"Internal Runner Error: {str(e)}"}]
-
-    return all_passed, run_results, user_stdout, user_stderr, elapsed_seconds, peak_memory_kb
+    from api.services.piston_sandbox import execute_in_piston
+    return execute_in_piston(
+        code=code,
+        language=language,
+        test_cases=test_cases,
+        func_name=func_name,
+        call_code_override=call_override,
+        is_custom_run=is_custom_run
+    )
 
 
 def create_mock_attempt(request):
