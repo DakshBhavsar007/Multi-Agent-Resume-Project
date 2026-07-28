@@ -252,10 +252,22 @@ const DEFAULT_TESTIMONIALS = [
 const Testimonials = ({ userTypeFilter }) => {
   const [items, setItems] = useState([]);
   const [apiStats, setApiStats] = useState({ avg_rating: 5.0, total_reviews: 0 });
-  const [filterTab, setFilterTab] = useState(userTypeFilter || "all");
+  const [filterTab, setFilterTab] = useState(() => {
+    if (userTypeFilter === "developer") return "developer";
+    if (userTypeFilter === "job_seeker") return "platform";
+    if (userTypeFilter === "company" || userTypeFilter === "recruiter") return "company";
+    return userTypeFilter || "all";
+  });
   const [companyNames, setCompanyNames] = useState([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
+
+  useEffect(() => {
+    if (userTypeFilter === "developer") setFilterTab("developer");
+    else if (userTypeFilter === "job_seeker") setFilterTab("platform");
+    else if (userTypeFilter === "company" || userTypeFilter === "recruiter") setFilterTab("company");
+    else if (userTypeFilter) setFilterTab(userTypeFilter);
+  }, [userTypeFilter]);
 
   const isRecruiter = !!localStorage.getItem('vish_jwt');
   const isDeveloper = !!localStorage.getItem('portal_jwt');
