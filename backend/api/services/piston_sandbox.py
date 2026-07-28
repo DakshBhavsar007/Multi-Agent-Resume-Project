@@ -8,6 +8,7 @@ No local subprocess execution on the host machine.
 """
 
 import json
+import os
 import time
 import requests
 import logging
@@ -17,13 +18,44 @@ from api.decorators import redis_client
 
 logger = logging.getLogger(__name__)
 
-PISTON_API_URL = "https://emkc.org/api/v2/piston/execute"
+PISTON_API_URL = os.environ.get("PISTON_API_URL", "https://emkc.org/api/v2/piston/execute")
+PISTON_API_KEY = os.environ.get("PISTON_API_KEY", "")
+
+WANDBOX_API_URL = "https://wandbox.org/api/compile.json"
+WANDBOX_COMPILERS = {
+    "python": "cpython-3.10.15",
+    "javascript": "nodejs-head",
+    "js": "nodejs-head"
+}
 
 LANGUAGE_VERSIONS = {
     "python": "3.10.0",
     "javascript": "18.15.0",
     "js": "18.15.0"
 }
+
+
+def _call_wandbox_sandbox(runner_script: str, lang_key: str) -> Tuple[bool, str, str]:
+    """
+    Fallback execution service using Wandbox API when Piston requires a whitelist key.
+    """
+    compiler = WANDBOX_COMPILERS.get(lang_key, "cpython-3.10.15")
+    payload = {
+        "compiler": compiler,
+        "code": runner_script
+    }
+    try:
+        resp = requests.post(WANDBOX_API_URL, json=payload, timeout=15.0)
+        if resp.status_code == 200:
+            res_data = resp.json()
+            stdout = res_data.get("program_output", "") or res_data.get("compiler_output", "")
+            stderr = res_data.get("program_error", "") or res_data.get("compiler_error", "")
+            return True, stdout, stderr
+        else:
+            logger.warning("Wandbox API returned HTTP %d", resp.status_code)
+    except Exception as e:
+        logger.warning("Wandbox sandbox execution error: %s", e)
+    return False, "", "Wandbox execution failed"
 
 
 def acquire_piston_token_distributed(max_per_minute: int = 15) -> bool:
@@ -83,8 +115,8 @@ def execute_in_piston(
     is_custom_run: bool = False
 ) -> Tuple[bool, List[Dict[str, Any]], str, str, float, int]:
     """
-    Executes candidate code inside Piston API.
-    Batches all test cases into a single Piston API request.
+    Executes candidate code inside isolated sandbox API (Piston or Wandbox fallback).
+    Batches all test cases into a single API request.
 
     Returns:
       (all_passed, run_results, user_stdout, user_stderr, elapsed_seconds, peak_memory_kb)
@@ -98,15 +130,14 @@ def execute_in_piston(
 
     # 1. Rate Limit Check
     if not acquire_piston_token_distributed():
-        # Short backoff retry
-        time.sleep(2.0)
+        time.sleep(1.5)
         if not acquire_piston_token_distributed():
             return False, [{
                 "passed": False,
                 "error": "Piston rate limit exceeded. Please wait a few seconds and retry submission."
             }], "", "Rate limited", 0.0, 0
 
-    # 2. Build Batched Script for Piston
+    # 2. Build Batched Script for Sandbox
     inputs = [tc.get("input") for tc in test_cases]
     inputs_json = json.dumps(inputs)
 
@@ -166,7 +197,7 @@ console.log("___TEST_RESULTS___");
 console.log(JSON.stringify({{results: results, peak_memory_bytes: 0}}));
 """
 
-    # 3. Call Piston API with retries
+    # 3. Call Piston API with Wandbox fallback
     piston_version = LANGUAGE_VERSIONS[lang_key]
     payload = {
         "language": "python" if lang_key == "python" else "javascript",
@@ -175,35 +206,37 @@ console.log(JSON.stringify({{results: results, peak_memory_bytes: 0}}));
         "run_timeout": 10000
     }
 
-    resp_json = None
     start_time = time.perf_counter()
+    stdout = ""
+    stderr = ""
+    resp_success = False
 
-    for attempt in range(3):
-        try:
-            resp = requests.post(PISTON_API_URL, json=payload, timeout=12.0)
-            if resp.status_code == 200:
-                resp_json = resp.json()
-                break
-            elif resp.status_code == 429:
-                time.sleep(1.5 * (attempt + 1))
-            else:
-                logger.warning("Piston API returned HTTP %d on attempt %d", resp.status_code, attempt + 1)
-                time.sleep(1.0)
-        except Exception as http_err:
-            logger.warning("Piston API connection attempt %d failed: %s", attempt + 1, http_err)
-            time.sleep(1.0)
+    headers = {}
+    if PISTON_API_KEY:
+        headers["Authorization"] = PISTON_API_KEY
+
+    try:
+        resp = requests.post(PISTON_API_URL, json=payload, headers=headers, timeout=10.0)
+        if resp.status_code == 200:
+            run_output = resp.json().get("run", {})
+            stdout = run_output.get("stdout", "")
+            stderr = run_output.get("stderr", "")
+            resp_success = True
+        else:
+            logger.warning("Piston API returned HTTP %d: %s — trying Wandbox fallback", resp.status_code, resp.text[:120])
+    except Exception as http_err:
+        logger.warning("Piston API connection failed: %s — trying Wandbox fallback", http_err)
+
+    if not resp_success:
+        wand_ok, stdout, stderr = _call_wandbox_sandbox(runner_script, lang_key)
+        if not wand_ok:
+            elapsed_seconds = time.perf_counter() - start_time
+            return False, [{
+                "passed": False,
+                "error": "Sandbox execution service unavailable. Please retry submission."
+            }], "", "Sandbox service unavailable", round(elapsed_seconds, 3), 0
 
     elapsed_seconds = time.perf_counter() - start_time
-
-    if not resp_json or "run" not in resp_json:
-        return False, [{
-            "passed": False,
-            "error": "Sandbox execution service unavailable. Please retry submission."
-        }], "", "Piston service unavailable", round(elapsed_seconds, 3), 0
-
-    run_output = resp_json.get("run", {})
-    stdout = run_output.get("stdout", "")
-    stderr = run_output.get("stderr", "")
 
     if "___TEST_RESULTS___" not in stdout:
         err_msg = stderr or stdout or "Code execution failed inside sandbox"
