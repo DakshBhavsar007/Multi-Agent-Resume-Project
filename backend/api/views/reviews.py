@@ -25,9 +25,8 @@ logger = logging.getLogger(__name__)
 def _sanitize_avatar(url_or_path):
     if not url_or_path or not isinstance(url_or_path, str):
         return ""
-    if url_or_path.startswith("data:image/") or len(url_or_path) > 500:
-        return ""
-    return url_or_path
+    # Allow http(s), data:image, and relative media paths
+    return url_or_path.strip()
 
 
 def _extract_user_identity(request):

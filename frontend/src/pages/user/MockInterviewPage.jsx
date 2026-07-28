@@ -412,40 +412,56 @@ ${keywords.length > 0 ? `3. Key domain terms: ${keywords.join(", ")}.` : "3. Pra
     }
   };
 
-  const handleRunCodingTest = () => {
+  const handleRunCodingTest = async () => {
     setCompiling(true);
     setCodingTab("output");
-    setCompileOutput("Compiling and executing test cases...\n");
+    setCompileOutput("Executing test cases via Piston Sandbox...\n");
 
-    const currentSlug = activeAttempt.questions[currentQIndex].slug;
-    const startCode = activeAttempt.questions[currentQIndex]?.starter_code;
-    const codeText = typeof startCode === "object" ? (startCode?.python || startCode?.javascript || "") : (startCode || "");
-    
-    // Check if code has actually been modified from the starter template
-    const isCodeUnimplemented = codeContent.trim() === codeText.trim() || codeContent.includes("pass") || codeContent.trim().length < 30;
+    const currentQ = activeAttempt.questions[currentQIndex];
+    const currentSlug = currentQ?.slug;
 
-    setTimeout(() => {
+    try {
+      const res = await seekerAPI.runMockCode({
+        slug: currentSlug,
+        code: codeContent,
+        language: "python"
+      });
+
       setCompiling(false);
-      if (isCodeUnimplemented) {
-        setCompileOutput(
-          "✗ Compilation Failed / Testcases Failed\n" +
-          "Error: Solution not implemented or contains 'pass'. Please modify the starter code.\n" +
-          "Testcase 1: Failed (Execution timed out or returned no output)\n" +
-          "Testcase 2: Failed\n" +
-          "Testcase 3: Failed"
-        );
-        setRunStatus(prev => ({ ...prev, [currentSlug]: false }));
+      const allPassed = res.all_passed;
+      let outputText = "";
+      if (allPassed) {
+        outputText += "✓ Compilation & Execution Successful\n\n";
       } else {
-        setCompileOutput(
-          "✓ Compilation Successful\n" +
-          "✓ Testcase 1: Passed\n" +
-          "✓ Testcase 2: Passed\n" +
-          "✓ Testcase 3: Passed\n\n" +
-          "All testcases executed in 42ms."
-        );
-        setRunStatus(prev => ({ ...prev, [currentSlug]: true }));
+        outputText += "✗ Testcase Verification Failed\n\n";
       }
-    }, 1500);
+
+      if (res.user_stdout) outputText += `[Output]: ${res.user_stdout}\n`;
+      if (res.user_stderr) outputText += `[Errors]: ${res.user_stderr}\n`;
+
+      if (res.results && res.results.length > 0) {
+        res.results.forEach((r, idx) => {
+          const passIcon = r.passed ? "✓" : "✗";
+          outputText += `${passIcon} Testcase ${idx + 1}: ${r.passed ? "Passed" : "Failed"}\n`;
+          if (!r.passed) {
+            outputText += `   Expected: ${JSON.stringify(r.expected)}\n`;
+            outputText += `   Actual: ${JSON.stringify(r.actual)}\n`;
+            if (r.error) outputText += `   Error: ${r.error}\n`;
+          }
+        });
+      }
+
+      if (res.execution_time_sec) {
+        outputText += `\nExecuted in ${(res.execution_time_sec * 1000).toFixed(0)}ms.`;
+      }
+
+      setCompileOutput(outputText);
+      setRunStatus(prev => ({ ...prev, [currentSlug]: allPassed }));
+    } catch (err) {
+      setCompiling(false);
+      setCompileOutput(`✗ Execution Failed: ${err.message || "Sandbox unavailable"}`);
+      setRunStatus(prev => ({ ...prev, [currentSlug]: false }));
+    }
   };
 
   const handleNextCodingQuestion = () => {

@@ -1547,6 +1547,52 @@ def execute_problem_code(problem, code, language, custom_input_raw=None):
     )
 
 
+@csrf_exempt
+def seeker_mock_run_code(request):
+    """
+    POST /api/v1/seeker/mock-interview/run-code
+    Runs candidate code for practice coding tests via Piston sandbox.
+    """
+    from api.views.seeker_auth import require_seeker_jwt
+    @require_seeker_jwt
+    def _inner(request):
+        if request.method != "POST":
+            return JsonResponse(error_response("Method not allowed"), status=405)
+        try:
+            data = json.loads(request.body)
+            code = data.get("code", "")
+            language = data.get("language", "python").lower()
+            slug = data.get("slug", "")
+            custom_input = data.get("custom_input", None)
+        except Exception:
+            return JsonResponse(error_response("Invalid JSON"), status=400)
+
+        problem = CodingProblem.objects.filter(slug=slug).first()
+        if not problem:
+            _fallback_coding_problems("")
+            problem = CodingProblem.objects.filter(slug=slug).first()
+
+        if not problem:
+            return JsonResponse(error_response("Problem not found"), status=404)
+
+        all_passed, run_results, user_stdout, user_stderr, elapsed, memory = execute_problem_code(
+            problem=problem,
+            code=code,
+            language=language,
+            custom_input_raw=custom_input
+        )
+
+        return JsonResponse(success_response({
+            "all_passed": all_passed,
+            "results": run_results,
+            "user_stdout": user_stdout,
+            "user_stderr": user_stderr,
+            "execution_time_sec": elapsed,
+            "memory_usage_kb": memory
+        }))
+    return _inner(request)
+
+
 def create_mock_attempt(request):
     """
     POST /api/v1/seeker/mock-interview/create

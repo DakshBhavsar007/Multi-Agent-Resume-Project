@@ -538,7 +538,13 @@ def require_admin_role(*allowed_roles):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
             role = getattr(request, 'admin_role', 'super_admin')
-            if role not in allowed_roles:
+            # Normalize "admin" to "super_admin" for backwards compatibility
+            normalized_role = "super_admin" if role in ["super_admin", "admin"] else role
+            expanded_allowed = set(allowed_roles)
+            if "super_admin" in expanded_allowed:
+                expanded_allowed.add("admin")
+
+            if role not in expanded_allowed and normalized_role not in expanded_allowed:
                 return JsonResponse({
                     "success": False,
                     "data": None,

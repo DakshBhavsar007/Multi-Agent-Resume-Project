@@ -79,7 +79,7 @@ def admin_login(request):
             payload = {
                 "company_id": "admin",
                 "email": admin_email,
-                "role": "admin",
+                "role": "super_admin",
                 "is_admin": True,
                 "exp": datetime.utcnow() + timedelta(minutes=20)
             }

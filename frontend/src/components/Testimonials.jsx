@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Quote, Star, Pen, Trash2, MessageSquareQuote, UserCheck, Building2, Code2, Briefcase, ThumbsUp, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { publicAPI, seekerAPI, recruiterAPI } from '../lib/api';
+import { publicAPI, seekerAPI, recruiterAPI, API_HOST } from '../lib/api';
 import { portalReviews } from '../lib/portalApi';
 import WriteReviewModal from './WriteReviewModal';
 import VerifiedBadge from './VerifiedBadge';
@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import './Testimonials.css';
 
 const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
+  const [imgError, setImgError] = useState(false);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -39,9 +40,23 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
 
   const ratingStars = t.rating || 5;
 
+  const getAvatarUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http") || path.startsWith("data:image")) return path;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${API_HOST}${cleanPath}`;
+  };
+
+  const avatarSrc = getAvatarUrl(t.avatarPath);
+
   const AvatarEl = () => (
-    t.avatarPath ? (
-      <img src={t.avatarPath} alt={t.author} className="w-9 h-9 rounded-full object-cover border border-blue-500/20" />
+    avatarSrc && !imgError ? (
+      <img 
+        src={avatarSrc} 
+        alt={t.author} 
+        onError={() => setImgError(true)}
+        className="w-9 h-9 rounded-full object-cover border border-blue-500/20" 
+      />
     ) : (
       <div className="author-avatar font-bold text-xs">
         {t.initials}
@@ -237,7 +252,7 @@ const DEFAULT_TESTIMONIALS = [
 const Testimonials = ({ userTypeFilter }) => {
   const [items, setItems] = useState([]);
   const [apiStats, setApiStats] = useState({ avg_rating: 5.0, total_reviews: 0 });
-  const [filterTab, setFilterTab] = useState("all");
+  const [filterTab, setFilterTab] = useState(userTypeFilter || "all");
   const [companyNames, setCompanyNames] = useState([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
@@ -249,8 +264,7 @@ const Testimonials = ({ userTypeFilter }) => {
   const userRole = isRecruiter ? 'recruiter' : isDeveloper ? 'developer' : 'job_seeker';
 
   const loadReviews = (retryCount = 0) => {
-    const params = userTypeFilter ? { user_type: userTypeFilter } : {};
-    publicAPI.listReviews(params)
+    publicAPI.listReviews()
       .then((data) => {
         if (data.stats) {
           setApiStats(data.stats);

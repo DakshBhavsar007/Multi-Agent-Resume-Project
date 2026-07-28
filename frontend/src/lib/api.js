@@ -538,6 +538,7 @@ export const seekerAPI = {
 
   // Mock Practice Portal
   createMockAttempt: (attemptType) => seekerReq('POST', '/api/v1/seeker/mock-interview/create', { attempt_type: attemptType }),
+  runMockCode: (payload) => seekerReq('POST', '/api/v1/seeker/mock-interview/run-code', payload),
   listMockAttempts: () => seekerReq('GET', '/api/v1/seeker/mock-interview/list'),
   getMockAttempt: (id) => seekerReq('GET', `/api/v1/seeker/mock-interview/${id}`),
   saveMockProgress: (id, payload) => seekerReq('POST', `/api/v1/seeker/mock-interview/${id}/progress`, payload),
