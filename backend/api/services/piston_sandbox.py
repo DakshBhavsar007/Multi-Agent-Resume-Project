@@ -24,8 +24,8 @@ PISTON_API_KEY = os.environ.get("PISTON_API_KEY", "")
 WANDBOX_API_URL = "https://wandbox.org/api/compile.json"
 WANDBOX_COMPILERS = {
     "python": "cpython-3.10.15",
-    "javascript": "nodejs-head",
-    "js": "nodejs-head"
+    "javascript": "nodejs-20.17.0",
+    "js": "nodejs-20.17.0"
 }
 
 LANGUAGE_VERSIONS = {
@@ -142,7 +142,7 @@ def execute_in_piston(
     inputs_json = json.dumps(inputs)
 
     if lang_key == "python":
-        call_expr = f"{func_name}(**inp)" if func_name else (call_code_override or "None")
+        call_expr = call_code_override if call_code_override else (f"{func_name}(**inp)" if func_name else "None")
         runner_script = f"""
 import json
 import sys
@@ -168,21 +168,24 @@ print(json.dumps({{"results": results, "peak_memory_bytes": 0}}))
 """
 
     elif lang_key in ["javascript", "js"]:
-        call_expr = f"{func_name}(...Object.values(inp))" if func_name else (call_code_override or "null")
+        call_expr = call_code_override if call_code_override else (f"{func_name}(...Object.values(inp))" if func_name else "null")
+        array_call_expr = call_code_override if call_code_override else (f"{func_name}(inp)" if func_name else "null")
         runner_script = f"""
 // User submitted code
 {code}
 
-const inputs = JSON.parse('{inputs_json}');
+const inputs = {inputs_json};
 const results = [];
 
 for (let idx = 0; idx < inputs.length; idx++) {{
     const inp = inputs[idx];
     try {{
         let res;
-        if (typeof inp === 'object' && inp !== null) {{
+        if (Array.isArray(inp)) {{
+            res = {array_call_expr};
+        }} else if (typeof inp === 'object' && inp !== null) {{
             res = {call_expr};
-        }} else if (typeof {func_name} === 'function') {{
+        }} else if (typeof {func_name} !== 'undefined') {{
             res = {func_name}(inp);
         }} else {{
             res = {call_expr};

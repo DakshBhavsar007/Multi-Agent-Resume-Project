@@ -7,7 +7,7 @@ export default function PremiumBadge({ tooltip = 'Available on Enterprise plan',
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    window.location.href = '/#pricing';
+    navigate('/dashboard/settings?tab=billing');
   };
 
   return (
