@@ -224,6 +224,104 @@
   color: #f8fafc !important;
 }
 
+/* Card Elements High-Contrast Rules */
+.card-target-pill {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+  border: 1px solid #93c5fd !important;
+  font-weight: 800 !important;
+  font-size: 10px !important;
+}
+.dark .card-target-pill {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #60a5fa !important;
+}
+.dark .card-target-pill svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.card-you-pill {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+  border: 1px solid #93c5fd !important;
+  font-weight: 800 !important;
+  font-size: 9px !important;
+}
+.dark .card-you-pill {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #60a5fa !important;
+}
+
+.card-edit-btn {
+  background-color: #dbeafe !important;
+  border: 1px solid #93c5fd !important;
+  color: #1e40af !important;
+}
+.dark .card-edit-btn {
+  background-color: #2563eb !important;
+  border-color: #60a5fa !important;
+  color: #ffffff !important;
+}
+.dark .card-edit-btn svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.card-delete-btn {
+  background-color: #fee2e2 !important;
+  border: 1px solid #fca5a5 !important;
+  color: #991b1b !important;
+}
+.dark .card-delete-btn {
+  background-color: #dc2626 !important;
+  border-color: #f87171 !important;
+  color: #ffffff !important;
+}
+.dark .card-delete-btn svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.card-official-reply {
+  background-color: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+.dark .card-official-reply {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+}
+.card-official-reply-title {
+  color: #1d4ed8 !important;
+  font-weight: 800 !important;
+}
+.dark .card-official-reply-title {
+  color: #60a5fa !important;
+  font-weight: 800 !important;
+}
+.card-official-reply-text {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+.dark .card-official-reply-text {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.dark .author-info span {
+  color: #ffffff !important;
+}
+.dark .author-role-text {
+  color: #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+.dark .time-ago-text {
+  color: #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+
 /* Quote Icon Decoration */
 .quote-icon-bg {
   position: absolute;
