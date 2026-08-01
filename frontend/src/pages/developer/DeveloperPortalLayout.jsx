@@ -216,7 +216,7 @@ export default function DeveloperPortalLayout() {
       </header>
 
       {/* Sidebar */}
-      <aside className={`fixed top-16 bottom-0 left-0 z-40 bg-white dark:bg-[#0b0b0c] border-r border-gray-200 dark:border-[#222226] transition-[width] duration-200 ${
+      <aside className={`fixed top-16 bottom-0 left-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-r border-gray-200/80 dark:border-zinc-800/80 transition-[width] duration-200 ${
         sidebarCollapsed ? "w-[72px]" : "w-[260px]"
       } flex flex-col`}>
         
@@ -233,20 +233,20 @@ export default function DeveloperPortalLayout() {
                   data-tour={item.tourAttr || undefined}
                   className={`flex items-center h-12 rounded-full px-3 gap-5 relative group transition-colors duration-200 ${
                     isActive 
-                      ? "text-[#111111] font-semibold" 
-                      : "text-charcoal hover:bg-gray-100 font-medium"
+                      ? "text-blue-600 dark:text-blue-400 font-semibold" 
+                      : "text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 font-medium"
                   } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
                   title={item.name}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeDevNavBackground"
-                      className="absolute inset-0 bg-gray-100 rounded-full border border-[#111111]/10"
+                      className="absolute inset-0 bg-blue-500/10 dark:bg-blue-500/20 rounded-full border border-blue-500/30"
                       transition={{ type: "spring", stiffness: 350, damping: 28 }}
                     />
                   )}
                   <span className={`w-6 flex items-center justify-center shrink-0 transition-colors duration-200 relative z-10 ${
-                    isActive ? "text-[#111111]" : "text-gray-500 group-hover:text-charcoal"
+                    isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-zinc-500 group-hover:text-gray-900 dark:group-hover:text-white"
                   }`}>
                     <Icon size={20} />
                   </span>
@@ -260,7 +260,7 @@ export default function DeveloperPortalLayout() {
             })}
           </div>
 
-          <div className="flex flex-col gap-1 mb-4 border-t border-gray-200 pt-4">
+          <div className="flex flex-col gap-1 mb-4 border-t border-gray-200/80 dark:border-zinc-800/80 pt-4">
             {bottomItems.map((item) => {
               const Icon = item.icon;
               const isActive = cleanPath === item.href.replace(/\/$/, "");
@@ -271,8 +271,8 @@ export default function DeveloperPortalLayout() {
                   to={item.href}
                   className={`flex items-center h-12 rounded-full px-3 gap-5 relative group transition-colors duration-200 ${
                     isActive 
-                      ? "text-[#111111] font-semibold" 
-                      : "text-charcoal hover:bg-gray-100 font-medium"
+                      ? "text-blue-600 dark:text-blue-400 font-semibold" 
+                      : "text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 font-medium"
                   } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
                   title={item.name}
                 >

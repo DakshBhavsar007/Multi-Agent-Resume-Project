@@ -160,15 +160,15 @@ export default function SessionsPage() {
 
         {/* Tab Segments & Sort */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-          <div className="flex p-1 bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="flex p-1 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-gray-200/80 dark:border-zinc-800/80 rounded-xl shadow-sm">
             {['All', 'Active', 'Completed', 'Draft'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
                 className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
                   statusFilter === tab 
-                    ? 'bg-gray-100 text-charcoal' 
-                    : 'text-gray-500 hover:text-charcoal'
+                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20' 
+                    : 'text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 {tab}
@@ -180,12 +180,12 @@ export default function SessionsPage() {
             <select
               value={sortFilter}
               onChange={(e) => setSortFilter(e.target.value)}
-              className="appearance-none pl-4 pr-10 py-2 border border-gray-200 bg-white rounded-xl text-xs font-bold text-gray-600 focus:outline-none focus:border-accent shadow-sm cursor-pointer"
+              className="appearance-none pl-4 pr-10 py-2 border border-gray-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-xl text-xs font-bold text-gray-700 dark:text-zinc-300 focus:outline-none focus:border-blue-500 shadow-sm cursor-pointer"
             >
               <option value="Newest">Newest</option>
               <option value="Most Candidates">Most Candidates</option>
             </select>
-            <ArrowUpDown size={12} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <ArrowUpDown size={12} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 pointer-events-none" />
           </div>
         </div>
       </div>

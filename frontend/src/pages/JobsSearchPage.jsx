@@ -390,16 +390,16 @@ export default function JobsSearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f4ef] text-[#2A2A2A] font-sans flex flex-col">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] font-sans flex flex-col transition-colors duration-300">
       <JobsNavbar onUploadClick={() => setIsModalOpen(true)} />
 
       <div className="flex-1 w-full max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
         
         {/* Left Side Filters Sidebar */}
         <aside className="lg:col-span-1 space-y-6">
-          <div className="bg-white border border-[#e6dfcd] p-6 rounded-2xl shadow-sm space-y-6">
-            <div className="flex justify-between items-center pb-2 border-b border-[#e6dfcd]">
-              <h3 className="font-extrabold text-sm text-[#2A2A2A] flex items-center space-x-1.5">
+          <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-gray-200/80 dark:border-zinc-800/80 p-6 rounded-2xl shadow-sm space-y-6">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-200/80 dark:border-zinc-800/80">
+              <h3 className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center space-x-1.5">
                 <SlidersHorizontal size={16} />
                 <span>Filters</span>
               </h3>
@@ -409,7 +409,7 @@ export default function JobsSearchPage() {
                   setSalaryRange(150);
                   setExperienceLevel('Senior');
                 }}
-                className="text-xs text-[#2563EB] hover:text-[#1D4ED8] font-semibold"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold"
               >
                 Clear All
               </button>
@@ -417,32 +417,32 @@ export default function JobsSearchPage() {
 
             {/* Job Type Filter */}
             <div className="space-y-3">
-              <label className="text-[10px] uppercase tracking-wider text-[#5c5c5c] font-bold">Job Type</label>
+              <label className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-zinc-400 font-bold">Job Type</label>
               <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm text-[#2A2A2A] cursor-pointer">
+                <label className="flex items-center space-x-2 text-sm text-gray-800 dark:text-zinc-200 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={jobTypes.FullTime}
                     onChange={(e) => setJobTypes({ ...jobTypes, FullTime: e.target.checked })}
-                    className="accent-[#2563EB] h-4 w-4 rounded"
+                    className="accent-blue-600 h-4 w-4 rounded"
                   />
                   <span>Full-time</span>
                 </label>
-                <label className="flex items-center space-x-2 text-sm text-[#2A2A2A] cursor-pointer">
+                <label className="flex items-center space-x-2 text-sm text-gray-800 dark:text-zinc-200 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={jobTypes.Contract}
                     onChange={(e) => setJobTypes({ ...jobTypes, Contract: e.target.checked })}
-                    className="accent-[#2563EB] h-4 w-4 rounded"
+                    className="accent-blue-600 h-4 w-4 rounded"
                   />
                   <span>Contract</span>
                 </label>
-                <label className="flex items-center space-x-2 text-sm text-[#2A2A2A] cursor-pointer">
+                <label className="flex items-center space-x-2 text-sm text-gray-800 dark:text-zinc-200 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={jobTypes.Remote}
                     onChange={(e) => setJobTypes({ ...jobTypes, Remote: e.target.checked })}
-                    className="accent-[#2563EB] h-4 w-4 rounded"
+                    className="accent-blue-600 h-4 w-4 rounded"
                   />
                   <span>Remote</span>
                 </label>
