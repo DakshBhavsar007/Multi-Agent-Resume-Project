@@ -4,6 +4,7 @@ import { testAPI } from "../../lib/api";
 import { TestShell } from "../../components/test/TestShell";
 import { useVoiceInterview } from "../../hooks/useVoiceInterview";
 import { toast } from "react-hot-toast";
+import { Check, X } from "lucide-react";
 
 export default function InterviewRound() {
   const navigate = useNavigate();
@@ -397,7 +398,7 @@ export default function InterviewRound() {
                   <div className={`h-5 w-5 rounded-full flex items-center justify-center text-xs font-bold ${
                     cameraStatus === "allowed" ? "bg-green-100 text-green-700" : (cameraStatus === "denied" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-400")
                   }`}>
-                    {cameraStatus === "allowed" ? "✓" : (cameraStatus === "denied" ? "✗" : "•")}
+                    {cameraStatus === "allowed" ? <Check size={12} /> : (cameraStatus === "denied" ? <X size={12} /> : "•")}
                   </div>
                   <span className="text-xs font-semibold text-gray-700">Webcam Diagnostic Check</span>
                 </div>

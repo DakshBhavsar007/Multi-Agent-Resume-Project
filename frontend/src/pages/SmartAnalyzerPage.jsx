@@ -414,8 +414,8 @@ export default function SmartAnalyzerPage() {
                 />
 
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                    {jdText.length > 30 ? `✓ ${jdText.split(/\s+/).length} words detected` : 'Minimum 30 characters required'}
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                    {jdText.length > 30 ? <><Check size={12} className="text-green-600 inline" /> {jdText.split(/\s+/).length} words detected</> : 'Minimum 30 characters required'}
                   </span>
                 </div>
               </motion.div>

@@ -786,7 +786,10 @@ export default function NewSessionPage() {
                       <span>Must equal exactly 1.0</span>
                     </span>
                   ) : (
-                    <span className="text-green-600 mb-0">✓ Weights balanced</span>
+                    <span className="text-green-600 mb-0 flex items-center gap-1">
+                      <Check size={14} />
+                      <span>Weights balanced</span>
+                    </span>
                   )}
                 </div>
               </div>
@@ -1066,8 +1069,9 @@ export default function NewSessionPage() {
                               )}
                             </div>
                             {round.uploadResult ? (
-                              <p className="text-[10px] text-emerald-600 font-semibold mt-1.5">
-                                ✓ {round.uploadResult.questions_extracted} {isCoding ? 'problems' : 'questions'} extracted successfully.
+                              <p className="text-[10px] text-emerald-600 font-semibold mt-1.5 flex items-center gap-1">
+                                <Check size={12} className="shrink-0 text-emerald-600" />
+                                <span>{round.uploadResult.questions_extracted} {isCoding ? 'problems' : 'questions'} extracted successfully.</span>
                               </p>
                             ) : (
                               <p className="text-[10px] text-gray-400 mt-1.5">

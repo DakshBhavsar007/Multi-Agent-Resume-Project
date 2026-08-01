@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { roundsAPI } from "../lib/api";
 import { toast } from "react-hot-toast";
-import { CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle, XCircle, Clock, AlertCircle, Check, X } from "lucide-react";
 
 export default function ApplicantResultsPage() {
   const { id } = useParams();
@@ -324,10 +324,16 @@ export default function ApplicantResultsPage() {
                           {((item.keywords_hit && item.keywords_hit.length > 0) || (item.keywords_missed && item.keywords_missed.length > 0)) && (
                             <div className="pl-14 flex flex-wrap gap-1.5 text-[9px] font-bold">
                               {item.keywords_hit?.map((k, i) => (
-                                <span key={i} className="bg-green-50 text-green-600 border border-green-200/60 px-2 py-0.5 rounded-full">✓ {k}</span>
+                                <span key={i} className="bg-green-50 text-green-600 border border-green-200/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <Check size={10} className="shrink-0" />
+                                  <span>{k}</span>
+                                </span>
                               ))}
                               {item.keywords_missed?.map((k, i) => (
-                                <span key={i} className="bg-red-50 text-red-500 border border-red-200/60 px-2 py-0.5 rounded-full">✗ {k}</span>
+                                <span key={i} className="bg-red-50 text-red-500 border border-red-200/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <X size={10} className="shrink-0" />
+                                  <span>{k}</span>
+                                </span>
                               ))}
                             </div>
                           )}

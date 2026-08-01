@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ProctoringCamera } from "./ProctoringCamera";
 import { RoundTimer } from "./RoundTimer";
 
+import { Check } from "lucide-react";
+
 export function TestShell({
   children,
   roundName,
@@ -85,7 +87,7 @@ export function TestShell({
                         : "bg-gray-100 text-gray-400"
                     }`}
                   >
-                    {isCompleted ? "✓" : i + 1}
+                    {isCompleted ? <Check size={11} /> : i + 1}
                   </span>
                   {r.name}
                 </button>

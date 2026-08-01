@@ -136,9 +136,9 @@ const FeaturesList = () => {
             Eliminate manual resume screening with weighted semantic matching. Recruiters set custom weights for mandatory skills, experience years, and compensation ranges to instantly rank applicants.
           </p>
           <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1.5 font-medium text-emerald-800 dark:text-emerald-300">
-            <div>✓ Configurable weighting matrix (Technical skills vs Experience)</div>
-            <div>✓ Real-time score calculation out of 100</div>
-            <div>✓ Automated candidate shortlist recommendations</div>
+            <div className="flex items-center gap-1.5"><CheckCircle2 size={13} className="shrink-0" /><span>Configurable weighting matrix (Technical skills vs Experience)</span></div>
+            <div className="flex items-center gap-1.5"><CheckCircle2 size={13} className="shrink-0" /><span>Real-time score calculation out of 100</span></div>
+            <div className="flex items-center gap-1.5"><CheckCircle2 size={13} className="shrink-0" /><span>Automated candidate shortlist recommendations</span></div>
           </div>
         </div>
       )
@@ -190,8 +190,8 @@ const FeaturesList = () => {
             Continuous biometric typing verification and domain validation protect against impersonation and fraudulent application spam.
           </p>
           <div className="p-3.5 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-xs space-y-1.5 font-medium text-pink-800 dark:text-pink-300">
-            <div>✓ Real-time keystroke dynamics profiling</div>
-            <div>✓ Automated domain authenticity verification</div>
+            <div className="flex items-center gap-1.5"><CheckCircle2 size={13} className="shrink-0" /><span>Real-time keystroke dynamics profiling</span></div>
+            <div className="flex items-center gap-1.5"><CheckCircle2 size={13} className="shrink-0" /><span>Automated domain authenticity verification</span></div>
           </div>
         </div>
       )

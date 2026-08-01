@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { Play, Copy } from "lucide-react";
+import { Play, Copy, AlertCircle } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import { portalKeys } from "../../lib/portalApi";
@@ -809,7 +809,10 @@ console.log(matches.data.matches);`}
                       )}
                     </div>
                     {!apiKey && (
-                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold pl-1">⚠ No active key found. Go to <a href="/developer/portal/keys" className="underline">API Keys</a> to create one.</p>
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold pl-1 flex items-center">
+                        <AlertCircle size={12} className="inline mr-1 shrink-0" />
+                        <span>No active key found. Go to <a href="/developer/portal/keys" className="underline">API Keys</a> to create one.</span>
+                      </p>
                     )}
                   </div>
 

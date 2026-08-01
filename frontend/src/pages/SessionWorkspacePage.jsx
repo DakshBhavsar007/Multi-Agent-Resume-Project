@@ -411,7 +411,7 @@ export default function SessionWorkspacePage() {
 
   const handleMatchAll = async () => {
     try {
-      toast("Matching all candidates...", { icon: "ℹ️" });
+      toast("Matching all candidates...");
       const { job_id } = await sessionsAPI.matchAll(id);
       addJob(job_id, "match_all");
     } catch(e) { toast.error(e.message); }
