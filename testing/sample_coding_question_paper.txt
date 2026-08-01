@@ -1,0 +1,32 @@
+BETWEEN AI PLATFORM - TECHNICAL CODING TEST QUESTION PAPER
+==========================================================
+Category: Data Structures & Algorithms
+Total Problems: 2
+
+Problem 1: Two Sum Target
+-------------------------
+Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.
+You may assume that each input would have exactly one solution, and you may not use the same element twice.
+
+Example 1:
+Input: nums = [2, 7, 11, 15], target = 9
+Output: [0, 1]
+Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].
+
+Constraints:
+- 2 <= nums.length <= 10^4
+- -10^9 <= nums[i] <= 10^9
+- -10^9 <= target <= 10^9
+
+
+Problem 2: Reverse Words in a String
+-----------------------------------
+Given an input string `s`, reverse the order of the words. A word is defined as a sequence of non-space characters. The words in `s` will be separated by at least one space. Return a string of the words in reverse order concatenated by a single space.
+
+Example 1:
+Input: s = "the sky is blue"
+Output: "blue is sky the"
+
+Constraints:
+- 1 <= s.length <= 10^4
+- s contains English letters (upper-case and lower-case), digits, and spaces ' '.

@@ -1,0 +1,39 @@
+BETWEEN AI PLATFORM - APTITUDE & TECHNICAL MCQ QUESTION PAPER
+============================================================
+Category: Full Stack & Computer Science Fundamentals
+Total Questions: 5
+
+Q1. What is the time complexity of searching an element in a balanced Binary Search Tree (BST)?
+A) O(1)
+B) O(n)
+C) O(log n)
+D) O(n log n)
+Answer: C
+
+Q2. Which HTTP status code represents a successful REST API request that created a new resource?
+A) 200 OK
+B) 201 Created
+C) 204 No Content
+D) 400 Bad Request
+Answer: B
+
+Q3. In Python, which of the following data structures is immutable?
+A) List
+B) Dictionary
+C) Set
+D) Tuple
+Answer: D
+
+Q4. Which SQL command is used to remove all records from a table without logging individual row deletions?
+A) DELETE
+B) DROP
+C) TRUNCATE
+D) REMOVE
+Answer: C
+
+Q5. Which design pattern ensures that a class has only one instance and provides a global point of access to it?
+A) Factory Pattern
+B) Singleton Pattern
+C) Observer Pattern
+D) Strategy Pattern
+Answer: B
