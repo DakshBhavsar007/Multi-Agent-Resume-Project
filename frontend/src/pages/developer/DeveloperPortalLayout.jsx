@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
-import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, PanelLeftClose, PanelLeftOpen, Grid3x3, Home, Bot } from "lucide-react";
+import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, PanelLeftClose, PanelLeftOpen, MoreHorizontal, Home, Bot } from "lucide-react";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { portalAuth } from "../../lib/portalApi";
 import { motion } from "framer-motion";
@@ -173,7 +173,7 @@ export default function DeveloperPortalLayout() {
             className="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-gray-500 dark:text-zinc-400 transition shrink-0"
             title="App Switcher"
           >
-            <Grid3x3 size={20} />
+            <MoreHorizontal size={20} />
           </button>
 
           {appsOpen && (

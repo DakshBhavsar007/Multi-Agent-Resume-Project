@@ -15,7 +15,7 @@ import {
   HelpCircle,
   CheckCircle,
   Lock,
-  Grid3x3,
+  MoreHorizontal,
   Home,
   LayoutDashboard,
   Bot
@@ -270,7 +270,7 @@ export default function SupportPortalPage() {
                 className="w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 transition shrink-0 border border-slate-200 dark:border-slate-700"
                 title="App Switcher"
               >
-                <Grid3x3 size={18} />
+                <MoreHorizontal size={18} />
               </button>
 
               {appsOpen && (

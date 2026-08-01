@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock, Grid3x3, Home, LayoutDashboard, Bot, HelpCircle, Star, MessageSquareQuote } from "lucide-react";
+import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock, MoreHorizontal, Home, LayoutDashboard, Bot, HelpCircle, Star, MessageSquareQuote } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { portalBilling, portalAuth, portalReviews } from "../../lib/portalApi";
@@ -215,7 +215,7 @@ const response = await fetch(
                 className="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-gray-600 dark:text-zinc-300 transition shrink-0"
                 title="App Switcher"
               >
-                <Grid3x3 size={20} />
+                <MoreHorizontal size={20} />
               </button>
 
               {appsOpen && (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, ChevronDown, Info, Heart, Grid3x3, Bot } from "lucide-react";
+import { Briefcase, Search, Building2, User, LayoutDashboard, LogOut, Shield, TrendingUp, FileText, HelpCircle, Sparkles, Home, BarChart3, ChevronRight, ChevronDown, Info, Heart, MoreHorizontal, Bot } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { OnboardingTour, useTour } from "../OnboardingTour";
 import { SocialTooltip } from "../ui/social-media";
@@ -295,7 +295,7 @@ export function Header() {
               className="pill p-2 text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-center transition shrink-0 rounded-full"
               title="Between Applications"
             >
-              <Grid3x3 className="h-4 w-4" />
+              <MoreHorizontal className="h-4 w-4" />
             </button>
 
             {appsOpen && (

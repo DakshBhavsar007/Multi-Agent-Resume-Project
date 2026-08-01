@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll } from 'framer-motion';
-import { Grid3x3, Home, LayoutDashboard, Bot, HelpCircle } from 'lucide-react';
+import { MoreHorizontal, Home, LayoutDashboard, Bot, HelpCircle } from 'lucide-react';
 import './Navbar.css';
 import ThemeToggle from './ThemeToggle';
 
@@ -152,7 +152,7 @@ const Navbar = ({ onSignIn, isLoggedIn }) => {
             className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-700 dark:text-zinc-300 transition shrink-0 border border-slate-200/60 dark:border-zinc-800"
             title="App Switcher"
           >
-            <Grid3x3 size={18} />
+            <MoreHorizontal size={18} />
           </button>
 
           {appsOpen && (

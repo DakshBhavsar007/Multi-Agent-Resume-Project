@@ -7,7 +7,7 @@ import {
   Search,
   HelpCircle,
   Settings as SettingsIcon,
-  Grid3x3,
+  MoreHorizontal,
   LayoutDashboard,
   Sparkles,
   Shield,
@@ -517,7 +517,7 @@ export default function DashboardLayout() {
               aria-label="Apps"
               className="hidden sm:flex w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 items-center justify-center text-gray-500 dark:text-zinc-400 transition shrink-0"
             >
-              <Grid3x3 size={20} />
+              <MoreHorizontal size={20} />
             </button>
             {appsOpen && (
               <div className="absolute right-0 mt-2 w-52 rounded-xl p-1.5 z-50 flex flex-col gap-0.5 skeuo-dropdown-panel">
