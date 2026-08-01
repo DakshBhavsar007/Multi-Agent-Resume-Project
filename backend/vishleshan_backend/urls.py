@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.static import serve
 from django.conf import settings
@@ -141,6 +142,9 @@ def health_check(request):
     }, status=200)
 
 urlpatterns = [
+    # Built-in Django Admin Interface
+    path('admin/', admin.site.urls),
+
     # Health checks for UptimeRobot, Render & Load Balancers
     path('health', health_check, name='root-health'),
     path('healthz', health_check, name='root-healthz'),

@@ -74,7 +74,11 @@ DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1")
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
     'api',
@@ -82,15 +86,32 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'api.middleware.SecurityHeadersMiddleware',
     'api.middleware.ExceptionSanitizationMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'api.middleware.UsageLoggerMiddleware',
 ]
 
 ROOT_URLCONF = 'vishleshan_backend.urls'
 
-TEMPLATES = []
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 WSGI_APPLICATION = 'vishleshan_backend.wsgi.application'
 ASGI_APPLICATION = 'vishleshan_backend.asgi.application'
