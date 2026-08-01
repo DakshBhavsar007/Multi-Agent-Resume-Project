@@ -432,10 +432,11 @@ def public_market_trends(request):
         if db_salaries:
             avg_db_salary = int(sum(db_salaries) / len(db_salaries))
         else:
-            avg_db_salary = 148200
+            avg_db_salary = 1850000
 
         base_salary = avg_db_salary
         salary_change = round(8.5 + (hired_count * 0.1), 1)
+        base_formatted = f"₹{round(base_salary / 100000, 1)} LPA" if base_salary >= 100000 else f"${base_salary:,}"
 
         # 2. Dynamic Location Distribution from DB
         INVALID_LOCS = {"Ca", "Ny", "Tx", "Fl", "In", "Up", "Mh", "Gj", "Dl", "Ka", "Tn", "Unknown", "None", "Remote"}
@@ -506,12 +507,11 @@ def public_market_trends(request):
                     "salary": s_val
                 })
         else:
-            base_k = int(base_salary / 1000) if base_salary else 138
             salary_timeline = [
-                {"year": "2023", "salary": max(90, base_k - 26)},
-                {"year": "2024", "salary": max(100, base_k - 14)},
-                {"year": "2025", "salary": base_k},
-                {"year": "2026 (Est)", "salary": int(base_k * 1.12)}
+                {"year": "2023", "salary": 14},
+                {"year": "2024", "salary": 16},
+                {"year": "2025", "salary": 18.5},
+                {"year": "2026 (Est)", "salary": 20.8}
             ]
 
         # 4. Dynamic High Growth Skills & Salaries from DB
@@ -531,7 +531,7 @@ def public_market_trends(request):
                     s.criteria.get("salary_max") or s.criteria.get("max_budget") or 
                     s.criteria.get("max_salary") or s.criteria.get("salary_min") or s.criteria.get("budget")
                 )
-                curr = s.criteria.get("salary_currency", "USD")
+                curr = s.criteria.get("salary_currency", "INR")
 
                 for sk in all_sk:
                     if isinstance(sk, str) and sk.strip():
@@ -555,12 +555,32 @@ def public_market_trends(request):
         top_db_skills = skill_counts.most_common(5)
         for idx, (sk_name, count_val) in enumerate(top_db_skills):
             sal_tuples = skill_salaries.get(sk_name, [])
-            if sal_tuples:
-                avg_val = sum(t[0] for t in sal_tuples) / len(sal_tuples)
-                curr_symbol = "₹" if sal_tuples[0][1] == "INR" else ("€" if sal_tuples[0][1] == "EUR" else ("£" if sal_tuples[0][1] == "GBP" else "$"))
-                pay_str = f"{curr_symbol}{int(avg_val / 1000)}k" if avg_val < 100000 else f"{curr_symbol}{round(avg_val / 100000, 1)}L"
+            valid_salaries = [t[0] for t in sal_tuples if isinstance(t[0], (int, float)) and t[0] > 0]
+            
+            if valid_salaries:
+                avg_val = sum(valid_salaries) / len(valid_salaries)
+                curr = sal_tuples[0][1] if len(sal_tuples[0]) > 1 else "INR"
             else:
-                pay_str = f"${145 + (count_val * 5)}k"
+                avg_val = 0
+                curr = "INR"
+
+            # Realistic market fallback if salary data is missing or 0
+            if avg_val <= 0:
+                skill_defaults = {
+                    "Python": 450000,
+                    "Git": 380000,
+                    "Aws": 650000,
+                    "React": 520000,
+                    "Docker": 580000,
+                    "Java": 480000
+                }
+                avg_val = skill_defaults.get(sk_name, 450000)
+                curr = "INR"
+
+            if curr == "INR" or (avg_val >= 100000 and curr != "USD"):
+                pay_str = f"₹{round(avg_val / 100000, 1)}L"
+            else:
+                pay_str = f"${int(avg_val / 1000)}k"
 
             growth_pct = min(99, 18 + (count_val * 6))
             high_growth_domains.append({
@@ -585,9 +605,9 @@ def public_market_trends(request):
 
         if not high_growth_domains:
             high_growth_domains = [
-                {"name": "Prompt Engineering", "growth": "+48%", "pay": "$185k", "description": "Highest request growth this quarter."},
-                {"name": "Design Systems", "growth": "+14%", "pay": "$140k", "description": "Steady enterprise adoption indices."},
-                {"name": "Rust / Go Backend", "growth": "+22%", "pay": "$165k", "description": "High throughput performance demand."}
+                {"name": "Python", "growth": "+48%", "pay": "₹4.5L", "description": "Highest request growth across active database requisitions."},
+                {"name": "Git", "growth": "+32%", "pay": "₹3.8L", "description": "Highest request growth across active database requisitions."},
+                {"name": "AWS", "growth": "+42%", "pay": "₹6.5L", "description": "Highest request growth across active database requisitions."}
             ]
 
         # Response Time & Hiring Velocity
@@ -616,12 +636,13 @@ def public_market_trends(request):
             "avg_response_hours": avg_hrs,
             "category_counts": category_counts,
             "demand_growth": f"+{round(10.5 + (active_sessions_count * 0.15), 1)}%",
-            "median_salary": f"${int(base_salary / 1000)}k",
+            "median_salary": base_formatted,
             "time_to_offer": f"{max(4, int(avg_hrs / 2))}d"
         }
 
         trends = {
             "average_tech_base": base_salary,
+            "average_tech_base_formatted": base_formatted,
             "average_tech_base_change": salary_change,
             "hiring_velocity": min(9.8, round(8.4 + (hired_count * 0.1), 1)),
             "hiring_velocity_days": min(6.0, round(3.2 + (hired_count * 0.05), 1)),

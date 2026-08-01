@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Briefcase, DollarSign, Globe, Award, Sparkles } from 'lucide-react';
+import { TrendingUp, Briefcase, DollarSign, Globe, Award, Sparkles, Cloud, Code, GitBranch, Cpu, Database } from 'lucide-react';
 import { Header, Footer } from '../components/user/site-chrome';
 import ResumeUploadModal from '../components/ResumeUploadModal';
 import { publicAPI } from '../lib/api';
@@ -20,6 +20,46 @@ const defaultRegionDistribution = [
   { name: 'Zurich', value: 180, color: '#22C55E' },
   { name: 'London', value: 240, color: '#8b5cf6' }
 ];
+
+function getSkillConfig(name, idx) {
+  const sName = (name || '').toLowerCase();
+  if (sName.includes('aws') || sName.includes('cloud') || sName.includes('azure')) {
+    return {
+      Icon: Cloud,
+      bgClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+      textClass: 'text-amber-600 dark:text-amber-400'
+    };
+  }
+  if (sName.includes('git') || sName.includes('version')) {
+    return {
+      Icon: GitBranch,
+      bgClass: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20',
+      textClass: 'text-orange-600 dark:text-orange-400'
+    };
+  }
+  if (sName.includes('python') || sName.includes('code') || sName.includes('script')) {
+    return {
+      Icon: Code,
+      bgClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+      textClass: 'text-emerald-600 dark:text-emerald-400'
+    };
+  }
+  if (sName.includes('react') || sName.includes('frontend') || sName.includes('ui')) {
+    return {
+      Icon: Sparkles,
+      bgClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
+      textClass: 'text-blue-600 dark:text-blue-400'
+    };
+  }
+  
+  // Fallback indexing
+  const fallbacks = [
+    { Icon: Code, bgClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20', textClass: 'text-emerald-600 dark:text-emerald-400' },
+    { Icon: GitBranch, bgClass: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20', textClass: 'text-orange-600 dark:text-orange-400' },
+    { Icon: Cloud, bgClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20', textClass: 'text-amber-600 dark:text-amber-400' },
+  ];
+  return fallbacks[idx % fallbacks.length];
+}
 
 export default function JobsTrendsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,7 +106,9 @@ export default function JobsTrendsPage() {
               </>
             ) : (
               <>
-                <div className="text-3xl font-black text-foreground">${trends?.average_tech_base?.toLocaleString()}</div>
+                <div className="text-3xl font-black text-foreground">
+                  {trends?.average_tech_base_formatted || (trends?.average_tech_base ? `₹${(trends.average_tech_base / 100000).toFixed(1)} LPA` : '₹18.5 LPA')}
+                </div>
                 <div className="text-xs text-green-500 font-semibold flex items-center">&uarr; +{trends?.average_tech_base_change}% vs last year</div>
               </>
             )}
@@ -229,25 +271,24 @@ export default function JobsTrendsPage() {
           <h3 className="font-extrabold text-lg text-foreground">High-Growth Domains</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {(trends?.high_growth_domains || [
-              { name: "Prompt Engineering", growth: "+48%", pay: "$185k", description: "Highest request growth this quarter (+48%)." },
-              { name: "Design Systems", growth: "+14%", pay: "$140k", description: "Steady enterprise adoption indices (+14%)." },
-              { name: "Rust / Go Backend", growth: "+22%", pay: "$165k", description: "High throughput performance demand (+22%)." }
+              { name: "Python", growth: "+48%", pay: "₹4.5L", description: "Highest request growth across active database requisitions." },
+              { name: "Git", growth: "+32%", pay: "₹3.8L", description: "Highest request growth across active database requisitions." },
+              { name: "AWS", growth: "+42%", pay: "₹6.5L", description: "Highest request growth across active database requisitions." }
             ]).map((domain, idx) => {
-              // Map icons and colors dynamically
-              const Icon = idx === 0 ? Sparkles : idx === 1 ? Award : TrendingUp;
-              const colorHex = idx === 0 ? "#22C55E" : idx === 1 ? "#0F56B3" : "#2563EB";
-              const bgClass = idx === 0 ? "bg-[#22C55E]/10 text-[#22C55E] dark:text-[#22C55E]" : idx === 1 ? "bg-[#0F56B3]/10 text-[#0F56B3] dark:text-blue-400" : "bg-[#2563EB]/10 text-[#2563EB] dark:text-blue-400";
-              const textCol = idx === 0 ? colorHex : undefined;
+              const { Icon, bgClass, textClass } = getSkillConfig(domain.name, idx);
               
               return (
                 <div key={idx} className="bg-card border border-border p-6 rounded-2xl shadow-sm flex items-start space-x-4">
-                  <div className={`${bgClass} p-3 rounded-xl shrink-0`}>
+                  <div className={`${bgClass} p-3 rounded-xl shrink-0 flex items-center justify-center`}>
                     <Icon size={20} />
                   </div>
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-sm text-foreground">{domain.name}</h4>
-                    <p className="text-xs text-muted-foreground">{domain.description}</p>
-                    <div className="text-xs font-bold pt-1" style={{ color: textCol || "var(--accent)" }}>Avg Pay: {domain.pay}</div>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-sm text-foreground truncate">{domain.name}</h4>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{domain.growth}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{domain.description}</p>
+                    <div className={`text-xs font-extrabold pt-1 ${textClass}`}>Avg Pay: {domain.pay}</div>
                   </div>
                 </div>
               );
