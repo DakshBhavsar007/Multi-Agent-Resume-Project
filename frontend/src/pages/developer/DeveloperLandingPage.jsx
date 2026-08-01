@@ -502,9 +502,9 @@ const response = await fetch(
       </section>
 
       {/* DEVELOPER TESTIMONIALS */}
-      <section className="py-12 border-t border-gray-100 dark:border-zinc-800/80 bg-white dark:bg-[#0b0b0d]">
+      <div className="border-t border-gray-100 dark:border-zinc-800/80">
         <Testimonials userTypeFilter="developer" />
-      </section>
+      </div>
 
       {/* PRICING */}
       <section className="py-24 bg-gray-50 dark:bg-[#0b0b0d] border-t border-gray-100 dark:border-zinc-800/80" id="pricing">

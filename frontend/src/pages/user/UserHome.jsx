@@ -841,9 +841,7 @@ function Home() {
       <ScrollingAnimation />
 
       {/* Testimonials — Filtered for Job Seekers */}
-      <section className="py-8">
-        <Testimonials userTypeFilter="job_seeker" />
-      </section>
+      <Testimonials userTypeFilter="job_seeker" />
 
       {/* Write Review Modal */}
       {showReviewModal && (

@@ -151,11 +151,15 @@
 /* Simulated SaaS Video/Dashboard */
 .simulated-dashboard {
   flex: 1;
-  background: var(--bg);
+  background: #f8fafc;
   padding: 32px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.dark .simulated-dashboard {
+  background: #0f172a;
 }
 
 .dash-top-nav {
@@ -168,9 +172,14 @@
 .dash-search {
   height: 32px;
   width: 200px;
-  background: white;
-  border: 1px solid var(--border-light);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
+}
+
+.dark .dash-search {
+  background: #1e293b;
+  border-color: #334155;
 }
 
 .candidate-list {
@@ -184,35 +193,56 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: white;
-  border: 1px solid var(--border-light);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.dark .candidate-item {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .avatar-circle {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--border-light);
+  background: #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.dark .avatar-circle {
+  background: #334155;
+  color: #f8fafc;
 }
 
 .candidate-info h4 {
   margin: 0 0 4px;
   font-size: 15px;
-  color: var(--text);
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dark .candidate-info h4 {
+  color: #f8fafc;
 }
 
 .candidate-info p {
   margin: 0;
   font-size: 12px;
-  color: var(--text-secondary);
+  font-weight: 500;
+  color: #475569;
+}
+
+.dark .candidate-info p {
+  color: #94a3b8;
 }
 
 .skill-tags {
@@ -223,11 +253,16 @@
 
 .skill {
   padding: 2px 8px;
-  background: var(--bg);
+  background: #f1f5f9;
   border-radius: 4px;
   font-size: 10px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: #334155;
+}
+
+.dark .skill {
+  background: #334155;
+  color: #e2e8f0;
 }
 
 .score-cell {
@@ -237,14 +272,19 @@
 
 .score-val {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 2px;
 }
 
 .score-label {
   font-size: 10px;
-  color: var(--text-secondary);
+  font-weight: 700;
   text-transform: uppercase;
+  color: #64748b;
+}
+
+.dark .score-label {
+  color: #94a3b8;
 }
 
 @media (max-width: 1024px) {
