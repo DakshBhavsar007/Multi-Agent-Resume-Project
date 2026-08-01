@@ -121,11 +121,11 @@ export default function NewSessionPage() {
     };
     
     setFormData(prev => {
-      let currentRounds = prev.rounds.filter(r => r.round_type !== roundType && r.name !== defaultNameMap[roundType]);
+      let currentRounds = prev.rounds.filter(r => r.round_type !== roundType);
       if (enabled) {
         currentRounds.push({
           id: currentRounds.length + 1,
-          name: defaultNameMap[roundType],
+          name: defaultNameMap[roundType] || "Assessment Round",
           round_type: roundType,
           interviewer: "",
           order: currentRounds.length + 1,
@@ -792,7 +792,7 @@ export default function NewSessionPage() {
                   onClick={() => {
                     const nextVal = !mcqEnabled;
                     setMcqEnabled(nextVal);
-                    toggleRoundInList("Aptitude Assessment Round", nextVal);
+                    toggleRoundInList("mcq", nextVal);
                   }}
                   className={`p-3 rounded-xl border text-left flex flex-col justify-between transition ${
                     mcqEnabled ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white"
@@ -810,7 +810,7 @@ export default function NewSessionPage() {
                   onClick={() => {
                     const nextVal = !codingEnabled;
                     setCodingEnabled(nextVal);
-                    toggleRoundInList("Technical Coding Round", nextVal);
+                    toggleRoundInList("coding", nextVal);
                   }}
                   className={`p-3 rounded-xl border text-left flex flex-col justify-between transition ${
                     codingEnabled ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white"
@@ -828,7 +828,7 @@ export default function NewSessionPage() {
                   onClick={() => {
                     const nextVal = !interviewEnabled;
                     setInterviewEnabled(nextVal);
-                    toggleRoundInList("AI Interview Round", nextVal);
+                    toggleRoundInList("interview", nextVal);
                   }}
                   className={`p-3 rounded-xl border text-left flex flex-col justify-between transition ${
                     interviewEnabled ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white"
