@@ -43,17 +43,19 @@
 .nav-center {
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: 28px;
+  flex-wrap: nowrap;
 }
 
 .nav-link {
   text-decoration: none;
   color: var(--text-secondary);
-  font-size: 16px;
-  font-weight: 500;
-  display: flex;
+  font-size: 15px;
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
   transition: color 0.2s ease;
 }
 

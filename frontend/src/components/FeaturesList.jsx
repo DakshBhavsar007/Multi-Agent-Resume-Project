@@ -80,7 +80,7 @@ const FeaturesList = () => {
       title: "AI Resume Parsing", 
       description: "Multi-agent extraction of skills, experience, and projects with deep LLM-powered analysis.", 
       iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg>,
-      color: "#2563eb", tag: "CORE AI", size: "tall",
+      color: "#2563eb", tag: "CORE AI", size: "wide",
       link: "/jobs/register",
       details: (
         <div className="space-y-4">
@@ -106,26 +106,6 @@ const FeaturesList = () => {
       )
     },
     { 
-      id: "rank-match",
-      title: "Rank & Match", 
-      description: "Semantic scoring maps candidate skills against job requirements with configurable weights.", 
-      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 11c0 3.517-2.103 6.542-5.12 7.792V21l3.91-2.347A10.046 10.046 0 0 1 12 11z"/><path d="M18 11c0 3.517-2.103 6.542-5.12 7.792V21l3.91-2.347A10.046 10.046 0 0 0 18 11z"/><circle cx="12" cy="5" r="3"/></svg>,
-      color: "#10b981", tag: "MATCHING", size: "wide",
-      link: "/jobs/search",
-      details: (
-        <div className="space-y-4">
-          <p className="text-sm font-medium leading-relaxed text-charcoal dark:text-gray-200">
-            Eliminate manual resume screening with weighted semantic matching. Recruiters set custom weights for mandatory skills, experience years, and compensation ranges to instantly rank applicants.
-          </p>
-          <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1.5 font-medium text-emerald-800 dark:text-emerald-300">
-            <div>✓ Configurable weighting matrix (Technical skills vs Experience)</div>
-            <div>✓ Real-time score calculation out of 100</div>
-            <div>✓ Automated candidate shortlist recommendations</div>
-          </div>
-        </div>
-      )
-    },
-    { 
       id: "developer-api",
       title: "Developer API", 
       description: "Full REST API with tiered subscriptions, rate limiting, and interactive documentation.", 
@@ -139,6 +119,26 @@ const FeaturesList = () => {
           </p>
           <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs font-mono text-purple-700 dark:text-purple-300">
             POST /api/v1/parse -H "X-API-Key: vish_pub_xxx"
+          </div>
+        </div>
+      )
+    },
+    { 
+      id: "rank-match",
+      title: "Rank & Match", 
+      description: "Semantic scoring maps candidate skills against job requirements with configurable weights.", 
+      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 11c0 3.517-2.103 6.542-5.12 7.792V21l3.91-2.347A10.046 10.046 0 0 1 12 11z"/><path d="M18 11c0 3.517-2.103 6.542-5.12 7.792V21l3.91-2.347A10.046 10.046 0 0 0 18 11z"/><circle cx="12" cy="5" r="3"/></svg>,
+      color: "#10b981", tag: "MATCHING", size: "small",
+      link: "/jobs/search",
+      details: (
+        <div className="space-y-4">
+          <p className="text-sm font-medium leading-relaxed text-charcoal dark:text-gray-200">
+            Eliminate manual resume screening with weighted semantic matching. Recruiters set custom weights for mandatory skills, experience years, and compensation ranges to instantly rank applicants.
+          </p>
+          <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1.5 font-medium text-emerald-800 dark:text-emerald-300">
+            <div>✓ Configurable weighting matrix (Technical skills vs Experience)</div>
+            <div>✓ Real-time score calculation out of 100</div>
+            <div>✓ Automated candidate shortlist recommendations</div>
           </div>
         </div>
       )
@@ -167,13 +167,32 @@ const FeaturesList = () => {
       title: "Smart Search & Analytics", 
       description: "Autocomplete job search with state mapping, hiring velocity dashboards, and pipeline analytics.", 
       iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M16 8v5M19 11h-6"/></svg>,
-      color: "#06b6d4", tag: "DATA", size: "small",
+      color: "#06b6d4", tag: "DATA", size: "wide",
       link: "/jobs/trends",
       details: (
         <div className="space-y-4">
           <p className="text-sm font-medium leading-relaxed text-charcoal dark:text-gray-200">
             Track industry compensation benchmarks, high-demand technical skills, regional hiring hubs, and company response velocity in real time.
           </p>
+        </div>
+      )
+    },
+    { 
+      id: "keystroke-security",
+      title: "Keystroke Telemetry & Security", 
+      description: "Anti-fraud keystroke dynamics, domain verification, and background integrity protection.", 
+      iconSVG: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+      color: "#ec4899", tag: "SECURITY", size: "small",
+      link: "/support",
+      details: (
+        <div className="space-y-4">
+          <p className="text-sm font-medium leading-relaxed text-charcoal dark:text-gray-200">
+            Continuous biometric typing verification and domain validation protect against impersonation and fraudulent application spam.
+          </p>
+          <div className="p-3.5 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-xs space-y-1.5 font-medium text-pink-800 dark:text-pink-300">
+            <div>✓ Real-time keystroke dynamics profiling</div>
+            <div>✓ Automated domain authenticity verification</div>
+          </div>
         </div>
       )
     }
