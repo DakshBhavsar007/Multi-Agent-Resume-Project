@@ -83,6 +83,7 @@ urlpatterns = [
     # session_root handles both GET (list) and POST (create)
     path('api/v1/sessions', sessions.session_root, name='sessions-root'),
     path('api/v1/sessions/generate-jd', sessions.generate_jd, name='sessions-generate-jd'),
+    path('api/v1/sessions/upload-question-paper', round_views.upload_question_paper, name='sessions-upload-question-paper'),
     # session_detail handles GET (retrieve), PATCH (update), DELETE (archive)
     path('api/v1/sessions/<str:session_id>', sessions.session_detail, name='sessions-detail'),
     path('api/v1/sessions/<str:session_id>/criteria', sessions.set_criteria, name='sessions-criteria'),

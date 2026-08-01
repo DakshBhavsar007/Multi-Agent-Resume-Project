@@ -78,7 +78,6 @@ def require_test_token(view_func):
 # ─── COMPANY SIDE ENDPOINTS ───────────────────────────────────────────────────
 
 @csrf_exempt
-@require_api_key
 def recommend_rounds(request, session_id):
     """
     POST /api/v1/sessions/<session_id>/recommend-rounds
@@ -103,9 +102,10 @@ def recommend_rounds(request, session_id):
     if not session:
         return JsonResponse(error_response("Session not found"), status=404)
 
-    # Verify ownership
-    if str(session.company_id) != str(request.company.id):
-        return JsonResponse(error_response("Permission denied"), status=403)
+    # Verify ownership if request.company is set via API key
+    if hasattr(request, "company") and request.company:
+        if str(session.company_id) != str(request.company.id):
+            return JsonResponse(error_response("Permission denied"), status=403)
 
     agent = RoundRecommendationAgent()
     recommendation = agent.recommend(session.job_title, session.job_description)
