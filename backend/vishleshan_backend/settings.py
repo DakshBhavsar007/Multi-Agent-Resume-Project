@@ -205,5 +205,5 @@ ANYMAIL = {
 }
 
 EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
-DEFAULT_FROM_EMAIL = os.getenv("MAIL_FROM", "noreply@vishleshan.ai")
+DEFAULT_FROM_EMAIL = os.getenv("MAIL_FROM", "Between <support@between.indevs.in>")
 

@@ -17,6 +17,7 @@ from api.services.email_service import (
     send_round_unlocked_to_seeker,
     send_round_completed_to_recruiter,
     send_high_match_alert_to_recruiter,
+    send_offer_letter_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -522,6 +523,18 @@ def candidate_action(request, session_id, cand_id):
                             location=(session.criteria.get("location") if (isinstance(session.criteria, dict) and session.criteria.get("location")) else None),
                             test_link=test_link,
                         )
+
+                        # Trigger official Offer Letter Email if status is hired
+                        if notify_status == 'hired':
+                            try:
+                                send_offer_letter_email(
+                                    to_email=seeker.email,
+                                    seeker_name=seeker.full_name,
+                                    job_title=session.job_title,
+                                    company_name=company_name,
+                                )
+                            except Exception as offer_err:
+                                logger.warning('Offer letter email failed: %s', offer_err)
         except Exception as notify_err:
             logger.warning('Notification error for candidate action: %s', notify_err)
         # ─────────────────────────────────────────────────────────────────────

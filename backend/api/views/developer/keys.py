@@ -92,6 +92,19 @@ def keys_root(request):
                 environment=env
             )
 
+            # Trigger email notification
+            try:
+                from api.services.email_service import send_developer_api_key_email
+                send_developer_api_key_email(
+                    to_email=dev.email,
+                    dev_name=getattr(dev, "full_name", dev.email),
+                    key_name=key_name,
+                    masked_key=secret[:12] + "••••••••"
+                )
+            except Exception as mail_err:
+                import logging
+                logging.getLogger(__name__).warning("Failed to send dev api key email: %s", mail_err)
+
             return JsonResponse(success_response({
                 "id": str(new_key.id),
                 "key_name": new_key.key_name,

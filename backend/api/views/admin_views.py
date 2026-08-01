@@ -11,7 +11,10 @@ from api.utils.security import encrypt_api_key, decrypt_api_key, mask_api_key
 from django.utils.html import escape
 from django.utils import timezone
 from models.schemas import success_response, error_response
-from api.services.email_service import send_support_ticket_confirmation
+from api.services.email_service import (
+    send_support_ticket_confirmation,
+    send_support_admin_reply_email,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -519,6 +522,18 @@ def admin_ticket_reply(request):
 
         ticket.messages = current_msgs
         ticket.save()
+
+        # Trigger email notification to user
+        try:
+            send_support_admin_reply_email(
+                to_email=ticket.email,
+                user_name=ticket.name or "User",
+                ticket_id=str(ticket.id),
+                ticket_subject=ticket.subject or "Support Request",
+                admin_reply_text=message
+            )
+        except Exception as mail_err:
+            logger.warning("Failed to send support admin reply email: %s", mail_err)
 
         return JsonResponse(success_response({"messages": ticket.messages, "status": ticket.status}))
     except Exception as e:

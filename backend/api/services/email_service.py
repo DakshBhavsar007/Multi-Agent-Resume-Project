@@ -1089,3 +1089,369 @@ def send_new_review_notification_to_company(
     return send_email(to_email=company_email, subject=subject, html_body=html_email, text_body=text_body)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Auth & Security Emails
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_otp_email(to_email: str, user_name: str, otp_code: str, purpose: str = "Email Verification") -> bool:
+    """
+    Send a 6-digit OTP code for email verification, login authentication, or 2FA.
+    """
+    subject = f"Your Verification Code: {otp_code} — Between AI"
+    title = f"{purpose} Code"
+    subtitle = "Use this security code to verify your action"
+    badge = "Security OTP"
+
+    body_html = f"""
+    <p>Hi <strong>{user_name}</strong>,</p>
+    <p>Please use the following 6-digit verification code to complete your <strong>{purpose}</strong> request on Between AI:</p>
+
+    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 16px; padding: 28px; margin: 24px 0; text-align: center;">
+        <p style="margin: 0 0 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 1.5px;">Verification Code</p>
+        <p style="margin: 0; font-size: 42px; font-weight: 900; color: #38bdf8; letter-spacing: 8px; font-family: 'Courier New', monospace;">{otp_code}</p>
+        <p style="margin: 10px 0 0; font-size: 12px; color: #64748b;">This code is valid for 10 minutes. Do not share it with anyone.</p>
+    </div>
+
+    <p style="font-size: 13px; color: #64748b;">If you did not request this verification code, please ignore this email or contact support immediately at <a href="mailto:support@between.indevs.in" style="color: #2563eb;">support@between.indevs.in</a>.</p>
+    """
+
+    text_body = f"Hi {user_name},\n\nYour {purpose} code is: {otp_code}\nValid for 10 minutes.\n\n— Between AI Security"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        badge_text=badge
+    )
+    return send_email(to_email=to_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+def send_password_reset_email(to_email: str, user_name: str, reset_url: str = None, otp_code: str = None) -> bool:
+    """
+    Send password reset instructions with direct link and/or OTP.
+    """
+    subject = "Password Reset Request — Between AI"
+    title = "Reset Your Password"
+    subtitle = "Follow instructions below to reset your account password"
+    badge = "Account Security"
+    cta_url = reset_url or f"{FRONTEND_URL}/reset-password"
+
+    otp_block = f"""
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 16px 0; text-align: center;">
+        <p style="margin: 0 0 4px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Reset Security Code</p>
+        <p style="margin: 0; font-size: 32px; font-weight: 900; color: #2563eb; letter-spacing: 4px;">{otp_code}</p>
+    </div>
+    """ if otp_code else ""
+
+    body_html = f"""
+    <p>Hi <strong>{user_name}</strong>,</p>
+    <p>We received a request to reset your password for your Between AI account.</p>
+    {otp_block}
+    <p>Click the button below to securely update your password:</p>
+    """
+
+    text_body = f"Hi {user_name},\n\nReset your password for Between AI:\n{cta_url}\n\n— Between AI Security"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Reset Password Now",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=to_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+def send_new_login_alert_email(to_email: str, user_name: str, ip_address: str = "Unknown", device_info: str = "Unknown Device", login_time: str = None) -> bool:
+    """
+    Send a security notification when a user logs in from a new device or IP.
+    """
+    subject = "Security Alert: New Sign-in to Your Account — Between AI"
+    title = "New Device Sign-In Alert"
+    subtitle = "Account Activity Notification"
+    badge = "Security Notice"
+
+    from datetime import datetime
+    time_str = login_time or datetime.now().strftime("%B %d, %Y at %I:%M %p UTC")
+
+    body_html = f"""
+    <p>Hi <strong>{user_name}</strong>,</p>
+    <p>Your Between AI account was just accessed from a new device or location.</p>
+
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 10px; width: 40%;">
+                    <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Date & Time</p>
+                    <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #0f172a;">{time_str}</p>
+                </td>
+                <td style="padding-bottom: 10px; width: 60%;">
+                    <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">IP Address</p>
+                    <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #2563eb;">{ip_address}</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Device & Browser</p>
+                    <p style="margin: 2px 0 0; font-size: 13px; font-weight: 600; color: #334155;">{device_info}</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <p style="font-size: 13px; color: #64748b;">If this was you, no action is needed. If you didn't authorize this login, please reset your password immediately.</p>
+    """
+
+    text_body = f"Hi {user_name},\n\nNew sign-in detected on your account.\nTime: {time_str}\nIP: {ip_address}\nDevice: {device_info}\n\n— Between AI Security"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Secure Account",
+        cta_url=f"{FRONTEND_URL}/settings/security",
+        badge_text=badge
+    )
+    return send_email(to_email=to_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Seeker Intelligence & Offer Emails
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_resume_audit_report_email(
+    to_email: str,
+    seeker_name: str,
+    ats_score: float,
+    formatting_score: float = None,
+    missing_keywords: list = None,
+    strengths: list = None,
+    recommendations: list = None,
+) -> bool:
+    """
+    Send an AI Resume Audit summary digest email to a job seeker.
+    """
+    subject = f"Your AI Resume Audit Report — {int(ats_score)}% ATS Compatibility"
+    title = "AI Resume Audit Complete"
+    subtitle = "Comprehensive ATS & Content Analysis"
+    badge = "AI Audit Report"
+    cta_url = f"{FRONTEND_URL}/seeker/resume-audit"
+
+    ats_int = int(ats_score)
+    color = "#059669" if ats_int >= 75 else ("#d97706" if ats_int >= 50 else "#dc2626")
+
+    kw_html = "".join([f'<span style="display: inline-block; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 14px; padding: 2px 10px; margin: 3px; font-size: 12px; color: #991b1b;">{k}</span>' for k in (missing_keywords or [])[:6]]) or "<span style='font-size:12px; color:#64748b;'>No critical missing keywords!</span>"
+    rec_html = "".join([f'<li style="margin-bottom: 6px;">{r}</li>' for r in (recommendations or [])[:3]]) or "<li>Keep your experience bullets quantifiable with numbers and metrics.</li>"
+
+    body_html = f"""
+    <p>Hi <strong>{seeker_name}</strong>,</p>
+    <p>Your resume has been analyzed by Between AI's recruitment intelligence parser. Here is your evaluation report:</p>
+
+    <div style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe; border-radius: 16px; padding: 24px; margin: 20px 0; text-align: center;">
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b;">Overall ATS Score</p>
+        <p style="margin: 0; font-size: 50px; font-weight: 900; color: {color}; line-height: 1;">{ats_int}%</p>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin: 16px 0;">
+        <p style="margin: 0 0 8px; font-size: 11px; font-weight: 700; color: #991b1b; text-transform: uppercase;">Top Missing Industry Keywords</p>
+        <div>{kw_html}</div>
+
+        <p style="margin: 16px 0 8px; font-size: 11px; font-weight: 700; color: #1e40af; text-transform: uppercase;">Top Actionable Improvements</p>
+        <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.6;">
+            {rec_html}
+        </ul>
+    </div>
+
+    <p style="font-size: 13px; color: #64748b;">Log in to your Between dashboard to view the full detailed breakdown and optimization tools.</p>
+    """
+
+    text_body = f"Hi {seeker_name},\n\nYour AI Resume Audit Score: {ats_int}%\n\nView full report: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="View Full Audit Report",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=to_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+def send_offer_letter_email(
+    to_email: str,
+    seeker_name: str,
+    job_title: str,
+    company_name: str,
+    salary: str = None,
+    start_date: str = None,
+    onboarding_link: str = None,
+) -> bool:
+    """
+    Send an official offer extended email when a candidate status updates to 'hired'.
+    """
+    subject = f"Official Offer Extended: {job_title} at {company_name}!"
+    title = "Congratulations! Employment Offer"
+    subtitle = f"Official Offer for {job_title}"
+    badge = "Offer Extended"
+    cta_url = onboarding_link or f"{FRONTEND_URL}/jobs/applications"
+
+    salary_html = f"""
+    <tr>
+        <td style="padding-bottom: 10px; width: 50%;">
+            <p style="margin: 0; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase;">Compensation Package</p>
+            <p style="margin: 2px 0 0; font-size: 15px; font-weight: 800; color: #14532d;">{salary}</p>
+        </td>
+    </tr>
+    """ if salary else ""
+
+    start_date_html = f"""
+    <tr>
+        <td style="padding-bottom: 10px;">
+            <p style="margin: 0; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase;">Target Start Date</p>
+            <p style="margin: 2px 0 0; font-size: 14px; font-weight: 700; color: #166534;">{start_date}</p>
+        </td>
+    </tr>
+    """ if start_date else ""
+
+    body_html = f"""
+    <p>Hi <strong>{seeker_name}</strong>,</p>
+    <p>Great news! <strong>{company_name}</strong> is thrilled to extend an official employment offer to you for the position of <strong>{job_title}</strong>.</p>
+
+    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1.5px solid #86efac; border-radius: 16px; padding: 24px; margin: 20px 0;">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td style="padding-bottom: 12px;" colspan="2">
+                    <p style="margin: 0 0 2px; font-size: 11px; color: #166534; font-weight: 700; text-transform: uppercase;">Position</p>
+                    <p style="margin: 0; font-size: 18px; font-weight: 900; color: #14532d;">{job_title} &bull; {company_name}</p>
+                </td>
+            </tr>
+            {salary_html}
+            {start_date_html}
+        </table>
+    </div>
+
+    <p>Please click the button below to view and accept your offer letter and complete your onboarding documentation on Between.</p>
+    """
+
+    text_body = f"Hi {seeker_name},\n\nCongratulations! {company_name} has extended an official offer for {job_title}.\n\nView Offer: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="View & Accept Offer",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=to_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Recruiter Team & Support Admin Mails
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_recruiter_team_invite_email(to_email: str, inviter_name: str, company_name: str, invite_url: str, role_title: str = "Recruiter") -> bool:
+    """
+    Send a team invitation email to join a company hiring workspace.
+    """
+    subject = f"Invitation to join {company_name}'s Hiring Team — Between AI"
+    title = "Hiring Team Invitation"
+    subtitle = f"Join {company_name} on Between AI"
+    badge = "Team Invite"
+    cta_url = invite_url or f"{FRONTEND_URL}/register?role=recruiter"
+
+    body_html = f"""
+    <p>Hi there,</p>
+    <p><strong>{inviter_name}</strong> has invited you to join the recruitment team for <strong>{company_name}</strong> on Between AI as a <strong>{role_title}</strong>.</p>
+
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 4px; font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Company Workspace</p>
+        <p style="margin: 0; font-size: 16px; font-weight: 800; color: #1d4ed8;">{company_name}</p>
+    </div>
+
+    <p>Click below to accept your invitation and access candidate applications, ATS match pipelines, and interview tools.</p>
+    """
+
+    text_body = f"Hi,\n\n{inviter_name} invited you to join {company_name} on Between AI.\n\nAccept Invite: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Accept Team Invitation",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=to_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+def send_support_admin_reply_email(to_email: str, user_name: str, ticket_id: str, ticket_subject: str, admin_reply_text: str) -> bool:
+    """
+    Send an email notification to user when support admin replies to a ticket.
+    """
+    from django.utils.html import escape
+    safe_name = escape(user_name)
+    safe_subject = escape(ticket_subject)
+    safe_reply = escape(admin_reply_text)
+    ticket_short_id = str(ticket_id)[:8]
+
+    subject = f"[Re: Ticket #{ticket_short_id}] Response from Between Support"
+    title = "Support Ticket Update"
+    subtitle = f"Reply to Ticket #{ticket_short_id}"
+    badge = "Support Update"
+    cta_url = f"{FRONTEND_URL}/support?ticket_id={ticket_id}"
+
+    body_html = f"""
+    <p>Hi <strong>{safe_name}</strong>,</p>
+    <p>Our support admin team has posted a reply regarding your query (<strong>{safe_subject}</strong>):</p>
+
+    <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 6px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Support Desk Response</p>
+        <p style="margin: 0; font-size: 14px; color: #0f172a; line-height: 1.6; white-space: pre-wrap;">{safe_reply}</p>
+    </div>
+
+    <p style="font-size: 13px; color: #64748b;">You can reply directly or track ticket status anytime on the Support Portal.</p>
+    """
+
+    text_body = f"Hi {safe_name},\n\nSupport response for ticket #{ticket_short_id}:\n\n\"{admin_reply_text}\"\n\nView ticket: {cta_url}\n\n— Between Support Team"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="View Support Thread",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=to_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
+def send_developer_api_key_email(to_email: str, dev_name: str, key_name: str, masked_key: str) -> bool:
+    """
+    Send developer API key creation confirmation.
+    """
+    subject = f"API Key Generated: {key_name} — Between Developer Portal"
+    title = "API Key Created"
+    subtitle = f"Developer Portal &bull; {key_name}"
+    badge = "Developer Alert"
+    cta_url = f"{FRONTEND_URL}/developer/keys"
+
+    body_html = f"""
+    <p>Hi <strong>{dev_name}</strong>,</p>
+    <p>A new API Key named <strong>{key_name}</strong> has been generated for your Between Developer account.</p>
+
+    <div style="background: #0f172a; border-radius: 14px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Masked API Key</p>
+        <p style="margin: 0; font-size: 16px; font-weight: 800; color: #38bdf8; font-family: monospace;">{masked_key}</p>
+    </div>
+
+    <p style="font-size: 13px; color: #64748b;">Keep your secret keys secure and never check them into public code repositories.</p>
+    """
+
+    text_body = f"Hi {dev_name},\n\nAPI Key '{key_name}' created: {masked_key}.\n\nDeveloper portal: {cta_url}\n\n— Between AI Platform"
+    html_email = build_between_email_html(
+        title=title,
+        subtitle=subtitle,
+        body_content_html=body_html,
+        cta_text="Manage Developer Keys",
+        cta_url=cta_url,
+        badge_text=badge
+    )
+    return send_email(to_email=to_email, subject=subject, html_body=html_email, text_body=text_body)
+
+
