@@ -186,17 +186,17 @@ const TestimonialCard = ({ t, index, timeAgo, onEdit, onDelete }) => {
             <div className="flex items-center gap-1.5 ml-2 shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(t); }}
-                className="p-1.5 rounded-lg bg-blue-100 dark:bg-slate-800 border border-blue-300 dark:border-slate-700 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-slate-700 cursor-pointer flex items-center justify-center transition-colors"
+                className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/80 border border-blue-300 dark:border-blue-600 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 cursor-pointer flex items-center justify-center transition-colors shadow-sm"
                 title="Edit review"
               >
-                <Pen size={14} />
+                <Pen size={14} className="shrink-0 text-blue-800 dark:text-blue-200" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(t); }}
-                className="p-1.5 rounded-lg bg-red-100 dark:bg-slate-800 border border-red-300 dark:border-slate-700 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-slate-700 cursor-pointer flex items-center justify-center transition-colors"
+                className="p-2 rounded-lg bg-red-100 dark:bg-red-900/80 border border-red-300 dark:border-red-600 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-800 cursor-pointer flex items-center justify-center transition-colors shadow-sm"
                 title="Delete review"
               >
-                <Trash2 size={14} />
+                <Trash2 size={14} className="shrink-0 text-red-800 dark:text-red-200" />
               </button>
             </div>
           )}
