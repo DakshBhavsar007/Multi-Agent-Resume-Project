@@ -2,6 +2,11 @@
   height: 400vh; /* Track for horizontal scroll */
   position: relative;
   background: white;
+  transition: background-color 0.3s ease;
+}
+
+.dark .showcase-horizontal-wrapper {
+  background: #090d16;
 }
 
 .sticky-container {
@@ -50,28 +55,40 @@
 
 .showcase-label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--text-secondary);
+  color: #2563eb;
   margin-bottom: 24px;
   display: block;
+}
+
+.dark .showcase-label {
+  color: #60a5fa;
 }
 
 .showcase-title {
   font-family: var(--serif);
   font-size: 52px;
   line-height: 1.1;
-  color: var(--text);
+  color: #111827;
   margin: 0 0 28px;
   letter-spacing: -0.01em;
+}
+
+.dark .showcase-title {
+  color: #f9fafb;
 }
 
 .showcase-desc {
   font-size: 18px;
   line-height: 1.6;
-  color: var(--text-secondary);
+  color: #4b5563;
   margin-bottom: 32px;
+}
+
+.dark .showcase-desc {
+  color: #9ca3af;
 }
 
 .showcase-actions {
@@ -100,6 +117,11 @@
   z-index: 0;
 }
 
+.dark .dotted-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.2px, transparent 1.2px);
+  opacity: 0.25;
+}
+
 .visual-card {
   position: relative;
   z-index: 1;
@@ -112,6 +134,12 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.dark .visual-card {
+  background: #111827;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
 }
 
 .api-frame {

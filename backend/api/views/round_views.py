@@ -1342,7 +1342,6 @@ def save_proctoring_flag(request):
 
 
 @csrf_exempt
-@require_api_key
 def upload_question_paper(request):
     """
     POST /api/v1/sessions/upload-question-paper
@@ -1396,6 +1395,7 @@ def upload_question_paper(request):
                     "message": "No MCQ questions could be extracted from this file.",
                     "questions_extracted": 0,
                     "created_in_db": 0,
+                    "ids": [],
                     "preview": []
                 }))
             result = agent.save_to_db(questions, session_id)
@@ -1404,6 +1404,7 @@ def upload_question_paper(request):
                 "questions_extracted": len(questions),
                 "created_in_db": result["created"],
                 "already_existed": result["skipped"],
+                "ids": result.get("ids", []),
                 "preview": questions[:5]
             }))
     except ValueError as ve:
