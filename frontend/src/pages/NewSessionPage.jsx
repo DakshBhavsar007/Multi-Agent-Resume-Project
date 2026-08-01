@@ -112,6 +112,34 @@ export default function NewSessionPage() {
   const [codingEnabled, setCodingEnabled] = useState(true);
   const [interviewEnabled, setInterviewEnabled] = useState(true);
   const [recommending, setRecommending] = useState(false);
+  const [draggedIdx, setDraggedIdx] = useState(null);
+
+  const handleDragStart = (e, index) => {
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e, targetIdx) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === targetIdx) return;
+
+    const newRounds = [...formData.rounds];
+    const [draggedRound] = newRounds.splice(draggedIdx, 1);
+    newRounds.splice(targetIdx, 0, draggedRound);
+
+    const updatedRounds = newRounds.map((r, i) => ({
+      ...r,
+      order: i + 1
+    }));
+
+    setFormData(prev => ({ ...prev, rounds: updatedRounds }));
+    setDraggedIdx(null);
+  };
 
   const toggleRoundInList = (roundType, enabled) => {
     const defaultNameMap = {
@@ -861,9 +889,28 @@ export default function NewSessionPage() {
               {formData.rounds.map((round, idx) => {
                 const isLast = idx === formData.rounds.length - 1;
                 return (
-                  <div key={round.id} className={`flex flex-col gap-3 p-4 bg-white border ${isLast ? 'border-[#2563EB] shadow-sm' : 'border-gray-200'} rounded-xl relative transition-all`}>
+                  <div
+                    key={round.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    onDragEnd={() => setDraggedIdx(null)}
+                    className={`flex flex-col gap-3 p-4 bg-white border rounded-xl relative transition-all ${
+                      draggedIdx === idx
+                        ? 'border-2 border-dashed border-blue-500 opacity-40 bg-blue-50/30 shadow-inner'
+                        : isLast
+                        ? 'border-[#2563EB] shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="text-gray-400 cursor-move"><GripVertical size={18} /></div>
+                      <div
+                        className="text-gray-400 hover:text-blue-600 cursor-grab active:cursor-grabbing p-1 transition-colors flex items-center"
+                        title="Drag & Drop to reorder round stage & set Final Round"
+                      >
+                        <GripVertical size={18} />
+                      </div>
                       
                       <input 
                         type="text" value={round.name}
@@ -1034,7 +1081,7 @@ export default function NewSessionPage() {
                     
                     {isLast && (
                       <div className="absolute -top-2.5 right-4 bg-blue-100 text-[#2563EB] text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-amber-200">
-                        Final Round
+                        Final Round (Hire Candidate)
                       </div>
                     )}
                   </div>
@@ -1054,21 +1101,39 @@ export default function NewSessionPage() {
               </button>
             )}
 
-            <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col gap-4 relative z-10">
-              <button
-                onClick={handleCreate} disabled={creating}
-                className="w-full h-12 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg font-semibold transition-colors flex items-center justify-center disabled:opacity-75 shadow-sm text-lg"
-              >
-                {creating ? <><Loader2 className="animate-spin mr-2" size={20} /> Creating session...</> : <><Save size={20} className="mr-2" /> Create Session</>}
-              </button>
-              
-              <button 
-                onClick={() => setStep(2)}
-                className="text-gray-500 hover:text-charcoal text-sm font-medium transition-colors text-center w-full bg-white py-2"
-              >
-                &larr; Back to Criteria
-              </button>
-            </div>
+            {(() => {
+              const allDatesProvided = formData.rounds.length > 0 && formData.rounds.every(r => r.result_announcement_date && r.result_announcement_date.trim() !== "");
+
+              return (
+                <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col gap-3 relative z-10">
+                  {!allDatesProvided && (
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-semibold flex items-center gap-2 justify-center">
+                      <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                      <span>Please set <strong>Result Declaration Time</strong> for all rounds to enable Create Session.</span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleCreate}
+                    disabled={!allDatesProvided || creating}
+                    className={`w-full h-12 rounded-lg font-semibold transition-all flex items-center justify-center text-lg shadow-sm ${
+                      !allDatesProvided || creating
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300/60"
+                        : "bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-blue-500/20 active:scale-[0.99]"
+                    }`}
+                  >
+                    {creating ? <><Loader2 className="animate-spin mr-2" size={20} /> Creating session...</> : <><Save size={20} className="mr-2" /> Create Session</>}
+                  </button>
+                  
+                  <button 
+                    onClick={() => setStep(2)}
+                    className="text-gray-500 hover:text-charcoal text-sm font-medium transition-colors text-center w-full bg-white py-2"
+                  >
+                    &larr; Back to Criteria
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         );
     }
