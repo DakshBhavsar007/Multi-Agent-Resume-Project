@@ -119,19 +119,33 @@ export default function NewSessionPage() {
       coding: "Technical Coding Round",
       interview: "AI Interview Round"
     };
+
+    const typePriority = {
+      mcq: 1,
+      coding: 2,
+      interview: 3
+    };
     
     setFormData(prev => {
       let currentRounds = prev.rounds.filter(r => r.round_type !== roundType);
       if (enabled) {
         currentRounds.push({
-          id: currentRounds.length + 1,
+          id: Date.now() + Math.random(),
           name: defaultNameMap[roundType] || "Assessment Round",
           round_type: roundType,
           interviewer: "",
-          order: currentRounds.length + 1,
+          order: typePriority[roundType] || 99,
           result_announcement_date: ""
         });
       }
+
+      // Sort by natural stage order (Aptitude -> Coding -> AI Interview)
+      currentRounds.sort((a, b) => {
+        const pA = typePriority[a.round_type] || 99;
+        const pB = typePriority[b.round_type] || 99;
+        return pA - pB;
+      });
+
       // Re-index order
       currentRounds = currentRounds.map((r, i) => ({
         ...r,
