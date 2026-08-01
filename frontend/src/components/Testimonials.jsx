@@ -443,25 +443,25 @@ const Testimonials = ({ userTypeFilter }) => {
 
         {/* Rating Summary Bar */}
         <div className="flex items-center justify-center gap-4 mt-6 flex-wrap">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 font-bold text-xs shadow-sm">
+          <div className="rating-pill-1 inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs shadow-sm">
             <span className="text-base font-black text-amber-500">{avgRating}</span>
             <div className="flex items-center gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} size={14} fill={i < Math.round(Number(avgRating)) ? "#f59e0b" : "transparent"} color="#f59e0b" opacity={i < Math.round(Number(avgRating)) ? 1 : 0.3} />
               ))}
             </div>
-            <span className="text-xs font-extrabold text-slate-800 dark:text-zinc-200 ml-1">
+            <span className="text-xs font-extrabold ml-1">
               {totalReviewsCount} {totalReviewsCount === 1 ? 'Verified Review' : 'Verified Reviews'}
             </span>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 text-xs font-extrabold px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-600 text-emerald-900 dark:text-white border border-emerald-300 dark:border-emerald-500 shadow-sm">
-            <ThumbsUp size={14} className="shrink-0 text-emerald-900 dark:text-white" />
+          <div className="rating-pill-2 inline-flex items-center gap-1.5 text-xs font-extrabold px-4 py-2 rounded-full shadow-sm">
+            <ThumbsUp size={14} className="shrink-0" />
             <span>{recommendPct}% Recommend Between</span>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 text-xs font-extrabold px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-600 text-blue-900 dark:text-white border border-blue-300 dark:border-blue-500 shadow-sm">
-            <ShieldCheck size={14} className="shrink-0 text-blue-900 dark:text-white" />
+          <div className="rating-pill-3 inline-flex items-center gap-1.5 text-xs font-extrabold px-4 py-2 rounded-full shadow-sm">
+            <ShieldCheck size={14} className="shrink-0" />
             <span>{verifiedProfilesPct}% Verified Profiles</span>
           </div>
         </div>
@@ -483,7 +483,7 @@ const Testimonials = ({ userTypeFilter }) => {
               className={`px-4 py-2 rounded-full text-xs font-extrabold cursor-pointer transition-all border ${
                 filterTab === tab.id
                   ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25'
-                  : 'bg-slate-200 dark:bg-zinc-800 border-slate-300 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 hover:bg-slate-300 dark:hover:bg-zinc-700'
+                  : 'filter-btn-unselected'
               }`}
             >
               {tab.label}

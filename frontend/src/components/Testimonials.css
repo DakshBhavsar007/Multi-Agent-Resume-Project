@@ -175,7 +175,53 @@
 }
 
 .dark .author-info p {
-  color: #9ca3af;
+  color: #e2e8f0 !important;
+  font-weight: 600 !important;
+}
+
+/* Explicit Rating & Filter Pill Overrides */
+.rating-pill-1 {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+.dark .rating-pill-1 {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.rating-pill-2 {
+  background-color: #d1fae5;
+  border: 1px solid #6ee7b7;
+  color: #065f46;
+}
+.dark .rating-pill-2 {
+  background-color: #059669 !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.rating-pill-3 {
+  background-color: #dbeafe;
+  border: 1px solid #93c5fd;
+  color: #1e40af;
+}
+.dark .rating-pill-3 {
+  background-color: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.filter-btn-unselected {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+.dark .filter-btn-unselected {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
 }
 
 /* Quote Icon Decoration */
