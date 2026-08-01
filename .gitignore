@@ -18,6 +18,7 @@ backend/env/
 backend/.env
 backend/.env.local
 backend/db.sqlite3
+backend/staticfiles/
 backend/db.sqlite3-journal
 backend/uploads/
 backend/photos/
