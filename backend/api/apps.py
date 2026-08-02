@@ -32,7 +32,3 @@ class ApiConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(ensure_default_superuser, sender=self)
-        try:
-            ensure_default_superuser()
-        except Exception:
-            pass
