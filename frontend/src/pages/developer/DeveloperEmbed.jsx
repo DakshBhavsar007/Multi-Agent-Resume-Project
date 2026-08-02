@@ -25,8 +25,7 @@ export default function DeveloperEmbed() {
   // Fetch real tokens
   const { data: tokens, refetch, isLoading } = useQuery({
     queryKey: ["embed-tokens"],
-    queryFn: portalEmbed.list,
-    enabled: isBusiness
+    queryFn: portalEmbed.list
   });
 
   const handleGenerate = async (e) => {
@@ -99,18 +98,6 @@ import { BetweenPanel } from '@between/vue';
 
   const [activeTab, setActiveTab] = useState("HTML");
 
-  if (!isBusiness) {
-    return (
-      <div className="w-full max-w-5xl mx-auto flex items-center justify-center min-h-[60vh] relative font-sans">
-         <div className="bg-white border-2 border-gray-100 rounded-3xl p-10 max-w-lg w-full flex flex-col items-center text-center shadow-2xl relative z-10">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-6"><Component size={32} /></div>
-            <h2 className="text-2xl font-black text-charcoal mb-3">Embed requires Business plan</h2>
-            <p className="text-gray-500 font-medium mb-8">Drop in a beautifully styled React component to instantly bring AI resume parsing and matching directly into your UI.</p>
-            <Link to="/developer/portal/billing" className="w-full py-4 bg-accent text-white font-bold rounded-2xl hover:bg-accent-dark transition-all text-center">Upgrade to Business &rarr;</Link>
-         </div>
-      </div>
-    );
-  }
 
   const activeSnippets = codeSnippets(activeTokenCode);
 

@@ -15,9 +15,6 @@ from models.schemas import success_response, error_response
 def tokens_root(request):
     """Handles GET /tokens (list) and POST /tokens (create)"""
     dev = request.developer
-    
-    if dev.tier not in ["business", "enterprise"]:
-        return JsonResponse(error_response("Embed widget requires Business plan or above. Please upgrade."), status=403)
 
     if request.method == "GET":
         try:

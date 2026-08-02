@@ -55,9 +55,6 @@ def webhooks_root(request):
 
     elif request.method == "POST":
         try:
-            if dev.tier == "free":
-                return JsonResponse(error_response("Webhooks require Starter plan or above"), status=400)
-
             data = json.loads(request.body)
             url = data.get("url")
             events = data.get("events", [])

@@ -28,8 +28,6 @@ export default function DeveloperWebhooks() {
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [createdSecret, setCreatedSecret] = useState(null);
 
-  const isFree = tier === "free" || !tier;
-
   const fetchWebhooks = async () => {
     if (portalWebhooks?.list) return portalWebhooks.list();
     return [];
@@ -37,8 +35,7 @@ export default function DeveloperWebhooks() {
 
   const { data: webhooks, refetch } = useQuery({
     queryKey: ["webhooks"],
-    queryFn: fetchWebhooks,
-    enabled: !isFree
+    queryFn: fetchWebhooks
   });
 
   const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useQuery({
@@ -92,18 +89,6 @@ export default function DeveloperWebhooks() {
     setPanelOpen(true);
   };
 
-  if (isFree) {
-    return (
-      <div className="w-full max-w-5xl mx-auto flex items-center justify-center min-h-[60vh] relative">
-         <div className="bg-white border-2 border-gray-100 rounded-3xl p-10 max-w-lg w-full flex flex-col items-center text-center shadow-2xl relative z-10">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-6"><Lock size={32} /></div>
-            <h2 className="text-2xl font-black text-charcoal mb-3">Webhooks require Starter plan</h2>
-            <p className="text-gray-500 font-medium mb-8">Receive real-time HTTP callbacks to your infrastructure when processing completes. Eliminate constant polling.</p>
-            <Link to="/developer/portal/billing" className="w-full py-4 bg-accent text-white text-sm font-bold rounded-2xl hover:bg-accent-dark transition-all text-center">Upgrade to Starter &rarr;</Link>
-         </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-5xl mx-auto pb-12 relative flex overflow-hidden">
