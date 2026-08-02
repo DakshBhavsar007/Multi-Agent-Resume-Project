@@ -140,32 +140,69 @@ const { data } = await response.json();
 //   candidate: { name, email, experience... }
 // }`;
 
+  const [copiedTab, setCopiedTab] = useState(false);
+
   const tabs = {
     Python: `import requests
-response = requests.post(
-    "https://api.between.indevs.in/api/v1/ingest/upload",
-    headers={"X-API-Key": "between_live_your_key"},
-    files={"files": open("resume.pdf", "rb")},
-    data={"session_id": "your_session_id"}
-)
-result = response.json()`,
-    JavaScript: `const formData = new FormData();
-formData.append('files', resumeFile);
-formData.append('session_id', 'your_session_id');
 
-const response = await fetch(
-  'https://api.between.indevs.in/api/v1/ingest/upload',
-  {
-    method: 'POST',
-    headers: { 'X-API-Key': 'between_live_your_key' },
-    body: formData
-  }
-);`,
-    cURL: `curl -X POST \
-  https://api.between.indevs.in/api/v1/ingest/upload \
+# 1. Parse & Ingest Candidate Resume PDF
+url = "https://api.between.indevs.in/api/v1/parse"
+headers = {"X-API-Key": "between_live_your_key"}
+files = {"file": open("resume.pdf", "rb")}
+
+response = requests.post(url, headers=headers, files=files)
+candidate_data = response.json()
+print("Parsed Candidate:", candidate_data)
+
+# 2. Match Candidate against Job Requirements
+match_res = requests.post(
+    "https://api.between.indevs.in/api/v1/match",
+    headers={"X-API-Key": "between_live_your_key", "Content-Type": "application/json"},
+    json={
+        "seeker_skills": ["Python", "Django", "React", "AWS"],
+        "job_requirements": ["Python", "React", "Docker"]
+    }
+)
+print("Match Result:", match_res.json())`,
+    JavaScript: `// 1. Upload & Parse Resume File via Fetch API
+const formData = new FormData();
+formData.append('file', resumeFile);
+
+const parseResponse = await fetch('https://api.between.indevs.in/api/v1/parse', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'between_live_your_key'
+  },
+  body: formData
+});
+const parsedData = await parseResponse.json();
+
+// 2. Perform AI Skill & Candidate Matching
+const matchResponse = await fetch('https://api.between.indevs.in/api/v1/match', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'between_live_your_key',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    seeker_skills: parsedData.skills || ["Python", "React"],
+    job_requirements: ["Python", "React", "PostgreSQL"]
+  })
+});
+const matchResult = await matchResponse.json();`,
+    cURL: `# 1. Parse Resume File (PDF / DOCX)
+curl -X POST https://api.between.indevs.in/api/v1/parse \\
   -H "X-API-Key: between_live_your_key" \\
-  -F "session_id=your_session_id" \
-  -F "files=@resume.pdf"`
+  -F "file=@/path/to/resume.pdf"
+
+# 2. Match Candidate Skills to Job Description
+curl -X POST https://api.between.indevs.in/api/v1/match \\
+  -H "X-API-Key: between_live_your_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "seeker_skills": ["Python", "React", "Django"],
+    "job_requirements": ["Python", "React", "AWS"]
+  }'`
   };
 
   return (
@@ -465,24 +502,39 @@ const response = await fetch(
            <h2 className="text-3xl font-bold text-charcoal dark:text-white">Integration is a breeze</h2>
            <p className="text-gray-500 dark:text-zinc-400 mt-4">Available via standard REST interfaces in any language.</p>
          </div>
-         <div className="bg-[#1E1E1E] rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
-            <div className="flex border-b border-gray-700 bg-[#2D2D2D]">
-              {Object.keys(tabs).map(tab => (
-                 <button 
-                  key={tab} 
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-4 text-sm font-semibold transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white bg-[#1E1E1E]' : 'text-gray-400 hover:text-white'}`}
-                 >
-                   {tab}
-                 </button>
-              ))}
-            </div>
-            <div className="p-6 relative text-sm">
-               <SyntaxHighlighter language={activeTab === "Python" ? "python" : activeTab === "cURL" ? "bash" : "javascript"} style={vs2015} customStyle={{ background: "transparent", padding: 0, margin: 0, lineHeight: "1.6" }}>
-                 {tabs[activeTab]}
-               </SyntaxHighlighter>
-            </div>
-         </div>
+         <div className="bg-[#18181b] rounded-2xl overflow-hidden shadow-2xl border border-zinc-800">
+             <div className="flex items-center justify-between border-b border-zinc-800 bg-[#09090b] px-2">
+               <div className="flex items-center gap-1">
+                 {Object.keys(tabs).map(tab => (
+                    <button 
+                     key={tab} 
+                     onClick={() => setActiveTab(tab)}
+                     className={`px-5 py-3.5 text-xs font-bold transition-all rounded-t-lg ${activeTab === tab ? 'text-white bg-[#18181b] border-t-2 border-accent shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'}`}
+                    >
+                      {tab}
+                    </button>
+                 ))}
+               </div>
+               <button
+                 onClick={() => {
+                   navigator.clipboard.writeText(tabs[activeTab]);
+                   setCopiedTab(true);
+                   toast.success(`Copied ${activeTab} code to clipboard!`);
+                   setTimeout(() => setCopiedTab(false), 2000);
+                 }}
+                 className="flex items-center gap-1.5 px-3 py-1.5 mr-3 text-xs font-bold text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-700/80 rounded-lg transition-all border border-zinc-700/50"
+                 title="Copy code to clipboard"
+               >
+                 {copiedTab ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                 <span>{copiedTab ? "Copied!" : "Copy Code"}</span>
+               </button>
+             </div>
+             <div className="p-6 relative text-sm font-mono overflow-x-auto">
+                <SyntaxHighlighter language={activeTab === "Python" ? "python" : activeTab === "cURL" ? "bash" : "javascript"} style={vs2015} customStyle={{ background: "transparent", padding: 0, margin: 0, lineHeight: "1.6" }}>
+                  {tabs[activeTab]}
+                </SyntaxHighlighter>
+             </div>
+          </div>
       </section>
 
       {/* DEVELOPER ECOSYSTEM SOLAR SYSTEM */}
