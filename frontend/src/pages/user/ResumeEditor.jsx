@@ -25,7 +25,9 @@ import {
   Sun,
   Moon,
   History,
-  Clock
+  Clock,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -187,26 +189,8 @@ export default function ResumeEditor() {
   const [jobInfo, setJobInfo] = useState(null);
   const [targetJobDescription, setTargetJobDescription] = useState("");
   
-  // ATS Check state
-  const [atsLoading, setAtsLoading] = useState(false);
-  const [atsReport, setAtsReport] = useState(null);
-  const [atsError, setAtsError] = useState(null);
-  const [autoScan, setAutoScan] = useState(false);
-  const [showAtsPanel, setShowAtsPanel] = useState(true);
-  
-  // AI Optimization state
-  const [optimizing, setOptimizing] = useState(false);
-  const [optimizations, setOptimizations] = useState([]);
-  const [showOptimizeModal, setShowOptimizeModal] = useState(false);
-  
-  // AI Enhancement state
-  const [enhancing, setEnhancing] = useState(false);
-  const [enhancementReport, setEnhancementReport] = useState(null);
-  const [showEnhanceModal, setShowEnhanceModal] = useState(false);
-
-  // Tracking changes for debouncing
-  const lastCheckedHash = useRef("");
-  const debounceTimer = useRef(null);
+  // Fit to screen preview state
+  const [fitToScreen, setFitToScreen] = useState(false);
 
   // Accordion state
   const [open, setOpen] = useState({
@@ -272,11 +256,6 @@ export default function ResumeEditor() {
           setOpen((prev) => ({ ...prev, certifications: true }));
         }
         
-        if (draft.atsReport) {
-          setAtsReport(draft.atsReport);
-          lastCheckedHash.current = JSON.stringify(loadedContent);
-        }
-
         // Load Job if query param is set
         if (targetJobId) {
           try {
@@ -298,63 +277,6 @@ export default function ResumeEditor() {
 
     fetchInitData();
   }, [resumeId, targetJobId]);
-
-  // 2. Debounced ATS Analyzer Call (triggers 2s after typing stops or job description changes)
-  useEffect(() => {
-    if (loading) return;
-    if (!autoScan) return;
-
-    // Clear previous timer
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    const currentHash = JSON.stringify(content);
-    // Cost control: Skip if content is identical
-    if (currentHash === lastCheckedHash.current) {
-      return;
-    }
-
-    // Set new timer
-    debounceTimer.current = setTimeout(() => {
-      runAtsCheck(content);
-    }, 2000);
-
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, [content, jobInfo, loading, autoScan, targetJobDescription]);
-
-  const runAtsCheck = async (contentToCheck) => {
-    if (seeker?.tier !== 'premium') {
-      setAtsReport(null);
-      setAtsError("ATS Score Checker is a Premium feature. Please upgrade to unlock ATS scoring and recommendations.");
-      return;
-    }
-    setAtsLoading(true);
-    setAtsError(null);
-    try {
-      const payload = {
-        resumeDraftId: resumeId, // Link check to active draft
-        content: contentToCheck,
-        targetJobDescription: targetJobDescription || undefined
-      };
-      
-      const report = await seekerAPI.atsCheck(payload);
-      setAtsReport(report);
-      lastCheckedHash.current = JSON.stringify(contentToCheck);
-    } catch (err) {
-      console.error("ATS Analyzer Error:", err);
-      // Don't crash, render safe "Score unavailable" state
-      setAtsError("ATS scan rate-limited or unavailable. Press refresh to try again.");
-    } finally {
-      setAtsLoading(false);
-    }
-  };
-
-  const handleManualAtsCheck = () => {
-    runAtsCheck(content);
-  };
 
   const handleAITailor = async () => {
     if (seeker?.tier !== 'premium') {
@@ -463,7 +385,7 @@ export default function ResumeEditor() {
         resumeDraftId: resumeId,
         content,
         targetJobDescription: targetJobDescription || "",
-        liveAtsScore: atsReport?.overallScore || null   // send live score as anchor
+        liveAtsScore: null
       };
       const response = await seekerAPI.enhanceDraft(payload);
       clearInterval(interval);
@@ -490,8 +412,6 @@ export default function ResumeEditor() {
         templateId,
         content: updatedContent
       });
-      // Re-evaluate compatibility immediately using active target JD!
-      runAtsCheck(updatedContent);
     } catch (err) {
       console.error("Auto-saving AI changes failed:", err);
       toast.error("Failed to save AI changes to database.");
@@ -957,9 +877,9 @@ export default function ResumeEditor() {
   const toggle = (k) => setOpen((o) => ({ ...o, [k]: !o[k] }));
 
   // Visual warning checks for accordions
-  const hasFormattingIssues = atsReport?.breakdown?.formatting?.issues?.length > 0;
-  const hasStructureIssues = atsReport?.breakdown?.structure?.issues?.length > 0;
-  const hasContentIssues = atsReport?.breakdown?.content?.weakBullets?.length > 0;
+  const hasFormattingIssues = false;
+  const hasStructureIssues = false;
+  const hasContentIssues = false;
 
   if (loading) {
     return (
@@ -1651,13 +1571,16 @@ export default function ResumeEditor() {
                   {darkMode ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4" />}
                 </button>
                 <button
-                  onClick={() => setShowAtsPanel(!showAtsPanel)}
-                  className={`inline-flex items-center gap-1.5 pill border border-border px-4 py-2 text-xs font-semibold hover:bg-muted transition-all ${
-                    showAtsPanel ? "bg-primary-soft text-primary border-primary/20" : "bg-background text-muted-foreground"
+                  onClick={() => setFitToScreen(!fitToScreen)}
+                  className={`inline-flex items-center gap-1.5 pill border border-border px-4 py-2 text-xs font-semibold transition-all ${
+                    fitToScreen
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background text-foreground border-border hover:bg-muted"
                   }`}
+                  title={fitToScreen ? "Reset to Standard Size" : "Fit Resume to Screen"}
                 >
-                  <Target className="h-3.5 w-3.5" />
-                  {showAtsPanel ? "Hide ATS Panel" : "Show ATS Panel"}
+                  {fitToScreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5 text-primary" />}
+                  <span>{fitToScreen ? "Reset Fit" : "Fit to Screen"}</span>
                 </button>
                 <button
                   onClick={handleExportPdf}
@@ -1667,8 +1590,8 @@ export default function ResumeEditor() {
                 </button>
               </div>
             </div>
-            <div ref={previewRef} className="flex-1 overflow-y-auto p-8 flex justify-center">
-              <div className="shadow-elevation-3 rounded-2xl bg-white h-fit mb-8">
+            <div ref={previewRef} className={`flex-1 overflow-y-auto p-8 flex justify-center ${fitToScreen ? "items-center overflow-hidden" : ""}`}>
+              <div className={`shadow-elevation-3 rounded-2xl bg-white h-fit transition-all duration-300 ${fitToScreen ? "scale-[0.82] origin-top md:origin-center max-h-[85vh] overflow-y-auto" : "mb-8"}`}>
                 <ResumePreview template={templateId} resume={content} />
               </div>
             </div>
@@ -1746,11 +1669,6 @@ export default function ResumeEditor() {
                                 <Clock className="h-3 w-3" /> {dt}
                               </span>
                             </div>
-                            {v.atsScore !== null && (
-                              <span className="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full shrink-0">
-                                ATS {v.atsScore}%
-                              </span>
-                            )}
                           </div>
                           <button
                             onClick={() => handleRestoreVersion(v.id)}
@@ -1764,270 +1682,6 @@ export default function ResumeEditor() {
                   </div>
                 )}
               </div>
-            </div>
-          </aside>
-        )}
-
-        {/* RIGHT PANEL: DYNAMIC ATS COMPATIBILITY AGENT */}
-        {showAtsPanel && (
-          <aside className="w-[340px] border-l border-border bg-card flex flex-col overflow-hidden">
-            <div className="border-b border-border px-5 py-4 flex items-center justify-between bg-muted/20">
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                <Target className="h-4 w-4 text-primary" />
-                <span>ATS Analysis</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={autoScan}
-                    onChange={(e) => setAutoScan(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary/20 h-3.5 w-3.5 accent-primary"
-                  />
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Auto</span>
-                </label>
-                <button
-                  onClick={handleManualAtsCheck}
-                  disabled={atsLoading}
-                  className="p-1 text-muted-foreground hover:text-primary rounded-full hover:bg-muted transition-all disabled:opacity-50"
-                  title="Recalculate ATS Score"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${atsLoading ? "animate-spin" : ""}`} />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5 space-y-6">
-              {/* Optional Job Description Input */}
-              <div className="bg-muted/30 border border-border/60 p-3.5 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                    <Target className="h-3 w-3 text-primary" /> Target Job Target
-                  </span>
-                  {jobInfo && (
-                    <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">
-                      Job-Targeted Mode
-                    </span>
-                  )}
-                </div>
-                {jobInfo && (
-                  <div className="text-xs font-semibold text-foreground leading-tight">
-                    {jobInfo.job_title} at {jobInfo.company?.name || "Target Company"}
-                  </div>
-                )}
-                <textarea
-                  value={targetJobDescription}
-                  onChange={(e) => {
-                    setTargetJobDescription(e.target.value);
-                  }}
-                  placeholder="Paste target job description or type a target job title (e.g. 'Frontend Developer') here to optimize your resume..."
-                  rows={4}
-                  className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-[11px] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all leading-normal"
-                />
-              </div>
-
-              {/* AI Optimize buttons */}
-              <div className="px-1 space-y-2">
-                <button
-                  onClick={handleAIEnhance}
-                  disabled={enhancing}
-                  className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-xs font-bold text-white shadow-elevation-1 hover:shadow-elevation-2 hover:from-violet-700 hover:to-indigo-700 transition-all disabled:opacity-50"
-                >
-                  {enhancing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Running AI Enhancement...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 animate-pulse" />
-                      <span>Full AI Enhancement</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={handleAITailor}
-                  disabled={optimizing}
-                  className="w-full flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all disabled:opacity-50"
-                >
-                  {optimizing ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Generating AI Patches...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-3.5 w-3.5" />
-                      <span>Quick Polish (AI Patches)</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Error or Fallback State */}
-              {atsError && (
-                <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-2xl flex flex-col gap-3">
-                  <div className="flex gap-2 items-start">
-                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                    <div className="text-xs">
-                      <span className="font-semibold block">Scan Unavailable</span>
-                      {atsError}
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleManualAtsCheck}
-                    className="pill bg-destructive text-white py-1.5 text-[10px] font-bold hover:bg-destructive/90 transition-all inline-flex items-center justify-center gap-1"
-                  >
-                    <RefreshCw className="h-3 w-3" /> Retry Scan
-                  </button>
-                </div>
-              )}
-
-              {/* Loading Overlay */}
-              {atsLoading && !atsReport && (
-                <div className="h-48 flex flex-col items-center justify-center gap-2">
-                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                  <span className="text-xs text-muted-foreground">Scanning compatibility...</span>
-                </div>
-              )}
-
-              {/* Full report dashboard */}
-              {atsReport && (
-                <div className="space-y-6">
-                  {/* Score Indicator */}
-                  <div className="text-center bg-muted/40 border border-border/60 p-5 rounded-3xl flex flex-col items-center">
-                    <div className="relative w-24 h-24 flex items-center justify-center">
-                      <svg className="absolute w-full h-full transform -rotate-90">
-                        <circle
-                          cx="48"
-                          cy="48"
-                          r="40"
-                          stroke="rgba(37, 99, 235, 0.1)"
-                          strokeWidth="8"
-                          fill="transparent"
-                        />
-                        <circle
-                          cx="48"
-                          cy="48"
-                          r="40"
-                          stroke="rgb(37, 99, 235)"
-                          strokeWidth="8"
-                          fill="transparent"
-                          strokeDasharray="251.2"
-                          strokeDashoffset={251.2 - (251.2 * (atsReport.overallScore || 0)) / 100}
-                          className="transition-all duration-500 ease-out"
-                        />
-                      </svg>
-                      <span className="text-2xl font-bold text-primary relative z-10">{atsReport.overallScore}%</span>
-                    </div>
-                    <h4 className="text-sm font-semibold mt-3">
-                      {jobInfo ? "Job Match Score" : "ATS Score"}
-                    </h4>
-                    <p className="text-[11px] text-muted-foreground mt-1 max-w-[200px]">
-                      {atsReport.overallScore >= 80 ? "Your resume has high structural and compatibility scores." : "Resolve flagged warnings below to boost compatibility."}
-                    </p>
-                  </div>
-
-                  {/* Score Breakdown Slider Indicators */}
-                  <div className="space-y-3.5">
-                    <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Checks Breakdown</h5>
-                    
-                    <BreakdownBar label="Keyword Match (35%)" score={atsReport.detailed_breakdown?.keyword_match?.score ?? atsReport.breakdown?.keywords?.score} />
-                    <BreakdownBar label="Skills Match (25%)" score={atsReport.detailed_breakdown?.skills_match?.score ?? atsReport.breakdown?.integrity?.score} />
-                    <BreakdownBar label="Experience Relevance (15%)" score={atsReport.detailed_breakdown?.experience_relevance?.score ?? 70} />
-                    <BreakdownBar label="Project Relevance (10%)" score={atsReport.detailed_breakdown?.project_relevance?.score ?? 70} />
-                    <BreakdownBar label="Education Match (5%)" score={atsReport.detailed_breakdown?.education_match?.score ?? atsReport.breakdown?.structure?.score} />
-                    <BreakdownBar label="ATS Formatting (10%)" score={atsReport.detailed_breakdown?.ats_formatting?.score ?? atsReport.breakdown?.formatting?.score} />
-                  </div>
-
-                  {/* Strengths & Weaknesses */}
-                  {(atsReport.strengths?.length > 0 || atsReport.weaknesses?.length > 0) && (
-                    <div className="space-y-3 border-t border-border/60 pt-4">
-                      {atsReport.strengths?.length > 0 && (
-                        <div>
-                          <div className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mb-1.5">Key Strengths</div>
-                          <ul className="space-y-1">
-                            {atsReport.strengths.map((str, idx) => (
-                              <li key={idx} className="flex gap-1.5 text-xs text-foreground items-start">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
-                                <span>{str}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {atsReport.weaknesses?.length > 0 && (
-                        <div className="mt-3.5">
-                          <div className="text-[10px] font-bold text-destructive/80 uppercase tracking-wider mb-1.5">Weaknesses / Gaps</div>
-                          <ul className="space-y-1">
-                            {atsReport.weaknesses.map((weak, idx) => (
-                              <li key={idx} className="flex gap-1.5 text-xs text-foreground items-start">
-                                <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
-                                <span>{weak}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Target Keywords matching (Job-Targeted specific) */}
-                  {jobInfo && atsReport.breakdown?.keywords && (
-                    <div className="space-y-3 border-t border-border/60 pt-4">
-                      <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Job Keyword Density</h5>
-                      
-                      {/* Missing */}
-                      <div>
-                        <div className="text-[10px] font-bold text-destructive/80 uppercase tracking-wide mb-1">Missing Keywords</div>
-                        {atsReport.breakdown.keywords.missingKeywords?.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {atsReport.breakdown.keywords.missingKeywords.map((kw, i) => (
-                              <span key={i} className="text-[10px] bg-destructive/10 text-destructive border border-destructive/20 px-2 py-0.5 rounded-lg font-medium">
-                                {kw}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-muted-foreground">All critical keywords matched!</div>
-                        )}
-                      </div>
-
-                      {/* Matched */}
-                      <div className="mt-2.5">
-                        <div className="text-[10px] font-bold text-[var(--google-green)] uppercase tracking-wide mb-1">Matched Keywords</div>
-                        {atsReport.breakdown.keywords.matchedKeywords?.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {atsReport.breakdown.keywords.matchedKeywords.map((kw, i) => (
-                              <span key={i} className="text-[10px] bg-green-500/10 text-[var(--google-green)] border border-green-500/20 px-2 py-0.5 rounded-lg font-medium">
-                                {kw}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-muted-foreground">No matches found yet. Add keywords.</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Top Coach suggestions */}
-                  {atsReport.topSuggestions && atsReport.topSuggestions.length > 0 && (
-                    <div className="space-y-3 border-t border-border/60 pt-4">
-                      <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Coach Recommendations</h5>
-                      <ul className="space-y-2">
-                        {atsReport.topSuggestions.map((s, idx) => (
-                          <li key={idx} className="flex gap-2 text-xs text-foreground items-start leading-relaxed bg-surface border border-border/50 p-2.5 rounded-xl">
-                            <span className="text-primary font-bold text-base shrink-0 mt-[-2px]">•</span>
-                            <span>{s}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </aside>
         )}
@@ -2194,11 +1848,11 @@ export default function ResumeEditor() {
                           strokeWidth="5"
                           fill="transparent"
                           strokeDasharray="169.6"
-                          strokeDashoffset={169.6 - (169.6 * (atsReport?.overallScore || 0)) / 100}
+                          strokeDashoffset={169.6 - (169.6 * (enhancementReport.ats_score_original || 0)) / 100}
                           className="transition-all duration-500 ease-out"
                         />
                       </svg>
-                      <span className="text-lg font-bold text-destructive relative z-10">{atsReport?.overallScore ?? enhancementReport.ats_score_original}%</span>
+                      <span className="text-lg font-bold text-destructive relative z-10">{enhancementReport.ats_score_original}%</span>
                     </div>
                   </div>
                               {/* Arrow */}
@@ -2206,7 +1860,7 @@ export default function ResumeEditor() {
 
                   {/* Enhanced Score */}
                   {(() => {
-                    const origScore = atsReport?.overallScore ?? enhancementReport.ats_score_original ?? 0;
+                    const origScore = enhancementReport.ats_score_original ?? 0;
                     const enhScore = enhancementReport.ats_score_enhanced ?? 0;
                     const isBoost = enhScore > origScore;
                     const diff = enhScore - origScore;

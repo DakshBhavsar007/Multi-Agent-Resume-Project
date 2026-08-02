@@ -88,6 +88,110 @@ const isAdvancedJD = (text) => {
   return matchedSections.length >= 3 && (hasBulletPoints || lines.length > 6);
 };
 
+const SALARY_OPTIONS_BY_CURRENCY = {
+  INR: [
+    { value: "", label: "Unspecified / Flexible" },
+    { value: "300000", label: "₹3 LPA (₹3.0L)" },
+    { value: "500000", label: "₹5 LPA (₹5.0L)" },
+    { value: "800000", label: "₹8 LPA (₹8.0L)" },
+    { value: "1000000", label: "₹10 LPA (₹10.0L)" },
+    { value: "1200000", label: "₹12 LPA (₹12.0L)" },
+    { value: "1500000", label: "₹15 LPA (₹15.0L)" },
+    { value: "2000000", label: "₹20 LPA (₹20.0L)" },
+    { value: "2500000", label: "₹25 LPA (₹25.0L)" },
+    { value: "3000000", label: "₹30 LPA (₹30.0L)" },
+    { value: "4000000", label: "₹40 LPA (₹40.0L)" },
+    { value: "5000000", label: "₹50 LPA (₹50.0L)" },
+    { value: "7500000", label: "₹75 LPA (₹75.0L)" },
+    { value: "10000000", label: "₹1 Cr+ (₹1.0Cr)" },
+    { value: "custom", label: "Other / Custom..." },
+  ],
+  USD: [
+    { value: "", label: "Unspecified / Flexible" },
+    { value: "30000", label: "$30,000 / yr ($30k)" },
+    { value: "40000", label: "$40,000 / yr ($40k)" },
+    { value: "50000", label: "$50,000 / yr ($50k)" },
+    { value: "60000", label: "$60,000 / yr ($60k)" },
+    { value: "80000", label: "$80,000 / yr ($80k)" },
+    { value: "100000", label: "$100,000 / yr ($100k)" },
+    { value: "120000", label: "$120,000 / yr ($120k)" },
+    { value: "150000", label: "$150,000 / yr ($150k)" },
+    { value: "200000", label: "$200,000 / yr ($200k)" },
+    { value: "250000", label: "$250,000+ / yr ($250k+)" },
+    { value: "custom", label: "Other / Custom..." },
+  ],
+  EUR: [
+    { value: "", label: "Unspecified / Flexible" },
+    { value: "30000", label: "€30,000 / yr (€30k)" },
+    { value: "45000", label: "€45,000 / yr (€45k)" },
+    { value: "60000", label: "€60,000 / yr (€60k)" },
+    { value: "80000", label: "€80,000 / yr (€80k)" },
+    { value: "100000", label: "€100,000 / yr (€100k)" },
+    { value: "120000", label: "€120,000 / yr (€120k)" },
+    { value: "150000", label: "€150,000+ / yr (€150k+)" },
+    { value: "custom", label: "Other / Custom..." },
+  ],
+  GBP: [
+    { value: "", label: "Unspecified / Flexible" },
+    { value: "30000", label: "£30,000 / yr (£30k)" },
+    { value: "45000", label: "£45,000 / yr (£45k)" },
+    { value: "60000", label: "£60,000 / yr (£60k)" },
+    { value: "80000", label: "£80,000 / yr (£80k)" },
+    { value: "100000", label: "£100,000 / yr (£100k)" },
+    { value: "120000", label: "£120,000 / yr (£120k)" },
+    { value: "150000", label: "£150,000+ / yr (£150k+)" },
+    { value: "custom", label: "Other / Custom..." },
+  ],
+};
+
+const formatSalaryHumanReadable = (valStr, currency = "INR") => {
+  if (!valStr || valStr === "" || valStr === "custom") return "";
+  const num = parseFloat(valStr);
+  if (isNaN(num) || num <= 0) return "";
+
+  if (currency === "INR") {
+    let lpaVal = num >= 1000 ? num / 100000 : num;
+    if (lpaVal >= 100) {
+      const cr = (lpaVal / 100).toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+      const fullRs = num >= 1000 ? Math.round(num) : Math.round(lpaVal * 100000);
+      return `₹${cr} Cr (${fullRs.toLocaleString('en-IN')} Rs)`;
+    }
+    const lpa = lpaVal.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+    const fullRs = num >= 1000 ? Math.round(num) : Math.round(lpaVal * 100000);
+    return `₹${lpa} LPA (${fullRs.toLocaleString('en-IN')} Rs)`;
+  } else if (currency === "USD") {
+    let kVal = num >= 1000 ? num / 1000 : num;
+    const kStr = kVal.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+    const fullUsd = num >= 1000 ? Math.round(num) : Math.round(num * 1000);
+    return `$${kStr}k / yr ($${fullUsd.toLocaleString('en-US')})`;
+  } else if (currency === "EUR") {
+    let kVal = num >= 1000 ? num / 1000 : num;
+    const kStr = kVal.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+    const fullEur = num >= 1000 ? Math.round(num) : Math.round(num * 1000);
+    return `€${kStr}k / yr (€${fullEur.toLocaleString('de-DE')})`;
+  } else if (currency === "GBP") {
+    let kVal = num >= 1000 ? num / 1000 : num;
+    const kStr = kVal.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+    const fullGbp = num >= 1000 ? Math.round(num) : Math.round(num * 1000);
+    return `£${kStr}k / yr (£${fullGbp.toLocaleString('en-GB')})`;
+  }
+
+  return "";
+};
+
+const normalizeSalaryValue = (valStr, currency = "INR") => {
+  if (!valStr || valStr === "" || valStr === "custom") return null;
+  const num = parseFloat(valStr);
+  if (isNaN(num) || num <= 0) return null;
+  if (currency === "INR" && num < 200) {
+    return Math.round(num * 100000);
+  }
+  if (currency !== "INR" && num < 1000) {
+    return Math.round(num * 1000);
+  }
+  return Math.round(num);
+};
+
 export default function NewSessionPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -97,7 +201,7 @@ export default function NewSessionPage() {
     required_skills: [], nice_to_have: [],
     preferred_locations: [], min_experience: 0,
     min_match_score: 60,
-    salary_min: "", salary_max: "", salary_currency: "USD",
+    salary_min: "", salary_max: "", salary_currency: "INR",
     weights: { skills: 0.5, experience: 0.3, location: 0.2 },
     rounds: [
       { id: 1, name: "Aptitude Assessment Round", round_type: "mcq", order: 1 },
@@ -113,6 +217,30 @@ export default function NewSessionPage() {
   const [interviewEnabled, setInterviewEnabled] = useState(true);
   const [recommending, setRecommending] = useState(false);
   const [draggedIdx, setDraggedIdx] = useState(null);
+  const [isCustomMin, setIsCustomMin] = useState(false);
+  const [isCustomMax, setIsCustomMax] = useState(false);
+
+  const handleMinSalarySelect = (e) => {
+    const val = e.target.value;
+    if (val === "custom") {
+      setIsCustomMin(true);
+      setFormData(prev => ({ ...prev, salary_min: "" }));
+    } else {
+      setIsCustomMin(false);
+      setFormData(prev => ({ ...prev, salary_min: val }));
+    }
+  };
+
+  const handleMaxSalarySelect = (e) => {
+    const val = e.target.value;
+    if (val === "custom") {
+      setIsCustomMax(true);
+      setFormData(prev => ({ ...prev, salary_max: "" }));
+    } else {
+      setIsCustomMax(false);
+      setFormData(prev => ({ ...prev, salary_max: val }));
+    }
+  };
 
   const handleDragStart = (e, index) => {
     setDraggedIdx(index);
@@ -447,11 +575,17 @@ export default function NewSessionPage() {
     try {
       let currentSessionId = inferredData?.session_id;
       
+      const finalMinSal = normalizeSalaryValue(formData.salary_min, formData.salary_currency);
+      const finalMaxSal = normalizeSalaryValue(formData.salary_max, formData.salary_currency);
+
       const sessionPayload = {
         name: formData.name,
         job_title: formData.job_title,
         job_description: formData.job_description,
-        rounds: formData.rounds
+        rounds: formData.rounds,
+        min_salary: finalMinSal,
+        max_salary: finalMaxSal,
+        salary_currency: formData.salary_currency
       };
       
       if (currentSessionId) {
@@ -468,8 +602,8 @@ export default function NewSessionPage() {
         min_experience: formData.min_experience,
         min_match_score: formData.min_match_score,
         weights: formData.weights,
-        salary_min: formData.salary_min !== "" ? Number(formData.salary_min) : null,
-        salary_max: formData.salary_max !== "" ? Number(formData.salary_max) : null,
+        salary_min: finalMinSal,
+        salary_max: finalMaxSal,
         salary_currency: formData.salary_currency
       });
 
@@ -587,39 +721,92 @@ export default function NewSessionPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3 items-start">
                 <div>
                   <label className="block text-sm font-medium text-charcoal mb-1.5">Currency</label>
                   <select
                     value={formData.salary_currency}
-                    onChange={e => setFormData({...formData, salary_currency: e.target.value})}
-                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none bg-white"
+                    onChange={e => {
+                      const newCurr = e.target.value;
+                      setIsCustomMin(false);
+                      setIsCustomMax(false);
+                      setFormData(prev => ({ ...prev, salary_currency: newCurr, salary_min: "", salary_max: "" }));
+                    }}
+                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none bg-white cursor-pointer font-medium text-charcoal"
                   >
-                    <option value="USD">USD ($)</option>
                     <option value="INR">INR (₹)</option>
+                    <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
                     <option value="GBP">GBP (£)</option>
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-charcoal mb-1.5">Min Salary</label>
-                  <input
-                    type="number"
-                    value={formData.salary_min}
-                    onChange={e => setFormData({...formData, salary_min: e.target.value})}
-                    placeholder="e.g. 80000"
-                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
-                  />
+                  <select
+                    value={isCustomMin ? "custom" : formData.salary_min}
+                    onChange={handleMinSalarySelect}
+                    className={`w-full p-3 border-[1.5px] rounded-lg text-sm focus:border-[#2563EB] focus:outline-none bg-white cursor-pointer font-medium text-charcoal ${isCustomMin ? 'border-[#2563EB] bg-blue-50/20' : 'border-gray-200'}`}
+                  >
+                    {(SALARY_OPTIONS_BY_CURRENCY[formData.salary_currency] || SALARY_OPTIONS_BY_CURRENCY.INR).map(opt => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  {isCustomMin && (
+                    <div className="mt-2 space-y-1">
+                      <input
+                        type="number"
+                        value={formData.salary_min}
+                        onChange={e => setFormData({ ...formData, salary_min: e.target.value })}
+                        placeholder={formData.salary_currency === "INR" ? "e.g. 200000 or 2 (for 2 LPA)" : "e.g. 85000 or 85 (for 85k)"}
+                        className="w-full p-2.5 border-[1.5px] border-[#2563EB] rounded-lg text-sm focus:outline-none bg-white shadow-sm"
+                        autoFocus
+                      />
+                      {formData.salary_min && formatSalaryHumanReadable(formData.salary_min, formData.salary_currency) && (
+                        <div className="text-xs font-semibold text-[#2563EB] bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 inline-flex items-center gap-1.5 shadow-sm">
+                          <Sparkles className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
+                          <span className="opacity-70">Standard:</span>
+                          <span className="font-bold">{formatSalaryHumanReadable(formData.salary_min, formData.salary_currency)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-charcoal mb-1.5">Max Salary</label>
-                  <input
-                    type="number"
-                    value={formData.salary_max}
-                    onChange={e => setFormData({...formData, salary_max: e.target.value})}
-                    placeholder="e.g. 120000"
-                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
-                  />
+                  <select
+                    value={isCustomMax ? "custom" : formData.salary_max}
+                    onChange={handleMaxSalarySelect}
+                    className={`w-full p-3 border-[1.5px] rounded-lg text-sm focus:border-[#2563EB] focus:outline-none bg-white cursor-pointer font-medium text-charcoal ${isCustomMax ? 'border-[#2563EB] bg-blue-50/20' : 'border-gray-200'}`}
+                  >
+                    {(SALARY_OPTIONS_BY_CURRENCY[formData.salary_currency] || SALARY_OPTIONS_BY_CURRENCY.INR).map(opt => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  {isCustomMax && (
+                    <div className="mt-2 space-y-1">
+                      <input
+                        type="number"
+                        value={formData.salary_max}
+                        onChange={e => setFormData({ ...formData, salary_max: e.target.value })}
+                        placeholder={formData.salary_currency === "INR" ? "e.g. 1500000 or 15 (for 15 LPA)" : "e.g. 120000 or 120 (for 120k)"}
+                        className="w-full p-2.5 border-[1.5px] border-[#2563EB] rounded-lg text-sm focus:outline-none bg-white shadow-sm"
+                        autoFocus
+                      />
+                      {formData.salary_max && formatSalaryHumanReadable(formData.salary_max, formData.salary_currency) && (
+                        <div className="text-xs font-semibold text-[#2563EB] bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 inline-flex items-center gap-1.5 shadow-sm">
+                          <Sparkles className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
+                          <span className="opacity-70">Standard:</span>
+                          <span className="font-bold">{formatSalaryHumanReadable(formData.salary_max, formData.salary_currency)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

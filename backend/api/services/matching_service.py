@@ -21,9 +21,12 @@ def _get_flat_skills(skills_input):
         flat.append(skills_input)
     return flat
 
+from asgiref.sync import async_to_sync
+
 def calculate_unified_match_score(skills, total_exp_years, location, entity_id_str, session):
     """
-    Unified, deterministic match score calculation (0-100) shared by:
+    Unified, deterministic match score calculation (0-100) powered by
+    the 4-Tier Hybrid SemanticMatchingAgent shared by:
     - Seeker Find Jobs (/jobs/search)
     - Seeker Applications (/jobs/applications)
     - Recruiter Dashboard & Candidate Profiles
@@ -34,18 +37,32 @@ def calculate_unified_match_score(skills, total_exp_years, location, entity_id_s
     criteria = getattr(session, "criteria", {}) or {}
     if not isinstance(criteria, dict):
         criteria = {}
-        
+
+    flat_skills = _get_flat_skills(skills)
+    cand_dict = {
+        "skills": flat_skills,
+        "normalized_skills": flat_skills,
+        "total_experience_years": total_exp_years or 0,
+        "location": location or ""
+    }
+
+    try:
+        from agents.matching_agent import SemanticMatchingAgent
+        agent = SemanticMatchingAgent()
+        result = async_to_sync(agent.match)(cand_dict, criteria)
+        score = float(result.get("match_score", 75))
+        return round(score, 1), result
+    except Exception as err:
+        logger.warning(f"SemanticMatchingAgent fallback in calculate_unified_match_score: {err}")
+
+    # Fallback if async agent invocation encounters any issue
     required_skills = criteria.get("required_skills", [])
     if not required_skills and getattr(session, "inferred_skills", None):
         required_skills = session.inferred_skills or []
 
     req_lower = [str(r).lower().strip() for r in required_skills if r]
+    cand_skill_names = {str(s).lower().strip() for s in flat_skills if s}
 
-    flat_skills = _get_flat_skills(skills)
-    cand_skill_names = {
-        str(s).lower().strip() for s in flat_skills if s
-    }
-    
     matched_list = [r for r in required_skills if any(str(r).lower().strip() in s or s in str(r).lower().strip() for s in cand_skill_names)]
     missing_list = [r for r in required_skills if str(r).lower().strip() not in [m.lower().strip() for m in matched_list]]
     matched = len(matched_list)
@@ -55,7 +72,6 @@ def calculate_unified_match_score(skills, total_exp_years, location, entity_id_s
     else:
         skill_score = min(95, max(60, 65 + len(cand_skill_names) * 3))
 
-    # Experience score
     min_exp = criteria.get("min_experience", 0)
     try:
         exp_years = float(total_exp_years or 0)
@@ -63,19 +79,10 @@ def calculate_unified_match_score(skills, total_exp_years, location, entity_id_s
         exp_years = 0.0
     experience_score = min(100, round((exp_years / max(min_exp, 1)) * 100)) if min_exp > 0 else (75 if exp_years >= 2 else 60)
 
-    # Location score
     preferred_locs = criteria.get("preferred_locations", [])
     cand_location = (location or "").lower().strip()
     location_score = 100 if not preferred_locs else (100 if any(str(l).lower().strip() in cand_location for l in preferred_locs) else 50)
 
-    # 100% Deterministic hash offset (0 to 11%) based on entity_id_str using hashlib.md5
-    if entity_id_str:
-        md5_hex = hashlib.md5(str(entity_id_str).encode('utf-8')).hexdigest()
-        hash_offset = int(md5_hex[:4], 16) % 12
-    else:
-        hash_offset = 5
-
-    # Weighted overall score
     weights = criteria.get("weights", {"skills": 0.5, "experience": 0.3, "location": 0.2})
     if not isinstance(weights, dict):
         weights = {"skills": 0.5, "experience": 0.3, "location": 0.2}
@@ -85,7 +92,7 @@ def calculate_unified_match_score(skills, total_exp_years, location, entity_id_s
         experience_score * weights.get("experience", 0.3) + 
         location_score * weights.get("location", 0.2)
     )
-    score = min(98, max(45, raw_score + (hash_offset if not req_lower else 0)))
+    score = min(98, max(45, raw_score))
 
     details = {
         "match_score": score,

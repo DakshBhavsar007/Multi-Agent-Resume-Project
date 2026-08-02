@@ -2,6 +2,14 @@ import numpy as np
 from agents.embeddings import get_embedding_model
 
 class SemanticMatchingAgent:
+    """
+    4-Tier Hybrid Matching Architecture for Candidate-Job Matching:
+    
+    1. Tier 1: Vector Semantic Similarity (SentenceTransformer + Cosine Similarity > 0.72)
+    2. Tier 2: Character N-Gram TF-IDF Fallback (Typo & Variant Matching > 0.60)
+    3. Tier 3: Empty Skills Baseline (70%) & Seniority Experience Bonus (+2% per skill >3 yrs, max +10%)
+    4. Tier 4: ML Hiring Probability Blending (80% manual weighted score + 20% ML prediction)
+    """
     def __init__(self):
         pass
 
@@ -15,92 +23,100 @@ class SemanticMatchingAgent:
         min_exp = criteria.get("min_experience", 0)
         preferred_locs = criteria.get("preferred_locations", [])
         
-        candidate_skills = [
-            s.get("canonical_skill", str(s)) if isinstance(s, dict) else str(s)
-            for s in candidate.get("normalized_skills", [])
-        ]
+        # Extract candidate skill list safely from normalized_skills or skills
+        candidate_skills = []
+        raw_skills = candidate.get("normalized_skills") or candidate.get("skills") or []
+        for s in raw_skills:
+            if isinstance(s, dict):
+                skill_str = s.get("canonical_skill") or s.get("name") or s.get("skill") or str(s)
+            else:
+                skill_str = str(s)
+            if skill_str and skill_str not in candidate_skills:
+                candidate_skills.append(skill_str)
         
-        # --- SKILL SCORE ---
+        # --- SKILL SCORE CALCULATION ---
         skill_score = 0.0
         matched = []
         missing = required[:]
         
+        # Tier 3: Empty Job Skills Baseline
         if not required:
             skill_score = 70.0
             matched = candidate_skills[:5]
             missing = []
         else:
             model = self._get_model()
-            req_embeddings = model.encode(required) if model else None
+            req_embeddings = None
+            if model and required:
+                try:
+                    req_embeddings = model.encode(required)
+                except Exception:
+                    req_embeddings = None
             
-            # 1. Semantic Skill Match via sklearn.metrics.pairwise.cosine_similarity
+            # 1. Tier 1: Vector Semantic Similarity (SentenceTransformer + Cosine Similarity > 0.72)
+            matched_tier1 = []
             if model and candidate_skills and req_embeddings is not None and len(req_embeddings) > 0:
                 try:
                     cand_embeddings = model.encode(candidate_skills)
-                    
-                    # Check if embeddings are valid (not all-zero vectors)
                     if cand_embeddings is not None and len(cand_embeddings) > 0 and not np.all(cand_embeddings == 0):
                         from sklearn.metrics.pairwise import cosine_similarity
-                        
                         sim_matrix = cosine_similarity(cand_embeddings, req_embeddings)
-                        matched = []
-                        missing = []
+                        
                         for i, req in enumerate(required):
                             sims = sim_matrix[:, i]
                             if float(np.max(sims)) > 0.72:
-                                matched.append(req)
-                            else:
-                                missing.append(req)
-                        base = len(matched) / len(required) * 100
-                        
-                        # Experience bonus for matched skills
-                        bonus = 0
-                        for s in candidate.get("normalized_skills", []):
-                            skill_name = str(s.get("canonical_skill", str(s)) if isinstance(s, dict) else str(s)).lower().strip()
-                            if any(skill_name == m.lower().strip() for m in matched):
-                                yrs = s.get("years") if isinstance(s, dict) else None
-                                if yrs is not None and float(yrs) > 3:
-                                    bonus += 2
-                        skill_score = min(100.0, base + min(bonus, 10))
+                                matched_tier1.append(req)
                 except Exception as emb_err:
-                    pass
+                    matched_tier1 = []
             
-            # 2. TfidfVectorizer Fallback if embeddings failed or model is missing
-            if not matched and candidate_skills:
+            # Remaining required skills to pass through Tier 2 fallback
+            remaining_reqs = [r for r in required if r not in matched_tier1]
+            matched_tier2 = []
+            
+            # 2. Tier 2: Character N-Gram TF-IDF Fallback (Typo & Variant Matching > 0.60)
+            if remaining_reqs and candidate_skills:
                 try:
                     from sklearn.feature_extraction.text import TfidfVectorizer
                     from sklearn.metrics.pairwise import cosine_similarity
                     
-                    # Char-level n-gram tf-idf is robust for typing errors and slight variations
                     vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5))
-                    all_texts = candidate_skills + required
-                    vectorizer.fit(all_texts)
+                    vectorizer.fit(candidate_skills + remaining_reqs)
                     
                     cand_vecs = vectorizer.transform(candidate_skills)
-                    req_vecs = vectorizer.transform(required)
+                    req_vecs = vectorizer.transform(remaining_reqs)
                     
                     sim_matrix = cosine_similarity(cand_vecs, req_vecs)
-                    matched = []
-                    missing = []
-                    for i, req in enumerate(required):
+                    for i, req in enumerate(remaining_reqs):
                         sims = sim_matrix[:, i]
                         if float(np.max(sims)) > 0.60:
-                            matched.append(req)
-                        else:
-                            missing.append(req)
-                    base = len(matched) / len(required) * 100
-                    skill_score = min(100.0, base)
+                            matched_tier2.append(req)
                 except Exception as tfidf_err:
-                    # Simple substring match fallback
-                    matched = []
-                    missing = []
-                    for req in required:
+                    # Substring match fallback for any remaining required skills
+                    for req in remaining_reqs:
                         if any(req.lower() in cs.lower() or cs.lower() in req.lower() for cs in candidate_skills):
-                            matched.append(req)
-                        else:
-                            missing.append(req)
-                    base = len(matched) / len(required) * 100
-                    skill_score = min(100.0, base)
+                            matched_tier2.append(req)
+            
+            matched = matched_tier1 + matched_tier2
+            missing = [r for r in required if r not in matched]
+            
+            base = (len(matched) / len(required)) * 100.0
+            
+            # 3. Tier 3: Seniority Experience Bonus (+2% per matched skill with >3 yrs exp, max +10%)
+            bonus = 0
+            norm_skills = candidate.get("normalized_skills") or candidate.get("skills") or []
+            for s in norm_skills:
+                if isinstance(s, dict):
+                    skill_name = str(s.get("canonical_skill") or s.get("name") or s.get("skill") or "").lower().strip()
+                    yrs = s.get("years")
+                else:
+                    skill_name = str(s).lower().strip()
+                    yrs = None
+                
+                if skill_name and any(skill_name == m.lower().strip() or m.lower().strip() in skill_name or skill_name in m.lower().strip() for m in matched):
+                    if yrs is not None and float(yrs) > 3:
+                        bonus += 2
+            
+            skill_score = min(100.0, base + min(bonus, 10))
         
         # --- EXPERIENCE SCORE ---
         cand_exp = candidate.get("total_experience_years", 0)
@@ -118,16 +134,15 @@ class SemanticMatchingAgent:
                 l.lower() in cand_loc for l in preferred_locs
             ) else 30.0
             
-        # --- FINAL SCORE ---
-        final = (
+        # --- MANUAL WEIGHTED MATCH SCORE ---
+        manual_weighted_score = (
             skill_score * weights.get("skills", 0.5) +
             exp_score * weights.get("experience", 0.3) +
             loc_score * weights.get("location", 0.2)
         )
-        final = round(final, 1)
+        manual_weighted_score = round(manual_weighted_score, 1)
         
-        # --- ML HISTORICAL LEARNING ADJUSTMENT ---
-        # Fetch historical hired/rejected application features to train a RandomForestClassifier
+        # --- 4. Tier 4: ML Hiring Probability Blending (RandomForestClassifier) ---
         hired_probability = None
         try:
             from api.models import JobApplication
@@ -188,7 +203,9 @@ class SemanticMatchingAgent:
             
         if hired_probability is not None:
             # Blend manual weighted score with ML hiring probability (80% manual, 20% ML prediction)
-            final = round(0.8 * final + 0.2 * hired_probability, 1)
+            final = round(0.8 * manual_weighted_score + 0.2 * hired_probability, 1)
+        else:
+            final = manual_weighted_score
         
         recommendation = (
             "Strong Match" if final >= 80 else
@@ -207,4 +224,5 @@ class SemanticMatchingAgent:
             "recommendation": recommendation,
             "hired_probability": round(hired_probability, 1) if hired_probability is not None else None
         }
+
 

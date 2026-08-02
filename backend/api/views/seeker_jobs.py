@@ -73,39 +73,62 @@ def _parse_job_description_meta(description: str) -> dict:
 
 
 def _get_salary_range(session) -> str:
-    # 1. First check if salary is explicitly defined in JD description text
-    meta = _parse_job_description_meta(session.job_description)
-    if meta.get("salary_range") and meta["salary_range"] != "Competitive":
-        return meta["salary_range"]
+    sal_min = getattr(session, 'min_salary', None)
+    sal_max = getattr(session, 'max_salary', None)
+    curr = getattr(session, 'salary_currency', None) or 'INR'
 
     criteria = session.criteria or {}
-    if isinstance(criteria, dict) and criteria.get("salary_range"):
-        return criteria["salary_range"]
+    if sal_min is None and isinstance(criteria, dict):
+        sal_min = criteria.get("salary_min") or criteria.get("min_salary")
+    if sal_max is None and isinstance(criteria, dict):
+        sal_max = criteria.get("salary_max") or criteria.get("max_salary")
+    if not curr and isinstance(criteria, dict):
+        curr = criteria.get("salary_currency") or "INR"
 
-    salary_min = criteria.get("salary_min")
-    salary_max = criteria.get("salary_max")
-    salary_currency = criteria.get("salary_currency", "USD")
-    
     currency_symbols = {
         "USD": "$",
         "INR": "₹",
         "EUR": "€",
         "GBP": "£",
     }
-    symbol = currency_symbols.get(salary_currency, salary_currency + " ")
-    
-    if salary_min is not None and salary_max is not None:
+    symbol = currency_symbols.get(curr, curr + " ")
+
+    if sal_min is not None and sal_max is not None:
         try:
-            return f"{symbol}{int(salary_min):,} - {symbol}{int(salary_max):,}"
+            min_val = float(sal_min)
+            max_val = float(sal_max)
+            if curr == "INR":
+                min_lpa = min_val / 100000.0 if min_val >= 1000 else min_val
+                max_lpa = max_val / 100000.0 if max_val >= 1000 else max_val
+                if min_lpa == max_lpa:
+                    return f"₹{min_lpa:.1f}".replace('.0', '') + " LPA"
+                return f"₹{min_lpa:.1f} - ₹{max_lpa:.1f} LPA".replace('.0', '')
+            else:
+                min_k = min_val / 1000.0 if min_val >= 1000 else min_val
+                max_k = max_val / 1000.0 if max_val >= 1000 else max_val
+                if min_k == max_k:
+                    return f"{symbol}{min_k:.1f}k".replace('.0', '')
+                return f"{symbol}{min_k:.1f}k - {symbol}{max_k:.1f}k".replace('.0', '')
         except (ValueError, TypeError):
             pass
-    elif salary_min is not None:
+    elif sal_min is not None:
         try:
-            return f"{symbol}{int(salary_min):,}+"
+            min_val = float(sal_min)
+            if curr == "INR":
+                min_lpa = min_val / 100000.0 if min_val >= 1000 else min_val
+                return f"₹{min_lpa:.1f} LPA+".replace('.0', '')
+            else:
+                min_k = min_val / 1000.0 if min_val >= 1000 else min_val
+                return f"{symbol}{min_k:.1f}k+".replace('.0', '')
         except (ValueError, TypeError):
             pass
 
-    return meta.get("salary_range", "Competitive")
+    # Fallback check if JD description explicitly mentions salary
+    meta = _parse_job_description_meta(session.job_description)
+    if meta.get("salary_range") and meta["salary_range"] != "Competitive":
+        return meta["salary_range"]
+
+    return meta.get("salary_range", "Not Disclosed")
 
 
 def _session_to_job(session: Session, match_score=None, applied=False, is_saved=False) -> dict:

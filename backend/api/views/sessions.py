@@ -87,7 +87,10 @@ def session_root(request):
                 job_title=job_title,
                 job_description=job_description,
                 rounds=rounds_data,
-                status=status_val
+                status=status_val,
+                min_salary=data.get("min_salary") if data.get("min_salary") is not None else data.get("salary_min"),
+                max_salary=data.get("max_salary") if data.get("max_salary") is not None else data.get("salary_max"),
+                salary_currency=data.get("salary_currency", "INR")
             )
 
             # Trigger in-app & email notifications for company followers
@@ -207,6 +210,9 @@ def session_detail(request, session_id):
                 "criteria": session.criteria,
                 "inferred_skills": session.inferred_skills,
                 "status": session.status,
+                "min_salary": session.min_salary,
+                "max_salary": session.max_salary,
+                "salary_currency": session.salary_currency,
                 "current_round": session.current_round_index,
                 "candidate_counts_per_round": round_counts,
                 "total_hired": total_hired,
@@ -224,6 +230,12 @@ def session_detail(request, session_id):
                 session.job_title = data["job_title"]
             if "job_description" in data and data["job_description"] is not None:
                 session.job_description = data["job_description"]
+            if "min_salary" in data or "salary_min" in data:
+                session.min_salary = data.get("min_salary") if "min_salary" in data else data.get("salary_min")
+            if "max_salary" in data or "salary_max" in data:
+                session.max_salary = data.get("max_salary") if "max_salary" in data else data.get("salary_max")
+            if "salary_currency" in data:
+                session.salary_currency = data["salary_currency"]
             if "rounds" in data and data["rounds"] is not None:
                 rounds_data = []
                 for r in data["rounds"]:
@@ -387,9 +399,15 @@ def set_criteria(request, session_id):
             "weights": weights,
             "salary_min": data.get("salary_min"),
             "salary_max": data.get("salary_max"),
-            "salary_currency": data.get("salary_currency", "USD"),
+            "salary_currency": data.get("salary_currency", "INR"),
         }
         session.criteria = criteria
+        if "salary_min" in data or "min_salary" in data:
+            session.min_salary = data.get("salary_min") if data.get("salary_min") is not None else data.get("min_salary")
+        if "salary_max" in data or "max_salary" in data:
+            session.max_salary = data.get("salary_max") if data.get("salary_max") is not None else data.get("max_salary")
+        if "salary_currency" in data and data["salary_currency"]:
+            session.salary_currency = data["salary_currency"]
         session.updated_at = timezone.now()
         session.save()
 

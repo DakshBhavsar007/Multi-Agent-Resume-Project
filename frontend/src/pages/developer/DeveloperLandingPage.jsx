@@ -33,7 +33,7 @@ export default function DeveloperLandingPage() {
   ];
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeTab, setActiveTab] = useState("Python");
+  const [activeTab, setActiveTab] = useState("cURL");
   
   const [platformStats, setPlatformStats] = useState({
     resumes_per_min: "500+",
@@ -143,66 +143,62 @@ const { data } = await response.json();
   const [copiedTab, setCopiedTab] = useState(false);
 
   const tabs = {
-    Python: `import requests
+    cURL: `# Pretty Print JSON Output in Terminal via python -m json.tool
+curl -s -X POST "http://localhost:8000/api/v1/parse" \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -F "file=@resume.pdf" | python -m json.tool`,
 
-# 1. Parse & Ingest Candidate Resume PDF
-url = "https://api.between.indevs.in/api/v1/parse"
-headers = {"X-API-Key": "between_live_your_key"}
-files = {"file": open("resume.pdf", "rb")}
+    Python: `import os
+import json
+import requests
 
-response = requests.post(url, headers=headers, files=files)
-candidate_data = response.json()
-print("Parsed Candidate:", candidate_data)
+def parse_resume(file_path, api_key):
+    url = "http://localhost:8000/api/v1/parse"
+    headers = {"X-API-Key": api_key}
 
-# 2. Match Candidate against Job Requirements
-match_res = requests.post(
-    "https://api.between.indevs.in/api/v1/match",
-    headers={"X-API-Key": "between_live_your_key", "Content-Type": "application/json"},
-    json={
-        "seeker_skills": ["Python", "Django", "React", "AWS"],
-        "job_requirements": ["Python", "React", "Docker"]
-    }
-)
-print("Match Result:", match_res.json())`,
-    JavaScript: `// 1. Upload & Parse Resume File via Fetch API
-const formData = new FormData();
-formData.append('file', resumeFile);
+    if not os.path.exists(file_path):
+        print(f"Error: File '{file_path}' not found.")
+        return
 
-const parseResponse = await fetch('https://api.between.indevs.in/api/v1/parse', {
-  method: 'POST',
-  headers: {
-    'X-API-Key': 'between_live_your_key'
-  },
-  body: formData
-});
-const parsedData = await parseResponse.json();
+    with open(file_path, "rb") as f:
+        files = {"file": f}
+        response = requests.post(url, headers=headers, files=files)
 
-// 2. Perform AI Skill & Candidate Matching
-const matchResponse = await fetch('https://api.between.indevs.in/api/v1/match', {
-  method: 'POST',
-  headers: {
-    'X-API-Key': 'between_live_your_key',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    seeker_skills: parsedData.skills || ["Python", "React"],
-    job_requirements: ["Python", "React", "PostgreSQL"]
-  })
-});
-const matchResult = await matchResponse.json();`,
-    cURL: `# 1. Parse Resume File (PDF / DOCX)
-curl -X POST https://api.between.indevs.in/api/v1/parse \\
-  -H "X-API-Key: between_live_your_key" \\
-  -F "file=@/path/to/resume.pdf"
+    result = response.json()
+    # Pretty print indented JSON
+    print(json.dumps(result, indent=2))
 
-# 2. Match Candidate Skills to Job Description
-curl -X POST https://api.between.indevs.in/api/v1/match \\
-  -H "X-API-Key: between_live_your_key" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "seeker_skills": ["Python", "React", "Django"],
-    "job_requirements": ["Python", "React", "AWS"]
-  }'`
+# Replace with your actual key and file path
+parse_resume("./resume.pdf", "YOUR_API_KEY")`,
+
+    JavaScript: `const fs = require('fs');
+const axios = require('axios');
+const FormData = require('form-data');
+
+async function parseResume(filePath, apiKey) {
+  try {
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(filePath));
+
+    const response = await axios.post(
+      'http://localhost:8000/api/v1/parse',
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          'X-API-Key': apiKey
+        }
+      }
+    );
+
+    // Pretty print indented JSON
+    console.log(JSON.stringify(response.data, null, 2));
+  } catch (error) {
+    console.error('Request Error:', error.response?.data || error.message);
+  }
+}
+
+parseResume('./resume.pdf', 'YOUR_API_KEY');`
   };
 
   return (

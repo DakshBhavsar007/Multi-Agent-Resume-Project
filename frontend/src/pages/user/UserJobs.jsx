@@ -21,23 +21,35 @@ import { BookmarkIconButton } from "../../components/ui/bookmark-icon-button";
 // Robust Salary Parsing & Conversion Helpers
 const parseSalary = (salaryStr) => {
   if (!salaryStr) return { min: null, max: null, currency: null, isFlexible: true };
-  const lowerStr = salaryStr.toLowerCase().trim();
+  const lowerStr = String(salaryStr).toLowerCase().trim();
+  
   if (
+    !lowerStr ||
+    lowerStr === "0" ||
+    lowerStr === "0 - 0" ||
+    lowerStr === "0 lpa" ||
+    lowerStr === "₹0" ||
+    lowerStr === "$0" ||
     lowerStr.includes("negotiable") || 
     lowerStr.includes("competitive") || 
     lowerStr.includes("disclosed") ||
-    lowerStr.includes("best in industry")
+    lowerStr.includes("not specified") ||
+    lowerStr.includes("best in industry") ||
+    lowerStr.includes("as per industry") ||
+    lowerStr.includes("as per market")
   ) {
     return { min: null, max: null, currency: null, isFlexible: true };
   }
 
-  let currency = "USD";
-  if (lowerStr.includes("₹") || lowerStr.includes("rs") || lowerStr.includes("lpa") || lowerStr.includes("inr") || lowerStr.includes("lakh")) {
+  let currency = null;
+  if (lowerStr.includes("₹") || lowerStr.includes("rs") || lowerStr.includes("lpa") || lowerStr.includes("inr") || lowerStr.includes("lakh") || lowerStr.includes("lac")) {
     currency = "INR";
   } else if (lowerStr.includes("£") || lowerStr.includes("gbp")) {
     currency = "GBP";
   } else if (lowerStr.includes("€") || lowerStr.includes("eur")) {
     currency = "EUR";
+  } else if (lowerStr.includes("$") || lowerStr.includes("usd")) {
+    currency = "USD";
   }
 
   const isMonthly = lowerStr.includes("/month") || lowerStr.includes("/mo") || lowerStr.includes("pm") || lowerStr.includes("p.m.");
@@ -48,8 +60,21 @@ const parseSalary = (salaryStr) => {
     return { min: null, max: null, currency, isFlexible: true };
   }
 
-  const rawValues = nums.map(n => parseFloat(n)).filter(n => !isNaN(n));
-  if (rawValues.length === 0) return { min: null, max: null, currency, isFlexible: true };
+  const rawValues = nums.map(n => parseFloat(n)).filter(n => !isNaN(n) && n > 0);
+  if (rawValues.length === 0) {
+    return { min: null, max: null, currency, isFlexible: true };
+  }
+
+  // If currency is not explicitly specified in the string:
+  // Numbers <= 100 (e.g. "8 - 12" or "10 - 15") represent LPA (INR)
+  if (!currency) {
+    const maxRaw = Math.max(...rawValues);
+    if (maxRaw <= 100) {
+      currency = "INR";
+    } else {
+      currency = "USD";
+    }
+  }
 
   const normalized = rawValues.map(num => {
     let val = num;
@@ -60,47 +85,53 @@ const parseSalary = (salaryStr) => {
     }
 
     if (currency === "INR") {
-      if (lowerStr.includes("l") || lowerStr.includes("lakh") || lowerStr.includes("lpa")) {
-        val = num;
-      } else if (num >= 1000) {
-        val = num / 100000;
+      // If the number is in full rupees (e.g., 500000 or 1200000), convert to LPA (divide by 100,000)
+      if (val >= 1000) {
+        val = val / 100000;
       }
+      // If val < 1000 (e.g., 8, 12, 15), it is already in LPA!
     } else {
-      if (lowerStr.includes("k")) {
-        val = num;
-      } else if (num >= 1000) {
-        val = num / 1000;
+      // For USD, GBP, EUR: if val >= 1000 (e.g., 80000 or 120000), convert to thousands ($k)
+      if (val >= 1000) {
+        val = val / 1000;
       }
     }
     return val;
   });
 
-  const min = normalized[0];
-  const max = normalized[1] || min;
+  const min = Math.min(...normalized);
+  const max = Math.max(...normalized);
 
-  return { min: Math.min(min, max), max: Math.max(min, max), currency, isFlexible: false };
+  if (max <= 0) {
+    return { min: null, max: null, currency, isFlexible: true };
+  }
+
+  return { min, max, currency, isFlexible: false };
 };
 
 const convertSalaryToCurrency = (val, fromCurrency, toCurrency) => {
   if (!val || fromCurrency === toCurrency) return val;
   
-  const toUSDThousands = {
+  const toUSD = {
     USD: 1.0,
     INR: 1.2,
     GBP: 1.27,
     EUR: 1.08,
   };
 
-  const valInUSDThousands = val * (toUSDThousands[fromCurrency] || 1.0);
-  return valInUSDThousands / (toUSDThousands[toCurrency] || 1.0);
+  const fromFactor = toUSD[fromCurrency] || 1.0;
+  const toFactor = toUSD[toCurrency] || 1.0;
+
+  const valInUSD = val * fromFactor;
+  return valInUSD / toFactor;
 };
 
 const salaryFilterFn = (salaryRange, minVal, filterCurrencyCode) => {
   if (minVal === 0) return true;
   const parsed = parseSalary(salaryRange);
-  if (parsed.isFlexible || parsed.max === null) return true;
+  if (parsed.isFlexible || parsed.max === null || parsed.max <= 0) return true;
   
-  const jobCurrency = parsed.currency || "USD";
+  const jobCurrency = parsed.currency || filterCurrencyCode || "INR";
   const convertedMax = convertSalaryToCurrency(parsed.max, jobCurrency, filterCurrencyCode);
   
   return convertedMax >= minVal;

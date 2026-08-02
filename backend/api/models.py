@@ -62,6 +62,9 @@ class Session(models.Model):
     gdrive_tokens = models.JSONField(null=True, blank=True)
     gdrive_folder_id = models.CharField(max_length=255, null=True, blank=True)
     gmail_address = models.CharField(max_length=255, null=True, blank=True)
+    min_salary = models.FloatField(null=True, blank=True)
+    max_salary = models.FloatField(null=True, blank=True)
+    salary_currency = models.CharField(max_length=10, default="INR", null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
