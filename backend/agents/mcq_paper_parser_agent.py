@@ -6,7 +6,6 @@ No vision model needed — pure text extraction + LLM parsing.
 """
 import json
 import logging
-import PyPDF2
 import io
 
 from agents.llm import RotateLLMClient
@@ -19,20 +18,57 @@ class MCQPaperParserAgent:
         self.llm = RotateLLMClient(agent_name="mcq_parser")
 
     def extract_text_from_pdf(self, file_bytes: bytes) -> str:
-        """Extract all text from a PDF file."""
-        reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
-        text_parts = []
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_parts.append(page_text)
-        return "\n\n".join(text_parts)
+        """Extract all text from a PDF file using pypdf or PyPDF2 with fallbacks."""
+        # Try pypdf first (modern library)
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+            text_parts = []
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_parts.append(page_text)
+            if text_parts:
+                return "\n\n".join(text_parts)
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.warning("pypdf extraction error: %s", e)
+
+        # Fallback to PyPDF2
+        try:
+            import PyPDF2
+            reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+            text_parts = []
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_parts.append(page_text)
+            if text_parts:
+                return "\n\n".join(text_parts)
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.warning("PyPDF2 extraction error: %s", e)
+
+        # Final raw bytes text fallback
+        try:
+            return file_bytes.decode("utf-8", errors="ignore")
+        except Exception:
+            return ""
 
     def extract_text_from_docx(self, file_bytes: bytes) -> str:
-        """Extract all text from a DOCX file."""
-        import docx
-        doc = docx.Document(io.BytesIO(file_bytes))
-        return "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+        """Extract all text from a DOCX file using python-docx."""
+        try:
+            import docx
+            doc = docx.Document(io.BytesIO(file_bytes))
+            return "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+        except ImportError:
+            logger.warning("python-docx package is not installed; attempting raw string fallback")
+            return file_bytes.decode("utf-8", errors="ignore")
+        except Exception as e:
+            logger.error("DOCX extraction error: %s", e)
+            return file_bytes.decode("utf-8", errors="ignore")
 
     def parse_questions_with_llm(self, raw_text: str, category_hint: str = "general") -> list:
         """
