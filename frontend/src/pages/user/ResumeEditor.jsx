@@ -79,6 +79,11 @@ export default function ResumeEditor() {
   const [optimizations, setOptimizations] = useState([]);
   const [optimizing, setOptimizing] = useState(false);
 
+  // AI Enhancement modal & report state
+  const [showEnhanceModal, setShowEnhanceModal] = useState(false);
+  const [enhancementReport, setEnhancementReport] = useState(null);
+  const [enhancing, setEnhancing] = useState(false);
+
   // Dark Mode state
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme") === "dark" || 
