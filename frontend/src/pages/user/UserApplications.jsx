@@ -222,8 +222,15 @@ export default function UserApplications() {
               const rounds = app.rounds || [];
               const sortedRounds = [...rounds].sort((a, b) => a.order - b.order);
 
-              // Find active/upcoming round details
-              const activeRound = sortedRounds.find(r => Number(r.order) === Number(app.visible_round_index)) || sortedRounds[0];
+              // Find active round details
+              const activeRoundObj = sortedRounds.find(r => Number(r.order) === Number(app.visible_round_index)) || sortedRounds[0];
+              const activeHasDate = activeRoundObj && !!activeRoundObj.result_announcement_date;
+              const activeDatePassed = activeHasDate && new Date(serverTime) >= new Date(activeRoundObj.result_announcement_date);
+              const activeIsScheduled = activeHasDate && !activeDatePassed;
+              const activeIsAttempted = activeRoundObj && (activeRoundObj.score !== undefined && activeRoundObj.score !== null || activeRoundObj.attempt_status === "submitted");
+
+              // Show action buttons ONLY IF round is active, application is active, not scheduled/awaiting results, and not yet attempted!
+              const showActiveRoundButtons = app.status !== "rejected" && app.status !== "hired" && !activeIsScheduled && !activeIsAttempted;
 
               return (
                 <div 
@@ -258,7 +265,7 @@ export default function UserApplications() {
                             {app.match_score}% Match
                           </span>
                         )}
-                        {app.status !== "rejected" && app.status !== "hired" && (
+                        {showActiveRoundButtons ? (
                           <div className="flex flex-col items-end gap-1.5 mt-1">
                             <a
                               href={app.test_link || "#"}
@@ -272,7 +279,7 @@ export default function UserApplications() {
                               }}
                               className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition no-underline inline-flex items-center gap-1 cursor-pointer"
                             >
-                              Start {app.test_round_name || (sortedRounds.find(r => Number(r.order) === Number(app.visible_round_index))?.name) || "Assessment"} →
+                              Start {activeRoundObj?.name || app.test_round_name || "Assessment"} →
                             </a>
                             {SHOW_MOCK_TESTING_CONTROLS && (
                               <div className="flex gap-1.5 mt-1" onClick={(e) => e.stopPropagation()}>
@@ -315,7 +322,16 @@ export default function UserApplications() {
                               </div>
                             )}
                           </div>
-                        )}
+                        ) : activeIsScheduled && app.status !== "rejected" && app.status !== "hired" ? (
+                          <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground font-medium bg-muted/50 px-2.5 py-1 rounded-lg border border-border" onClick={(e) => e.stopPropagation()}>
+                            <span>Result release in:</span>
+                            <CountdownTimer 
+                              targetDate={activeRoundObj.result_announcement_date} 
+                              serverTime={serverTime}
+                              onComplete={fetchApplications}
+                            />
+                          </div>
+                        ) : null}
                       </div>
                       <div className="p-1.5 rounded-full hover:bg-muted text-muted-foreground">
                         {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
@@ -523,7 +539,7 @@ export default function UserApplications() {
                                         </span>
                                       )}
                                     </p>
-                                    {isActive && app.status !== "rejected" && app.status !== "hired" && (
+                                    {isActive && showActiveRoundButtons && (
                                        <div className="mt-2.5 flex flex-wrap gap-2 items-center">
                                          {app.test_link ? (
                                            <a
