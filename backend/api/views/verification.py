@@ -22,8 +22,6 @@ def get_user_by_role_and_email(role, email):
 def get_user_by_role_and_phone(role, phone):
     if role == 'seeker':
         return JobSeekerAccount.objects.filter(phone=phone).first()
-    elif role == 'recruiter':
-        return Company.objects.filter(phone=phone).first()
     elif role == 'developer':
         return DeveloperAccount.objects.filter(phone=phone).first()
     return None
@@ -163,6 +161,9 @@ def send_phone_otp(request):
         if not role:
             return JsonResponse({'success': False, 'error': 'Role is required'}, status=400)
         
+        if role == 'recruiter':
+            return JsonResponse({'success': False, 'error': 'Phone verification is not required for Company accounts.'}, status=400)
+
         if not phone and not email:
             return JsonResponse({'success': False, 'error': 'Phone number or email is required'}, status=400)
 
@@ -274,6 +275,8 @@ def verify_phone_otp(request):
         
         if not role or not otp_submitted:
             return JsonResponse({'success': False, 'error': 'Role and OTP are required'}, status=400)
+        if role == 'recruiter':
+            return JsonResponse({'success': False, 'error': 'Phone verification is not required for Company accounts.'}, status=400)
         if not phone and not email:
             return JsonResponse({'success': False, 'error': 'Phone or email is required'}, status=400)
         
