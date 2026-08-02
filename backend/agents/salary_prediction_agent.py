@@ -1,6 +1,15 @@
+import warnings
 import numpy as np
 import os
 import django
+
+try:
+    from sklearn.exceptions import InconsistentVersionWarning
+    warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+except ImportError:
+    pass
+warnings.filterwarnings("ignore", message=".*InconsistentVersionWarning.*")
+warnings.filterwarnings("ignore", message=".*Trying to unpickle estimator.*")
 
 class SalaryPredictionAgent:
     def __init__(self):

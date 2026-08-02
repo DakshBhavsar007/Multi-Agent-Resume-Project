@@ -1,5 +1,14 @@
+import warnings
 import numpy as np
 from agents.embeddings import get_embedding_model
+
+try:
+    from sklearn.exceptions import InconsistentVersionWarning
+    warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+except ImportError:
+    pass
+warnings.filterwarnings("ignore", message=".*InconsistentVersionWarning.*")
+warnings.filterwarnings("ignore", message=".*Trying to unpickle estimator.*")
 
 class SemanticMatchingAgent:
     """
