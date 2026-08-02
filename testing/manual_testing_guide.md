@@ -386,19 +386,65 @@ This guide provides a step-by-step checklist to manually test and verify every f
 
 ---
 
-### **Step 36: Webhook Endpoint Registration & Delivery Logs**
-* **Tool:** Browser & Webhook Site (`https://webhook.site`)
-* **URL:** `http://localhost:5173/developer/portal/webhooks`
-* **Steps:** Register a test webhook URL, trigger candidate event.
-* **Expected Result:** Webhook delivery log records attempt with HTTP 200 status code.
+### **Step 36: Webhook Endpoint Registration, Signing & Delivery Logs Verification**
+* **Tool:** Browser + Webhook Site (`https://webhook.site`) + DevTools
+* **URL:** `http://localhost:5173/developer/portal/webhooks` or `https://between.indevs.in/developer/portal/webhooks`
+* **Detailed Steps:**
+  1. Open `https://webhook.site` in a new browser tab and copy your unique temporary Webhook URL (e.g. `https://webhook.site/abc12345-xyz-789`).
+  2. Navigate to **Developer Portal -> Webhooks** (`/developer/portal/webhooks`).
+  3. Click **Create Webhook** button.
+  4. Paste your Webhook URL into the **Endpoint URL** input field.
+  5. Select event checkboxes: `candidate.parsed`, `match.completed`, `session.created`.
+  6. Click **Create Webhook**. Save the displayed **Webhook Secret** (`whsec_...`).
+  7. On the active webhook card, click the **Test Delivery** button.
+  8. Click **View Logs** to open the side panel and inspect the HTTP delivery attempt (Status: `200 OK`, Timestamp, Latency).
+  9. Switch to your `webhook.site` tab and verify that a live HTTP POST payload was received containing:
+     * Header: `X-Between-Signature` (HMAC SHA-256 signature string)
+     * Header: `Content-Type: application/json`
+     * Body: `{"event": "test.delivery", "message": "This is a test webhook delivery from Vishleshan", "webhook_id": "..."}`
+  10. To test deletion: Click **Delete** icon on the webhook card, confirm dialog, and verify it is removed from the active list.
+* **Expected Result:** Webhooks create smoothly, test delivery returns HTTP 200 OK, delivery logs record payload status, and live requests arrive signed on `webhook.site`.
 
 ---
 
-### **Step 37: Embed Widget Iframe Generation**
-* **Tool:** Browser
-* **URL:** `http://localhost:5173/developer/portal/embed`
-* **Steps:** Select session, click **Generate Embed Snippet**.
-* **Expected Result:** Code snippet generated (`<iframe src="..."></iframe>`) and preview renders widget correctly.
+### **Step 37: Embed Widget Token Generation, Iframe SDK Loader & Domain Validation Test**
+* **Tool:** Browser + Local HTML Test File + DevTools Console & Network Tab
+* **URL:** `http://localhost:5173/developer/portal/embed` or `https://between.indevs.in/developer/portal/embed`
+* **Detailed Steps:**
+  1. Navigate to **Developer Portal -> Embed UI** (`/developer/portal/embed`).
+  2. Click **Generate Embed Token** button.
+  3. Enter **Allowed Domain**: `localhost` (or `*` to allow all origins).
+  4. Check permissions checkboxes: `read`, `upload`, `chat`.
+  5. Click **Generate Token**. Copy your generated token (e.g. `vish_embed_abc123...`).
+  6. Switch snippet tabs (**HTML**, **React**, **Vue**) and click **Copy Snippet**. Verify the snippet copies cleanly to clipboard with `https://api.between.indevs.in/embed.js`.
+  7. **Live SDK Test**: Create a local file named `test_embed.html` with the following content:
+     ```html
+     <!DOCTYPE html>
+     <html>
+     <head>
+       <title>Between Embed SDK Test</title>
+       <meta charset="utf-8">
+     </head>
+     <body style="font-family: sans-serif; padding: 40px; background: #f4f4f5;">
+       <h2>Host Application Integration Test</h2>
+       <div id="between-panel"></div>
+       <script src="https://api.between.indevs.in/embed.js"></script>
+       <script>
+         Between.init({
+           token: "YOUR_COPIED_EMBED_TOKEN",
+           container: "#between-panel",
+           theme: "light"
+         });
+       </script>
+     </body>
+     </html>
+     ```
+  8. Open `test_embed.html` in your browser and press `F12` to open DevTools Console & Network tab.
+  9. Verify DevTools Console prints: `[Between Embed] Widget initialized successfully.`
+  10. Check Network tab: Verify request `GET /api/v1/developer/embed/validate?token=YOUR_TOKEN` returns HTTP 200 OK with `valid: true` and short-lived JWT token!
+  11. Verify the iframe mounts smoothly inside `#between-panel`, rendering the Between candidate upload & matching interface!
+  12. **Revocation Check**: Go back to `/developer/portal/embed`, click **Revoke** on the active token, and refresh `test_embed.html`. Verify Network tab shows `HTTP 401 Invalid or revoked embed token`.
+* **Expected Result:** Tokens generate cleanly, `embed.js` mounts the widget iframe seamlessly, domain validation passes for authorized domains, and revoking tokens blocks widget access.
 
 ---
 
