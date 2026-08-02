@@ -15,7 +15,7 @@ from models.schemas import success_response, error_response
 def tokens_root(request):
     """Handles GET /tokens (list) and POST /tokens (create)"""
     dev = request.developer
-
+    
     if request.method == "GET":
         try:
             tokens = EmbedToken.objects.filter(developer_id=dev.id, is_active=True)
