@@ -2,9 +2,40 @@ from django.contrib import admin
 from api.models import (
     SubscriptionPlan, MarketRegionConfig, SalaryTimelineConfig,
     GrowthSkillFallback, LocationLookup, Company, JobSeekerAccount,
+    DeveloperAccount, DeveloperAPIKey, Webhook, EmbedToken, APIUsageLog,
     Candidate, Session, SupportTicket,
     GeminiProject, GeminiApiKey, AgentModelConfig
 )
+
+@admin.register(DeveloperAccount)
+class DeveloperAccountAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'email', 'tier', 'is_active', 'is_banned', 'created_at')
+    list_filter = ('tier', 'is_active', 'is_banned')
+    search_fields = ('name', 'email')
+
+@admin.register(DeveloperAPIKey)
+class DeveloperAPIKeyAdmin(admin.ModelAdmin):
+    list_display = ('id', 'developer', 'name', 'environment', 'is_active', 'created_at')
+    list_filter = ('environment', 'is_active')
+    search_fields = ('name', 'secret_key')
+
+@admin.register(Webhook)
+class WebhookAdmin(admin.ModelAdmin):
+    list_display = ('id', 'developer', 'url', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('url',)
+
+@admin.register(EmbedToken)
+class EmbedTokenAdmin(admin.ModelAdmin):
+    list_display = ('id', 'developer', 'token', 'allowed_domain', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('token', 'allowed_domain')
+
+@admin.register(APIUsageLog)
+class APIUsageLogAdmin(admin.ModelAdmin):
+    list_display = ('id', 'developer', 'endpoint', 'method', 'status_code', 'latency_ms', 'timestamp')
+    list_filter = ('method', 'status_code')
+    search_fields = ('endpoint',)
 
 @admin.register(SubscriptionPlan)
 class SubscriptionPlanAdmin(admin.ModelAdmin):
