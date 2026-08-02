@@ -516,25 +516,27 @@ export default function UserApplications() {
                                         </span>
                                       )}
                                     </p>
-                                    {isActive && !isScheduled && app.test_link && (
+                                    {(isActive || SHOW_MOCK_TESTING_CONTROLS) && (app.test_link || SHOW_MOCK_TESTING_CONTROLS) && (
                                       <div className="mt-2.5 flex flex-wrap gap-2 items-center">
                                         <a
-                                          href={SHOW_MOCK_TESTING_CONTROLS 
-                                            ? (app.test_link.includes('?') ? `${app.test_link}&is_mock_test=true` : `${app.test_link}?is_mock_test=true`)
-                                            : app.test_link
+                                          href={app.test_link 
+                                            ? (SHOW_MOCK_TESTING_CONTROLS 
+                                                ? (app.test_link.includes('?') ? `${app.test_link}&is_mock_test=true` : `${app.test_link}?is_mock_test=true`)
+                                                : app.test_link)
+                                            : `/test/entry?app_id=${app.id}&round=${round.order}&is_mock_test=true`
                                           }
                                           onClick={(e) => e.stopPropagation()}
-                                          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 text-xs transition shadow-sm"
+                                          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 text-xs transition shadow-sm cursor-pointer"
                                           style={{ textDecoration: 'none' }}
                                         >
-                                          Start {app.test_round_name || "Assessment"} →
+                                          Start {app.test_round_name || round.name || "Assessment"} →
                                         </a>
                                         {SHOW_MOCK_TESTING_CONTROLS && (
                                           <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
                                             <button
                                               onClick={async (e) => {
                                                 e.preventDefault();
-                                                const token = getTestToken(app.test_link);
+                                                const token = getTestToken(app.test_link) || app.id;
                                                 if (!token) return toast.error("No valid token found");
                                                 const tId = toast.loading("Submitting mock pass (85%)...");
                                                 try {
@@ -545,14 +547,14 @@ export default function UserApplications() {
                                                   toast.error(err.message || "Failed mock submit", { id: tId });
                                                 }
                                               }}
-                                              className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
+                                              className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition cursor-pointer"
                                             >
                                               Mock Pass
                                             </button>
                                             <button
                                               onClick={async (e) => {
                                                 e.preventDefault();
-                                                const token = getTestToken(app.test_link);
+                                                const token = getTestToken(app.test_link) || app.id;
                                                 if (!token) return toast.error("No valid token found");
                                                 const tId = toast.loading("Submitting mock fail (30%)...");
                                                 try {
@@ -563,7 +565,7 @@ export default function UserApplications() {
                                                   toast.error(err.message || "Failed mock submit", { id: tId });
                                                 }
                                               }}
-                                              className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition"
+                                              className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition cursor-pointer"
                                             >
                                               Mock Fail
                                             </button>
