@@ -46,16 +46,14 @@ export default function DeveloperUsage() {
 
   const monthlyHistory = historyData?.months || [];
 
-  const { data: endpoints } = useQuery({
+  const { data: endpoints = [] } = useQuery({
     queryKey: ["usage-endpoints"],
     queryFn: async () => {
-       if (portalUsage.endpoints) return portalUsage.endpoints("30d");
-       return [
-         { path: "/api/v1/parse", calls: 12450, latency: 450, error_rate: 0.5 },
-         { path: "/api/v1/match", calls: 8200, latency: 120, error_rate: 1.2 },
-         { path: "/api/v1/chat", calls: 4100, latency: 850, error_rate: 2.1 },
-         { path: "/api/v1/export", calls: 340, latency: 1200, error_rate: 5.4 }
-       ];
+       if (portalUsage.endpoints) {
+         const res = await portalUsage.endpoints("30d");
+         return res || [];
+       }
+       return [];
     }
   });
 
@@ -213,22 +211,38 @@ export default function DeveloperUsage() {
                      <th className="pb-3 px-2 text-right">Error Rate</th>
                    </tr>
                  </thead>
-                 <tbody>
-                   {(endpoints || []).sort((a,b)=>b.calls-a.calls).map((ep, i) => (
-                     <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                       <td className="py-3 px-2 font-bold text-charcoal">{ep.path}</td>
-                       <td className="py-3 px-2 font-bold text-gray-900">{(ep.calls || 0).toLocaleString()}</td>
-                       <td className="py-3 px-2 text-right font-bold text-gray-800">{ep.latency}ms</td>
-                       <td className="py-3 px-2 text-right">
-                          <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-bold ${
-                             ep.error_rate < 1 ? "bg-green-100 text-green-700" :
-                             ep.error_rate <= 5 ? "bg-gray-100 text-amber-700" :
-                             "bg-red-100 text-red-700"
-                          }`}>{ep.error_rate}%</span>
-                       </td>
-                     </tr>
-                   ))}
-                 </tbody>
+                  <tbody>
+                    {endpoints && endpoints.length > 0 ? (
+                      [...endpoints]
+                        .sort((a, b) => (b.count ?? b.calls ?? 0) - (a.count ?? a.calls ?? 0))
+                        .map((ep, i) => {
+                          const epPath = ep.endpoint || ep.path || "unknown";
+                          const callsCount = ep.count ?? ep.calls ?? 0;
+                          const latencyMs = Math.round(ep.avg_latency_ms ?? ep.latency ?? 0);
+                          const errRate = ep.error_rate ?? 0;
+                          return (
+                            <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                              <td className="py-3 px-2 font-bold text-charcoal">{epPath}</td>
+                              <td className="py-3 px-2 font-bold text-gray-900">{callsCount.toLocaleString()}</td>
+                              <td className="py-3 px-2 text-right font-bold text-gray-800">{latencyMs}ms</td>
+                              <td className="py-3 px-2 text-right">
+                                 <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-bold ${
+                                    errRate < 1 ? "bg-green-100 text-green-700" :
+                                    errRate <= 5 ? "bg-gray-100 text-amber-700" :
+                                    "bg-red-100 text-red-700"
+                                 }`}>{errRate}%</span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-xs font-semibold text-gray-400">
+                          No API endpoint calls recorded yet
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
                </table>
             </div>
          </div>
