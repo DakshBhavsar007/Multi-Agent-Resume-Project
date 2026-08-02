@@ -160,6 +160,7 @@ def _session_to_job(session: Session, match_score=None, applied=False, is_saved=
     return {
         "id": str(session.id),
         "job_title": session.job_title,
+        "company_id": str(session.company.id) if session.company else None,
         "company_name": session.company.name if session.company else "Between Partner",
         "company_logo_path": session.company.logo_path if session.company else None,
         "job_description": session.job_description[:500] + "..." if len(session.job_description) > 500 else session.job_description,
@@ -249,11 +250,14 @@ def _compute_match_score(seeker_skills: list, job_skills: list, session_id: str 
     if seeker_lower and job_lower:
         intersection = seeker_lower & job_lower
         ratio_score = round(len(intersection) / max(1, len(job_lower)) * 100)
-        return max(60, min(98, ratio_score))
+        return min(98, ratio_score)
 
-    base = 72
-    hash_offset = (abs(hash(str(session_id))) % 12) if session_id else 5
-    return min(96, base + hash_offset)
+    # No seeker skills or no job skills — return 0 for honest scoring
+    if not seeker_lower and job_lower:
+        return 0
+    if seeker_lower and not job_lower:
+        return 0
+    return 0
 
 
 # ── Public (authenticated seeker) endpoints ────────────────────────────────────

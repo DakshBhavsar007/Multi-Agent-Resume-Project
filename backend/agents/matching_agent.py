@@ -48,10 +48,10 @@ class SemanticMatchingAgent:
         matched = []
         missing = required[:]
         
-        # Tier 3: Empty Job Skills Baseline
+        # Tier 3: Empty Job Skills Baseline — no required skills defined = cannot match
         if not required:
-            skill_score = 70.0
-            matched = candidate_skills[:5]
+            skill_score = 0.0
+            matched = []
             missing = []
         else:
             model = self._get_model()
@@ -149,6 +149,11 @@ class SemanticMatchingAgent:
             exp_score * weights.get("experience", 0.3) +
             loc_score * weights.get("location", 0.2)
         )
+        
+        # Strict matching: If there are required skills but 0 were matched, the candidate is a 0% match.
+        if required and len(matched) == 0:
+            manual_weighted_score = 0
+            
         manual_weighted_score = round(manual_weighted_score, 1)
         
         # --- 4. Tier 4: ML Hiring Probability Blending (RandomForestClassifier) ---
@@ -215,6 +220,10 @@ class SemanticMatchingAgent:
             final = round(0.8 * manual_weighted_score + 0.2 * hired_probability, 1)
         else:
             final = manual_weighted_score
+            
+        # Strict matching: override final blended score to 0 if 0 skills matched
+        if required and len(matched) == 0:
+            final = 0
         
         recommendation = (
             "Strong Match" if final >= 80 else

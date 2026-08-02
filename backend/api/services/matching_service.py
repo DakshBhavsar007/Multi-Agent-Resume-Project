@@ -70,7 +70,8 @@ def calculate_unified_match_score(skills, total_exp_years, location, entity_id_s
     if req_lower:
         skill_score = round((matched / len(req_lower)) * 100)
     else:
-        skill_score = min(95, max(60, 65 + len(cand_skill_names) * 3))
+        # No required skills defined for this job — cannot compute meaningful match
+        skill_score = 0
 
     min_exp = criteria.get("min_experience", 0)
     try:
@@ -92,7 +93,12 @@ def calculate_unified_match_score(skills, total_exp_years, location, entity_id_s
         experience_score * weights.get("experience", 0.3) + 
         location_score * weights.get("location", 0.2)
     )
-    score = min(98, max(45, raw_score))
+    
+    # Strict matching: If there are required skills but 0 were matched, the candidate is a 0% match.
+    if req_lower and matched == 0:
+        raw_score = 0
+        
+    score = min(98, max(0, raw_score))
 
     details = {
         "match_score": score,
