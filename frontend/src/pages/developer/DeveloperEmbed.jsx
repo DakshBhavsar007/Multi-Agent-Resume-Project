@@ -66,7 +66,7 @@ export default function DeveloperEmbed() {
 
   const codeSnippets = (tokenVal) => ({
     HTML: `<div id="between-panel"></div>
-<script src="https://cdn.between.indevs.in/embed.js"></script>
+<script src="https://api.between.indevs.in/embed.js"></script>
 <script>
 Between.init({
   token: "${tokenVal || "YOUR_EMBED_TOKEN"}",

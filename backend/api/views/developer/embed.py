@@ -98,32 +98,72 @@ def revoke_embed_token(request, token_id):
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 
 @csrf_exempt
+def serve_embed_js(request):
+    """Serves the Between Javascript SDK loader snippet for web integration."""
+    js_content = """(function() {
+  if (window.Between) return;
+  window.Between = {
+    init: function(config) {
+      if (!config || !config.token) {
+        console.error('[Between Embed] Token is required. e.g. Between.init({ token: "vish_embed_..." })');
+        return;
+      }
+      var container = config.container || '#between-panel';
+      var theme = config.theme || 'light';
+      var el = typeof container === 'string' ? document.querySelector(container) : container;
+      if (!el) {
+        console.error('[Between Embed] Container element not found:', container);
+        return;
+      }
+      var baseUrl = 'https://between.indevs.in/developer/portal/embed/widget';
+      if (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) {
+        baseUrl = window.location.origin + '/developer/portal/embed/widget';
+      }
+      var iframe = document.createElement('iframe');
+      iframe.src = baseUrl + '?token=' + encodeURIComponent(config.token) + '&theme=' + encodeURIComponent(theme);
+      iframe.style.width = config.width || '100%';
+      iframe.style.height = config.height || '550px';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '16px';
+      iframe.style.boxShadow = '0 10px 30px -5px rgba(0,0,0,0.12)';
+      el.innerHTML = '';
+      el.appendChild(iframe);
+      console.log('[Between Embed] Widget initialized successfully.');
+    }
+  };
+})();"""
+    from django.http import HttpResponse
+    return HttpResponse(js_content, content_type="application/javascript")
+
+@csrf_exempt
 def validate_embed_token(request):
     if request.method != "GET":
         return JsonResponse(error_response("Method not allowed"), status=405)
     try:
-        embed_token = request.headers.get("X-Embed-Token")
-        origin = request.headers.get("Origin", "")
+        embed_token = request.headers.get("X-Embed-Token") or request.GET.get("token")
+        origin = request.headers.get("Origin", "") or request.headers.get("Referer", "")
 
         if not embed_token:
-            return JsonResponse(error_response("Missing X-Embed-Token header"), status=400)
+            return JsonResponse(error_response("Missing X-Embed-Token header or token parameter"), status=400)
 
         token = EmbedToken.objects.filter(token=embed_token, is_active=True).first()
         if not token:
             return JsonResponse(error_response("Invalid or revoked embed token"), status=401)
 
-        # Extract domain from origin
+        # Extract domain from origin/referer
         if origin:
             parsed = urlparse(origin)
-            request_domain = parsed.hostname or ""
+            request_domain = (parsed.hostname or "").lower()
         else:
             request_domain = ""
 
-        # Validate domain
-        if token.allowed_domain and token.allowed_domain not in request_domain:
-            return JsonResponse(error_response("Domain not authorized for this embed token"), status=403)
+        # Validate domain if domain restriction is set (allow *, localhost, 127.0.0.1, or exact host match)
+        allowed = (token.allowed_domain or "").lower()
+        if allowed and allowed != "*":
+            if request_domain and request_domain not in ["localhost", "127.0.0.1"] and allowed not in request_domain:
+                return JsonResponse(error_response("Domain not authorized for this embed token"), status=403)
 
-        # Generate short-lived JWT (1 hour)
+        # Generate short-lived JWT (1 hour) for widget iframe
         payload = {
             "developer_id": str(token.developer_id),
             "embed_token_id": str(token.id),
@@ -136,6 +176,7 @@ def validate_embed_token(request):
             "valid": True,
             "jwt": short_jwt,
             "permissions": token.permissions,
+            "allowed_domain": token.allowed_domain,
             "expires_in": 3600
         }))
     except Exception as e:

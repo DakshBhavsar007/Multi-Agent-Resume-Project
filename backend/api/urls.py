@@ -340,6 +340,13 @@ urlpatterns = [
     path('api/v1/seeker/ats-score', ml_views.ats_score_view, name='seeker-ats-score'),
     path('api/v1/recruiter/cluster-skills', ml_views.cluster_skills_view, name='recruiter-cluster-skills'),
 
+    # ── Developer Embed SDK & Widget Tokens ────────────────────────────────────
+    path('embed.js', dev_embed.serve_embed_js, name='dev-embed-js-root'),
+    path('api/v1/embed.js', dev_embed.serve_embed_js, name='dev-embed-js'),
+    path('api/v1/developer/embed/tokens', dev_embed.tokens_root, name='dev-embed-tokens-root'),
+    path('api/v1/developer/embed/tokens/<str:token_id>/revoke', dev_embed.revoke_embed_token, name='dev-embed-tokens-revoke'),
+    path('api/v1/developer/embed/validate', dev_embed.validate_embed_token, name='dev-embed-validate'),
+
     # ── Admin Panel & Support Tickets ──────────────────────────────────────────
     path('api/v1/admin/auth/login', admin_views.admin_login, name='admin-auth-login'),
     path('api/v1/admin/dashboard', admin_views.admin_dashboard, name='admin-dashboard'),
