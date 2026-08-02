@@ -804,7 +804,7 @@ def my_applications(request):
                 except Exception:
                     pass
 
-            if candidate and not is_awaiting_results and seeker_status not in ["rejected", "hired"]:
+            if candidate and seeker_status not in ["rejected", "hired"]:
                 active_attempt = ApplicantRoundAttempt.objects.filter(
                     candidate=candidate,
                     round__round_number=visible_round_index,
