@@ -291,7 +291,8 @@ export default function UserJobs() {
     if (location) params.location = location;
     
     // Try seeker API first (for match scores), fall back to public API
-    const token = localStorage.getItem('vish_seeker_token');
+    const rawToken = localStorage.getItem('vish_seeker_token');
+    const token = (rawToken && rawToken !== 'undefined' && rawToken !== 'null' && rawToken.trim() !== '') ? rawToken : null;
     const apiCall = token ? seekerAPI.listJobs(params) : publicAPI.listJobs(params);
     apiCall
       .then((data) => {
@@ -300,17 +301,15 @@ export default function UserJobs() {
         setTotalJobs(data.total || 0);
       })
       .catch(async (err) => {
-        console.warn("Primary listJobs call failed, trying public API fallback:", err);
-        if (token) {
-          try {
-            const pubData = await publicAPI.listJobs(params);
-            setJobs(pubData.jobs || []);
-            setTotalPages(pubData.total_pages || 1);
-            setTotalJobs(pubData.total || 0);
-            return;
-          } catch (pubErr) {
-            console.error(pubErr);
-          }
+        console.warn("Primary listJobs call failed, executing public API fallback:", err);
+        try {
+          const pubData = await publicAPI.listJobs(params);
+          setJobs(pubData.jobs || []);
+          setTotalPages(pubData.total_pages || 1);
+          setTotalJobs(pubData.total || 0);
+          return;
+        } catch (pubErr) {
+          console.error("Fallback public API listJobs failed:", pubErr);
         }
         toast.error("Failed to load jobs");
       })
