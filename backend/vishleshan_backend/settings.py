@@ -96,6 +96,11 @@ MIDDLEWARE = [
     'api.middleware.UsageLoggerMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'api.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 ROOT_URLCONF = 'vishleshan_backend.urls'
 
 TEMPLATES = [
