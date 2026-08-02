@@ -98,7 +98,6 @@ import { BetweenPanel } from '@between/vue';
 
   const [activeTab, setActiveTab] = useState("HTML");
 
-
   const activeSnippets = codeSnippets(activeTokenCode);
 
   return (

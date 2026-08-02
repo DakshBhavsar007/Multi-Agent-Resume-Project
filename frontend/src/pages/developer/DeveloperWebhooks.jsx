@@ -28,6 +28,8 @@ export default function DeveloperWebhooks() {
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [createdSecret, setCreatedSecret] = useState(null);
 
+  const isFree = tier === "free" || !tier;
+
   const fetchWebhooks = async () => {
     if (portalWebhooks?.list) return portalWebhooks.list();
     return [];
