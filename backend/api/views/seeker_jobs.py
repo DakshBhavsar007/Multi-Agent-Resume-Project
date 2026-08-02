@@ -319,17 +319,19 @@ def list_jobs(request):
         applied_ids = set(
             str(sid) for sid in
             JobApplication.objects.filter(seeker=seeker).values_list("session_id", flat=True)
-        )
+        ) if seeker else set()
 
         # Get seeker's saved session IDs
         saved_ids = set(
             str(sid) for sid in
             SavedJob.objects.filter(seeker=seeker).values_list("session_id", flat=True)
-        )
+        ) if seeker else set()
 
         jobs = []
+        seeker_skills = seeker.skills if (seeker and hasattr(seeker, "skills") and seeker.skills) else []
+
         for s in sessions[:200]:
-            score = _compute_match_score(seeker.skills, s.inferred_skills, session_id=str(s.id), seeker=seeker, session=s)
+            score = _compute_match_score(seeker_skills, s.inferred_skills, session_id=str(s.id), seeker=seeker, session=s) if seeker else None
             is_applied = str(s.id) in applied_ids
             is_saved = str(s.id) in saved_ids
             jobs.append(_session_to_job(s, match_score=score, applied=is_applied, is_saved=is_saved))

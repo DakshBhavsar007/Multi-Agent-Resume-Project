@@ -299,8 +299,19 @@ export default function UserJobs() {
         setTotalPages(data.total_pages || 1);
         setTotalJobs(data.total || 0);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(async (err) => {
+        console.warn("Primary listJobs call failed, trying public API fallback:", err);
+        if (token) {
+          try {
+            const pubData = await publicAPI.listJobs(params);
+            setJobs(pubData.jobs || []);
+            setTotalPages(pubData.total_pages || 1);
+            setTotalJobs(pubData.total || 0);
+            return;
+          } catch (pubErr) {
+            console.error(pubErr);
+          }
+        }
         toast.error("Failed to load jobs");
       })
       .finally(() => {
