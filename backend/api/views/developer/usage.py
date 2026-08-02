@@ -214,18 +214,56 @@ def usage_history(request):
     dev = request.developer
     try:
         months = int(request.GET.get("months", 6))
-        summaries = MonthlyUsageSummary.objects.filter(developer_id=dev.id).order_by("-year_month")[:months]
+        summaries = {
+            s.year_month: s 
+            for s in MonthlyUsageSummary.objects.filter(developer_id=dev.id).order_by("-year_month")[:months]
+        }
 
         result = []
-        for r in summaries:
-            scan_c = getattr(r, 'scan_count', 0) or 0
+        now = datetime.utcnow()
+        for i in range(months):
+            year = now.year
+            month = now.month - i
+            while month <= 0:
+                month += 12
+                year -= 1
+            ym_key = f"{year:04d}-{month:02d}"
+            
+            s_obj = summaries.get(ym_key)
+            if s_obj:
+                parse_c = s_obj.parse_count or 0
+                match_c = s_obj.match_count or 0
+                chat_c = s_obj.chat_count or 0
+                scan_c = getattr(s_obj, 'scan_count', 0) or 0
+            else:
+                start_dt = datetime(year, month, 1)
+                if month == 12:
+                    end_dt = datetime(year + 1, 1, 1)
+                else:
+                    end_dt = datetime(year, month + 1, 1)
+                
+                logs = APIUsageLog.objects.filter(
+                    developer_id=dev.id,
+                    timestamp__gte=start_dt,
+                    timestamp__lt=end_dt
+                )
+                parse_c = logs.filter(action_type="parse").count()
+                match_c = logs.filter(action_type="match").count()
+                chat_c = logs.filter(action_type="chat").count()
+                scan_c = logs.filter(action_type="scan").count()
+            
+            dt_obj = datetime(year, month, 1)
+            month_label = dt_obj.strftime("%b %Y")
+            total_c = parse_c + match_c + chat_c + scan_c
+            
             result.append({
-                "year_month": r.year_month,
-                "parse": r.parse_count or 0,
-                "match": r.match_count or 0,
-                "chat": r.chat_count or 0,
-                "scan": scan_c,
-                "total": (r.parse_count or 0) + (r.match_count or 0) + (r.chat_count or 0) + scan_c
+                "month": month_label,
+                "year_month": ym_key,
+                "parses": parse_c,
+                "matches": match_c,
+                "chats": chat_c,
+                "scans": scan_c,
+                "total": total_c
             })
 
         return JsonResponse(success_response({"months": result}))

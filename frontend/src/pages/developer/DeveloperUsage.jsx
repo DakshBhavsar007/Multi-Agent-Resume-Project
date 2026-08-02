@@ -39,6 +39,13 @@ export default function DeveloperUsage() {
     queryFn: () => portalUsage.timeline(days)
   });
 
+  const { data: historyData } = useQuery({
+    queryKey: ["usage-history"],
+    queryFn: () => portalUsage.history(6)
+  });
+
+  const monthlyHistory = historyData?.months || [];
+
   const { data: endpoints } = useQuery({
     queryKey: ["usage-endpoints"],
     queryFn: async () => {
@@ -121,23 +128,26 @@ export default function DeveloperUsage() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: "Resume Parsing", used: parseUsage, limit: summary?.limits?.parse?.limit || 1000, color: "bg-blue-600" },
-            { label: "Job Matching", used: matchUsage, limit: summary?.limits?.match?.limit || 500, color: "bg-emerald-600" },
-            { label: "AI Chatbot", used: chatUsage, limit: summary?.limits?.chat?.limit || 500, color: "bg-purple-600" },
+            { label: "Resume Parsing", used: parseUsage, rawLimit: summary?.limits?.parse?.limit, fallback: 1000, color: "bg-blue-600" },
+            { label: "Job Matching", used: matchUsage, rawLimit: summary?.limits?.match?.limit, fallback: 500, color: "bg-emerald-600" },
+            { label: "AI Chatbot", used: chatUsage, rawLimit: summary?.limits?.chat?.limit, fallback: 500, color: "bg-purple-600" },
           ].map((item, idx) => {
-            const pct = Math.min(100, Math.round((item.used / (item.limit || 1)) * 100));
+            const isUnlimited = item.rawLimit === -1;
+            const limitVal = item.rawLimit !== undefined ? item.rawLimit : item.fallback;
+            const displayLimit = isUnlimited ? "Unlimited" : (limitVal || 0).toLocaleString();
+            const pct = isUnlimited ? 0 : Math.min(100, Math.round((item.used / (limitVal || 1)) * 100));
             return (
               <div key={idx} className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-between">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-extrabold text-gray-700">{item.label}</span>
-                  <span className="text-xs font-black text-gray-900">{pct}%</span>
+                  <span className="text-xs font-black text-gray-900">{isUnlimited ? "Unlimited" : `${pct}%`}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 overflow-hidden">
-                  <div className={`h-2.5 rounded-full ${item.color} transition-all duration-500`} style={{ width: `${pct}%` }}></div>
+                  <div className={`h-2.5 rounded-full ${isUnlimited ? "bg-emerald-500" : item.color} transition-all duration-500`} style={{ width: isUnlimited ? "100%" : `${pct}%` }}></div>
                 </div>
                 <div className="flex justify-between text-[11px] font-bold text-gray-500">
                   <span>{item.used.toLocaleString()} calls used</span>
-                  <span>Limit: {item.limit.toLocaleString()}</span>
+                  <span>Limit: {displayLimit}</span>
                 </div>
               </div>
             );
@@ -242,26 +252,25 @@ export default function DeveloperUsage() {
                      <th className="pb-3 px-2 text-right">Total</th>
                    </tr>
                  </thead>
-                 <tbody>
-                   {Array.from({length: 6}).map((_, i) => {
-                     const d = new Date();
-                     d.setMonth(d.getMonth() - i);
-                     const m = d.toLocaleString('default', { month: 'short', year: 'numeric' });
-                     const mockCalls = Math.max(100, Math.floor(totalCalls * (1 - (i*0.15))));
-                     const p = Math.floor(mockCalls * 0.5);
-                     const mt = Math.floor(mockCalls * 0.3);
-                     const sc = mockCalls - p - mt;
-                     return (
-                       <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                         <td className="py-3 px-2 font-bold text-charcoal">{m}</td>
-                         <td className="py-3 px-2 font-bold text-gray-900">{(p || 0).toLocaleString()}</td>
-                         <td className="py-3 px-2 font-bold text-gray-900">{(mt || 0).toLocaleString()}</td>
-                         <td className="py-3 px-2 font-bold text-gray-900">{(sc || 0).toLocaleString()}</td>
-                         <td className="py-3 px-2 text-right font-black text-charcoal">{(mockCalls || 0).toLocaleString()}</td>
-                       </tr>
-                     );
-                   })}
-                 </tbody>
+                  <tbody>
+                    {monthlyHistory && monthlyHistory.length > 0 ? (
+                      monthlyHistory.map((row, i) => (
+                        <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                          <td className="py-3 px-2 font-bold text-charcoal">{row.month}</td>
+                          <td className="py-3 px-2 font-bold text-gray-900">{(row.parses || 0).toLocaleString()}</td>
+                          <td className="py-3 px-2 font-bold text-gray-900">{(row.matches || 0).toLocaleString()}</td>
+                          <td className="py-3 px-2 font-bold text-gray-900">{(row.scans || 0).toLocaleString()}</td>
+                          <td className="py-3 px-2 text-right font-black text-charcoal">{(row.total || 0).toLocaleString()}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-xs font-semibold text-gray-400">
+                          No historical API calls recorded for past months
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
                </table>
             </div>
          </div>
