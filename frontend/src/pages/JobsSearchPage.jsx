@@ -154,6 +154,7 @@ export default function JobsSearchPage() {
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [slowLoading, setSlowLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [seekerProfile, setSeekerProfile] = useState(null);
 
@@ -256,15 +257,22 @@ export default function JobsSearchPage() {
   // Fetch jobs
   const fetchJobs = async () => {
     setLoading(true);
+    setSlowLoading(false);
+    const slowTimer = setTimeout(() => setSlowLoading(true), 8000);
     try {
       const data = await publicJobsAPI.list(
         searchParams.get('query') || '',
         searchParams.get('location') || ''
       );
-      setJobs(data);
+      // Backend returns { jobs: [...], total, page, per_page } or a flat array
+      setJobs(Array.isArray(data) ? data : (data?.jobs || []));
     } catch (err) {
-      toast.error("Failed to load jobs");
+      toast.error(err.message?.includes('timed out') 
+        ? "Server is taking too long. Please try again." 
+        : "Failed to load jobs");
     } finally {
+      clearTimeout(slowTimer);
+      setSlowLoading(false);
       setLoading(false);
     }
   };
@@ -629,6 +637,17 @@ export default function JobsSearchPage() {
             <div className="flex flex-col items-center justify-center py-20 space-y-3">
               <RefreshCw className="animate-spin text-[#2563EB]" size={28} />
               <span className="text-sm text-[#5c5c5c]">Loading jobs...</span>
+              {slowLoading && (
+                <div className="text-center space-y-2 mt-2">
+                  <p className="text-xs text-amber-600 font-medium">Taking longer than usual... The server may be waking up.</p>
+                  <button
+                    onClick={() => fetchJobs()}
+                    className="text-xs font-semibold text-[#2563EB] hover:underline"
+                  >
+                    Retry now →
+                  </button>
+                </div>
+              )}
             </div>
           ) : filteredJobs.length === 0 ? (
             <div className="bg-white border border-[#e6dfcd] text-center p-12 rounded-2xl shadow-sm text-[#5c5c5c]">

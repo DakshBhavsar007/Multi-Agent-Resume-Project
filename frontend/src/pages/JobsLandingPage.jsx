@@ -89,7 +89,8 @@ export default function JobsLandingPage() {
     const fetchJobs = async () => {
       try {
         const data = await publicJobsAPI.list();
-        setJobsList(data || []);
+        const jobsArr = Array.isArray(data) ? data : (data?.jobs || []);
+        setJobsList(jobsArr);
       } catch (err) {
         console.error("Failed to load jobs list for autocomplete", err);
       }

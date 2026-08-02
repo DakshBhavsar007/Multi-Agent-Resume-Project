@@ -56,31 +56,48 @@ def list_public_jobs(request):
         location_filter = request.GET.get("location", "").strip()
         try:
             page = int(request.GET.get("page", 1))
-            per_page = int(request.GET.get("per_page", 10))
+            per_page = int(request.GET.get("per_page", 50))
         except ValueError:
             page = 1
-            per_page = 10
+            per_page = 50
         
-        # Only active, non-archived sessions
+        # Cap per_page to prevent abuse
+        per_page = min(per_page, 100)
+        
+        # Check cache first (cache key based on query params)
+        from django.core.cache import cache
+        cache_key = f"public_jobs:{query}:{location_filter}:{page}:{per_page}"
+        cached = cache.get(cache_key)
+        if cached:
+            return JsonResponse(success_response(cached))
+        
+        # Only active, non-archived sessions — use DB-level filtering
+        from django.db.models import Q
         qs = Session.objects.filter(status="active").select_related("company")
         
         if query:
-            qs = qs.filter(job_title__icontains=query) | qs.filter(job_description__icontains=query)
-            
+            qs = qs.filter(Q(job_title__icontains=query) | Q(job_description__icontains=query))
+        
+        # Get total count at DB level before pagination
+        total_jobs = qs.count()
+        
+        # DB-level pagination using slicing (translates to LIMIT/OFFSET)
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_qs = qs[start:end]
+        
         jobs = []
-        for s in qs:
+        for s in paginated_qs:
             criteria = s.criteria or {}
             preferred_locations = criteria.get("preferred_locations", [])
             
-            # Simple check for location filter
+            # Simple check for location filter (post-query since criteria is JSON)
             if location_filter:
                 loc_match = False
-                # Check criteria location list
                 for loc in preferred_locations:
                     if location_filter.lower() in loc.lower():
                         loc_match = True
                         break
-                # Check description text as fallback
                 if not loc_match and location_filter.lower() in s.job_description.lower():
                     loc_match = True
                 if not loc_match:
@@ -104,19 +121,19 @@ def list_public_jobs(request):
                 "location": meta["location"],
                 "employment_type": meta["employment_type"]
             })
-            
-        total_jobs = len(jobs)
-        start = (page - 1) * per_page
-        end = start + per_page
-        paginated_jobs = jobs[start:end]
         
-        return JsonResponse(success_response({
-            "jobs": paginated_jobs,
+        response_data = {
+            "jobs": jobs,
             "total": total_jobs,
             "page": page,
             "per_page": per_page,
             "total_pages": (total_jobs + per_page - 1) // per_page if per_page else 1
-        }))
+        }
+        
+        # Cache for 5 minutes
+        cache.set(cache_key, response_data, 300)
+        
+        return JsonResponse(success_response(response_data))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)
 

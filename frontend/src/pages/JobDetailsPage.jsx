@@ -142,7 +142,8 @@ export default function JobDetailsPage() {
       setJob(data);
       
       // Fetch list and get similar
-      const allJobs = await publicJobsAPI.list();
+      const allJobsData = await publicJobsAPI.list();
+      const allJobs = Array.isArray(allJobsData) ? allJobsData : (allJobsData?.jobs || []);
       const filtered = allJobs.filter(j => j.id !== id).slice(0, 2);
       setSimilarJobs(filtered);
     } catch (err) {

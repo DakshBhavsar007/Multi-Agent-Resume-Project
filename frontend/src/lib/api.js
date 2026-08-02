@@ -46,15 +46,29 @@ function getHeaders(isFile=false) {
 }
 
 async function req(method, path, body=null, isFile=false) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  
   const opts = {
     method,
     headers: getHeaders(isFile),
     body: body 
       ? (isFile ? body : JSON.stringify(body))
-      : undefined
+      : undefined,
+    signal: controller.signal
   }
   
-  const res = await fetch(BASE + path, opts)
+  let res;
+  try {
+    res = await fetch(BASE + path, opts);
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. The server is taking too long to respond. Please try again.');
+    }
+    throw err;
+  }
+  clearTimeout(timeoutId);
   const data = await res.json()
   
   if (res.status === 401) {
