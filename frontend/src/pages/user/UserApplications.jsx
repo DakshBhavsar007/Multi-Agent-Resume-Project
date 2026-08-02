@@ -261,8 +261,18 @@ export default function UserApplications() {
                       <div className="flex flex-col items-end gap-1.5">
                         {getStatusBadge(app.status)}
                         {app.match_score !== null && (
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                            {app.match_score}% Match
+                          <div className="flex flex-wrap items-center justify-end gap-1 mt-0.5">
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                              {app.match_score}% Match
+                            </span>
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-blue-600 inline" /> Min Req: {app.min_match_score || 60}%
+                            </span>
+                          </div>
+                        )}
+                        {app.is_below_min_score && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700 border border-red-200">
+                            Below Threshold ({app.min_match_score || 60}%)
                           </span>
                         )}
                         {showActiveRoundButtons ? (

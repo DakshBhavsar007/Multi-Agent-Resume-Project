@@ -109,7 +109,9 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
   const maxRound = rounds.length > 0 ? Math.max(...rounds.map(r => r.order || 1)) : 1;
   const currentRoundIndex = candidate?.round_index ?? candidate?.current_round_index ?? 0;
   const isLastRound = currentRoundIndex >= maxRound;
-  const isHiredOrRejected = candidate?.status === "hired" || candidate?.status === "rejected";
+  const minScoreThreshold = candidate?.min_match_score ?? candidate?.session_min_score ?? 60;
+  const isBelowMinScore = score > 0 && score < minScoreThreshold;
+  const isHiredOrRejected = candidate?.status === "hired" || candidate?.status === "rejected" || isBelowMinScore;
 
   const [showOfferModal, setShowOfferModal] = useState(false);
 
@@ -394,6 +396,13 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
                 <X size={18}/>
               </motion.button>
             </>
+          )}
+
+          {isBelowMinScore && (
+            <div className="flex-1 bg-red-50 border border-red-200 text-red-700 text-xs font-bold py-2 rounded-lg text-center flex items-center justify-center gap-1.5">
+              <XCircle size={14} className="text-red-500 shrink-0" />
+              Below Min Threshold ({minScoreThreshold}%) — Auto Rejected
+            </div>
           )}
         </div>
       </motion.div>

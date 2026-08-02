@@ -484,19 +484,25 @@ def apply_job(request, session_id):
         from api.views.jobs import _calculate_match_score
         _calculate_match_score(candidate, session)
 
+        match_val = _compute_match_score(seeker.skills if seeker.skills else [], [], str(session.id), seeker, session)
+        match_score_str = f"{match_val}%" if (match_val is not None and match_val > 0) else "N/A"
+        company_name = session.company.name if (session.company and session.company.name) else "Between Partner"
+        min_score = session.criteria.get("min_match_score", 60) if isinstance(session.criteria, dict) else 60
+
+        initial_app_status = "applied"
+        if match_val is not None and match_val < min_score:
+            candidate.status = "rejected"
+            candidate.save(update_fields=["status"])
+            initial_app_status = "rejected"
+
         # Create JobApplication record
         application = JobApplication.objects.create(
             seeker=seeker,
             session=session,
             candidate=candidate,
             cover_note=cover_note,
-            status="applied",
+            status=initial_app_status,
         )
-
-        # Compute match score & details
-        match_val = _compute_match_score(seeker.skills if seeker.skills else [], [], str(session.id), seeker, session)
-        match_score_str = f"{match_val}%" if (match_val is not None and match_val > 0) else "N/A"
-        company_name = session.company.name if (session.company and session.company.name) else "Between Partner"
 
         # Notification for seeker
         Notification.objects.create(
@@ -507,13 +513,20 @@ def apply_job(request, session_id):
             link=f"/jobs/applications?app_id={application.id}",
         )
 
-        min_score = session.criteria.get("min_match_score", 50) if isinstance(session.criteria, dict) else 50
         if match_val is not None and match_val >= min_score:
             Notification.objects.create(
                 seeker=seeker,
                 type="shortlisted",
                 title=f"Application Shortlisted",
                 message=f"Congratulations! Your profile matched for {session.job_title} at {company_name} ({match_score_str} Match). Your application is currently under screening.",
+                link=f"/jobs/applications?app_id={application.id}",
+            )
+        else:
+            Notification.objects.create(
+                seeker=seeker,
+                type="general",
+                title=f"Application Archived",
+                message=f"Your application match score ({match_score_str}) is below the required threshold ({min_score}%).",
                 link=f"/jobs/applications?app_id={application.id}",
             )
 
@@ -876,6 +889,9 @@ def my_applications(request):
                 if not rejection_reason:
                     rejection_reason = f"Resume match score ({match_score}%) did not meet recruiter criteria."
 
+            min_match_score = session.criteria.get("min_match_score", 60) if isinstance(session.criteria, dict) else 60
+            is_below_min_score = bool(match_score is not None and match_score < min_match_score)
+
             result.append({
                 "id": str(app.id),
                 "job_id": str(session.id),
@@ -892,6 +908,8 @@ def my_applications(request):
                 "visible_round_index": visible_round_index,
                 "agent_processing_status": "success",
                 "match_score": match_score,
+                "min_match_score": min_match_score,
+                "is_below_min_score": is_below_min_score,
                 "test_link": test_link,
                 "test_round_name": test_round_name,
                 "rejection_reason": rejection_reason,
