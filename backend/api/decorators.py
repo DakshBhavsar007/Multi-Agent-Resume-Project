@@ -126,8 +126,11 @@ def verify_api_key_helper(request):
                         company.tier = dev_acc.tier
                         company.save(update_fields=['tier'])
                     
-                    # Try to find an active developer key for rate-limit tracking
-                    dev_key_obj = DeveloperAPIKey.objects.filter(developer_id=dev_acc.id, is_active=True).first()
+                    # Try to find an active developer key for rate-limit tracking (prioritize production)
+                    dev_key_obj = DeveloperAPIKey.objects.filter(developer_id=dev_acc.id, environment="production", is_active=True).first()
+                    if not dev_key_obj:
+                        dev_key_obj = DeveloperAPIKey.objects.filter(developer_id=dev_acc.id, is_active=True).first()
+                    
                     company._api_key_obj = dev_key_obj
                     request.company = company
                     return True
@@ -355,11 +358,15 @@ def check_rate_limit(action: str):
             if not api_key:
                 return view_func(request, *args, **kwargs)  # skip rate limit if no API key object stashed
 
-            tier = company.tier or "free"
-            limits = TIER_LIMITS.get(tier, TIER_LIMITS["free"])
-            action_limit = limits.get(action, 0)
+            is_test_key = getattr(api_key, 'environment', '') == 'test'
+            if is_test_key:
+                action_limit = 50
+            else:
+                tier = company.tier or "free"
+                limits = TIER_LIMITS.get(tier, TIER_LIMITS["free"])
+                action_limit = limits.get(action, 0)
             
-            if action_limit == -1:
+            if action_limit == -1 and not is_test_key:
                 return view_func(request, *args, **kwargs)
 
             now = datetime.now()

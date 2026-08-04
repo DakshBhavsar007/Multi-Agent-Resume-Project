@@ -127,13 +127,6 @@ function DeveloperKeyRow({ apiKey, onUpdate }) {
 
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <button 
-              onClick={() => handleCopy(apiKey.secret_key || "", 'secret')}
-              className="p-1.5 text-gray-600 hover:text-accent hover:bg-blue-50 rounded-lg transition-colors"
-              title="Copy secret key"
-            >
-              {copiedType === 'secret' ? <Check size={14} className="text-green-500" /> : <Key size={14} />}
-            </button>
-            <button 
               onClick={() => handleCopy(apiKey.public_key || "", 'masked')}
               className="p-1.5 text-gray-600 hover:text-charcoal hover:bg-gray-100 rounded-lg transition-colors"
               title="Copy public key"
@@ -429,29 +422,65 @@ export default function DeveloperKeys({ defaultTab }) {
   ];
 
   const tabs = {
-    cURL: `curl -X POST \\
-  https://api.between.indevs.in/api/v1/parse \\
-  -H "X-API-Key: YOUR_KEY" \\
-  -F "files=@resume.pdf"`,
-    Python: `import requests
- 
-response = requests.post(
-    "https://api.between.indevs.in/api/v1/parse",
-    headers={"X-API-Key": "YOUR_KEY"},
-    files={"files": open("resume.pdf", "rb")}
-)
-print(response.json())`,
-    JavaScript: `const formData = new FormData();
-formData.append('files', resumeFile);
- 
-const response = await fetch('https://api.between.indevs.in/api/v1/parse', {
-  method: 'POST',
-  headers: { 'X-API-Key': 'YOUR_KEY' },
-  body: formData
-});
-const data = await response.json();`
+    cURL: `# Pretty Print JSON Output in Terminal via python -m json.tool
+curl -s -X POST "https://api.between.indevs.in/api/v1/parse" \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -F "file=@resume.pdf" | python -m json.tool`,
+
+    Python: `import os
+import json
+import requests
+
+def parse_resume(file_path, api_key):
+    url = "https://api.between.indevs.in/api/v1/parse"
+    headers = {"X-API-Key": api_key}
+
+    if not os.path.exists(file_path):
+        print(f"Error: File '{file_path}' not found.")
+        return
+
+    with open(file_path, "rb") as f:
+        files = {"file": f}
+        response = requests.post(url, headers=headers, files=files)
+
+    result = response.json()
+    # Pretty print indented JSON
+    print(json.dumps(result, indent=2))
+
+# Replace with your actual key and file path
+parse_resume("./resume.pdf", "YOUR_API_KEY")`,
+
+    JavaScript: `const fs = require('fs');
+const axios = require('axios');
+const FormData = require('form-data');
+
+async function parseResume(filePath, apiKey) {
+  try {
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(filePath));
+
+    const response = await axios.post(
+      'https://api.between.indevs.in/api/v1/parse',
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          'X-API-Key': apiKey
+        }
+      }
+    );
+
+    // Pretty print indented JSON
+    console.log(JSON.stringify(response.data, null, 2));
+  } catch (error) {
+    console.error('Request Error:', error.response?.data || error.message);
+  }
+}
+
+parseResume('./resume.pdf', 'YOUR_API_KEY');`
   };
   const [activeCodeTab, setActiveCodeTab] = useState("cURL");
+  const [copiedTab, setCopiedTab] = useState(false);
 
   const tabItems = [
     { id: 'profile', label: 'Workspace profile', icon: Building },
@@ -655,27 +684,38 @@ const data = await response.json();`
               </div>
 
               {/* INTEGRATION QUICKSTART */}
-              <div className="bg-[#1E1E1E] rounded-2xl overflow-hidden shadow-xl border border-gray-800">
-                 <div className="p-6 border-b border-gray-700">
-                    <h3 className="font-bold text-white text-md">Quick Integration Guide</h3>
-                    <p className="text-gray-300 text-xs mt-1">Make your first parse request using your API key.</p>
-                 </div>
-                 <div className="flex bg-[#2D2D2D] border-b border-gray-700 px-2">
-                   {Object.keys(tabs).map(tab => (
-                      <button 
-                       key={tab} 
-                       onClick={() => setActiveCodeTab(tab)}
-                       className={`px-6 py-3 text-xs font-bold transition-colors ${activeCodeTab === tab ? 'text-white border-b-2 border-white bg-[#1E1E1E]' : 'text-gray-300 hover:text-white'}`}
-                      >
-                        {tab}
-                      </button>
-                   ))}
-                 </div>
-                 <div className="p-6 relative text-xs font-mono">
-                    <SyntaxHighlighter language={activeCodeTab === "Python" ? "python" : activeCodeTab === "cURL" ? "bash" : "javascript"} style={vs2015} customStyle={{ background: "transparent", padding: 0, margin: 0, lineHeight: "1.6" }}>
-                      {tabs[activeCodeTab]}
-                    </SyntaxHighlighter>
-                 </div>
+              <div className="bg-[#18181b] rounded-2xl overflow-hidden shadow-2xl border border-zinc-800 mt-6">
+                <div className="flex items-center justify-between border-b border-zinc-800 bg-[#09090b] px-2">
+                  <div className="flex items-center gap-1">
+                    {Object.keys(tabs).map(tab => (
+                       <button 
+                        key={tab} 
+                        onClick={() => setActiveCodeTab(tab)}
+                        className={`px-5 py-3.5 text-xs font-bold transition-all rounded-t-lg mt-2 ${activeCodeTab === tab ? 'text-white bg-[#18181b] border-t-2 border-accent shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'}`}
+                       >
+                         {tab}
+                       </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(tabs[activeCodeTab]);
+                      setCopiedTab(true);
+                      toast.success(`Copied ${activeCodeTab} code to clipboard!`);
+                      setTimeout(() => setCopiedTab(false), 2000);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 mr-3 text-xs font-bold text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-700/80 rounded-lg transition-all border border-zinc-700/50"
+                    title="Copy code to clipboard"
+                  >
+                    {copiedTab ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                    <span>{copiedTab ? "Copied!" : "Copy Code"}</span>
+                  </button>
+                </div>
+                <div className="p-6 relative text-sm font-mono overflow-x-auto">
+                   <SyntaxHighlighter language={activeCodeTab === "Python" ? "python" : activeCodeTab === "cURL" ? "bash" : "javascript"} style={vs2015} customStyle={{ background: "transparent", padding: 0, margin: 0, lineHeight: "1.6" }}>
+                     {tabs[activeCodeTab]}
+                   </SyntaxHighlighter>
+                </div>
               </div>
             </>
           )}

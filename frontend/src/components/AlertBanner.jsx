@@ -3,13 +3,14 @@ import { useAuthStore } from '../stores/authStore';
 import { useSeekerAuthStore } from '../stores/seekerAuthStore';
 import { usePortalAuthStore } from '../stores/portalAuthStore';
 import { ShieldAlert } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function AlertBanner() {
   const recruiter = useAuthStore((state) => state.company);
   const seeker = useSeekerAuthStore((state) => state.seeker);
   const developer = usePortalAuthStore((state) => state.developer);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [showBanner, setShowBanner] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState(false);
@@ -21,20 +22,22 @@ export default function AlertBanner() {
     })();
     const activeSeeker = seeker || localSeeker;
 
-    if (recruiter) {
+    const path = location.pathname;
+    
+    if (path.startsWith('/developer') && developer) {
+      setUnverifiedEmail(!developer.is_verified);
+      setUnverifiedPhone(false);
+      setShowBanner(!developer.is_verified);
+    } else if (path.startsWith('/dashboard') && recruiter) {
       setUnverifiedEmail(!recruiter.email_verified);
       setUnverifiedPhone(false);
       setShowBanner(!recruiter.email_verified);
-    } else if (activeSeeker) {
+    } else if ((path.startsWith('/jobs') || path.startsWith('/seeker')) && activeSeeker) {
       const emailUnverified = !activeSeeker.email_verified;
       const phoneUnverified = !activeSeeker.phone_verified;
       setUnverifiedEmail(emailUnverified);
       setUnverifiedPhone(phoneUnverified);
       setShowBanner(emailUnverified || phoneUnverified);
-    } else if (developer) {
-      setUnverifiedEmail(!developer.is_verified);
-      setUnverifiedPhone(false);
-      setShowBanner(!developer.is_verified);
     } else {
       setShowBanner(false);
     }

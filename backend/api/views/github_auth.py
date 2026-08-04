@@ -51,7 +51,7 @@ def verify_github_code(code):
             'https://api.github.com/user',
             headers={
                 'Authorization': f'token {access_token}',
-                'User-Agent': 'Vishleshan-Backend'
+                'User-Agent': 'Between-Backend'
             }
         )
         
@@ -63,7 +63,7 @@ def verify_github_code(code):
             'https://api.github.com/user/emails',
             headers={
                 'Authorization': f'token {access_token}',
-                'User-Agent': 'Vishleshan-Backend'
+                'User-Agent': 'Between-Backend'
             }
         )
         

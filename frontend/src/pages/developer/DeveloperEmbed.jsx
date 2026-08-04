@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, X, Component, Shield, CheckCircle } from "lucide-react";
+import { Plus, X, Component, Shield, CheckCircle, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import CopyButton from "../../components/CopyButton";
@@ -99,6 +99,25 @@ import { BetweenPanel } from '@between/vue';
   const [activeTab, setActiveTab] = useState("HTML");
 
   const activeSnippets = codeSnippets(activeTokenCode);
+
+  if (!isBusiness) {
+    return (
+      <div className="w-full max-w-5xl mx-auto pb-12">
+        <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm mt-8">
+          <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock size={32} />
+          </div>
+          <h2 className="text-2xl font-black text-charcoal mb-3">Embed UI is locked</h2>
+          <p className="text-gray-500 max-w-md mx-auto mb-8 font-medium">
+            The Embed UI component is exclusively available on the Business plan. Upgrade your billing plan to embed our AI panel directly inside your application.
+          </p>
+          <Link to="/developer/portal/billing" className="inline-flex items-center gap-2 bg-charcoal text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition">
+            Upgrade to Business Plan
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto pb-12 font-sans">

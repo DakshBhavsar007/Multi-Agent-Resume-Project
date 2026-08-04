@@ -909,22 +909,43 @@ def public_platform_stats(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
 
     try:
-        from api.models import APIUsageLog, Candidate, JobSeekerAccount, DeveloperAccount, Company
+        from api.models import APIUsageLog, Candidate, JobSeekerAccount, DeveloperAccount, Company, SkillTaxonomy
         from django.db.models import Avg
 
-        # Dynamic average latency from APIUsageLog
-        avg_lat = APIUsageLog.objects.aggregate(avg=Avg('latency_ms'))['avg']
-        latency_str = f"<{int(avg_lat)}ms" if (avg_lat and avg_lat < 100) else "<10ms"
-
-        # Candidate / Resume parse count
+        # 1. Total Resumes Parsed
         cand_count = Candidate.objects.count()
-        resumes_rate = f"{max(500, cand_count * 10)}+" if cand_count else "500+"
+
+        # 2. Dynamic average latency from APIUsageLog
+        avg_lat = APIUsageLog.objects.aggregate(avg=Avg('latency_ms'))['avg']
+        latency_str = f"<{int(avg_lat)}ms" if (avg_lat and avg_lat < 100) else ("<10ms" if not avg_lat else f"{int(avg_lat)}ms")
+
+        # 3. Dynamic Uptime (Success Rate of API Usage)
+        total_logs = APIUsageLog.objects.count()
+        if total_logs > 0:
+            success_logs = APIUsageLog.objects.filter(status_code__lt=500).count()
+            uptime_pct = (success_logs / total_logs) * 100
+            # If 100.0, format as 100%, else 99.9%
+            uptime_str = f"{uptime_pct:.1f}%" if uptime_pct < 100 else "100%"
+        else:
+            uptime_str = "100%"
+
+        # 4. Total Skills Parsed
+        skills_count = SkillTaxonomy.objects.count()
+        if skills_count == 0:
+            # Fallback to computing distinct skills from candidates if taxonomy is empty
+            skills_set = set()
+            for c in Candidate.objects.only('normalized_skills').iterator():
+                if c.normalized_skills:
+                    for s in c.normalized_skills:
+                        if s:
+                            skills_set.add(str(s).lower().strip())
+            skills_count = len(skills_set)
 
         return JsonResponse(success_response({
-            "resumes_per_min": resumes_rate,
+            "total_resumes": f"{cand_count}+" if cand_count > 1000 else str(cand_count),
             "latency": latency_str,
-            "uptime": "99.9%",
-            "skills": "5,000+",
+            "uptime": uptime_str,
+            "skills": f"{skills_count}+" if skills_count > 5000 else str(skills_count),
             "total_candidates": cand_count,
             "total_professionals": JobSeekerAccount.objects.count() + DeveloperAccount.objects.count() + Company.objects.count()
         }))

@@ -292,7 +292,7 @@ def gmail_connect(request):
             from googleapiclient.discovery import build
             service = build('gmail', 'v1', credentials=credentials)
             profile = service.users().getProfile(userId='me').execute()
-            gmail_address = profile.get('emailAddress', 'recruiter@vishleshan.com')
+            gmail_address = profile.get('emailAddress', 'recruiter@between.indevs.in')
             
             session.gmail_tokens = credentials_to_dict(credentials)
             session.gmail_address = gmail_address

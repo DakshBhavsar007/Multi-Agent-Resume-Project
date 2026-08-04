@@ -57,12 +57,12 @@ def tokens_root(request):
                 is_active=True
             )
 
-            html_snippet = f"""<div id="vishleshan-panel"></div>
-<script src="https://cdn.vishleshan.ai/embed.js"></script>
+            html_snippet = f"""<div id="between-panel"></div>
+<script src="https://api.between.indevs.in/embed.js"></script>
 <script>
-Vishleshan.init({{
+Between.init({{
   token: "{token_value}",
-  container: "#vishleshan-panel",
+  container: "#between-panel",
   theme: "light"
 }});
 </script>"""
@@ -100,25 +100,27 @@ def revoke_embed_token(request, token_id):
 @csrf_exempt
 def serve_embed_js(request):
     """Serves the Between Javascript SDK loader snippet for web integration."""
-    js_content = """(function() {
-  if (window.Between) return;
-  window.Between = {
-    init: function(config) {
-      if (!config || !config.token) {
-        console.error('[Between Embed] Token is required. e.g. Between.init({ token: "vish_embed_..." })');
+    api_host = request.get_host()
+    if "localhost" in api_host or "127.0.0.1" in api_host:
+        frontend_url = "http://localhost:5173"
+    else:
+        frontend_url = "https://between.indevs.in"
+
+    js_content = f"""(function() {{
+  window.Between = {{
+    init: function(config) {{
+      if (!config.token) {{
+        console.error('[Between Embed] Missing required token.');
         return;
-      }
+      }}
       var container = config.container || '#between-panel';
       var theme = config.theme || 'light';
       var el = typeof container === 'string' ? document.querySelector(container) : container;
-      if (!el) {
+      if (!el) {{
         console.error('[Between Embed] Container element not found:', container);
         return;
-      }
-      var baseUrl = 'https://between.indevs.in/developer/portal/embed/widget';
-      if (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) {
-        baseUrl = window.location.origin + '/developer/portal/embed/widget';
-      }
+      }}
+      var baseUrl = '{frontend_url}/developer/portal/embed/widget';
       var iframe = document.createElement('iframe');
       iframe.src = baseUrl + '?token=' + encodeURIComponent(config.token) + '&theme=' + encodeURIComponent(theme);
       iframe.style.width = config.width || '100%';
@@ -129,9 +131,9 @@ def serve_embed_js(request):
       el.innerHTML = '';
       el.appendChild(iframe);
       console.log('[Between Embed] Widget initialized successfully.');
-    }
-  };
-})();"""
+    }}
+  }};
+}})();"""
     from django.http import HttpResponse
     return HttpResponse(js_content, content_type="application/javascript")
 

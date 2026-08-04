@@ -39,6 +39,25 @@ def parse_resume(request):
         if file.size > 10 * 1024 * 1024:  # 10 MB
             return JsonResponse(error_response("File size must be under 10 MB"), status=400)
 
+        is_test_key = hasattr(request, "company") and getattr(request.company, "_api_key_obj", None) and getattr(request.company._api_key_obj, "environment", "") == "test"
+        if is_test_key:
+            return JsonResponse(success_response({
+                "watermark": "CREATED USING TEST API KEY - NOT FOR PRODUCTION. MOCK DATA.",
+                "candidate_id": f"test_cnd_{uuid.uuid4().hex[:8]}",
+                "status": "completed",
+                "name": "John Doe (Test Key)",
+                "skills": ["Test Skill", "Python", "API Integration"],
+                "raw_parsed_data": {
+                    "name": "John Doe (Test Key)",
+                    "email": "test@example.com",
+                    "phone": "+1234567890",
+                    "skills": ["Test Skill", "Python", "API Integration"],
+                    "experience": [],
+                    "education": [],
+                    "summary": "This is a dummy response generated because you used a Test API Key. No real parsing occurred, and this data will not be saved."
+                }
+            }))
+
         # Save to a temporary parse directory
         temp_dir = os.path.join(UPLOAD_DIR, "temp_parse")
         os.makedirs(temp_dir, exist_ok=True)
@@ -218,6 +237,26 @@ def global_match(request):
         if not job_title or not job_description:
             return JsonResponse(error_response("job_title and job_description are required"), status=400)
 
+        is_test_key = hasattr(request, "company") and getattr(request.company, "_api_key_obj", None) and getattr(request.company._api_key_obj, "environment", "") == "test"
+        if is_test_key:
+            return JsonResponse(success_response({
+                "watermark": "CREATED USING TEST API KEY - NOT FOR PRODUCTION. MOCK DATA.",
+                "matches": [
+                    {
+                        "candidate_id": "cnd_test_12345",
+                        "name": "Test Candidate A",
+                        "match_score": 95.5,
+                        "matched_skills": ["Python", "Testing", "Mocking"]
+                    },
+                    {
+                        "candidate_id": "cnd_test_67890",
+                        "name": "Test Candidate B",
+                        "match_score": 88.0,
+                        "matched_skills": ["APIs", "Integration"]
+                    }
+                ][:top_k]
+            }))
+
         # Retrieve candidates belonging to this company's sessions
         session_ids = Session.objects.filter(company_id=request.company.id).values_list('id', flat=True)
         candidates = Candidate.objects.filter(session_id__in=session_ids)
@@ -301,6 +340,17 @@ def global_chat(request):
 
         if not message:
             return JsonResponse(error_response("message is required"), status=400)
+
+        is_test_key = hasattr(request, "company") and getattr(request.company, "_api_key_obj", None) and getattr(request.company._api_key_obj, "environment", "") == "test"
+        if is_test_key:
+            return JsonResponse(success_response({
+                "watermark": "CREATED USING TEST API KEY - NOT FOR PRODUCTION. MOCK DATA.",
+                "answer": f"This is a mock response because you are using a Test API Key. Mock answer for: '{message}'",
+                "candidates": [
+                    {"candidate_id": "cnd_test_mock", "name": "Mock Candidate"}
+                ],
+                "tokens_used": 0
+            }))
 
         # Try to use RecruiterChatbotAgent if a valid session exists
         session = None

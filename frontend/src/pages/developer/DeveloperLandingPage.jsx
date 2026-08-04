@@ -5,7 +5,7 @@ import { Copy, Check, Menu, X, Search, FileText, Brain, Cpu, Zap, Lock, MoreHori
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { portalBilling, portalAuth, portalReviews } from "../../lib/portalApi";
-import { publicAPI } from "../../lib/api";
+import { publicAPI, API_HOST } from "../../lib/api";
 import VerifiedBadge from "../../components/VerifiedBadge";
 import WriteReviewModal from "../../components/WriteReviewModal";
 import toast from "react-hot-toast";
@@ -43,7 +43,7 @@ export default function DeveloperLandingPage() {
   });
 
   useEffect(() => {
-    fetch("/api/v1/public/platform-stats")
+    fetch(API_HOST + "/api/v1/public/platform-stats")
       .then(res => res.json())
       .then(data => {
         if (data && data.success && data.data) {
@@ -144,7 +144,7 @@ const { data } = await response.json();
 
   const tabs = {
     cURL: `# Pretty Print JSON Output in Terminal via python -m json.tool
-curl -s -X POST "http://localhost:8000/api/v1/parse" \\
+curl -s -X POST "https://api.between.indevs.in/api/v1/parse" \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -F "file=@resume.pdf" | python -m json.tool`,
 
@@ -153,7 +153,7 @@ import json
 import requests
 
 def parse_resume(file_path, api_key):
-    url = "http://localhost:8000/api/v1/parse"
+    url = "https://api.between.indevs.in/api/v1/parse"
     headers = {"X-API-Key": api_key}
 
     if not os.path.exists(file_path):
@@ -181,7 +181,7 @@ async function parseResume(filePath, apiKey) {
     formData.append('file', fs.createReadStream(filePath));
 
     const response = await axios.post(
-      'http://localhost:8000/api/v1/parse',
+      'https://api.between.indevs.in/api/v1/parse',
       formData,
       {
         headers: {
@@ -375,20 +375,20 @@ parseResume('./resume.pdf', 'YOUR_API_KEY');`
       <section className="w-full bg-[#111111] dark:bg-[#131316] py-8">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-white/20">
            <div className="flex flex-col px-4 text-white">
-             <span className="text-2xl font-bold">{platformStats.resumes_per_min || "500+"}</span>
-             <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Resumes/min</span>
+             <span className="text-2xl font-bold">{platformStats.total_resumes || "0"}</span>
+             <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Total Resumes</span>
            </div>
            <div className="flex flex-col px-4 text-white">
              <span className="text-2xl font-bold">{platformStats.latency || "<10ms"}</span>
-             <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Latency</span>
+             <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Avg Latency</span>
            </div>
            <div className="flex flex-col px-4 text-white">
-             <span className="text-2xl font-bold">{platformStats.uptime || "99.9%"}</span>
+             <span className="text-2xl font-bold">{platformStats.uptime || "100%"}</span>
              <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Uptime</span>
            </div>
            <div className="flex flex-col px-4 text-white">
-             <span className="text-2xl font-bold">{platformStats.skills || "5,000+"}</span>
-             <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Skills</span>
+             <span className="text-2xl font-bold">{platformStats.skills || "0"}</span>
+             <span className="text-sm font-medium text-white/90 uppercase tracking-wide">Skills Parsed</span>
            </div>
         </div>
       </section>

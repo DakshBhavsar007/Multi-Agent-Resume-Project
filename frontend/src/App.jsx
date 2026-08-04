@@ -57,6 +57,7 @@ const DeveloperUsage = lazy(() => import('./pages/developer/DeveloperUsage'));
 const DeveloperBilling = lazy(() => import('./pages/developer/DeveloperBilling'));
 const DeveloperWebhooks = lazy(() => import('./pages/developer/DeveloperWebhooks'));
 const DeveloperEmbed = lazy(() => import('./pages/developer/DeveloperEmbed'));
+const EmbedWidget = lazy(() => import('./pages/developer/EmbedWidget'));
 const DeveloperDocs = lazy(() => import('./pages/developer/DeveloperDocs'));
 const DeveloperSettings = lazy(() => import('./pages/developer/DeveloperSettings'));
 
@@ -166,7 +167,7 @@ export default function App() {
         const path = window.location.pathname;
         if (path.startsWith('/admin/dashboard')) {
           window.location.href = '/admin/login';
-        } else if (path.startsWith('/developer/portal')) {
+        } else if (path.startsWith('/developer/portal') && !path.includes('/embed/widget')) {
           window.location.href = '/developer/login';
         } else if (path.startsWith('/jobs/applications') || path.startsWith('/jobs/resume') || path.startsWith('/jobs/notifications') || path.startsWith('/jobs')) {
           // If they are on a seeker page, go back to jobs login
@@ -285,6 +286,8 @@ export default function App() {
             <Route path="docs" element={<DeveloperDocs />} />
             <Route path="settings" element={<DeveloperSettings />} />
           </Route>
+          
+          <Route path="/developer/portal/embed/widget" element={<EmbedWidget />} />
 
           {/* Protected Dashboard Routes */}
           <Route path="/dashboard" element={

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
-import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, PanelLeftClose, PanelLeftOpen, MoreHorizontal, Home, Bot } from "lucide-react";
+import { LayoutDashboard, Key, BarChart2, Webhook, Code, CreditCard, BookOpen, Settings, LogOut, Menu, X, HelpCircle, PanelLeftClose, PanelLeftOpen, MoreHorizontal, Home, Bot, Lock } from "lucide-react";
 import { usePortalAuthStore } from "../../stores/portalAuthStore";
 import { portalAuth } from "../../lib/portalApi";
 import { motion } from "framer-motion";
@@ -69,7 +69,7 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function DeveloperPortalLayout() {
-  const { jwt, developer, company_name, initFromStorage, clearAuth, setAuth } = usePortalAuthStore();
+  const { jwt, developer, company_name, tier, initFromStorage, clearAuth, setAuth } = usePortalAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
@@ -114,12 +114,15 @@ export default function DeveloperPortalLayout() {
 
   if (!mounted || !jwt) return null;
 
+  const isFree = tier === "free" || !tier;
+  const isBusiness = tier === "business" || tier === "enterprise";
+
   const navItems = [
     { name: "Overview", href: "/developer/portal/dashboard", icon: LayoutDashboard, tourAttr: 'dev-nav-dashboard' },
     { name: "API Keys", href: "/developer/portal/keys", icon: Key, tourAttr: 'dev-nav-keys' },
     { name: "Usage & Logs", href: "/developer/portal/usage", icon: BarChart2, tourAttr: 'dev-nav-usage' },
-    { name: "Webhooks", href: "/developer/portal/webhooks", icon: Webhook },
-    { name: "Embed", href: "/developer/portal/embed", icon: Code },
+    { name: "Webhooks", href: "/developer/portal/webhooks", icon: Webhook, locked: isFree },
+    { name: "Embed", href: "/developer/portal/embed", icon: Code, locked: !isBusiness },
     { name: "Billing", href: "/developer/portal/billing", icon: CreditCard, tourAttr: 'dev-nav-billing' },
   ];
 
@@ -251,8 +254,9 @@ export default function DeveloperPortalLayout() {
                     <Icon size={20} />
                   </span>
                   {showLabel && (
-                    <span className="text-sm truncate relative z-10">
+                    <span className="text-sm truncate relative z-10 flex-1 flex items-center justify-between pr-2">
                       {item.name}
+                      {item.locked && <Lock size={12} className="text-gray-400 opacity-60" />}
                     </span>
                   )}
                 </Link>

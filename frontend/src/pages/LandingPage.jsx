@@ -18,7 +18,7 @@ import SolarSystem from '../components/SolarSystem';
 export default function LandingPage() {
   useDocumentTitle(
     "AI Resume Parsing & Intelligent Recruiter Screening",
-    "Vishleshan is a next-generation resume intelligence platform that automates candidate matching, ATS scoring, and background verification."
+    "Between is a next-generation resume intelligence platform that automates candidate matching, ATS scoring, and background verification."
   );
 
   const navigate = useNavigate();

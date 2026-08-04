@@ -91,6 +91,24 @@ export default function DeveloperWebhooks() {
     setPanelOpen(true);
   };
 
+  if (isFree) {
+    return (
+      <div className="w-full max-w-5xl mx-auto pb-12">
+        <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm mt-8">
+          <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock size={32} />
+          </div>
+          <h2 className="text-2xl font-black text-charcoal mb-3">Webhooks are locked</h2>
+          <p className="text-gray-500 max-w-md mx-auto mb-8 font-medium">
+            Real-time webhook notifications are available on the Starter plan and above. Upgrade your billing plan to use this feature.
+          </p>
+          <Link to="/developer/portal/billing" className="inline-flex items-center gap-2 bg-charcoal text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition">
+            Upgrade to Starter Plan
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto pb-12 relative flex overflow-hidden">

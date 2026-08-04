@@ -3,9 +3,9 @@ import { useEffect } from "react";
 export default function useDocumentTitle(title, description) {
   useEffect(() => {
     if (title) {
-      document.title = `${title} | Vishleshan`;
+      document.title = `${title} | Between`;
     } else {
-      document.title = "Vishleshan — Modern AI Resume Analyzer & Recruiter Platform";
+      document.title = "Between — Modern AI Resume Analyzer & Recruiter Platform";
     }
 
     if (description) {
