@@ -60,9 +60,9 @@ export default function UserCompanies() {
         </div>
 
         <div className="relative z-20">
-          <div className="google-shadow mt-8 flex items-center gap-2 rounded-3xl border border-border bg-background p-2">
+          <form onSubmit={(e) => e.preventDefault()} className="google-shadow mt-8 flex items-center gap-2 rounded-3xl border border-border bg-background p-2">
             <div className="flex flex-1 items-center gap-2 px-3 py-2">
-              <Search className="h-5 w-5 text-muted-foreground" />
+              <Search className="h-5 w-5 text-muted-foreground shrink-0" />
               <input 
                 placeholder="Search company name or industry..." 
                 value={search}
@@ -72,7 +72,14 @@ export default function UserCompanies() {
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" 
               />
             </div>
-          </div>
+            <button
+              type="submit"
+              className="rounded-full flex items-center justify-center gap-1.5 bg-[#2563EB] hover:bg-blue-700 active:bg-blue-800 text-white font-semibold px-5 py-2.5 text-xs sm:text-sm transition-all duration-200 shrink-0 cursor-pointer"
+            >
+              <Search className="h-4 w-4" />
+              <span>Search</span>
+            </button>
+          </form>
           {showSuggestions && (
             <div className="absolute left-0 right-0 mt-1 bg-background border border-border rounded-2xl shadow-lg z-50 max-h-48 overflow-y-auto py-1">
               {(() => {

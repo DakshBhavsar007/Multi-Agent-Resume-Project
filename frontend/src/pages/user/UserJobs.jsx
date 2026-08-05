@@ -323,10 +323,10 @@ export default function UserJobs() {
   }, [page]);
 
   useEffect(() => {
-    const qParam = searchParams.get("q") || searchParams.get("category");
-    if (qParam && qParam !== search) {
-      setSearch(qParam);
-    }
+    const qParam = searchParams.get("q") || searchParams.get("category") || "";
+    const locParam = searchParams.get("location") || "";
+    if (qParam !== search) setSearch(qParam);
+    if (locParam !== location) setLocation(locParam);
   }, [searchParams]);
 
   useEffect(() => {
@@ -336,6 +336,15 @@ export default function UserJobs() {
     setSearchParams(params, { replace: true });
     fetchJobs(true);
   }, [search, location]);
+
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    const params = {};
+    if (search) params.q = search;
+    if (location) params.location = location;
+    setSearchParams(params, { replace: true });
+    fetchJobs(true);
+  };
 
   const toggle = (arr, set, v) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -386,17 +395,17 @@ export default function UserJobs() {
             <h1 className="mt-1.5 font-display text-2xl font-semibold tracking-tight sm:text-3xl">Find your perfect role</h1>
             <p className="mt-1 text-xs text-muted-foreground">Showing {filtered.length} of {totalJobs} roles</p>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto relative z-20">
-            <div className="relative flex-1 sm:w-[240px]">
+          <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto relative z-20 items-center">
+            <div className="relative flex-1 sm:w-[220px] w-full">
               <div className="google-shadow flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 w-full">
-                <Search className="h-4 w-4 text-muted-foreground" />
+                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
                 <input 
                   placeholder="Search job title..." 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onFocus={() => setShowSearchSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
-                  className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" 
+                  className="flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground" 
                 />
               </div>
               {showSearchSuggestions && (
@@ -412,6 +421,7 @@ export default function UserJobs() {
                       filteredList.map((sug, idx) => (
                         <button
                           key={idx}
+                          type="button"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             setSearch(sug);
@@ -429,16 +439,16 @@ export default function UserJobs() {
                 </div>
               )}
             </div>
-            <div className="relative flex-1 sm:w-[240px]">
+            <div className="relative flex-1 sm:w-[200px] w-full">
               <div className="google-shadow flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 w-full">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                 <input 
                   placeholder="Location..." 
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   onFocus={() => setShowLocSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowLocSuggestions(false), 200)}
-                  className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" 
+                  className="flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground" 
                 />
               </div>
               {showLocSuggestions && (
@@ -454,6 +464,7 @@ export default function UserJobs() {
                       filteredList.map((sug, idx) => (
                         <button
                           key={idx}
+                          type="button"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             setLocation(sug);
@@ -471,7 +482,14 @@ export default function UserJobs() {
                 </div>
               )}
             </div>
-          </div>
+            <button
+              type="submit"
+              className="google-shadow flex items-center justify-center gap-1.5 rounded-full bg-[#2563EB] hover:bg-blue-700 active:bg-blue-800 text-white font-semibold px-5 py-2 text-xs sm:text-sm transition-all duration-200 shrink-0 w-full sm:w-auto h-[38px] cursor-pointer"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span>Search</span>
+            </button>
+          </form>
         </div>
 
         {/* Quick Category Filter Pills */}

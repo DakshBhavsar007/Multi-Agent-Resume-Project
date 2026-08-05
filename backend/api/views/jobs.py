@@ -52,7 +52,7 @@ def list_public_jobs(request):
         return JsonResponse(error_response("Method not allowed"), status=405)
         
     try:
-        query = request.GET.get("query", "").strip()
+        query = (request.GET.get("q") or request.GET.get("query") or request.GET.get("category") or "").strip()
         location_filter = request.GET.get("location", "").strip()
         try:
             page = int(request.GET.get("page", 1))
