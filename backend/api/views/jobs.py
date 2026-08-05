@@ -119,7 +119,8 @@ def list_public_jobs(request):
                 "created_at": s.created_at.isoformat() if s.created_at else None,
                 "salary_range": _get_salary_range(s),
                 "location": meta["location"],
-                "employment_type": meta["employment_type"]
+                "employment_type": criteria.get("employment_type") or meta["employment_type"],
+                "workplace_type": criteria.get("workplace_type") or None
             })
         
         response_data = {
@@ -169,10 +170,11 @@ def get_public_job(request, session_id):
             "nice_to_have": criteria.get("nice_to_have", []),
             "preferred_locations": criteria.get("preferred_locations", []),
             "min_experience": criteria.get("min_experience", 0),
-            "created_at": s.created_at.isoformat() if s.created_at else None,
-            "salary_range": _get_salary_range(s),
+            "created_at": session.created_at.isoformat() if session.created_at else None,
+            "salary_range": _get_salary_range(session),
             "location": meta["location"],
-            "employment_type": meta["employment_type"]
+            "employment_type": criteria.get("employment_type") or meta["employment_type"],
+            "workplace_type": criteria.get("workplace_type") or None
         }))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

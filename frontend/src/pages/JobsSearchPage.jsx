@@ -286,8 +286,14 @@ export default function JobsSearchPage() {
     let result = [...jobs];
 
     // Filter by Job Types
+    if (jobTypes.FullTime) {
+      result = result.filter(j => j.employment_type === "Full-time" || j.job_description.toLowerCase().includes('full-time'));
+    }
+    if (jobTypes.Contract) {
+      result = result.filter(j => j.employment_type === "Contract" || j.job_description.toLowerCase().includes('contract'));
+    }
     if (jobTypes.Remote) {
-      result = result.filter(j => j.job_description.toLowerCase().includes('remote') || j.preferred_locations.some(l => l.toLowerCase().includes('remote')));
+      result = result.filter(j => j.workplace_type === "Remote" || j.job_description.toLowerCase().includes('remote') || j.preferred_locations.some(l => l.toLowerCase().includes('remote')));
     }
 
     // Filter by Experience Level

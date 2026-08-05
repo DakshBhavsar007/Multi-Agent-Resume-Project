@@ -246,6 +246,7 @@ function cleanDescriptionSnippet(text) {
 }
 
 function getWorkplaceType(job) {
+  if (job.workplace_type) return job.workplace_type;
   const loc = (job.location || "").toLowerCase();
   const desc = (job.job_description || "").toLowerCase();
   if (loc.includes("remote")) return "Remote";

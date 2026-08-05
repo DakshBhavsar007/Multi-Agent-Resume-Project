@@ -175,7 +175,8 @@ def _session_to_job(session: Session, match_score=None, applied=False, is_saved=
         "applicant_count": session.applicant_count if hasattr(session, "applicant_count") else session.seeker_applications.count(),
         "salary_range": _get_salary_range(session),
         "location": loc,
-        "employment_type": meta["employment_type"],
+        "employment_type": criteria.get("employment_type") or meta["employment_type"],
+        "workplace_type": criteria.get("workplace_type") or None,
     }
 
 

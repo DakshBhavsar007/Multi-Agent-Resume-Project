@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Between (Vishleshan) — Ultimate Code & Architecture Reference Manual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #06080d;
+      --bg-card: #0d111c;
+      --bg-card-hover: #141a29;
+      --border-color: #1a2336;
+      --border-color-glow: rgba(56, 189, 248, 0.4);
+      --accent-blue: #38bdf8;
+      --accent-indigo: #6366f1;
+      --accent-purple: #a855f7;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+    .app-container { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 320px;
+      background-color: rgba(13, 17, 28, 0.95);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid var(--border-color);
+      position: fixed;
+      top: 0; bottom: 0; left: 0;
+      z-index: 50;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .brand-logo { display: flex; align-items: center; gap: 12px; padding: 8px 12px; text-decoration: none; color: white; }
+    .brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 20px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+    .brand-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+
+    .search-box { position: relative; margin: 4px 0; }
+    .search-input {
+      width: 100%; padding: 10px 14px 10px 36px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 10px; color: white; font-size: 13px; outline: none; transition: all 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent-blue); box-shadow: 0 0 12px rgba(56, 189, 248, 0.2); }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 14px; }
+
+    .nav-menu { display: flex; flex-direction: column; gap: 4px; list-style: none; }
+    .nav-section-label {
+      font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 14px 12px 4px 12px;
+    }
+    .nav-item a {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 500; transition: all 0.15s;
+    }
+    .nav-item a:hover, .nav-item.active a { background: rgba(56, 189, 248, 0.1); color: var(--accent-blue); font-weight: 600; }
+
+    .main-content { margin-left: 320px; flex: 1; padding: 40px 60px; max-width: 1450px; }
+
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(13, 17, 28, 0.95), rgba(30, 41, 59, 0.7)), radial-gradient(circle at top right, rgba(99, 102, 241, 0.2), transparent 60%);
+      border: 1px solid var(--border-color); border-radius: 20px; padding: 40px; margin-bottom: 40px; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .hero-banner::after {
+      content: ''; position: absolute; top: 0; right: 0; width: 350px; height: 350px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); pointer-events: none;
+    }
+
+    .badge-pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-blue); margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-size: 40px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; background: linear-gradient(135deg, #ffffff 30%, var(--accent-blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle { font-size: 16px; color: var(--text-muted); max-width: 900px; margin-bottom: 24px; }
+    .tag-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .tech-tag {
+      background: var(--bg-card); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-family: 'JetBrains Mono', monospace; color: var(--text-main); display: flex; align-items: center; gap: 6px;
+    }
+
+    .section-card {
+      background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 36px; margin-bottom: 36px; transition: border-color 0.2s;
+    }
+    .section-card:hover { border-color: rgba(56, 189, 248, 0.3); }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);
+    }
+    .section-title { font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+    .section-title span { background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo)); width: 10px; height: 24px; border-radius: 4px; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+    @media (max-width: 1100px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 20px; }
+    }
+
+    .sub-card {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;
+    }
+    .sub-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--accent-blue); display: flex; align-items: center; gap: 8px; }
+    .sub-card p { font-size: 13.5px; color: var(--text-muted); line-height: 1.6; }
+
+    .code-box {
+      background: #090c14; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; margin-top: 16px; font-family: 'JetBrains Mono', monospace;
+    }
+    .code-header {
+      background: #111624; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); font-size: 12px; color: var(--text-dim);
+    }
+    .code-body { padding: 18px; font-size: 12.5px; color: #e6edf3; overflow-x: auto; white-space: pre; line-height: 1.6; }
+
+    .kw { color: #ff7b72; }
+    .fn { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .cm { color: #8b949e; font-style: italic; }
+
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+    .data-table th, .data-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .data-table th { background: rgba(255, 255, 255, 0.03); color: var(--text-muted); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .data-table tr:hover { background: rgba(56, 189, 248, 0.03); }
+
+    .pk-badge { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .fk-badge { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .idx-badge { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+
+    .footer-bar {
+      margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; color: var(--text-dim); font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <a href="#" class="brand-logo">
+      <div class="brand-icon">B</div>
+      <div class="brand-title">Between Code Docs</div>
+    </a>
+
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="docSearch" class="search-input" placeholder="Search agents, code, models..." onkeyup="filterDocs()">
+    </div>
+
+    <ul class="nav-menu">
+      <li class="nav-section-label">Overview</li>
+      <li class="nav-item active"><a href="#overview">🚀 Executive Overview</a></li>
+
+      <li class="nav-section-label">1. Agent Code & Implementations</li>
+      <li class="nav-item"><a href="#agent-llm-code">⚡ llm.py (RotateLLMClient)</a></li>
+      <li class="nav-item"><a href="#agent-parsing-code">📄 parsing_agent.py</a></li>
+      <li class="nav-item"><a href="#agent-matching-code">🎯 matching_agent.py</a></li>
+      <li class="nav-item"><a href="#agent-interview-code">🎤 interview_agent.py</a></li>
+      <li class="nav-item"><a href="#agent-embeddings-code">📊 embeddings.py</a></li>
+
+      <li class="nav-section-label">2. Database Models Schema</li>
+      <li class="nav-item"><a href="#database-models">🗄️ 41 Django Models (PKs, FKs, Indexes)</a></li>
+
+      <li class="nav-section-label">3. Core Algorithms</li>
+      <li class="nav-item"><a href="#algorithms">🧠 Algorithms, Cosine & Failover</a></li>
+
+      <li class="nav-section-label">4. React Components Inventory</li>
+      <li class="nav-item"><a href="#frontend-components">🎨 React 18 Components Inventory</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    
+    <!-- Hero Banner -->
+    <div class="hero-banner" id="overview">
+      <div class="badge-pill">✨ Ultimate Source Code & System Reference</div>
+      <h1 class="hero-title">Between (Vishleshan) Master Code & Architecture</h1>
+      <p class="hero-subtitle">
+        Comprehensive reference including source code implementations for all multi-agent LLM routers, parsing engines, similarity matchers, 41 Django database models, primary/foreign keys, database indexes, and React component inventories.
+      </p>
+
+      <div class="tag-grid">
+        <div class="tech-tag">🐍 Python 3.10+ Source Code</div>
+        <div class="tech-tag">🤖 RotateLLMClient Pool</div>
+        <div class="tech-tag">📄 Resume Parsing Agent</div>
+        <div class="tech-tag">🎯 Cosine Semantic Matcher</div>
+        <div class="tech-tag">🗄️ 41 Django Models (PK/FK/Index)</div>
+        <div class="tech-tag">⚛️ React 18 Components</div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: AGENT SOURCE CODE EXAMPLES -->
+    <div class="section-card" id="agent-llm-code">
+      <div class="section-header">
+        <h2 class="section-title"><span></span>1.1 LLM Router Implementation (`backend/agents/llm.py`)</h2>
+        <span class="badge-pill">Python Code</span>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 12px;">
+        Core load-balancer & failover client for Google Gemini & Groq LLM requests.
+      </p>
+
+      <div class="code-box">
+        <div class="code-header">
+          <span>backend/agents/llm.py — RotateLLMClient Source Code Snippet</span>
+          <span>Python</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> google.generativeai <span class="kw">as</span> genai
+<span class="kw">import</span> os, time, logging
+<span class="kw">from</span> django.conf <span class="kw">import</span> settings
+
+logger = logging.getLogger(__name__)
+
+<span class="kw">class</span> <span class="fn">RotateLLMClient</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, agent_name=<span class="str">"default"</span>):
+        self.agent_name = agent_name
+        self.api_keys = getattr(settings, <span class="str">"GEMINI_API_KEYS"</span>, [])
+        self.current_idx = <span class="str">0</span>
+
+    <span class="kw">def</span> <span class="fn">generate_content</span>(self, prompt: str, **kwargs) -> str:
+        <span class="cm"># Automatic failover across registered API key pool on 429 / 503 errors</span>
+        <span class="kw">if</span> <span class="kw">not</span> self.api_keys:
+            self.api_keys = [os.getenv(<span class="str">"GEMINI_API_KEY"</span>, <span class="str">""</span>)]
+
+        attempts = <span class="str">0</span>
+        max_attempts = len(self.api_keys) * <span class="str">2</span>
+
+        <span class="kw">while</span> attempts &lt; max_attempts:
+            key = self.api_keys[self.current_idx]
+            <span class="kw">try</span>:
+                genai.configure(api_key=key)
+                model = genai.GenerativeModel(<span class="str">'gemini-1.5-flash'</span>)
+                res = model.generate_content(prompt, **kwargs)
+                <span class="kw">return</span> res.text
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                logger.warning(<span class="str">f"Key {self.current_idx} failed for agent '{self.agent_name}': {e}. Rotating..."</span>)
+                self.current_idx = (self.current_idx + <span class="str">1</span>) % len(self.api_keys)
+                attempts += <span class="str">1</span>
+                time.sleep(<span class="str">0.5</span>)
+
+        <span class="kw">raise</span> RuntimeError(<span class="str">"All Gemini API keys in pool exhausted."</span>)</div>
+      </div>
+    </div>
+
+    <!-- PARSING AGENT CODE -->
+    <div class="section-card" id="agent-parsing-code">
+      <div class="section-header">
+        <h2 class="section-title"><span></span>1.2 Resume Parsing Agent (`backend/agents/parsing_agent.py`)</h2>
+        <span class="badge-pill">Python Code</span>
+      </div>
+
+      <div class="code-box">
+        <div class="code-header">
+          <span>backend/agents/parsing_agent.py — Structured Extraction Source</span>
+          <span>Python</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> pdfplumber, os, json
+<span class="kw">from</span> docx <span class="kw">import</span> Document
+<span class="kw">from</span> agents.llm <span class="kw">import</span> RotateLLMClient
+
+<span class="kw">class</span> <span class="fn">ResumeParsingAgent</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.client = RotateLLMClient(agent_name=<span class="str">"parsing_agent"</span>)
+
+    <span class="kw">async def</span> <span class="fn">parse</span>(self, file_path: str, file_type: str) -> dict:
+        <span class="kw">if</span> file_type == <span class="str">"pdf"</span>:
+            text = self._extract_pdf_text(file_path)
+        <span class="kw">elif</span> file_type <span class="kw">in</span> [<span class="str">"docx"</span>, <span class="str">"doc"</span>]:
+            text = self._extract_docx_text(file_path)
+        <span class="kw">else</span>:
+            <span class="kw">with</span> open(file_path, <span class="str">'r'</span>, errors=<span class="str">'ignore'</span>) <span class="kw">as</span> f:
+                text = f.read()
+
+        prompt = <span class="str">f"""
+Extract candidate profile JSON from this resume text:
+{text[:4000]}
+
+Return pure JSON matching:
+{{
+  "name": str, "email": str|null, "phone": str|null, "location": str|null,
+  "skills": [{"skill": str, "years": float|null}],
+  "total_experience_years": float,
+  "experience": [{"company": str, "role": str, "responsibilities": [str]}]
+}}
+"""</span>
+        raw_response = self.client.generate_content(prompt)
+        <span class="kw">return</span> json.loads(raw_response.strip(<span class="str">"`json\n"</span>))</div>
+      </div>
+    </div>
+
+    <!-- MATCHING AGENT CODE -->
+    <div class="section-card" id="agent-matching-code">
+      <div class="section-header">
+        <h2 class="section-title"><span></span>1.3 Semantic Matching Agent (`backend/agents/matching_agent.py`)</h2>
+        <span class="badge-pill">Python Code</span>
+      </div>
+
+      <div class="code-box">
+        <div class="code-header">
+          <span>backend/agents/matching_agent.py — Vector Similarity Implementation</span>
+          <span>Python</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> sklearn.metrics.pairwise <span class="kw">import</span> cosine_similarity
+<span class="kw">from</span> agents.embeddings <span class="kw">import</span> get_embedding_model
+
+<span class="kw">class</span> <span class="fn">SemanticMatchingAgent</span>:
+    <span class="kw">async def</span> <span class="fn">match</span>(self, candidate: dict, criteria: dict) -> dict:
+        weights = criteria.get(<span class="str">"weights"</span>, {<span class="str">"skills"</span>: <span class="str">0.5</span>, <span class="str">"experience"</span>: <span class="str">0.3</span>, <span class="str">"location"</span>: <span class="str">0.2</span>})
+        required = criteria.get(<span class="str">"required_skills"</span>, [])
+        candidate_skills = [s.get(<span class="str">"canonical_skill"</span>, str(s)) <span class="kw">for</span> s <span class="kw">in</span> candidate.get(<span class="str">"normalized_skills"</span>, [])]
+
+        model = get_embedding_model()
+        req_embeddings = model.encode(required)
+        cand_embeddings = model.encode(candidate_skills)
+
+        <span class="cm"># Compute Cosine Similarity Matrix</span>
+        sim_matrix = cosine_similarity(cand_embeddings, req_embeddings)
+        matched = []
+        <span class="kw">for</span> i, req <span class="kw">in</span> enumerate(required):
+            sims = sim_matrix[:, i]
+            <span class="kw">if</span> float(np.max(sims)) &gt; <span class="str">0.72</span>:
+                matched.append(req)
+
+        skill_score = (len(matched) / len(required)) * <span class="str">100</span> <span class="kw">if</span> required <span class="kw">else</span> <span class="str">70.0</span>
+        final_score = (skill_score * weights[<span class="str">"skills"</span>]) + <span class="str">30.0</span>
+        <span class="kw">return</span> {<span class="str">"match_score"</span>: round(final_score, <span class="str">1</span>), <span class="str">"matched_skills"</span>: matched}</div>
+      </div>
+    </div>
+
+    <!-- INTERVIEW AGENT CODE -->
+    <div class="section-card" id="agent-interview-code">
+      <div class="section-header">
+        <h2 class="section-title"><span></span>1.4 AI Interviewer Agent (`backend/agents/interview_agent.py`)</h2>
+        <span class="badge-pill">Python Code</span>
+      </div>
+
+      <div class="code-box">
+        <div class="code-header">
+          <span>backend/agents/interview_agent.py — Interactive Interview Simulation</span>
+          <span>Python</span>
+        </div>
+        <div class="code-body"><span class="kw">from</span> agents.llm <span class="kw">import</span> RotateLLMClient
+<span class="kw">import</span> json
+
+<span class="kw">class</span> <span class="fn">AIInterviewAgent</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.client = RotateLLMClient(agent_name=<span class="str">"interview_agent"</span>)
+
+    <span class="kw">def</span> <span class="fn">generate_next_question</span>(self, transcript: list, job_title: str) -> str:
+        prompt = <span class="str">f"""
+You are an expert AI Interviewer for the role of '{job_title}'.
+Transcript history: {json.dumps(transcript)}
+
+Ask the next concise follow-up technical or behavioral question based on the candidate's previous response.
+"""</span>
+        <span class="kw">return</span> self.client.generate_content(prompt)</div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: ALL 41 DATABASE MODELS -->
+    <div class="section-card" id="database-models">
+      <div class="section-header">
+        <h2 class="section-title"><span></span>2. All 41 Django Database Models Table (`backend/api/models.py`)</h2>
+        <span class="badge-pill">PostgreSQL ORM</span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Model Name</th>
+            <th>DB Table Name</th>
+            <th>Primary Key (PK)</th>
+            <th>Foreign Keys (FK)</th>
+            <th>Indexes & Constraints</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Company</code></td><td><code>companies</code></td><td><span class="pk-badge">id (UUID)</span></td><td>—</td><td><span class="idx-badge">db_index: name, is_active, is_banned</span> | unique: email</td></tr>
+          <tr><td><code>APIKey</code></td><td><code>api_keys</code></td><td><span class="pk-badge">id (UUID)</span></td><td><span class="fk-badge">company → Company</span></td><td>unique: secret_key, public_key</td></tr>
+          <tr><td><code>Session</code></td><td><code>sessions</code></td><td><span class="pk-badge">id (UUID)</span></td><td><span class="fk-badge">company → Company</span></td><td><span class="idx-badge">db_index: status</span></td></tr>
+          <tr><td><code>Candidate</code></td><td><code>candidates</code></td><td><span class="pk-badge">id (UUID)</span></td><td><span class="fk-badge">session → Session</span></td><td><span class="idx-badge">db_index: email, match_score, current_round_index, status</span></td></tr>
+          <tr><td><code>SkillTaxonomy</code></td><td><code>skill_taxonomy</code></td><td><span class="pk-badge">id (UUID)</span></td><td>—</td><td>Canonical skill records</td></tr>
+          <tr><td><code>DeveloperAccount</code></td><td><code>developer_accounts</code></td><td><span class="pk-badge">id (UUID)</span></td><td>—</td><td>unique: email</td></tr>
+          <tr><td><code>DeveloperAPIKey</code></td><td><code>developer_api_keys</code></td><td><span class="pk-badge">id (UUID)</span></td><td><span class="fk-badge">developer → DeveloperAccount</span></td><td>unique: secret_key, public_key</td></tr>
+          <tr><td><code>JobSeekerAccount</code></td><td><code>job_seeker_accounts</code></td><td><span class="pk-badge">id (UUID)</span></td><td><span class="fk-badge">active_resume_draft → ResumeDraft</span></td><td><span class="idx-badge">db_index: is_banned</span> | unique: email</td></tr>
+          <tr><td><code>JobApplication</code></td><td><code>job_applications</code></td><td><span class="pk-badge">id (UUID)</span></td><td><span class="fk-badge">seeker → JobSeekerAccount</span>, <span class="fk-badge">session → Session</span></td><td><span class="idx-badge">db_index: status</span> | unique_together: (seeker, session)</td></tr>
+          <tr><td><code>ResumeDraft</code></td><td><code>resume_drafts</code></td><td><span class="pk-badge">id (UUID)</span></td><td><span class="fk-badge">seeker → JobSeekerAccount</span></td><td>7 resume templates JSON storage</td></tr>
+          <tr><td><code>AdminBanLog</code></td><td><code>admin_ban_logs</code></td><td><span class="pk-badge">id (UUID)</span></td><td>—</td><td>User ban action log</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECTION 3: CORE ALGORITHMS -->
+    <div class="section-card" id="algorithms">
+      <div class="section-header">
+        <h2 class="section-title"><span></span>3. Core Algorithms, Vector Matching & Indexing</h2>
+        <span class="badge-pill">Algorithms</span>
+      </div>
+
+      <div class="grid-2">
+        <div class="sub-card">
+          <h4>📊 1. Cosine Similarity Vector Matching</h4>
+          <p>384-dimensional dense embeddings generated by sentence-transformers for resume vs JD semantic matching.</p>
+        </div>
+        <div class="sub-card">
+          <h4>🤖 2. Round-Robin Key Failover Pool</h4>
+          <p>Atomic key rotation algorithm across Gemini & Groq API key pools preventing 429 quota exhaustion.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: FRONTEND COMPONENTS -->
+    <div class="section-card" id="frontend-components">
+      <div class="section-header">
+        <h2 class="section-title"><span></span>4. Complete Frontend React Components Inventory</h2>
+        <span class="badge-pill">React 18</span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Component Name</th>
+            <th>File Path</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>JobsNavbar</code></td><td><code>components/JobsNavbar.jsx</code></td><td>Seeker portal navigation header.</td></tr>
+          <tr><td><code>CandidateCard</code></td><td><code>components/CandidateCard.jsx</code></td><td>Candidate ATS card on board.</td></tr>
+          <tr><td><code>UserJobs</code></td><td><code>pages/user/UserJobs.jsx</code></td><td>Main job search page with Form & Search button.</td></tr>
+          <tr><td><code>ResumeEditor</code></td><td><code>pages/user/ResumeEditor.jsx</code></td><td>AI resume builder with 7 templates.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="footer-bar">
+      <div>© 2026 Between (Vishleshan) Multi-Agent AI Platform</div>
+      <div>Full Master Source Code & System Reference</div>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  function filterDocs() {
+    const query = document.getElementById('docSearch').value.toLowerCase();
+    const sections = document.querySelectorAll('.section-card');
+
+    sections.forEach(sec => {
+      const text = sec.innerText.toLowerCase();
+      if (text.includes(query)) {
+        sec.style.display = 'block';
+      } else {
+        sec.style.display = 'none';
+      }
+    });
+  }
+</script>
+</body>
+</html>

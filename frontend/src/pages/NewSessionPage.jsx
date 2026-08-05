@@ -200,6 +200,7 @@ export default function NewSessionPage() {
     name: "", job_title: "", job_description: "",
     required_skills: [], nice_to_have: [],
     preferred_locations: [], min_experience: 0,
+    employment_type: "Full-time", workplace_type: "On-site",
     min_match_score: 60,
     salary_min: "", salary_max: "", salary_currency: "INR",
     weights: { skills: 0.5, experience: 0.3, location: 0.2 },
@@ -493,10 +494,18 @@ export default function NewSessionPage() {
           required_skills: (inferred.required_skills && inferred.required_skills.length > 0) ? inferred.required_skills : prev.required_skills,
           nice_to_have: (inferred.nice_to_have_skills && inferred.nice_to_have_skills.length > 0) ? inferred.nice_to_have_skills : prev.nice_to_have,
           preferred_locations: (inferred.preferred_locations && inferred.preferred_locations.length > 0) ? inferred.preferred_locations : prev.preferred_locations,
-          min_experience: inferred.minimum_experience_years !== undefined ? inferred.minimum_experience_years : prev.min_experience,
+          min_experience: (inferred.minimum_experience_years !== undefined && inferred.minimum_experience_years > 0) ? inferred.minimum_experience_years : prev.min_experience,
           salary_min: salMin,
           salary_max: salMax,
-          salary_currency: currency
+          salary_currency: currency,
+          employment_type: inferred.employment_type || prev.employment_type,
+          workplace_type: ((locs, desc) => {
+            const locStr = (locs || []).join(" ").toLowerCase();
+            const d = (desc || "").toLowerCase();
+            if (locStr.includes("remote") || d.includes("remote")) return "Remote";
+            if (locStr.includes("hybrid") || d.includes("hybrid")) return "Hybrid";
+            return "On-site";
+          })(inferred.preferred_locations, jdText) || prev.workplace_type
         };
       });
       toast.success("AI analysis complete!");
@@ -599,6 +608,8 @@ export default function NewSessionPage() {
         required_skills: formData.required_skills,
         nice_to_have: formData.nice_to_have,
         preferred_locations: formData.preferred_locations,
+        employment_type: formData.employment_type,
+        workplace_type: formData.workplace_type,
         min_experience: formData.min_experience,
         min_match_score: formData.min_match_score,
         weights: formData.weights,
@@ -719,6 +730,34 @@ export default function NewSessionPage() {
                   placeholder="e.g., Senior Full Stack Engineer"
                   className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 items-start">
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1.5">Job Type</label>
+                  <select
+                    value={formData.employment_type}
+                    onChange={e => setFormData({...formData, employment_type: e.target.value})}
+                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none bg-white cursor-pointer font-medium text-charcoal"
+                  >
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1.5">Workplace Location</label>
+                  <select
+                    value={formData.workplace_type}
+                    onChange={e => setFormData({...formData, workplace_type: e.target.value})}
+                    className="w-full p-3 border-[1.5px] border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:outline-none bg-white cursor-pointer font-medium text-charcoal"
+                  >
+                    <option value="On-site">On-site</option>
+                    <option value="Remote">Remote</option>
+                    <option value="Hybrid">Hybrid</option>
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3 items-start">
