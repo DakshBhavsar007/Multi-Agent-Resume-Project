@@ -334,9 +334,12 @@ def gmail_sync(request):
                 job_description="Proficient in React and Python"
             )
 
+        from_date = data.get("from_date", "")  # e.g. "2025-01-15"
+        to_date = data.get("to_date", "")        # e.g. "2025-06-30"
+
         job = IngestJob.objects.create(session=session, type="gmail", status="pending")
 
-        sync_gmail_resumes.delay(str(session.id), str(job.id))
+        sync_gmail_resumes.delay(str(session.id), str(job.id), from_date, to_date)
         return JsonResponse(success_response({"job_id": str(job.id), "status": "pending"}))
     except Exception as e:
         return JsonResponse(error_response(f"Server error: {str(e)}"), status=500)

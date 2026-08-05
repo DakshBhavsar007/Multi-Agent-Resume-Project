@@ -579,7 +579,7 @@ def enrich_candidates_llm(candidate_ids: list):
             print(f"[LLM Enrich] Failed for {cid}: {e}")
 
 @celery_app.task(name="sync_gmail_resumes")
-def sync_gmail_resumes(session_id: str, job_id: str):
+def sync_gmail_resumes(session_id: str, job_id: str, from_date: str = "", to_date: str = ""):
     try:
         session_row = SessionModel.objects.get(id=session_id)
         job = IngestJob.objects.get(id=job_id)
@@ -599,6 +599,11 @@ def sync_gmail_resumes(session_id: str, job_id: str):
         service = build('gmail', 'v1', credentials=creds)
 
         query = "has:attachment filename:(pdf OR docx OR txt) subject:(resume OR CV OR application)"
+        # Append date range filters if provided (format: YYYY-MM-DD → YYYY/MM/DD for Gmail)
+        if from_date:
+            query += f" after:{from_date.replace('-', '/')}"
+        if to_date:
+            query += f" before:{to_date.replace('-', '/')}"
         results = service.users().messages().list(userId='me', q=query, maxResults=50).execute()
         messages = results.get('messages', [])
 

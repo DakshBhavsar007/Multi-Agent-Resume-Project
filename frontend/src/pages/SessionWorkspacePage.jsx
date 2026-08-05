@@ -96,6 +96,8 @@ export default function SessionWorkspacePage() {
   const [atsFile, setAtsFile] = useState(null);
   const [googleType, setGoogleType] = useState("drive"); 
   const [atsFormat, setAtsFormat] = useState("csv"); 
+  const [gmailFromDate, setGmailFromDate] = useState("");
+  const [gmailToDate, setGmailToDate] = useState("");
 
   const { data: session, isLoading } = useQuery({
     queryKey: ["session", id],
@@ -695,18 +697,31 @@ export default function SessionWorkspacePage() {
                         <p className="text-[10px] font-semibold text-gray-400 mt-3 text-center">We only read emails with resume attachments</p>
                       </div>
                     ) : (
-                      <div className="flex flex-col h-[120px] justify-center bg-green-50 rounded-xl border border-green-100 p-4">
+                      <div className="flex flex-col justify-center bg-green-50 rounded-xl border border-green-100 p-4">
                         <div className="flex items-center gap-2 text-green-700 font-bold text-sm mb-1 bg-white px-3 py-1.5 rounded-lg border border-green-200 self-start">
                           <Check size={16} strokeWidth={3}/> {session.gmail_address}
                         </div>
-                        <p className="text-[11px] font-semibold text-green-600/70 mb-4 mt-2 pl-1">Last synced: {session.last_gmail_sync ? new Date(session.last_gmail_sync).toLocaleString() : 'Never'}</p>
+                        <p className="text-[11px] font-semibold text-green-600/70 mb-3 mt-1.5 pl-1">Last synced: {session.last_gmail_sync ? new Date(session.last_gmail_sync).toLocaleString() : 'Never'}</p>
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-500 mb-0.5 pl-0.5">From Date</label>
+                            <input type="date" value={gmailFromDate} onChange={e => setGmailFromDate(e.target.value)} className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:border-accent focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-500 mb-0.5 pl-0.5">To Date</label>
+                            <input type="date" value={gmailToDate} onChange={e => setGmailToDate(e.target.value)} className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:border-accent focus:outline-none" />
+                          </div>
+                        </div>
                         <button onClick={async () => {
                           try {
-                            const { job_id } = await ingestAPI.syncGmail({ session_id: id });
+                            const payload = { session_id: id };
+                            if (gmailFromDate) payload.from_date = gmailFromDate;
+                            if (gmailToDate) payload.to_date = gmailToDate;
+                            const { job_id } = await ingestAPI.syncGmail(payload);
                             addJob(job_id, "gmail");
                             toast.success("Gmail sync started");
                           } catch(e) { toast.error(e.message) }
-                        }} className="bg-accent text-white py-2 rounded-lg text-sm font-bold hover:bg-[#1D4ED8] shadow-sm transition-colors mt-auto">
+                        }} className="bg-accent text-white py-2 rounded-lg text-sm font-bold hover:bg-[#1D4ED8] shadow-sm transition-colors">
                           Sync Now
                         </button>
                       </div>
