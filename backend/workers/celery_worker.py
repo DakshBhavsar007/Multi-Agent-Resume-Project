@@ -281,6 +281,30 @@ def _normalize_skills_sync(raw_skills: list, db=None) -> list:
     from agents.normalization_agent import _normalize_skills_sync as fast_normalize
     return fast_normalize(raw_skills, db)
 
+def _normalize_match_skill(s):
+    """Normalize skill string for fuzzy matching (strips spaces/digits, maps aliases)."""
+    if not s:
+        return ""
+    s = str(s).lower().strip()
+    s = re.sub(r'[\d\.\-\_\s]', '', s)
+    ALIASES = {
+        'js': 'javascript', 'javascript': 'javascript',
+        'reactjs': 'react', 'react': 'react',
+        'nodejs': 'node', 'node': 'node',
+        'ts': 'typescript', 'typescript': 'typescript',
+        'py': 'python', 'python': 'python',
+        'html': 'html', 'css': 'css',
+        'htmlcss': 'htmlcss',
+        'nextjs': 'nextjs', 'next': 'nextjs',
+        'vuejs': 'vue', 'vue': 'vue',
+        'angularjs': 'angular', 'angular': 'angular',
+        'expressjs': 'express', 'express': 'express',
+        'mongodb': 'mongodb', 'mongo': 'mongodb',
+        'postgresql': 'postgresql', 'postgres': 'postgresql',
+        'mysql': 'mysql', 'sql': 'sql',
+    }
+    return ALIASES.get(s, s)
+
 @celery_app.task(bind=True, max_retries=2, name="process_resume_batch")
 def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, source: str = "upload", use_llm: bool = True):
     """Process resume files. Two-phase approach for speed:
@@ -321,9 +345,17 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
         criteria = session_row.criteria or {}
         min_match_score = criteria.get("min_match_score", 0)
         required_skills = criteria.get("required_skills", [])
+        # Fallback to inferred_skills if required_skills is empty
+        if not required_skills and getattr(session_row, 'inferred_skills', None):
+            inferred = session_row.inferred_skills
+            if isinstance(inferred, dict):
+                required_skills = inferred.get('required_skills', []) or inferred.get('skills', []) or []
+            elif isinstance(inferred, list):
+                required_skills = inferred
         rounds = session_row.rounds or []
         first_round_order = rounds[0]["order"] if rounds else 0
         req_lower = [r.lower() for r in required_skills]
+        req_normalized = {_normalize_match_skill(r) for r in required_skills if r}
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(file_paths), 30)) as executor:
             future_to_path = {executor.submit(_process_one, p): p for p in file_paths}
@@ -366,13 +398,28 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
 
                 # Simple rule-based match scoring if criteria exist
                 if required_skills:
-                    cand_skill_names = {
+                    cand_skill_names_raw = {
                         (s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)).lower()
                         if isinstance(s, dict) else str(s).lower()
                         for s in normalized_skills if s
                     }
-                    matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
-                    missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
+                    # Build normalized set for fuzzy matching
+                    cand_normalized = {_normalize_match_skill(s) for s in cand_skill_names_raw if s}
+                    
+                    matched_list = []
+                    missing_list = []
+                    for r in required_skills:
+                        r_norm = _normalize_match_skill(r)
+                        # Check normalized match first, then substring containment fallback
+                        if r_norm and (
+                            r_norm in cand_normalized or
+                            any(r_norm in c or c in r_norm for c in cand_normalized if len(c) > 2) or
+                            any(r.lower() in s for s in cand_skill_names_raw)
+                        ):
+                            matched_list.append(r)
+                        else:
+                            missing_list.append(r)
+                    
                     matched = len(matched_list)
                     skill_score = round((matched / len(req_lower)) * 100) if req_lower else 0
                     
@@ -406,6 +453,10 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
                         "matched_count": matched,
                         "total_required": len(req_lower)
                     }
+                    
+                    # Auto-reject if below min_match_score threshold
+                    if min_match_score > 0 and score < min_match_score:
+                        new_cand.status = "rejected"
                 # Pre-generate AI insights if LLM parsed
                 if parsed_res.get("parsing_method") == "llm":
                     try:
@@ -871,7 +922,15 @@ def match_all_candidates(session_id: str, job_id: str):
     criteria = session_row.criteria or {}
     min_match_score = criteria.get("min_match_score", 0)
     required_skills = criteria.get("required_skills", [])
+    # Fallback to inferred_skills if required_skills is empty
+    if not required_skills and getattr(session_row, 'inferred_skills', None):
+        inferred = session_row.inferred_skills
+        if isinstance(inferred, dict):
+            required_skills = inferred.get('required_skills', []) or inferred.get('skills', []) or []
+        elif isinstance(inferred, list):
+            required_skills = inferred
     req_lower = [r.lower() for r in required_skills]
+    req_normalized = {_normalize_match_skill(r) for r in required_skills if r}
 
     candidates = Candidate.objects.filter(session_id=session_id)
     total_count = candidates.count()
@@ -883,13 +942,28 @@ def match_all_candidates(session_id: str, job_id: str):
     processed_count = 0
     for cand in candidates:
         norm_skills = cand.normalized_skills or []
-        cand_skill_names = {
+        cand_skill_names_raw = {
             (s.get("canonical_skill") or s.get("skill") or s.get("raw_skill") or str(s)).lower()
             if isinstance(s, dict) else str(s).lower()
             for s in norm_skills if s
         }
-        matched_list = [r for r in required_skills if any(r.lower() in s for s in cand_skill_names)]
-        missing_list = [r for r in required_skills if r.lower() not in [m.lower() for m in matched_list]]
+        # Build normalized set for fuzzy matching
+        cand_normalized = {_normalize_match_skill(s) for s in cand_skill_names_raw if s}
+        
+        matched_list = []
+        missing_list = []
+        for r in required_skills:
+            r_norm = _normalize_match_skill(r)
+            # Check normalized match first, then substring containment fallback
+            if r_norm and (
+                r_norm in cand_normalized or
+                any(r_norm in c or c in r_norm for c in cand_normalized if len(c) > 2) or
+                any(r.lower() in s for s in cand_skill_names_raw)
+            ):
+                matched_list.append(r)
+            else:
+                missing_list.append(r)
+        
         matched = len(matched_list)
         skill_score = round((matched / len(req_lower)) * 100) if req_lower else 0
 

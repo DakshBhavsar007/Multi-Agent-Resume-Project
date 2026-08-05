@@ -65,7 +65,7 @@ def clean_candidate_name(raw_name):
     return " ".join([word.capitalize() for word in name.split() if word])
 
 
-def _serialize_candidate_summary(c):
+def _serialize_candidate_summary(c, session_min_score=None):
     match_details = c.match_details or {}
     norm_skills = c.normalized_skills or []
     raw_data = c.raw_resume_data or {}
@@ -107,7 +107,7 @@ def _serialize_candidate_summary(c):
         except:
             resume_url = None
 
-    return {
+    result = {
         "id": str(c.id),
         "name": clean_candidate_name(c.name),
         "email": c.email,
@@ -138,6 +138,9 @@ def _serialize_candidate_summary(c):
         "source": c.source,
         "created_at": c.created_at.isoformat() if c.created_at else None
     }
+    if session_min_score is not None:
+        result["session_min_score"] = session_min_score
+    return result
 
 @csrf_exempt
 @require_api_key
@@ -169,6 +172,11 @@ def list_candidates(request, session_id):
         
         page = int(request.GET.get("page", 1))
         per_page = int(request.GET.get("per_page", 50))
+
+        # Fetch session's min_match_score from criteria
+        session_obj = Session.objects.filter(id=session_id).first()
+        session_criteria = (session_obj.criteria or {}) if session_obj else {}
+        session_min_score = session_criteria.get("min_match_score", 0)
 
         query = Candidate.objects.filter(session_id=session_id, deleted_at__isnull=True)
 
@@ -213,7 +221,7 @@ def list_candidates(request, session_id):
         total_rejected = Candidate.objects.filter(session_id=session_id, status="rejected").count()
 
         return JsonResponse(success_response({
-            "candidates": [_serialize_candidate_summary(c) for c in candidates],
+            "candidates": [_serialize_candidate_summary(c, session_min_score=session_min_score) for c in candidates],
             "total": total,
             "total_hired": total_hired,
             "total_rejected": total_rejected,

@@ -109,8 +109,8 @@ export default function CandidateCard({ candidate, sessionId, rounds = [], onAct
   const maxRound = rounds.length > 0 ? Math.max(...rounds.map(r => r.order || 1)) : 1;
   const currentRoundIndex = candidate?.round_index ?? candidate?.current_round_index ?? 0;
   const isLastRound = currentRoundIndex >= maxRound;
-  const minScoreThreshold = candidate?.min_match_score ?? candidate?.session_min_score ?? 60;
-  const isBelowMinScore = score > 0 && score < minScoreThreshold;
+  const minScoreThreshold = candidate?.min_match_score ?? candidate?.session_min_score ?? 0;
+  const isBelowMinScore = minScoreThreshold > 0 && score > 0 && score < minScoreThreshold;
   const isHiredOrRejected = candidate?.status === "hired" || candidate?.status === "rejected" || isBelowMinScore;
 
   const [showOfferModal, setShowOfferModal] = useState(false);

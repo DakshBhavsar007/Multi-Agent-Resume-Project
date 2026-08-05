@@ -1029,7 +1029,10 @@ export default function SessionWorkspacePage() {
                     {candidatesList.map(cand => (
                        <CandidateCard 
                          key={cand.id} 
-                         candidate={cand}
+                         candidate={{
+                           ...cand,
+                           session_min_score: cand.session_min_score ?? session?.criteria?.min_match_score ?? 0
+                         }}
                          sessionId={id}
                          rounds={session?.rounds || []}
                          onAction={() => {
