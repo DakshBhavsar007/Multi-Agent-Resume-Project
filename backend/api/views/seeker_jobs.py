@@ -798,13 +798,19 @@ def my_applications(request):
                 r_order = int(r.get("order", 1))
                 r_score = None
                 r_status = None
+                r_passing_score = 50
                 if candidate:
                     sr_obj = SessionRound.objects.filter(session=session, round_number=r_order).first()
                     if sr_obj:
+                        r_passing_score = sr_obj.passing_score
                         att = ApplicantRoundAttempt.objects.filter(candidate=candidate, round=sr_obj).first()
                         if att:
                             r_score = att.overall_score if att.overall_score is not None else (att.mcq_score or att.coding_score or att.interview_score)
                             r_status = att.status
+                else:
+                    sr_obj = SessionRound.objects.filter(session=session, round_number=r_order).first()
+                    if sr_obj:
+                        r_passing_score = sr_obj.passing_score
                 ui_rounds.append({
                     "name": r.get("name"),
                     "interviewer": r.get("interviewer"),
@@ -812,6 +818,7 @@ def my_applications(request):
                     "result_announcement_date": r.get("result_announcement_date"),
                     "score": r_score,
                     "attempt_status": r_status,
+                    "passing_score": r_passing_score,
                 })
 
             # Compute offer letter URL relative path if present

@@ -534,13 +534,18 @@ export default function UserApplications() {
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5">
                                       <span>Status: <span className={statusColor}>{roundStatus}</span></span>
+                                      {(isActive || isCompleted) && round.passing_score !== undefined && round.passing_score !== null && (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                          Min. Passing: {round.passing_score}%
+                                        </span>
+                                      )}
                                       {round.score !== undefined && round.score !== null && (
                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                          round.score >= 50
+                                          round.score >= (round.passing_score || 50)
                                             ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                                             : "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
                                         }`}>
-                                          {round.score >= 50 ? `Passed (${round.score}%)` : `Failed (${round.score}%)`}
+                                          {round.score >= (round.passing_score || 50) ? `Passed (${round.score}%)` : `Failed (${round.score}%)`}
                                         </span>
                                       )}
                                       {round.interviewer && round.interviewer.trim() !== "" && round.interviewer.trim().toLowerCase() !== "not assigned" && (
