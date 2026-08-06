@@ -1219,23 +1219,23 @@ export default function SessionWorkspacePage() {
             <div className="space-y-6 max-w-6xl pb-10">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {[
-                  { label: "Total Parsed", val: totalParsed, c: "text-charcoal", bg: "bg-gray-50" },
-                  { label: "Scored & Active", val: scoredActive, c: "text-blue-600", bg: "bg-blue-50" },
-                  { label: "Hired Final", val: hiredFinal, c: "text-green-600", bg: "bg-green-50" },
-                  { label: "Rejected", val: rejectedCount, c: "text-red-500", bg: "bg-red-50" },
-                  { label: "Avg Match Score", val: `${avgMatchScore}%`, c: "text-[#2563EB]", bg: "bg-blue-50" },
+                  { label: "Total Parsed", val: totalParsed, c: "text-zinc-900 dark:text-white", bg: "bg-gray-50 dark:bg-zinc-800/40" },
+                  { label: "Scored & Active", val: scoredActive, c: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/40" },
+                  { label: "Hired Final", val: hiredFinal, c: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
+                  { label: "Rejected", val: rejectedCount, c: "text-red-500 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/40" },
+                  { label: "Avg Match Score", val: `${avgMatchScore}%`, c: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/40" },
                 ].map((s,i) => (
-                  <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-center relative overflow-hidden group">
-                    <div className={`absolute top-0 inset-x-0 h-1.5 ${s.bg} border-b border-gray-100 transition-all group-hover:h-full -z-10 opacity-50`}></div>
-                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">{s.label}</div>
+                  <div key={i} className="bg-white dark:bg-[#131316] rounded-2xl p-5 border border-gray-100 dark:border-[#222226] shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-center relative overflow-hidden group">
+                    <div className={`absolute top-0 inset-x-0 h-1.5 ${s.bg} border-b border-gray-100 dark:border-zinc-800 transition-all group-hover:h-full -z-10 opacity-50`}></div>
+                    <div className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2 px-2">{s.label}</div>
                     <div className={`text-4xl font-black ${s.c} drop-shadow-sm`}>{s.val}</div>
                   </div>
                 ))}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-                <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[360px] flex flex-col">
-                  <h3 className="font-black text-charcoal text-lg mb-6 flex items-center gap-2"><div className="w-2 h-6 bg-accent rounded-full"></div>Score Distribution</h3>
+                <div className="bg-white dark:bg-[#131316] rounded-2xl p-7 border border-gray-100 dark:border-[#222226] shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[360px] flex flex-col">
+                  <h3 className="font-black text-zinc-900 dark:text-white text-lg mb-6 flex items-center gap-2"><div className="w-2 h-6 bg-blue-600 rounded-full"></div>Score Distribution</h3>
                   <div className="flex-1 -ml-4">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={[
@@ -1245,17 +1245,17 @@ export default function SessionWorkspacePage() {
                         {name:"60-80", count: allCandidatesList.filter(c=>c.match_score>60 && c.match_score<=80).length}, 
                         {name:"80-100", count: allCandidatesList.filter(c=>c.match_score>80).length}
                       ]}>
-                        <XAxis dataKey="name" tick={{fontSize:12, fill:'#6B7280', fontWeight:600}} axisLine={{stroke:'#E5E7EB'}} tickLine={false} dy={10} />
-                        <YAxis tick={{fontSize:12, fill:'#6B7280', fontWeight:600}} axisLine={false} tickLine={false} dx={-10} />
-                        <Tooltip cursor={{fill: '#F5F0E8', radius: 8}} contentStyle={{borderRadius:12, border:'1px solid #E5E7EB', boxShadow:'0 8px 24px rgba(0,0,0,0.08)', fontWeight:700}}/>
+                        <XAxis dataKey="name" tick={{fontSize:12, fill:'#9CA3AF', fontWeight:600}} axisLine={{stroke:'#374151'}} tickLine={false} dy={10} />
+                        <YAxis tick={{fontSize:12, fill:'#9CA3AF', fontWeight:600}} axisLine={false} tickLine={false} dx={-10} />
+                        <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.08)', radius: 8}} contentStyle={{borderRadius:12, backgroundColor: 'var(--bg)', border:'1px solid var(--border)', color: 'var(--text)', boxShadow:'0 8px 24px rgba(0,0,0,0.2)', fontWeight:700}}/>
                         <Bar dataKey="count" fill="#2563EB" radius={[6,6,0,0]} barSize={40} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[360px] flex flex-col">
-                  <h3 className="font-black text-charcoal text-lg mb-4 flex items-center gap-2"><div className="w-2 h-6 bg-blue-500 rounded-full"></div>Status Breakdown</h3>
+                <div className="bg-white dark:bg-[#131316] rounded-2xl p-7 border border-gray-100 dark:border-[#222226] shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[360px] flex flex-col">
+                  <h3 className="font-black text-zinc-900 dark:text-white text-lg mb-4 flex items-center gap-2"><div className="w-2 h-6 bg-blue-500 rounded-full"></div>Status Breakdown</h3>
                   <div className="flex-1 flex justify-center items-center relative">
                     <div className="w-[240px] h-[240px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1273,27 +1273,27 @@ export default function SessionWorkspacePage() {
                             <Cell fill="#EF4444"/>
                             <Cell fill="#22C55E"/>
                           </Pie>
-                          <Tooltip contentStyle={{borderRadius:12, border:'1px solid #E5E7EB', boxShadow:'0 8px 24px rgba(0,0,0,0.08)', fontWeight:700}}/>
+                          <Tooltip contentStyle={{borderRadius:12, backgroundColor: 'var(--bg)', border:'1px solid var(--border)', color: 'var(--text)', boxShadow:'0 8px 24px rgba(0,0,0,0.2)', fontWeight:700}}/>
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                      <span className="text-3xl font-black text-charcoal">{totalParsed}</span>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Total</span>
+                      <span className="text-3xl font-black text-zinc-900 dark:text-white">{totalParsed}</span>
+                      <span className="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest mt-1">Total</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[360px] flex flex-col">
-                  <h3 className="font-black text-charcoal text-lg mb-6 flex items-center gap-2"><div className="w-2 h-6 bg-green-500 rounded-full"></div>Hiring Funnel</h3>
+                <div className="bg-white dark:bg-[#131316] rounded-2xl p-7 border border-gray-100 dark:border-[#222226] shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[360px] flex flex-col">
+                  <h3 className="font-black text-zinc-900 dark:text-white text-lg mb-6 flex items-center gap-2"><div className="w-2 h-6 bg-emerald-500 rounded-full"></div>Hiring Funnel</h3>
                   <div className="flex-1 flex flex-col justify-between py-2 text-sm">
                     {(() => {
                       const funnelData = [
-                        { stage: "Applied / Ingested", count: totalParsed, color: "bg-blue-600" },
-                        { stage: "Screening Round", count: (session.candidate_counts_per_round?.["1"] || 0) + (session.candidate_counts_per_round?.["2"] || 0) + (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-indigo-500" },
-                        { stage: "Technical Round", count: (session.candidate_counts_per_round?.["2"] || 0) + (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-purple-500" },
-                        { stage: "HR Round", count: (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-pink-500" },
-                        { stage: "Hired Final", count: hiredFinal, color: "bg-emerald-500" }
+                        { stage: "Applied / Ingested", count: totalParsed, color: "bg-blue-600 dark:bg-blue-500" },
+                        { stage: "Aptitude Round", count: (session.candidate_counts_per_round?.["1"] || 0) + (session.candidate_counts_per_round?.["2"] || 0) + (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-indigo-500 dark:bg-indigo-400" },
+                        { stage: "Coding Round", count: (session.candidate_counts_per_round?.["2"] || 0) + (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-purple-500 dark:bg-purple-400" },
+                        { stage: "AI Interview", count: (session.candidate_counts_per_round?.["3"] || 0) + hiredFinal, color: "bg-pink-500 dark:bg-pink-400" },
+                        { stage: "Hired Final", count: hiredFinal, color: "bg-emerald-500 dark:bg-emerald-400" }
                       ];
                       
                       const maxCount = totalParsed || 1;
@@ -1302,11 +1302,11 @@ export default function SessionWorkspacePage() {
                         const widthPct = Math.min(100, pct);
                         return (
                           <div key={i} className="space-y-1">
-                            <div className="flex justify-between items-center text-[11px] font-bold text-charcoal">
+                            <div className="flex justify-between items-center text-[11px] font-bold text-zinc-900 dark:text-zinc-200">
                               <span>{f.stage}</span>
-                              <span className="text-gray-400 font-mono font-bold">{f.count}</span>
+                              <span className="text-gray-400 dark:text-zinc-500 font-mono font-bold">{f.count}</span>
                             </div>
-                            <div className="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
+                            <div className="w-full bg-gray-50 dark:bg-zinc-800/60 h-2.5 rounded-full overflow-hidden border border-gray-100 dark:border-zinc-800">
                               <div className={`${f.color} h-full rounded-full transition-all duration-500`} style={{ width: `${widthPct}%` }}></div>
                             </div>
                           </div>
@@ -1317,14 +1317,20 @@ export default function SessionWorkspacePage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden mt-8">
-                <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                  <h3 className="font-black text-charcoal text-lg">Leading Candidates</h3>
-                  <button className="text-xs font-bold text-accent hover:text-accent-dark transition-colors px-3 py-1.5 bg-blue-50 rounded-lg">View Full Leaderboard</button>
+              <div className="bg-white dark:bg-[#131316] rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 dark:border-[#222226] overflow-hidden mt-8">
+                <div className="p-5 border-b border-gray-100 dark:border-[#222226] bg-gray-50/50 dark:bg-zinc-900/40 flex justify-between items-center">
+                  <h3 className="font-black text-zinc-900 dark:text-white text-lg">Leading Candidates</h3>
+                  <button 
+                    type="button"
+                    onClick={() => setActiveTab("candidates")}
+                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 rounded-xl cursor-pointer"
+                  >
+                    View Full Leaderboard
+                  </button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-white text-gray-400 font-black border-b border-gray-100 uppercase tracking-widest text-[10px]">
+                    <thead className="bg-white dark:bg-[#131316] text-gray-400 dark:text-zinc-500 font-black border-b border-gray-100 dark:border-[#222226] uppercase tracking-widest text-[10px]">
                       <tr>
                         <th className="p-4 pl-6">Rank</th>
                         <th className="p-4">Candidate Name</th>
@@ -1338,19 +1344,19 @@ export default function SessionWorkspacePage() {
                         <tr 
                           key={cand.id} 
                           onClick={() => setActiveDetailCandidate(cand)}
-                          className="border-b last:border-b-0 border-gray-50 hover:bg-blue-50/30 transition-colors group"
+                          className="border-b last:border-b-0 border-gray-50 dark:border-[#1c1c20] hover:bg-blue-50/30 dark:hover:bg-blue-950/30 transition-colors group"
                         >
-                          <td className="p-4 pl-6 text-gray-400">
-                            <span className={`inline-block w-6 text-center font-black ${i===0?'text-amber-600':i===1?'text-gray-500':i===2?'text-amber-800':''}`}>#{i+1}</span>
+                          <td className="p-4 pl-6 text-gray-400 dark:text-zinc-500">
+                            <span className={`inline-block w-6 text-center font-black ${i===0?'text-amber-600 dark:text-amber-400':i===1?'text-gray-500 dark:text-gray-400':i===2?'text-amber-800 dark:text-amber-600':''}`}>#{i+1}</span>
                           </td>
-                          <td className="p-4 font-bold text-charcoal group-hover:text-amber-600 transition-colors">{cand.name}</td>
-                          <td className="p-4"><span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-black">{cand.match_score}%</span></td>
-                          <td className="p-4 text-gray-500 font-medium text-xs">{cand.location || "Unknown"}</td>
-                          <td className="p-4"><span className={`bg-blue-100/50 border border-blue-200 text-blue-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-sm ${cand.status === "hired" ? "bg-green-100 text-green-700 border-green-200" : cand.status === "rejected" ? "bg-red-100 text-red-700 border-red-200" : ""}`}>{cand.status || "Active"}</span></td>
+                          <td className="p-4 font-bold text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{cand.name}</td>
+                          <td className="p-4"><span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-lg font-black">{cand.match_score}%</span></td>
+                          <td className="p-4 text-gray-500 dark:text-zinc-400 font-medium text-xs">{cand.location || "Unknown"}</td>
+                          <td className="p-4"><span className={`bg-blue-100/50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-sm ${cand.status === "hired" ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900" : cand.status === "rejected" ? "bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900" : ""}`}>{cand.status || "Active"}</span></td>
                         </tr>
                       ))}
                       {allCandidatesList.length === 0 && (
-                        <tr><td colSpan="5" className="p-4 text-center text-gray-400 text-xs py-8">No candidates available yet.</td></tr>
+                        <tr><td colSpan="5" className="p-4 text-center text-gray-400 dark:text-zinc-500 text-xs py-8">No candidates available yet.</td></tr>
                       )}
                     </tbody>
                   </table>
