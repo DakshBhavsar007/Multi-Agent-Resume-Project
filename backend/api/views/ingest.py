@@ -2,6 +2,7 @@ import os
 import re
 import uuid
 import json
+import base64
 import zipfile
 from pathlib import Path
 import pandas as pd
@@ -99,7 +100,16 @@ def upload_resumes(request):
             failed_files=0
         )
 
-        process_resume_batch.delay(str(job.id), saved_paths, session_id, "upload", use_llm)
+        # Read file bytes for Celery (worker runs on separate server, can't access web server filesystem)
+        file_data_list = []
+        for path in saved_paths:
+            with open(path, 'rb') as bf:
+                file_data_list.append({
+                    'name': Path(path).name,
+                    'content_b64': base64.b64encode(bf.read()).decode('utf-8')
+                })
+
+        process_resume_batch.delay(str(job.id), saved_paths, session_id, "upload", use_llm, file_data_list)
 
         return JsonResponse(success_response({
             "job_id": str(job.id),
@@ -180,7 +190,19 @@ def upload_zip(request):
             failed_files=0
         )
 
-        process_resume_batch.delay(str(job.id), extracted, session_id, "upload", use_llm)
+        # Read file bytes for Celery (worker runs on separate server, can't access web server filesystem)
+        file_data_list = []
+        for path in extracted:
+            try:
+                with open(path, 'rb') as bf:
+                    file_data_list.append({
+                        'name': Path(path).name,
+                        'content_b64': base64.b64encode(bf.read()).decode('utf-8')
+                    })
+            except Exception:
+                pass
+
+        process_resume_batch.delay(str(job.id), extracted, session_id, "upload", use_llm, file_data_list)
 
         return JsonResponse(success_response({
             "job_id": str(job.id),

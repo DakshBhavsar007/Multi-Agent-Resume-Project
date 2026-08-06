@@ -26,6 +26,7 @@ import fitz  # PyMuPDF
 from docx import Document
 import re
 import uuid
+import base64
 
 from api.models import Candidate, Session as SessionModel, IngestJob, SkillTaxonomy
 
@@ -431,11 +432,22 @@ def _normalize_match_skill(s):
     return ALIASES.get(s, s)
 
 @celery_app.task(bind=True, max_retries=2, name="process_resume_batch")
-def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, source: str = "upload", use_llm: bool = True):
-    """Process resume files. Two-phase approach for speed:
-       Phase 1: Fast regex-only parsing (all files, <0.3s each)
-       Phase 2: Background LLM enrichment (if use_llm=True, staggered)
+def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, source: str = "upload", use_llm: bool = True, file_data_list: list = None):
+    """Process resume files with unified LLM parsing.
+       If file_data_list is provided (web uploads), reconstructs files on worker filesystem first.
+       Gmail/Drive sync passes file_paths directly (files already on worker).
     """
+    # If file_data_list provided, reconstruct files on worker's local filesystem
+    if file_data_list:
+        save_dir = os.path.join(os.getenv('UPLOAD_DIR', 'uploads'), session_id)
+        os.makedirs(save_dir, exist_ok=True)
+        file_paths = []
+        for fd in file_data_list:
+            local_path = os.path.join(save_dir, fd['name'])
+            with open(local_path, 'wb') as f:
+                f.write(base64.b64decode(fd['content_b64']))
+            file_paths.append(local_path)
+
     if not file_paths:
         try:
             job = IngestJob.objects.get(id=job_id)
