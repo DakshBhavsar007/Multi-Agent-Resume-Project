@@ -131,9 +131,7 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
         emails = re.findall(email_re, text)
         phones = re.findall(phone_re, text)
         linkedin = re.search(url_re, text, re.IGNORECASE)
-        github = re.search(github_re, text, re.IGNORECASE)
-
-        # ── Name extraction (handles ALL CAPS, skips email/phone/URL lines) ──
+        github = re.        # ── Name extraction (handles ALL CAPS, skips email/phone/URL lines) ──
         name = Path(file_path).stem
         email_set = set(e.lower() for e in emails)
         for line in text.split("\n")[:15]:
@@ -158,37 +156,63 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
                         name = line
                     break
 
+        # Fallback for name if it still equals raw filename stem
+        if name == Path(file_path).stem or len(name.strip()) == 0:
+            stem = Path(file_path).stem
+            clean_stem = re.sub(r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}_', '', stem, flags=re.IGNORECASE)
+            clean_stem = re.sub(r'^[a-f0-9\-]{36}_', '', clean_stem, flags=re.IGNORECASE)
+            clean_stem = re.sub(r'^resume_\d+_', '', clean_stem, flags=re.IGNORECASE)
+            clean_stem = re.sub(r'[_\-]+', ' ', clean_stem).strip()
+            if clean_stem:
+                name = clean_stem.title()
+
         # ── Experience years (multiple patterns + date range calculation) ──
         total_exp_years = 0.0
         exp_patterns = [
             r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)[\s,]+(?:of\s+)?(?:experience|exp)',
             r'(?:experience|exp)[\s:]+?(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)',
-            r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:in|of|across)',
+            r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:in|of|across|working|building|developing|as)',
             r'(?:over|nearly|approximately|about|around|with)\s+(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)',
-            r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:senior|professional|industry)',
+            r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:senior|professional|industry|software)',
         ]
         for pat in exp_patterns:
             m = re.search(pat, text, re.IGNORECASE)
             if m:
                 total_exp_years = float(m.group(1))
                 break
-        # Fallback: sum durations like "(3 yrs)" in experience entries
+
+        # Fallback 1: sum durations like "(3 yrs)" in experience entries
         if total_exp_years == 0:
             duration_matches = re.findall(r'\((\d+(?:\.\d+)?)\s*(?:years?|yrs?)\)', text, re.IGNORECASE)
             if duration_matches:
                 total_exp_years = sum(float(d) for d in duration_matches)
-        # Fallback: calculate from date ranges like "Aug 2021 - Present"
+
+        # Fallback 2: Year ranges like "2018 - 2023", "2019 to Present"
         if total_exp_years == 0:
-            date_range_re = r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December)\s+(\d{4})\s*[\-\u2013\u2014to]+\s*(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December)\s+(\d{4})|Present|Current|Now|Ongoing)'
-            date_ranges = re.findall(date_range_re, text, re.IGNORECASE)
-            if date_ranges:
-                for start_year, end_year in date_ranges:
+            yr_ranges = re.findall(r'\b(19\d{2}|20\d{2})\s*[\-\u2013\u2014to]+\s*(19\d{2}|20\d{2}|Present|Current|Now|Ongoing)\b', text, re.IGNORECASE)
+            if yr_ranges:
+                diffs = []
+                for sy, ey in yr_ranges:
                     try:
-                        sy = int(start_year)
-                        ey = int(end_year) if end_year else datetime.now().year
-                        total_exp_years += max(0, ey - sy)
-                    except (ValueError, TypeError):
+                        s = int(sy)
+                        e = datetime.now().year if ey.lower() in ['present', 'current', 'now', 'ongoing'] else int(ey)
+                        if 0 <= (e - s) <= 35:
+                            diffs.append(e - s)
+                    except Exception:
                         pass
+                if diffs:
+                    total_exp_years = float(max(diffs))
+
+        # Fallback 3: Any "X+ years" or "X yrs" in top summary
+        if total_exp_years == 0:
+            gen_m = re.search(r'\b(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\b', text[:2000], re.IGNORECASE)
+            if gen_m:
+                try:
+                    v = float(gen_m.group(1))
+                    if 0.5 <= v <= 35:
+                        total_exp_years = v
+                except Exception:
+                    pass
 
         # ── Skills extraction (expanded: 150+ tech keywords) ──
         SKILL_KEYWORDS = [
@@ -274,13 +298,11 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
             if re.search(r'\b' + re.escape(loc) + r'\b', text, re.IGNORECASE):
                 location = loc
                 break
-        # Fallback: detect "City, State" pattern near top of resume
+        # Fallback: detect "City, State" or "City, ST" pattern anywhere in top 2000 chars
         if not location:
-            for line in text.split("\n")[:8]:
-                loc_match = re.search(r'([A-Z][a-z]+(?:\s[A-Z][a-z]+)?),\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?|[A-Z]{2})', line)
-                if loc_match:
-                    location = f"{loc_match.group(1)}, {loc_match.group(2)}"
-                    break
+            loc_match = re.search(r'\b([A-Z][a-zA-Z\s]{2,15}),\s*([A-Z]{2}|[A-Z][a-zA-Z]{2,15})\b', text[:2000])
+            if loc_match:
+                location = f"{loc_match.group(1).strip()}, {loc_match.group(2).strip()}"
 
         # ── Extract current role ──
         current_role = None
@@ -350,7 +372,7 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
                             {"role": "user", "content": f"Parse this resume into rich JSON. Schema:\n{SCHEMA}\n\nResume:\n{text[:4000]}"}
                         ],
                         temperature=0.0,
-                        timeout=15
+                        timeout=6
                     )
                     raw = resp.choices[0].message.content.strip().strip("```json").strip("```").strip()
                     llm_result[0] = json.loads(raw)
@@ -359,7 +381,7 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
 
             t = threading.Thread(target=call_llm)
             t.start()
-            t.join(timeout=15)  # Allow enough time for reliable LLM parsing
+            t.join(timeout=6)  # Fast 6s timeout for responsive parsing
 
             if llm_error[0]:
                 print("LLM Error:", llm_error[0])
@@ -433,10 +455,7 @@ def _normalize_match_skill(s):
 
 @celery_app.task(bind=True, max_retries=2, name="process_resume_batch")
 def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, source: str = "upload", use_llm: bool = True, file_data_list: list = None):
-    """Process resume files with unified LLM parsing.
-       If file_data_list is provided (web uploads), reconstructs files on worker filesystem first.
-       Gmail/Drive sync passes file_paths directly (files already on worker).
-    """
+    """Process resume files with unified LLM parsing and fast regex fallback circuit breaker."""
     # If file_data_list provided, reconstruct files on worker's local filesystem
     if file_data_list:
         save_dir = os.path.join(os.getenv('UPLOAD_DIR', 'uploads'), session_id)
@@ -468,9 +487,30 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
         job.status = "processing"
         job.save()
 
-        # Unified parsing: always use LLM for every resume regardless of batch size
+        # Batch-level circuit breaker for LLM rate limits/failures
+        batch_state = {"consecutive_llm_fails": 0, "circuit_open": False}
+        import threading
+        state_lock = threading.Lock()
+
         def _process_one(path):
-            return path, _parse_resume_sync(path, skip_llm=(not use_llm))
+            with state_lock:
+                should_skip = (not use_llm) or batch_state["circuit_open"]
+            
+            res = _parse_resume_sync(path, skip_llm=should_skip)
+            
+            # Check if LLM failed
+            if not should_skip:
+                if res.get("parsing_method") != "llm":
+                    with state_lock:
+                        batch_state["consecutive_llm_fails"] += 1
+                        if batch_state["consecutive_llm_fails"] >= 2: # 2 fails in a row = open circuit for remaining batch!
+                            batch_state["circuit_open"] = True
+                            print(f"[Circuit Breaker] LLM providers exhausted for batch {job_id}. Switching remaining files to high-speed regex parser.")
+                else:
+                    with state_lock:
+                        batch_state["consecutive_llm_fails"] = 0
+            
+            return path, res
 
         criteria = session_row.criteria or {}
         min_match_score = criteria.get("min_match_score", 0)
@@ -587,8 +627,8 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
                     # Auto-reject if below min_match_score threshold
                     if min_match_score > 0 and score < min_match_score:
                         new_cand.status = "rejected"
-                # Pre-generate AI insights if LLM parsed
-                if parsed_res.get("parsing_method") == "llm":
+                # Pre-generate AI insights if LLM parsed and circuit breaker is closed
+                if parsed_res.get("parsing_method") == "llm" and not batch_state.get("circuit_open", False):
                     try:
                         from agents.llm import RotateLLMClient
                         import json as py_json
