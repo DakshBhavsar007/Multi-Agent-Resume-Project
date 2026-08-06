@@ -85,52 +85,63 @@ def _seed_from_env():
     from api.models import GeminiProject, GeminiApiKey, AgentModelConfig, GroqApiKey
     from api.utils.security import encrypt_api_key
 
-    # --- Seed Gemini keys from .env if DB is empty ---
-    if GeminiProject.objects.count() == 0:
-        keys_str = os.getenv("GEMINI_API_KEYS", "")
-        keys = [k.strip() for k in keys_str.split(",") if k.strip()]
-        if not keys:
-            single = os.getenv("GEMINI_API_KEY", "")
-            if single.strip():
-                keys.append(single.strip())
+    # --- Seed Gemini keys from .env into DB ---
+    keys_str = os.getenv("GEMINI_API_KEYS", "")
+    keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+    if not keys:
+        single = os.getenv("GEMINI_API_KEY", "")
+        if single.strip():
+            keys.append(single.strip())
 
-        for i, key in enumerate(keys, 1):
+    for i, key in enumerate(keys, 1):
+        if not GeminiApiKey.objects.filter(key=key).exists():
             project_name = f"Gemini-Project-{i}"
             project, _ = GeminiProject.objects.get_or_create(
                 name=project_name,
                 defaults={"daily_limit": 20, "daily_usage": 0, "rpm_limit": 5}
             )
-            GeminiApiKey.objects.get_or_create(
+            GeminiApiKey.objects.create(
                 key=key,
-                defaults={"project": project, "label": f"Key-{i}", "is_active": True}
+                project=project,
+                label=f"Key-{i}",
+                is_active=True
             )
-        if keys:
-            print(f"[LLM SEED] Auto-imported {len(keys)} Gemini keys from .env into DB.", flush=True)
+            print(f"[LLM SEED] Auto-imported new Gemini key {key[:8]}... into DB.", flush=True)
 
-    # --- Seed Groq keys from .env if DB is empty ---
-    if GroqApiKey.objects.count() == 0:
-        raw_keys_list = [
-            os.getenv("GROQ_API_KEYS", ""),
-            os.getenv("GROK_API_KEYS", ""),
-            os.getenv("GROQ_API_KEY", ""),
-            os.getenv("GROK_API_KEY", ""),
-        ]
-        gkeys = []
-        for raw in raw_keys_list:
-            if raw:
-                for k in raw.split(","):
-                    k_str = k.strip()
-                    if k_str and k_str not in gkeys:
-                        gkeys.append(k_str)
-        for i, gk in enumerate(gkeys, 1):
+    # --- Seed Groq keys from .env into DB ---
+    raw_keys_list = [
+        os.getenv("GROQ_API_KEYS", ""),
+        os.getenv("GROK_API_KEYS", ""),
+        os.getenv("GROQ_API_KEY", ""),
+        os.getenv("GROK_API_KEY", ""),
+    ]
+    gkeys = []
+    for raw in raw_keys_list:
+        if raw:
+            for k in raw.split(","):
+                k_str = k.strip()
+                if k_str and k_str not in gkeys:
+                    gkeys.append(k_str)
+
+    existing_groq_keys = set()
+    for db_k in GroqApiKey.objects.all():
+        try:
+            raw_k = db_k.key
+            if raw_k:
+                existing_groq_keys.add(raw_k)
+        except Exception:
+            pass
+
+    for i, gk in enumerate(gkeys, 1):
+        if gk not in existing_groq_keys:
             enc = encrypt_api_key(gk)
             if enc:
-                GroqApiKey.objects.get_or_create(
+                GroqApiKey.objects.create(
                     encrypted_key=enc,
-                    defaults={"label": f"Groq-Key-{i}", "is_active": True}
+                    label=f"Groq-Key-{i}",
+                    is_active=True
                 )
-        if gkeys:
-            print(f"[LLM SEED] Auto-imported {len(gkeys)} Groq keys from .env into encrypted DB.", flush=True)
+                print(f"[LLM SEED] Auto-imported new Groq key {gk[:8]}... into DB.", flush=True)
 
 
     # --- Seed AgentModelConfig if DB is empty ---
