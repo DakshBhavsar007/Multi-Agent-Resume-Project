@@ -346,7 +346,7 @@ export default function SessionWorkspacePage() {
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) setAtsFile(acceptedFiles[0]);
     },
-    accept: { 'text/csv': ['.csv'], 'application/json': ['.json'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] },
+    accept: { 'text/csv': ['.csv'], 'application/vnd.ms-excel': ['.csv'] },
     maxFiles: 1
   });
 
@@ -821,10 +821,10 @@ export default function SessionWorkspacePage() {
                     <ChevronDown size={20} className="text-gray-400 group-open:rotate-180 transition-transform" />
                   </summary>
                   <div className="p-6 border-t border-gray-100 bg-white">
-                    <div className="flex gap-3 mb-6">
-                      <span className="bg-[#2A2A2A] text-white text-xs px-4 py-1.5 rounded-full font-bold shadow-sm">CSV</span>
-                      <span className="text-gray-500 text-xs px-4 py-1.5 font-bold hover:bg-gray-100 rounded-full cursor-pointer transition-colors border border-gray-200 bg-white">JSON</span>
-                      <span className="text-gray-500 text-xs px-4 py-1.5 font-bold hover:bg-gray-100 rounded-full cursor-pointer transition-colors border border-gray-200 bg-white">Excel</span>
+                    <div className="flex items-center gap-2 mb-6">
+                      <span className="bg-[#2563EB] text-white text-xs px-3.5 py-1.5 rounded-full font-bold shadow-sm flex items-center gap-1.5">
+                        <FileText size={13} /> Supported Format: CSV (.csv)
+                      </span>
                     </div>
                     <div className="bg-blue-50/50 border border-blue-200 text-blue-900 p-4 rounded-xl text-xs mb-5 shadow-sm">
                       <strong className="block mb-1 text-sm">Expected columns:</strong> 
@@ -839,20 +839,46 @@ export default function SessionWorkspacePage() {
                       <div className={`border-2 border-dashed rounded-xl flex-1 flex flex-col items-center justify-center cursor-pointer transition-colors ${atsFile ? 'border-accent bg-blue-50' : 'border-gray-300 bg-gray-50/50 hover:bg-gray-50'}`}>
                         <input {...getAtsInput()} />
                         <FileText className="text-accent mb-2" size={28} />
-                        <span className="text-sm text-gray-500 font-bold">{atsFile ? atsFile.name : 'Drop CSV / Excel file here'}</span>
+                        <span className="text-sm text-gray-500 font-bold">{atsFile ? atsFile.name : 'Drop CSV file here (.csv)'}</span>
                       </div>
                       <div className="flex flex-col justify-center gap-3 min-w-[200px]">
-                        <button className="text-accent font-bold text-xs border-2 border-accent bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"><Download size={16}/> Download sample CSV</button>
                         <button 
-                          onClick={async () => {
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const headers = "name,email,phone,location,skills,experience_years\n";
+                            const sampleRows = [
+                              "John Doe,john.doe@example.com,+15550199,San Francisco CA,Python;React;Django,5",
+                              "Jane Smith,jane.smith@example.com,+15550188,New York NY,Java;Spring Boot;SQL,3",
+                              "Alex Johnson,alex.j@example.com,+15550177,Austin TX,JavaScript;Node.js;MongoDB,4"
+                            ].join("\n");
+                            const blob = new Blob([headers + sampleRows], { type: "text/csv;charset=utf-8;" });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = "sample_candidates.csv";
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                            toast.success("Sample CSV downloaded!");
+                          }}
+                          className="text-accent font-bold text-xs border-2 border-accent bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                        >
+                          <Download size={16}/> Download sample CSV
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
                             if (!atsFile) return;
                             try {
                               toast.success("Import processing...");
-                              const res = await ingestAPI.importATS(id, atsFile.name.endsWith(".json") ? "json" : atsFile.name.endsWith(".xlsx") ? "xlsx" : "csv", atsFile);
+                              const res = await ingestAPI.importATS(id, "csv", atsFile);
                               toast.success(`Imported ${res.imported} records. Failed: ${res.failed}`);
                               setAtsFile(null);
                               queryClient.invalidateQueries({ queryKey: ["candidates", id] });
-                            } catch (e) { toast.error(e.message); }
+                            } catch (err) { toast.error(err.message); }
                           }}
                           disabled={!atsFile}
                           className={`font-bold text-sm px-4 py-2.5 rounded-xl transition-colors ${atsFile ? 'bg-accent text-white hover:bg-[#1D4ED8]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
