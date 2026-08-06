@@ -131,7 +131,9 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
         emails = re.findall(email_re, text)
         phones = re.findall(phone_re, text)
         linkedin = re.search(url_re, text, re.IGNORECASE)
-        github = re.        # ── Name extraction (handles ALL CAPS, skips email/phone/URL lines) ──
+        github = re.search(github_re, text, re.IGNORECASE)
+      
+        # ── Name extraction (handles ALL CAPS, skips email/phone/URL lines) ──
         name = Path(file_path).stem
         email_set = set(e.lower() for e in emails)
         for line in text.split("\n")[:15]:
