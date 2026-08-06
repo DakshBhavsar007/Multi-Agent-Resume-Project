@@ -3,7 +3,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 4rem;
-  background-color: var(--bg);
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   height: 80px;
   position: sticky;
   top: 0;
@@ -13,19 +15,21 @@
 }
 
 .dark .navbar {
-  background-color: var(--bg);
+  background-color: #0b0b0c !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .navbar.scrolled {
-  background-color: var(--bg);
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   height: 70px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .dark .navbar.scrolled {
-  background-color: var(--bg);
+  background-color: #0b0b0c !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
