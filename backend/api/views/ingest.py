@@ -192,9 +192,9 @@ def upload_zip(request):
 
 def _get_google_flow(oauth_type, session_id):
     scopes = []
-    if oauth_type == "gmail":
+    if oauth_type in ["gmail", "email"]:
         scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
-    elif oauth_type in ["gdrive", "form"]:
+    elif oauth_type in ["gdrive", "drive", "form"]:
         scopes = ["https://www.googleapis.com/auth/drive.readonly"]
 
     client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")

@@ -11,7 +11,7 @@ export default function GoogleCallbackPage() {
     const [oauthType] = state.split(':');
 
     if (code && window.opener) {
-      const msgType = oauthType === 'gdrive' 
+      const msgType = (oauthType === 'gdrive' || oauthType === 'drive')
         ? 'GDRIVE_AUTH_CODE' 
         : oauthType === 'form' 
           ? 'GFORM_AUTH_CODE' 
