@@ -121,53 +121,178 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
             with open(file_path, "r", errors="ignore") as f:
                 text = f.read()
 
-        # ── FAST REGEX EXTRACTION (always runs, <0.5s) ──────────────────
+        # ── IMPROVED REGEX EXTRACTION (always runs as fallback) ──────────────────
         email_re = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
         phone_re = r'[\+\(]?[0-9][0-9\s\-\(\)]{8,14}[0-9]'
         url_re = r'https?://(?:www\.)?linkedin\.com/in/[\w\-]+'
         github_re = r'https?://(?:www\.)?github\.com/[\w\-]+'
-        exp_re = r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?(?:experience|exp)'
 
         emails = re.findall(email_re, text)
         phones = re.findall(phone_re, text)
         linkedin = re.search(url_re, text, re.IGNORECASE)
         github = re.search(github_re, text, re.IGNORECASE)
-        exp_match = re.search(exp_re, text, re.IGNORECASE)
 
-        # Extract name: first non-empty line that looks like a name (2 cap words)
+        # ── Name extraction (handles ALL CAPS, skips email/phone/URL lines) ──
         name = Path(file_path).stem
-        for line in text.split("\n")[:10]:
+        email_set = set(e.lower() for e in emails)
+        for line in text.split("\n")[:15]:
             line = line.strip()
+            if not line or len(line) > 60 or len(line) < 3:
+                continue
+            if any(e in line.lower() for e in email_set):
+                continue
+            if re.search(r'[\+\(]?\d[\d\s\-\(\)]{8,}', line):
+                continue
+            if re.search(r'https?://', line):
+                continue
+            if any(kw in line.lower() for kw in ['summary', 'objective', 'experience', 'education', 'skills', 'resume', 'curriculum', 'profile', 'portfolio']):
+                continue
             words = line.split()
-            if 1 < len(words) <= 6 and all(w[0].isupper() if w else True for w in words if w.isalpha()):
-                name = line
-                break
+            alpha_words = [w for w in words if re.match(r'^[A-Za-z\.\-\']+$', w)]
+            if 1 < len(alpha_words) <= 5 and len(alpha_words) == len(words):
+                if all(w[0].isupper() for w in alpha_words):
+                    if all(c.isupper() or not c.isalpha() for c in line):
+                        name = line.title()
+                    else:
+                        name = line
+                    break
 
-        # Extract skills: common tech stack keywords
+        # ── Experience years (multiple patterns + date range calculation) ──
+        total_exp_years = 0.0
+        exp_patterns = [
+            r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)[\s,]+(?:of\s+)?(?:experience|exp)',
+            r'(?:experience|exp)[\s:]+?(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)',
+            r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:in|of|across)',
+            r'(?:over|nearly|approximately|about|around|with)\s+(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)',
+            r'(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:senior|professional|industry)',
+        ]
+        for pat in exp_patterns:
+            m = re.search(pat, text, re.IGNORECASE)
+            if m:
+                total_exp_years = float(m.group(1))
+                break
+        # Fallback: sum durations like "(3 yrs)" in experience entries
+        if total_exp_years == 0:
+            duration_matches = re.findall(r'\((\d+(?:\.\d+)?)\s*(?:years?|yrs?)\)', text, re.IGNORECASE)
+            if duration_matches:
+                total_exp_years = sum(float(d) for d in duration_matches)
+        # Fallback: calculate from date ranges like "Aug 2021 - Present"
+        if total_exp_years == 0:
+            date_range_re = r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December)\s+(\d{4})\s*[\-\u2013\u2014to]+\s*(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December)\s+(\d{4})|Present|Current|Now|Ongoing)'
+            date_ranges = re.findall(date_range_re, text, re.IGNORECASE)
+            if date_ranges:
+                for start_year, end_year in date_ranges:
+                    try:
+                        sy = int(start_year)
+                        ey = int(end_year) if end_year else datetime.now().year
+                        total_exp_years += max(0, ey - sy)
+                    except (ValueError, TypeError):
+                        pass
+
+        # ── Skills extraction (expanded: 150+ tech keywords) ──
         SKILL_KEYWORDS = [
-            "Python","Java","JavaScript","TypeScript","C\\+\\+","C#","Go","Rust","Ruby","PHP","Swift","Kotlin",
-            "React","Angular","Vue","Next\\.js","Node\\.js","Django","Flask","FastAPI","Spring","Laravel",
+            # Languages
+            "Python","Java","JavaScript","TypeScript","C\\+\\+","C#","Go","Rust","Ruby","PHP",
+            "Swift","Kotlin","Scala","R","Perl","Dart","Elixir","Haskell","Clojure","Lua",
+            # Frontend
+            "React","Angular","Vue","Next\\.js","Nuxt\\.js","Svelte","Gatsby","Remix",
+            "Redux","Redux Toolkit","MobX","Zustand","Recoil",
+            "Framer Motion","GSAP","Three\\.js","D3\\.js","Chart\\.js",
+            "Webpack","Vite","Rollup","Parcel","Babel","esbuild","Storybook",
+            # Backend
+            "Node\\.js","Express\\.js","Express","NestJS","Fastify","Koa","Hapi",
+            "Django","Flask","FastAPI","Celery","Gunicorn","Uvicorn",
+            "Spring","Spring Boot","Hibernate","Maven","Gradle",
+            "Laravel","Symfony","Ruby on Rails",
+            "ASP\\.NET","\\.NET",
+            "GraphQL","REST","gRPC","WebSockets","Socket\\.IO","MQTT",
+            # Databases
             "PostgreSQL","MySQL","MongoDB","Redis","SQLite","Oracle","Cassandra","DynamoDB",
-            "AWS","GCP","Azure","Docker","Kubernetes","Terraform","Ansible","Jenkins","GitHub Actions",
-            "TensorFlow","PyTorch","Scikit-learn","Pandas","NumPy","OpenCV","Hugging Face",
-            "HTML","CSS","SCSS","Tailwind","Bootstrap","REST","GraphQL","gRPC","Kafka","RabbitMQ",
-            "Git","Linux","Bash","PowerShell","Agile","Scrum","Jira","Figma","Photoshop"
+            "Elasticsearch","Solr","Neo4j","CouchDB","InfluxDB","MariaDB",
+            "Firebase","Supabase","PlanetScale",
+            "Prisma","Sequelize","TypeORM","Mongoose","Knex","Drizzle",
+            # DevOps & Cloud
+            "AWS","GCP","Azure","Docker","Kubernetes","Terraform","Ansible",
+            "Jenkins","GitHub Actions","GitLab CI","CircleCI","Travis CI",
+            "Nginx","Apache","HAProxy","Caddy",
+            "Prometheus","Grafana","Datadog","New Relic","ELK","Logstash","Kibana",
+            "Helm","ArgoCD","Istio","Consul","Vault",
+            "EC2","S3","RDS","Lambda","CloudFront","ECS","EKS","Fargate",
+            "CloudFormation","Serverless",
+            "Vercel","Netlify","Heroku","Render",
+            # AI/ML
+            "TensorFlow","PyTorch","Scikit-learn","Pandas","NumPy","OpenCV",
+            "Hugging Face","LangChain","OpenAI","GPT",
+            "Keras","XGBoost","SpaCy","NLTK","Transformers",
+            "MLflow","SageMaker","Vertex AI",
+            "Computer Vision","NLP","Deep Learning","Machine Learning",
+            # Testing
+            "Jest","Mocha","Chai","Cypress","Playwright","Selenium",
+            "React Testing Library","Supertest","Postman",
+            "JUnit","TestNG","Mockito","PyTest",
+            # Mobile
+            "React Native","Flutter","Ionic","SwiftUI","Jetpack Compose","Expo",
+            # Design / CSS
+            "HTML","CSS","SCSS","Sass","Tailwind","Bootstrap",
+            "Material UI","Chakra UI","Ant Design","Styled Components",
+            "Figma","Sketch","Adobe XD","Photoshop",
+            # Messaging
+            "Kafka","RabbitMQ","SQS","SNS","NATS","Redis Pub/Sub",
+            # Tools & Practices
+            "Git","Linux","Bash","PowerShell",
+            "Agile","Scrum","Kanban","Jira","Confluence",
+            "OAuth","JWT","SAML","SSO",
+            "Microservices","CI/CD","DevOps",
+            "Blockchain","Solidity","Web3",
         ]
         found_skills = []
+        seen_skills = set()
         for sk in SKILL_KEYWORDS:
-            if re.search(r'\b' + sk + r'\b', text, re.IGNORECASE):
-                found_skills.append({"skill": sk.replace("\\", ""), "years": None, "level": None})
+            if re.search(r'(?:^|[\s,;|/\(])' + sk + r'(?:[\s,;|/\).]|$)', text, re.IGNORECASE):
+                clean_name = sk.replace("\\", "")
+                if clean_name.lower() not in seen_skills:
+                    found_skills.append({"skill": clean_name, "years": None, "level": None})
+                    seen_skills.add(clean_name.lower())
 
-        # Simple location detection
-        location_keywords = ["Bengaluru","Bangalore","Mumbai","Delhi","Hyderabad","Chennai","Pune","Remote","Kolkata",
-                             "Noida","Gurgaon","Gurugram","Kochi","Kerala","New York","San Francisco","London","Singapore","Dubai"]
+        # ── Location detection (expanded: 70+ cities + pattern matching) ──
+        location_keywords = [
+            "Bengaluru","Bangalore","Mumbai","Delhi","New Delhi","Hyderabad","Chennai","Pune",
+            "Kolkata","Noida","Gurgaon","Gurugram","Kochi","Thiruvananthapuram","Ahmedabad",
+            "Jaipur","Lucknow","Chandigarh","Indore","Bhopal","Nagpur","Coimbatore",
+            "Visakhapatnam","Vizag","Mysore","Mangalore","Surat","Vadodara","Patna",
+            "Ranchi","Bhubaneswar","Guwahati","Dehradun","Agra","Varanasi","Kanpur",
+            "New York","San Francisco","Los Angeles","Seattle","Austin","Boston","Chicago",
+            "Denver","Atlanta","Dallas","Houston","Miami","Portland","San Jose",
+            "Washington DC","Philadelphia","Phoenix","Minneapolis","Charlotte",
+            "London","Berlin","Paris","Amsterdam","Dublin","Munich","Barcelona","Stockholm",
+            "Singapore","Tokyo","Sydney","Melbourne","Toronto","Vancouver","Montreal",
+            "Dubai","Abu Dhabi","Riyadh","Remote",
+        ]
         location = None
         for loc in location_keywords:
-            if loc.lower() in text.lower():
+            if re.search(r'\b' + re.escape(loc) + r'\b', text, re.IGNORECASE):
                 location = loc
                 break
+        # Fallback: detect "City, State" pattern near top of resume
+        if not location:
+            for line in text.split("\n")[:8]:
+                loc_match = re.search(r'([A-Z][a-z]+(?:\s[A-Z][a-z]+)?),\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?|[A-Z]{2})', line)
+                if loc_match:
+                    location = f"{loc_match.group(1)}, {loc_match.group(2)}"
+                    break
 
-        # Fallback Mock Data for UI presentation if LLM fails
+        # ── Extract current role ──
+        current_role = None
+        role_patterns = [
+            r'(?:Senior|Lead|Staff|Principal|Junior|Associate)?\s*(?:Software|Full[\s\-]?Stack|Frontend|Backend|DevOps|Data|ML|AI|Cloud|Mobile|Web|QA|Test)\s*(?:Engineer|Developer|Architect|Scientist|Analyst|Consultant|Manager|Lead)',
+        ]
+        for pat in role_patterns:
+            m = re.search(pat, text, re.IGNORECASE)
+            if m:
+                current_role = m.group(0).strip()
+                break
+
+        # ── Build regex-parsed result ──
         regex_parsed = {
             "name": name,
             "email": emails[0] if emails else None,
@@ -175,11 +300,11 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
             "location": location or "Unknown",
             "linkedin_url": linkedin.group(0) if linkedin else None,
             "github_url": github.group(0) if github else None,
-            "total_experience_years": float(exp_match.group(1)) if exp_match else 0.0,
+            "total_experience_years": total_exp_years,
             "skills": found_skills if found_skills else [],
             "experience": [],
             "education": [],
-            "current_role": None
+            "current_role": current_role
         }
 
         if skip_llm:
@@ -224,7 +349,7 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
                             {"role": "user", "content": f"Parse this resume into rich JSON. Schema:\n{SCHEMA}\n\nResume:\n{text[:4000]}"}
                         ],
                         temperature=0.0,
-                        timeout=8
+                        timeout=15
                     )
                     raw = resp.choices[0].message.content.strip().strip("```json").strip("```").strip()
                     llm_result[0] = json.loads(raw)
@@ -233,7 +358,7 @@ def _parse_resume_sync(file_path: str, skip_llm: bool = False) -> dict:
 
             t = threading.Thread(target=call_llm)
             t.start()
-            t.join(timeout=7)  # hard cap: 7s so total stays <10s with overhead
+            t.join(timeout=15)  # Allow enough time for reliable LLM parsing
 
             if llm_error[0]:
                 print("LLM Error:", llm_error[0])
@@ -328,19 +453,12 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
         return
 
     try:
-        is_bulk = len(file_paths) > 10
-
         job.status = "processing"
         job.save()
 
-        # Phase 1: For bulk uploads → regex-only (fast, <0.3s/file)
-        # For small batches (<=10) and LLM enabled → full LLM parsing
-        do_llm_inline = (not is_bulk) and use_llm
-
+        # Unified parsing: always use LLM for every resume regardless of batch size
         def _process_one(path):
-            return path, _parse_resume_sync(path, skip_llm=(not do_llm_inline))
-
-        candidate_ids_for_enrichment = []
+            return path, _parse_resume_sync(path, skip_llm=(not use_llm))
 
         criteria = session_row.criteria or {}
         min_match_score = criteria.get("min_match_score", 0)
@@ -357,7 +475,7 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
         req_lower = [r.lower() for r in required_skills]
         req_normalized = {_normalize_match_skill(r) for r in required_skills if r}
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(file_paths), 30)) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(file_paths), 5)) as executor:
             future_to_path = {executor.submit(_process_one, p): p for p in file_paths}
             
             for future in concurrent.futures.as_completed(future_to_path):
@@ -494,10 +612,6 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
 
                 new_cand.save()
 
-                # Track candidates that need background LLM enrichment
-                if is_bulk and use_llm and parsed_res.get("parsing_method") == "regex":
-                    candidate_ids_for_enrichment.append(str(new_cand.id))
-
                 try:
                     active_job = IngestJob.objects.get(id=job_id)
                     active_job.processed_files = (active_job.processed_files or 0) + 1
@@ -512,16 +626,6 @@ def process_resume_batch(self, job_id: str, file_paths: list, session_id: str, s
             active_job.save()
         except IngestJob.DoesNotExist:
             pass
-
-        # Phase 2: Fire background LLM enrichment for bulk-parsed candidates
-        if candidate_ids_for_enrichment:
-            # Stagger: process 5 at a time with 2s delay between batches
-            for i in range(0, len(candidate_ids_for_enrichment), 5):
-                batch = candidate_ids_for_enrichment[i:i+5]
-                enrich_candidates_llm.apply_async(
-                    args=[batch],
-                    countdown=i // 5 * 2  # 0s, 2s, 4s, 6s...
-                )
 
     except Exception as e:
         import traceback
