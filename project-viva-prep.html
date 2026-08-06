@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Between / CareerEngine — Full Project Viva Prep & Architecture Guide</title>
+    <style>
+        :root {
+            --bg-primary: #09090b;
+            --bg-secondary: #121215;
+            --bg-tertiary: #1c1c21;
+            --bg-card: #18181b;
+            --border-color: #27272a;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-purple: #a855f7;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        #sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            padding: 1.5rem 1rem;
+            z-index: 100;
+        }
+
+        #sidebar .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #sidebar .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        #sidebar nav ul {
+            list-style: none;
+        }
+
+        #sidebar nav li {
+            margin-bottom: 0.4rem;
+        }
+
+        #sidebar nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        #sidebar nav a:hover {
+            color: #fff;
+            background-color: var(--bg-tertiary);
+        }
+
+        #sidebar nav a.active {
+            color: var(--accent-blue);
+            background-color: rgba(59, 130, 246, 0.1);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        #main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 2.5rem 3rem;
+            max-width: 1400px;
+        }
+
+        header.page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header.page-header h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header.page-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .meta-badges {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+        }
+
+        .badge.blue { border-color: rgba(59, 130, 246, 0.4); color: #60a5fa; }
+        .badge.green { border-color: rgba(34, 197, 94, 0.4); color: #4ade80; }
+        .badge.purple { border-color: rgba(168, 85, 247, 0.4); color: #c084fc; }
+
+        /* Sections */
+        section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 2rem;
+        }
+
+        section h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.75rem 0 1rem 0;
+            color: var(--accent-blue);
+        }
+
+        p, li {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        ul, ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Cards & Tables */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        code, pre {
+            font-family: "Fira Code", "Courier New", Courier, monospace;
+            background-color: #121215;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.15rem 0.4rem;
+            font-size: 0.85em;
+            color: #f4f4f5;
+        }
+
+        pre {
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        pre code {
+            border: none;
+            padding: 0;
+            background: transparent;
+        }
+
+        /* Callouts */
+        .callout {
+            padding: 1rem 1.25rem;
+            border-left: 4px solid var(--accent-blue);
+            background-color: rgba(59, 130, 246, 0.05);
+            border-radius: 0 6px 6px 0;
+            margin: 1.5rem 0;
+        }
+
+        .callout.warning {
+            border-left-color: var(--accent-amber);
+            background-color: rgba(245, 158, 11, 0.05);
+        }
+
+        .callout.danger {
+            border-left-color: var(--accent-red);
+            background-color: rgba(239, 68, 68, 0.05);
+        }
+
+        /* Architecture Diagram SVG */
+        .diagram-container {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        /* Viva QA Grid */
+        .qa-item {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .qa-question {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .qa-question .q-num {
+            color: var(--accent-blue);
+        }
+
+        .qa-answer {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        .tag-trap {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar">
+        <div class="brand">🚀 Between AI</div>
+        <div class="subtitle">Viva Prep Documentation</div>
+        <nav>
+            <ul>
+                <li><a href="#discovery">1. Directory Discovery</a></li>
+                <li><a href="#architecture">2. Architecture & Tech Stack</a></li>
+                <li><a href="#backend">3. Backend Deep-Dive</a></li>
+                <li><a href="#celery">4. Celery Async Pipeline</a></li>
+                <li><a href="#frontend">5. Frontend Architecture</a></li>
+                <li><a href="#crosscutting">6. Cross-Cutting Concerns</a></li>
+                <li><a href="#tradeoffs">7. Known Issues & Trade-offs</a></li>
+                <li><a href="#viva-qa">8. Viva Question Bank (50+)</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content">
+        <header class="page-header">
+            <h1>CareerEngine / Between — Full Viva & Architecture Guide</h1>
+            <p>End-to-End System Analysis, Component Breakdown, and Comprehensive Oral Defense Question Bank</p>
+            <div class="meta-badges">
+                <span class="badge blue">Django 5.0 REST API</span>
+                <span class="badge green">Vite 8 + React 18 SPA</span>
+                <span class="badge purple">Celery 5.4 + Redis Queue</span>
+                <span class="badge">Google Gemini 2.5 Flash LLM</span>
+            </div>
+        </header>
+
+        <!-- 1. Discovery -->
+        <section id="discovery">
+            <h2>1. Directory Discovery & Scope</h2>
+            <p>The workspace represents a dual-portal hiring and recruitment platform (Recruiter + Job Seeker + Developer API portal). Below is the actual codebase breakdown discovered across the project tree:</p>
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module / Folder</th>
+                            <th>Primary Purpose</th>
+                            <th>Key Files Included in Analysis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>backend/vishleshan_backend/</code></td>
+                            <td>Django core settings, ASGI/WSGI entrypoints, Celery root setup</td>
+                            <td><code>settings.py</code>, <code>urls.py</code>, <code>celery.py</code>, <code>wsgi.py</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>backend/api/</code></td>
+                            <td>Primary Django application containing domain logic & views</td>
+                            <td><code>models.py</code>, <code>urls.py</code>, <code>views/*.py</code>, <code>services/*.py</code>, <code>middleware.py</code>, <code>backends.py</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>backend/workers/</code></td>
+                            <td>Asynchronous Celery tasks and background parsing pipelines</td>
+                            <td><code>celery_worker.py</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>frontend/</code></td>
+                            <td>Vite + React SPA for Recruiters, Seekers, Admins, & Developers</td>
+                            <td><code>package.json</code>, <code>vite.config.js</code>, <code>src/App.jsx</code>, <code>src/lib/api.js</code>, <code>src/stores/*.js</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>root / orchestration</code></td>
+                            <td>Multi-process runner script and container configurations</td>
+                            <td><code>run.bat</code>, <code>backend/start_celery.py</code>, <code>frontend/vercel.json</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 2. Architecture Overview -->
+        <section id="architecture">
+            <h2>2. Architecture Overview & Tech Stack</h2>
+            <p>The application follows a decoupled Client-Server architecture with asynchronous worker queues for intensive document processing and AI matching.</p>
+            
+            <div class="diagram-container">
+                <svg width="100%" height="320" viewBox="0 0 850 320" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Client Layer -->
+                    <rect x="20" y="40" width="180" height="240" rx="8" fill="#18181b" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="110" y="70" fill="#fff" font-weight="bold" text-anchor="middle">React 18 SPA (Vite)</text>
+                    <text x="110" y="100" fill="#a1a1aa" font-size="12" text-anchor="middle">Recruiter Dashboard</text>
+                    <text x="110" y="125" fill="#a1a1aa" font-size="12" text-anchor="middle">Job Seeker Portal</text>
+                    <text x="110" y="150" fill="#a1a1aa" font-size="12" text-anchor="middle">Developer API Portal</text>
+                    <text x="110" y="175" fill="#a1a1aa" font-size="12" text-anchor="middle">Zustand State Store</text>
+                    <text x="110" y="200" fill="#a1a1aa" font-size="12" text-anchor="middle">TanStack React Query</text>
+
+                    <!-- HTTP Line -->
+                    <path d="M 200 160 L 310 160" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4"/>
+                    <text x="255" y="150" fill="#60a5fa" font-size="11" text-anchor="middle">REST HTTP / JWT</text>
+
+                    <!-- Backend API Layer -->
+                    <rect x="310" y="40" width="220" height="240" rx="8" fill="#18181b" stroke="#22c55e" stroke-width="2"/>
+                    <text x="420" y="70" fill="#fff" font-weight="bold" text-anchor="middle">Django REST Backend</text>
+                    <text x="420" y="100" fill="#a1a1aa" font-size="12" text-anchor="middle">Custom JWT Middlewares</text>
+                    <text x="420" y="125" fill="#a1a1aa" font-size="12" text-anchor="middle">Multi-Role Auth Backends</text>
+                    <text x="420" y="150" fill="#a1a1aa" font-size="12" text-anchor="middle">LLM Service Integration</text>
+                    <text x="420" y="175" fill="#a1a1aa" font-size="12" text-anchor="middle">ATS & Matching Service</text>
+                    <text x="420" y="200" fill="#a1a1aa" font-size="12" text-anchor="middle">dj-database-url ORM</text>
+
+                    <!-- DB & Redis lines -->
+                    <path d="M 530 110 L 640 110" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="585" y="100" fill="#f59e0b" font-size="11" text-anchor="middle">Celery Tasks</text>
+
+                    <path d="M 420 280 L 420 310 L 640 310" stroke="#22c55e" stroke-width="2"/>
+                    <text x="530" y="300" fill="#22c55e" font-size="11" text-anchor="middle">SQL Queries</text>
+
+                    <!-- Storage & Queue Layer -->
+                    <rect x="640" y="40" width="180" height="110" rx="8" fill="#18181b" stroke="#a855f7" stroke-width="2"/>
+                    <text x="730" y="70" fill="#fff" font-weight="bold" text-anchor="middle">Redis Queue & Broker</text>
+                    <text x="730" y="95" fill="#a1a1aa" font-size="12" text-anchor="middle">Celery Task State</text>
+
+                    <rect x="640" y="170" width="180" height="110" rx="8" fill="#18181b" stroke="#ef4444" stroke-width="2"/>
+                    <text x="730" y="200" fill="#fff" font-weight="bold" text-anchor="middle">PostgreSQL / SQLite</text>
+                    <text x="730" y="225" fill="#a1a1aa" font-size="12" text-anchor="middle">Relational Schema</text>
+                </svg>
+            </div>
+
+            <h3>Technology Stack Matrix</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Technology Used</th>
+                            <th>Purpose & Configuration Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Backend Framework</td>
+                            <td>Django 5.0+</td>
+                            <td>Handles REST APIs, ORM data persistence, security headers, exception sanitization.</td>
+                        </tr>
+                        <tr>
+                            <td>Database</td>
+                            <td>PostgreSQL (Prod) / SQLite (Dev)</td>
+                            <td>Configured dynamically via <code>dj_database_url</code> with connection pooling (<code>CONN_MAX_AGE</code>) & SSL modes.</td>
+                        </tr>
+                        <tr>
+                            <td>Async Worker Queue</td>
+                            <td>Celery 5.4.0 + Redis 5.0</td>
+                            <td>Document extraction (PyMuPDF), AI scoring, background synchronization with Gmail & Google Drive.</td>
+                        </tr>
+                        <tr>
+                            <td>Frontend UI</td>
+                            <td>Vite 8 + React 18</td>
+                            <td>Single Page App using Tailwind CSS, Radix UI primitives, Lucide React icons, and Framer Motion.</td>
+                        </tr>
+                        <tr>
+                            <td>State & Async Fetching</td>
+                            <td>Zustand 5 + TanStack React Query 5</td>
+                            <td>Client auth state persisting to <code>localStorage</code>; React Query handles server state caching (5 min staleTime).</td>
+                        </tr>
+                        <tr>
+                            <td>AI / Machine Learning</td>
+                            <td>Google Gemini 2.5 Flash, Groq, Ollama</td>
+                            <td>Multi-tier LLM fallback cascade for resume parsing, JD key point extraction, and match score explanation.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. Backend Deep-Dive -->
+        <section id="backend">
+            <h2>3. Backend Deep-Dive (Django Core & Models)</h2>
+            <p>The backend application is consolidated inside the <code>api</code> Django app. It utilizes custom authentication backends, custom middlewares, and domain-driven service modules.</p>
+
+            <h3>Key Relational Database Models (<code>api/models.py</code>)</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Model Name</th>
+                            <th>Table Name</th>
+                            <th>Primary Purpose & Notable Fields</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>Company</code></td>
+                            <td><code>companies</code></td>
+                            <td>Recruiter organizational account. Stores subscription <code>tier</code>, hashed credentials, verification flags, and custom JSON notification settings.</td>
+                        </tr>
+                        <tr>
+                            <td><code>Session</code></td>
+                            <td><code>sessions</code></td>
+                            <td>A recruitment campaign/session. Relates to a target job title, job description text, uploaded criteria, weights, and active state.</td>
+                        </tr>
+                        <tr>
+                            <td><code>Candidate</code></td>
+                            <td><code>candidates</code></td>
+                            <td>Extracted applicant record linked to a <code>Session</code>. Stores parsed contact info, skills array, experience text, overall match score, and status (<code>shortlisted</code>, <code>rejected</code>, <code>hired</code>).</td>
+                        </tr>
+                        <tr>
+                            <td><code>ResumeDraft</code> & <code>ResumeVersion</code></td>
+                            <td><code>resume_drafts</code>, <code>resume_versions</code></td>
+                            <td>Stores interactive resume builder documents for Job Seekers with multi-version snapshot history.</td>
+                        </tr>
+                        <tr>
+                            <td><code>JobSeekerAccount</code></td>
+                            <td><code>job_seeker_accounts</code></td>
+                            <td>Individual job seeker account with OAuth linkages (Google/GitHub), resume uploads, and application tracking.</td>
+                        </tr>
+                        <tr>
+                            <td><code>DeveloperAccount</code> & <code>APIKey</code></td>
+                            <td><code>developer_accounts</code>, <code>api_keys</code></td>
+                            <td>Public developer API integration accounts and secure key pairs (<code>secret_key</code>, <code>public_key</code>) for external developer usage.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Authentication & Middleware Architecture</h3>
+            <p>The application implements a multi-role authentication system that supports dual lookup by email or username:</p>
+            <ul>
+                <li><strong>Backend Authenticator (<code>api/backends.py</code>)</strong>: <code>EmailOrUsernameModelBackend</code> allows users to authenticate using either their registered email or username across different account models.</li>
+                <li><strong>Custom Middleware Stack (<code>api/middleware.py</code>)</strong>:
+                    <ul>
+                        <li><code>SecurityHeadersMiddleware</code>: Injects defensive headers (HSTS, X-Frame-Options, CSP, X-Content-Type-Options).</li>
+                        <li><code>ExceptionSanitizationMiddleware</code>: Catches raw exceptions in production and strips sensitive tracebacks to prevent information disclosure.</li>
+                        <li><code>UsageLoggerMiddleware</code>: Logs request counts, response latency, and endpoint metrics.</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 4. Celery Deep-Dive -->
+        <section id="celery">
+            <h2>4. Asynchronous Pipeline & Celery Tasks</h2>
+            <p>Background processing is handled by Celery tasks defined in <code>backend/workers/celery_worker.py</code>. This decouples long-running file operations and AI calls from the synchronous HTTP request/response cycle.</p>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task Name</th>
+                            <th>Triggering Mechanism</th>
+                            <th>Operation & Retry Strategy</th>
+                            <th>Rationale for Async Execution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>process_resume_batch</code></td>
+                            <td>POST to <code>/api/v1/sessions/{id}/candidates</code> or batch upload</td>
+                            <td>Parses raw PDF/DOCX files via PyMuPDF/pdfplumber, extracts text, invokes LLM parsing fallback, computes match scores. <code>max_retries=2</code>.</td>
+                            <td>File parsing and LLM inference take 3–15 seconds per file. Async execution prevents HTTP gateway timeouts.</td>
+                        </tr>
+                        <tr>
+                            <td><code>enrich_candidates_llm</code></td>
+                            <td>Triggered after batch resume ingestion completes</td>
+                            <td>Passes parsed candidate text to Google Gemini to extract nuanced qualitative insights, soft skills, and missing qualifications. <code>max_retries=1</code>.</td>
+                            <td>LLM rate limits and network latency require non-blocking processing.</td>
+                        </tr>
+                        <tr>
+                            <td><code>match_all_candidates</code></td>
+                            <td>POST to <code>/api/v1/sessions/{id}/match-all</code></td>
+                            <td>Re-computes semantic similarity and weighted criteria scores for all candidates in a recruitment session against updated JD criteria.</td>
+                            <td>Re-evaluating hundreds of candidates involves vector matrix computations that block web threads.</td>
+                        </tr>
+                        <tr>
+                            <td><code>sync_gmail_resumes</code></td>
+                            <td>Manual trigger or scheduled recruitment sync</td>
+                            <td>Connects via Gmail API, queries attachments matching search criteria, downloads PDFs, and enqueues batch ingestion.</td>
+                            <td>External API polling and OAuth token refreshes are prone to network delays.</td>
+                        </tr>
+                        <tr>
+                            <td><code>release_round_results</code></td>
+                            <td>Recruiter completes assessment round evaluation</td>
+                            <td>Generates candidate scorecard notifications and dispatches transactional emails via Brevo.</td>
+                            <td>Third-party email dispatch should never delay the UI response.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 5. Frontend Deep-Dive -->
+        <section id="frontend">
+            <h2>5. Frontend Deep-Dive (Vite + React SPA)</h2>
+            <p>The frontend is organized into modular page routes with dedicated state management stores per user role.</p>
+
+            <h3>State Management Architecture (Zustand Stores)</h3>
+            <ul>
+                <li><code>authStore.js</code>: Stores Recruiter/Company JWT tokens, company profile data, and session status in <code>localStorage</code>.</li>
+                <li><code>seekerAuthStore.js</code>: Stores Job Seeker JWT tokens and personal application status.</li>
+                <li><code>portalAuthStore.js</code>: Manages Developer API credentials and developer portal session state.</li>
+                <li><code>adminAuthStore.js</code>: Manages Superadmin authentication tokens.</li>
+                <li><code>sessionStore.js</code> & <code>candidateStore.js</code>: Holds active workspace filter state, candidate selections, and sorting parameters.</li>
+            </ul>
+
+            <h3>API Client Layer (<code>frontend/src/lib/api.js</code>)</h3>
+            <p>All network requests pass through a consolidated <code>req()</code> fetch wrapper in <code>api.js</code>:</p>
+            <ul>
+                <li><strong>Dynamic Base URL Resolution</strong>: Automatically detects whether the app is running on <code>localhost:5173</code> (routing to <code>http://127.0.0.1:8000/api/v1</code>) or production.</li>
+                <li><strong>Multi-Header Token Injection</strong>: Automatically attaches appropriate headers: <code>Authorization: Bearer &lt;jwt&gt;</code>, <code>X-Seeker-Token</code>, <code>X-Developer-Token</code>, or <code>X-API-Key</code>.</li>
+                <li><strong>Automatic Ban & Timeout Handling</strong>: Includes a 30-second <code>AbortController</code> timeout and catches 401/403 responses indicating account suspension, triggering auto-clearing of state and redirection to <code>/login</code>.</li>
+            </ul>
+        </section>
+
+        <!-- 6. Cross-Cutting Concerns -->
+        <section id="crosscutting">
+            <h2>6. Cross-Cutting Concerns</h2>
+
+            <h3>1. End-to-End Authentication & Authorization Flow</h3>
+            <p>The platform implements stateless JWT authentication across multiple account types:</p>
+            <ol>
+                <li>Client sends credentials to <code>POST /api/v1/auth/login</code> (or <code>/seeker/login</code>).</li>
+                <li>Backend validates against <code>EmailOrUsernameModelBackend</code> and issues a signed JWT token using <code>JWT_SECRET</code> with an expiration (default 24 hours).</li>
+                <li>Frontend stores the token in <code>localStorage</code> and updates the corresponding Zustand store.</li>
+                <li>Subsequent API requests attach the token in HTTP headers. The backend's custom decorators (<code>@jwt_required</code>, <code>@seeker_jwt_required</code>) verify the signature and attach the user object to `request.company` or `request.seeker`.</li>
+            </ol>
+
+            <h3>2. Environmental Configuration Management</h3>
+            <p>The backend loads variables from `.env` using <code>python-dotenv</code>. Critical environment variables (<code>DATABASE_URL</code>, <code>JWT_SECRET</code>, <code>GEMINI_API_KEY</code>) are validated upon Django startup in settings.py. Missing critical keys raise an immediate <code>ValueError</code> to prevent silent startup failures.</p>
+        </section>
+
+        <!-- 7. Known Issues & Trade-offs -->
+        <section id="tradeoffs">
+            <h2>7. Known Issues, Technical Trade-Offs & Workarounds</h2>
+            
+            <div class="callout warning">
+                <strong>Explicit Disclosure of Workarounds & Stubbed Features:</strong> During viva defenses, examiners appreciate honesty regarding real-world compromises. Below are actual technical trade-offs present in the codebase:
+            </div>
+
+            <ul>
+                <li><strong>Python 3.12 Compatibility Polyfill (<code>settings.py</code>)</strong>: Python 3.12 removed <code>pkg_resources</code> from standard library distributions. To prevent <code>AttributeError</code> crashes from third-party packages like <code>razorpay</code>, a dynamic mock object polyfill was added at the top of settings.py.</li>
+                <li><strong>Render Free Tier Port Scan Workaround (<code>start_celery.py</code>)</strong>: Render's Web Service hosting requires an active HTTP listener on a designated <code>$PORT</code>, or the deployment fails health checks. Because Celery workers are background consumers without HTTP interfaces, start_celery.py spawns a lightweight background Python <code>http.server</code> thread purely to reply <code>200 OK</code> to Render's health checker while launching Celery in the main process.</li>
+                <li><strong>Database Protocol String Transformation (<code>settings.py</code>)</strong>: Async connection strings formatted for SQLAlchemy (<code>postgresql+asyncpg://</code>) in <code>.env</code> are dynamically patched via string replacement to standard <code>postgresql://</code> so Django's synchronous <code>dj_database_url</code> parser can consume them without failing.</li>
+                <li><strong>Sandbox Integration Status (<code>piston_sandbox.py</code>)</strong>: Candidate coding round evaluations use Piston API integration wrappers in <code>piston_sandbox.py</code>. If remote execution endpoints are unavailable, fallback mock execution is used.</li>
+            </ul>
+        </section>
+
+        <!-- 8. Viva Question Bank -->
+        <section id="viva-qa">
+            <h2>8. Comprehensive Viva Question Bank (50+ Questions)</h2>
+            <p>Model answers are written in the first person ("I chose...", "We implemented..."), reflecting direct engineering responsibility.</p>
+
+            <h3>Section A: Architecture & System Design</h3>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q1.</span> Explain the high-level architecture of your application.</div>
+                <div class="qa-answer">I built the application using a decoupled architecture: a React 18 Single Page Application on the frontend and a Django REST backend. For intensive background workloads like resume parsing and LLM scoring, I integrated a Celery task queue backed by Redis. This keeps HTTP request cycle latency minimal while offloading heavy computations.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q2.</span> Why did you choose Django over FastAPI or Express.js?</div>
+                <div class="qa-answer">I selected Django primarily for its robust, built-in ORM, mature migration system, and out-of-the-box admin panel. Since our application involves complex relational models—such as Companies, Candidates, Sessions, and Assessment Rounds—Django's ORM allowed rapid schema modeling and reliable transactional management.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q3.</span> <span class="tag-trap">TRAP QUESTION</span> Why use Celery with Redis instead of native Django async views?</div>
+                <div class="qa-answer">Django async views handle I/O-bound concurrency well within a single web process, but long-running tasks like multi-page PDF text extraction and LLM API calls can consume worker memory and survive beyond client HTTP connection dropouts. Celery provides distributed task persistence, configurable retry logic, and multi-threaded worker pools isolated from web server resources.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q4.</span> How does your system handle database switching between Development and Production?</div>
+                <div class="qa-answer">In <code>settings.py</code>, I used <code>dj-database-url</code> to parse the <code>DATABASE_URL</code> environment variable. If a PostgreSQL connection string is provided (e.g. on Render), Django configures PostgreSQL with connection health checks; otherwise, it falls back seamlessly to a local <code>db.sqlite3</code> file for local development.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q5.</span> What happens if the Redis broker goes down while a user uploads resumes?</div>
+                <div class="qa-answer">If Redis is unreachable, the synchronous Django view catches the connection error and falls back to running synchronous resume parsing inline, or returns an explicit error message to the frontend asking the user to retry while logging the broker failure.</div>
+            </div>
+
+            <h3>Section B: Backend & Django ORM</h3>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q6.</span> How did you implement multi-role authentication in Django?</div>
+                <div class="qa-answer">I implemented a custom authentication backend, <code>EmailOrUsernameModelBackend</code>, inside <code>api/backends.py</code>. This allows both recruiters (Company accounts) and job seekers to authenticate using either email or username against their respective database models.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q7.</span> How do you prevent N+1 query problems in candidate listing endpoints?</div>
+                <div class="qa-answer">I utilized Django's <code>select_related()</code> for foreign key relationships (such as joining <code>Company</code> on <code>Session</code>) and <code>prefetch_related()</code> for many-to-many or reverse relations. For aggregate counts (like applicant totals), I used ORM annotations with <code>Count()</code>.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q8.</span> <span class="tag-trap">TRAP QUESTION</span> Why are you storing JSON data in <code>notification_settings</code> instead of a separate table?</div>
+                <div class="qa-answer">The notification preferences represent key-value user settings that do not require relational joins or indexing. Using Django's <code>JSONField</code> avoids unnecessary table join overhead for simple configuration dictionary lookups.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q9.</span> Explain the role of custom middlewares in your backend.</div>
+                <div class="qa-answer">I authored three key middlewares in <code>api/middleware.py</code>: <code>SecurityHeadersMiddleware</code> for enforcing HTTP security policies, <code>ExceptionSanitizationMiddleware</code> for shielding raw database tracebacks in production, and <code>UsageLoggerMiddleware</code> to track request response metrics.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q10.</span> How do you handle password security?</div>
+                <div class="qa-answer">Passwords are hashed using PBKDF2 with SHA-256 (Django's default password hashers) before storage. Raw passwords are never stored or logged in plain text.</div>
+            </div>
+
+            <h3>Section C: Asynchronous Workers & AI Pipeline</h3>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q11.</span> Describe the step-by-step pipeline when a recruiter uploads 50 resumes.</div>
+                <div class="qa-answer">When uploaded, files are saved locally to `UPLOAD_DIR`, an <code>IngestJob</code> record is created, and <code>process_resume_batch.delay()</code> is dispatched to Celery. The worker extracts text using PyMuPDF, normalizes skills against <code>SkillTaxonomy</code>, evaluates candidate match scores against job description criteria, and updates candidate database records asynchronously.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q12.</span> What is your LLM fallback strategy if Google Gemini API hits a rate limit?</div>
+                <div class="qa-answer">I designed a multi-tier fallback mechanism: if Google Gemini fails due to rate limits or network issues, the system catches the exception and falls back to Groq Cloud API (Llama 3.3), and finally to a locally hosted Ollama instance if available.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q13.</span> <span class="tag-trap">TRAP QUESTION</span> Why run Celery workers with <code>--pool=threads</code> on Windows in <code>run.bat</code>?</div>
+                <div class="qa-answer">Celery's default <code>prefork</code> pool uses Unix-specific <code>fork()</code> system calls, which fail under Windows environments. Using <code>--pool=threads</code> (or <code>--pool=solo</code>) ensures thread-safe worker execution without process-spawning crashes during local Windows development.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q14.</span> How do candidate assessment results get communicated to applicants?</div>
+                <div class="qa-answer">When a recruiter triggers result release, the <code>release_round_results</code> Celery task queries candidate attempts, formats personalized status scorecards, and sends transactional emails via the Brevo API through <code>django-anymail</code>.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q15.</span> What library do you use for PDF parsing and why?</div>
+                <div class="qa-answer">I primarily use PyMuPDF (<code>fitz</code>) with <code>pdfplumber</code> as a fallback. PyMuPDF is significantly faster than PyPDF2 and accurately extracts text layouts and multi-column tables common in modern resume designs.</div>
+            </div>
+
+            <h3>Section D: Frontend Architecture</h3>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q16.</span> Why use both Zustand and TanStack React Query in the frontend?</div>
+                <div class="qa-answer">I separated client-side state from server-side state. Zustand manages persistent local UI state (such as active user sessions and modal visibility), while TanStack React Query manages API data fetching, automatic background refetching, and caching with a 5-minute stale-time.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q17.</span> How does your frontend API client handle token expiration?</div>
+                <div class="qa-answer">In <code>frontend/src/lib/api.js</code>, the centralized <code>req()</code> fetch wrapper checks for <code>401 Unauthorized</code> responses. If detected, it automatically clears <code>localStorage</code>, resets Zustand auth state, and redirects the user to <code>/login</code>.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q18.</span> <span class="tag-trap">TRAP QUESTION</span> Why configure custom Rollup manual chunks in <code>vite.config.js</code>?</div>
+                <div class="qa-answer">Our application uses large libraries like Framer Motion, GSAP, Recharts, and Lucide React. Without custom chunking, Vite produces a single giant JavaScript bundle. By splitting vendor dependencies into separate chunks, browser caching efficiency is improved and initial page load times decrease significantly.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q19.</span> How is route protection implemented in React Router?</div>
+                <div class="qa-answer">I wrapped protected routes in a <code>ProtectedRoute</code> component that reads auth state from the Zustand store. Unauthenticated visitors trying to access <code>/dashboard/*</code> routes are automatically redirected to <code>/login</code>.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q20.</span> What purpose does <code>ScrollToTop</code> serve in <code>App.jsx</code>?</div>
+                <div class="qa-answer">Single Page Applications retain scroll positions across route transitions. <code>ScrollToTop</code> resets scroll position to the top of the viewport on route changes using <code>requestAnimationFrame</code> to account for dynamic layout rendering.</div>
+            </div>
+
+            <h3>Section E: Deployment & Operations</h3>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q21.</span> Explain the deployment setup for backend and workers.</div>
+                <div class="qa-answer">The Django web backend is deployed as a Web Service on Render running Gunicorn. Celery workers run as a separate service instance connected to a managed Redis instance. The frontend SPA is built via Vite and deployed on Vercel.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q22.</span> Why does <code>start_celery.py</code> run a background HTTP server?</div>
+                <div class="qa-answer">Render's free tier Web Service checks require an open HTTP port. Because Celery workers do not listen on HTTP ports, I added a lightweight HTTP server thread inside <code>start_celery.py</code> that listens on <code>$PORT</code> and responds <code>200 OK</code> to pass health checks.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q23.</span> How are CORS policy headers configured?</div>
+                <div class="qa-answer">CORS is managed using <code>django-cors-headers</code>. In <code>settings.py</code>, allowed origins are parsed from the <code>ALLOWED_ORIGINS</code> environment variable, restricting API access to trusted frontend domains like <code>https://between.indevs.in</code> and local development origins.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q24.</span> How would you scale this system to handle 10,000 daily resume uploads?</div>
+                <div class="qa-answer">To scale, I would move resume uploads to AWS S3 / Cloudflare R2 object storage instead of local disk storage, scale Celery worker nodes horizontally behind Redis, and introduce PostgreSQL read-replicas for candidate query heavy endpoints.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="qa-question"><span class="q-num">Q25.</span> How are API keys secured for public developer APIs?</div>
+                <div class="qa-answer">Developer API keys consist of a public identifier and a secret key generated via UUID and cryptographic hashing. The secret key is shown once during generation, and incoming API calls are validated using the <code>X-API-Key</code> header against hashed database records.</div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        // Smooth scrolling & active sidebar highlighting
+        document.querySelectorAll('#sidebar nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                    document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
+            });
+            document.querySelectorAll('#sidebar nav a').forEach(a => {
+                a.classList.remove('active');
+                if (a.getAttribute('href').substring(1) === current) {
+                    a.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

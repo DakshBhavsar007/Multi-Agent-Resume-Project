@@ -35,6 +35,7 @@ export default function CompleteProfilePage() {
     const toastId = toast.loading("Extracting details from resume...");
     try {
       const data = await publicAPI.parseResume(file);
+      if (data.full_name) setFullName(data.full_name);
       if (data.phone) setPhone(data.phone);
       if (data.location) setLocation(data.location);
       if (data.headline) setHeadline(data.headline);
@@ -46,9 +47,13 @@ export default function CompleteProfilePage() {
       toast.error(err.message || "Failed to parse resume", { id: toastId });
     } finally {
       setParsingResume(false);
+      e.target.value = '';
     }
   };
   
+  // Editable Name State
+  const [fullName, setFullName] = useState('');
+
   // Seeker Form State
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
@@ -83,6 +88,11 @@ export default function CompleteProfilePage() {
       const parsed = JSON.parse(raw);
       setOauthData(parsed);
       
+      const initialName = parsed.role === 'seeker'
+        ? (parsed.data?.seeker?.full_name || parsed.data?.seeker?.name || parsed.data?.full_name || parsed.data?.name || '')
+        : (parsed.data?.company_name || parsed.data?.name || '');
+      setFullName(initialName || '');
+
       // Pre-fill fields if they happen to already exist
       if (parsed.role === 'seeker' && parsed.data?.seeker) {
         setPhone(parsed.data.seeker.phone || '');
@@ -113,7 +123,6 @@ export default function CompleteProfilePage() {
 
   const { role, data } = oauthData;
   const email = role === 'seeker' ? data.seeker?.email : data.email;
-  const name = role === 'seeker' ? data.seeker?.full_name : (data.name || data.company_name);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,7 +130,7 @@ export default function CompleteProfilePage() {
 
     try {
       if (role === 'seeker') {
-        if (!phone.trim() || !location.trim() || !headline.trim()) {
+        if (!fullName.trim() || !phone.trim() || !location.trim() || !headline.trim()) {
           toast.error('All details are required');
           setLoading(false);
           return;
@@ -131,6 +140,7 @@ export default function CompleteProfilePage() {
         localStorage.setItem('vish_seeker_token', data.seeker_token);
         
         const updated = await seekerAPI.updateProfile({
+          full_name: fullName.trim(),
           phone: phone.trim(),
           location: location.trim(),
           headline: headline.trim(),
@@ -142,16 +152,16 @@ export default function CompleteProfilePage() {
         // Save final logged in state
         const finalAuthData = {
           seeker_token: data.seeker_token,
-          seeker: { ...data.seeker, ...updated, requires_profile_completion: false }
+          seeker: { ...data.seeker, ...updated, full_name: fullName.trim(), requires_profile_completion: false }
         };
         seekerAuth.setAuth(finalAuthData);
         sessionStorage.removeItem('temp_oauth_data');
-        toast.success(`Welcome, ${name}! Your profile is now set up.`);
+        toast.success(`Welcome, ${fullName.trim()}! Your profile is now set up.`);
         navigate('/jobs/dashboard');
 
       } else if (role === 'developer') {
-        if (!websiteUrl.trim()) {
-          toast.error('Website URL is required');
+        if (!fullName.trim() || !websiteUrl.trim()) {
+          toast.error('Full Name and Website URL are required');
           setLoading(false);
           return;
         }
@@ -159,12 +169,14 @@ export default function CompleteProfilePage() {
         localStorage.setItem('portal_jwt', data.jwt_token);
 
         const updated = await portalAuth.updateProfile({
+          name: fullName.trim(),
           website_url: websiteUrl.trim()
         });
 
         const finalAuthData = {
           ...data,
           ...updated,
+          name: fullName.trim(),
           requires_profile_completion: false
         };
         developerAuth.setAuth(finalAuthData);
@@ -174,7 +186,7 @@ export default function CompleteProfilePage() {
         navigate('/developer/portal/dashboard');
 
       } else if (role === 'recruiter') {
-        if (!industry.trim() || !hqLocation.trim() || !companySize.trim() || !recruiterWebsite.trim()) {
+        if (!fullName.trim() || !industry.trim() || !hqLocation.trim() || !companySize.trim() || !recruiterWebsite.trim()) {
           toast.error('All fields are required');
           setLoading(false);
           return;
@@ -183,6 +195,7 @@ export default function CompleteProfilePage() {
         localStorage.setItem('vish_jwt', data.jwt_token);
 
         const updated = await authAPI.updateProfile({
+          name: fullName.trim(),
           industry: industry.trim(),
           hq_location: hqLocation.trim(),
           company_size: companySize,
@@ -192,6 +205,7 @@ export default function CompleteProfilePage() {
         const finalAuthData = {
           ...data,
           ...updated,
+          name: fullName.trim(),
           requires_profile_completion: false
         };
         
@@ -244,18 +258,20 @@ export default function CompleteProfilePage() {
             </div>
           </div>
 
-          {/* Name (Prefilled & Disabled) */}
+          {/* Name (Editable) */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-              {role === 'recruiter' ? 'Company Name' : 'Full Name'}
+              {role === 'recruiter' ? 'Company Name*' : 'Full Name*'}
             </label>
             <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
               <input
                 type="text"
-                value={name || ''}
-                disabled
-                className="w-full text-xs p-3.5 pl-11 bg-zinc-950/50 border border-zinc-800/60 rounded-xl text-zinc-500 cursor-not-allowed focus:outline-none"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder={role === 'recruiter' ? "e.g. Acme Corp" : "e.g. John Doe"}
+                className="w-full text-xs p-3.5 pl-11 bg-zinc-950/60 border border-zinc-800/80 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none transition-colors"
               />
             </div>
           </div>
@@ -265,8 +281,8 @@ export default function CompleteProfilePage() {
           {/* Role specific inputs */}
           {role === 'seeker' && (
             <>
-              {/* ⚡ Resume Upload Dropzone */}
-              <div className="mb-6 p-4 border-2 border-dashed border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/40 hover:border-blue-500/60 rounded-2xl transition-colors text-center group">
+              {/* Resume Upload Dropzone */}
+              <div className="mb-6 p-4 border-2 border-dashed border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/40 hover:border-blue-500/60 rounded-2xl transition-all text-center group">
                 <input 
                   type="file" 
                   id="oauth-resume-upload" 
@@ -281,11 +297,13 @@ export default function CompleteProfilePage() {
                   ) : (
                     <UploadCloud className="mx-auto text-blue-400 group-hover:scale-110 transition-transform w-6 h-6" />
                   )}
-                  <div className="text-xs font-bold text-blue-300 flex items-center justify-center gap-1">
-                    <Sparkles size={14} className="text-blue-400" />
-                    <span>{parsingResume ? "Parsing resume details..." : "Auto-fill profile using Resume PDF / DOCX"}</span>
+                  <div className="text-xs font-bold text-blue-300 flex items-center justify-center gap-1.5">
+                    <Sparkles size={15} className="text-blue-400 animate-pulse" />
+                    <span>{parsingResume ? "Parsing resume details..." : "Upload Resume & Fetch Details"}</span>
                   </div>
-                  <p className="text-[10px] text-blue-400/80 font-medium">Upload resume to extract Phone, Location & Headline automatically</p>
+                  <p className="text-[10px] text-blue-400/80 font-medium">
+                    Upload PDF / DOCX resume to auto-fill Full Name, Phone, Location & Headline
+                  </p>
                 </label>
               </div>
 
