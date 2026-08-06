@@ -4,11 +4,13 @@ import { testAPI } from "../lib/api";
 export function useVoiceInterview({ token, onTranscriptReady }) {
   const [phase, setPhase] = useState("idle");
   // "idle" | "ai_speaking" | "recording" | "transcribing" | "complete"
+  const [liveTranscript, setLiveTranscript] = useState("");
   
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const audioStreamRef = useRef(null);
   const silenceIntervalRef = useRef(null);
+  const hasSubmittedRef = useRef(false);
   const silenceContextRef = useRef(null);
 
   // Speak text with natural speech settings
@@ -59,6 +61,8 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
   const startRecording = useCallback(async () => {
     try {
       liveTranscriptRef.current = "";
+      hasSubmittedRef.current = false;
+      setLiveTranscript("");
       
       // High sensitivity audio constraints with noise suppression & gain control
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -81,7 +85,7 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
         }
       };
 
-      // Live Web Speech Recognition if supported by browser
+      // Live Web Speech Recognition — PREVIEW ONLY (does NOT trigger answer submission)
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         try {
@@ -95,8 +99,9 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
               finalStr += event.results[i][0].transcript;
             }
             if (finalStr.trim()) {
+              // Only update the live preview — do NOT trigger answer submission
               liveTranscriptRef.current = finalStr.trim();
-              onTranscriptReady?.(finalStr.trim());
+              setLiveTranscript(finalStr.trim());
             }
           };
           rec.onerror = (e) => console.warn("Live WebSpeech warning:", e.error);
@@ -123,6 +128,13 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
           silenceContextRef.current.close().catch(() => {});
           silenceContextRef.current = null;
         }
+
+        // Guard: prevent double submission for the same recording
+        if (hasSubmittedRef.current) {
+          setPhase("idle");
+          return;
+        }
+        hasSubmittedRef.current = true;
 
         setPhase("transcribing");
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
@@ -242,6 +254,7 @@ export function useVoiceInterview({ token, onTranscriptReady }) {
 
   return {
     phase,
+    liveTranscript,
     startRecording,
     stopRecording,
     speakText,

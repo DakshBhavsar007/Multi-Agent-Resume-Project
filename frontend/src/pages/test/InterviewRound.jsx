@@ -46,6 +46,7 @@ export default function InterviewRound() {
   // Initialize Voice Interview hook
   const {
     phase,
+    liveTranscript,
     startRecording,
     stopRecording,
     speakText,
@@ -56,6 +57,9 @@ export default function InterviewRound() {
     token,
     onTranscriptReady: (text) => handleTranscript(text)
   });
+
+  // Guard: prevent processing multiple transcripts for the same question
+  const isProcessingRef = useRef(false);
 
   // Fetch initial context and questions
   useEffect(() => {
@@ -240,6 +244,13 @@ export default function InterviewRound() {
       return;
     }
 
+    // Guard: prevent double-processing for the same question
+    if (isProcessingRef.current) {
+      console.warn("handleTranscript skipped: already processing an answer.");
+      return;
+    }
+    isProcessingRef.current = true;
+
     setSpokenAnswer(text);
     setAiGenerating(true);
     setAiResponse("Evaluating response...");
@@ -275,15 +286,17 @@ export default function InterviewRound() {
         updateIdx(nextIdx);
         
         speakText(`${feedback} ${selectedTransition} ${nextQ.q}`, () => {
-          // Clear old response logs and start recording once AI finishes speaking
+          // Clear old response logs, reset guard, and start recording once AI finishes speaking
           setSpokenAnswer("");
           setAiResponse("");
+          isProcessingRef.current = false;
           startRecording();
         });
       }
     } catch (err) {
       toast.error(err.message || "Failed to submit answer.");
       setAiResponse("Could not contact the evaluation agent.");
+      isProcessingRef.current = false;
       speakText("There was an error saving your response. Let's try recording again.", () => {
         startRecording();
       });
@@ -527,10 +540,17 @@ export default function InterviewRound() {
                     </div>
 
                     {isRecording && (
-                      <span className="text-[10px] text-blue-500 font-semibold animate-pulse flex items-center gap-1 mt-2">
-                        <svg className="w-3.5 h-3.5 text-blue-500 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
-                        Listening... speak now. (Auto-saves when you stop talking)
-                      </span>
+                      <div className="space-y-2">
+                        <span className="text-[10px] text-blue-500 font-semibold animate-pulse flex items-center gap-1 mt-2">
+                          <svg className="w-3.5 h-3.5 text-blue-500 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
+                          Listening... speak now. (Auto-saves when you stop talking)
+                        </span>
+                        {liveTranscript && (
+                          <p className="text-[11px] text-gray-500 italic bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100 max-w-xs">
+                            "{liveTranscript}"
+                          </p>
+                        )}
+                      </div>
                     )}
 
                     {isTranscribing && (
