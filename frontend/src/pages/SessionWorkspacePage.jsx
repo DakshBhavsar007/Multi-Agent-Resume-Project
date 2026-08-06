@@ -705,15 +705,31 @@ export default function SessionWorkspacePage() {
                         <div className="grid grid-cols-2 gap-2 mb-3">
                           <div>
                             <label className="block text-[10px] font-bold text-gray-500 mb-0.5 pl-0.5">From Date</label>
-                            <input type="date" value={gmailFromDate} onChange={e => setGmailFromDate(e.target.value)} className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:border-accent focus:outline-none" />
+                            <input 
+                              type="date" 
+                              value={gmailFromDate} 
+                              max={gmailToDate || undefined}
+                              onChange={e => setGmailFromDate(e.target.value)} 
+                              className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:border-accent focus:outline-none" 
+                            />
                           </div>
                           <div>
                             <label className="block text-[10px] font-bold text-gray-500 mb-0.5 pl-0.5">To Date</label>
-                            <input type="date" value={gmailToDate} onChange={e => setGmailToDate(e.target.value)} className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:border-accent focus:outline-none" />
+                            <input 
+                              type="date" 
+                              value={gmailToDate} 
+                              min={gmailFromDate || undefined}
+                              onChange={e => setGmailToDate(e.target.value)} 
+                              className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:border-accent focus:outline-none" 
+                            />
                           </div>
                         </div>
                         <button onClick={async () => {
                           try {
+                            if (gmailFromDate && gmailToDate && new Date(gmailFromDate) > new Date(gmailToDate)) {
+                              toast.error("From Date cannot be later than To Date");
+                              return;
+                            }
                             const payload = { session_id: id };
                             if (gmailFromDate) payload.from_date = gmailFromDate;
                             if (gmailToDate) payload.to_date = gmailToDate;
