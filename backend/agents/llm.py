@@ -93,9 +93,9 @@ def _seed_from_env():
         if single.strip():
             keys.append(single.strip())
 
-    # Update any existing GeminiProject rows that had artificial 20 limit up to 1500
+    # Update any existing GeminiProject rows that had artificial limit up to 1500
     try:
-        GeminiProject.objects.filter(daily_limit__lt=1500).update(daily_limit=1500)
+        GeminiProject.objects.filter(daily_limit__lt=1500).update(daily_limit=1500, rpm_limit=15)
     except Exception:
         pass
 
