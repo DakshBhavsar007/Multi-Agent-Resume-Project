@@ -32,3 +32,31 @@ class ApiConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(ensure_default_superuser, sender=self)
+
+        # Neon DB Keepalive (Prevents cold start delay in Viva/Demos)
+        import sys
+        import os
+        is_runserver = 'runserver' in sys.argv
+        is_gunicorn = any('gunicorn' in arg for arg in sys.argv)
+        
+        # Start thread only in active web server process
+        if (is_runserver and os.environ.get('RUN_MAIN') == 'true') or is_gunicorn or not sys.argv:
+            if not getattr(self, '_keepalive_started', False):
+                self._keepalive_started = True
+                
+                import threading
+                def _neon_keepalive_loop():
+                    import time
+                    from django.db import connection, close_old_connections
+                    while True:
+                        time.sleep(240)  # Ping every 4 mins (Neon auto-suspends after 5 mins)
+                        try:
+                            close_old_connections()
+                            with connection.cursor() as cursor:
+                                cursor.execute("SELECT 1;")
+                        except Exception:
+                            pass
+
+                t = threading.Thread(target=_neon_keepalive_loop, daemon=True)
+                t.start()
+                print("[INIT] Neon DB keepalive thread active.")
