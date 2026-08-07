@@ -93,18 +93,12 @@ def _seed_from_env():
         if single.strip():
             keys.append(single.strip())
 
-    # Update any existing GeminiProject rows that had artificial limit up to 1500
-    try:
-        GeminiProject.objects.filter(daily_limit__lt=1500).update(daily_limit=1500, rpm_limit=15)
-    except Exception:
-        pass
-
     for i, key in enumerate(keys, 1):
         if not GeminiApiKey.objects.filter(key=key).exists():
             project_name = f"Gemini-Project-{i}"
             project, _ = GeminiProject.objects.get_or_create(
                 name=project_name,
-                defaults={"daily_limit": 1500, "daily_usage": 0, "rpm_limit": 15}
+                defaults={"daily_limit": 20, "daily_usage": 0, "rpm_limit": 5}
             )
             GeminiApiKey.objects.create(
                 key=key,
